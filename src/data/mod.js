@@ -5,6 +5,7 @@ import Decimal, * as numberUtils from '../util/break_eternity.js';
 export default {
 	// General Info
 	title: "The Modding Tree X",
+	banner: null,
 	id: "tmt-x",
 	author: "thepaperpilot",
 	discordName: "TMT-X Server",

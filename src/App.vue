@@ -1,12 +1,14 @@
 <template>
 	<div id="app" @mousemove="updateMouse" :style="theme">
 		<Nav />
-		<TPS v-if="showTPS || true" />
+		<Tabs />
+		<TPS v-if="showTPS" />
 	</div>
 </template>
 
 <script>
 import Nav from './components/system/Nav.vue';
+import Tabs from './components/system/Tabs.vue';
 import TPS from './components/system/TPS.vue';
 import themes from './data/themes.js';
 import { mapState } from 'vuex';
@@ -14,7 +16,7 @@ import { mapState } from 'vuex';
 export default {
 	name: 'App',
 	components: {
-		Nav, TPS
+		Nav, Tabs, TPS
 	},
 	computed: {
 		...mapState([ 'showTPS' ]),
@@ -23,8 +25,8 @@ export default {
 		}
 	},
 	methods: {
-		updateMouse(event) {
-			console.log("TODO updateMouse", event)
+		updateMouse(/* event */) {
+			// TODO use event to update mouse position for particles
 		}
 	}
 };
@@ -85,5 +87,7 @@ ul {
 #app {
 	background-color: var(--background);
 	color: var(--color);
+    display: flex;
+    flex-flow: column;
 }
 </style>

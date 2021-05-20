@@ -5,7 +5,8 @@ const defaultTheme = {
 	"--color": "#dfdfdf",
 	"--points": "#ffffff",
 	"--locked": "#bf8f8f",
-	"--link": "#02f2f2"
+	"--link": "#02f2f2",
+	"--separator": "#dfdfdf"
 };
 
 export default {
@@ -13,7 +14,8 @@ export default {
 	paper: {
 		...defaultTheme,
 		"--background": "#2a323d",
-		"--background_nav": "#333c4a"
+		"--background_nav": "#333c4a",
+		"--separator": "#333c4a"
 	},
 	aquad: {
 		...defaultTheme,
@@ -22,6 +24,7 @@ export default {
 		"--background_nav": "#001f3f",
 		"--color": "#bfdfff",
 		"--points": "#dfefff",
-		"--locked": "#c4a7b3"
+		"--locked": "#c4a7b3",
+		"--separator": "#bfdfff"
 	}
 };

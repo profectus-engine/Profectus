@@ -61,6 +61,7 @@ export default {
 		},
 		showTab(tab) {
 			console.log("TODO show tab", tab);
+			// tabs.splice(1, tabs.length, tab);
 		}
 	}
 };
@@ -75,6 +76,7 @@ export default {
 		top: 0;
 		height: 50px;
 		z-index: 9999999;
+		width: 100%;
 	}
 
 	.title {
