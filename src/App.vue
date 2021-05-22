@@ -35,24 +35,21 @@ export default {
 <style>
 * {
 	transition-duration: 0.5s;
-	text-align: center;
 	font-family: "Roboto Mono", monospace;
 	font-weight: bold;
-	table-align: center;
 	margin: auto;
-	-webkit-text-size-adjust: none;
 	text-size-adjust: none;
 }
 
 *:focus {
 	outline: none;
-	webkit-outline: none;
 }
 
 body {
 	overflow: hidden;
 	min-width: 640px;
 	transition: none;
+	text-align: center;
 }
 
 html, body, #app {
@@ -65,29 +62,31 @@ h1, h2, h3, b, input {
 }
 
 a,
+button,
 .link {
-    display: block;
-    font-size: 20px;
-    color: #02f2f2;
-    cursor: pointer;
-    text-decoration: none;
+	display: block;
+	color: var(--link);
+	background: none;
+	border: none;
+	cursor: pointer;
+	text-decoration: none;
 }
 
 a:hover,
+button:hover,
 .link:hover {
-    transform: scale(1.2, 1.2);
-    text-shadow: 5px 0 10px #02f2f2,
-    -3px 0 12px #02f2f2;
+	text-shadow: 5px 0 10px var(--link),
+		-3px 0 12px var(--link);
 }
 
 ul {
-    list-style-type: none;
+	list-style-type: none;
 }
 
 #app {
 	background-color: var(--background);
 	color: var(--color);
-    display: flex;
-    flex-flow: column;
+	display: flex;
+	flex-flow: column;
 }
 </style>

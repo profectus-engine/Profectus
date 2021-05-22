@@ -2,7 +2,7 @@ import modInfo from '../data/mod.js';
 
 export function getInitialStore() {
 	return {
-		tabs: ["tree-tab", "info-tab", "dummy"],
+		tabs: modInfo.initialTabs.slice(),
 		time: Date.now(),
 		autosave: true,
 		offlineProd: true,
@@ -11,6 +11,7 @@ export function getInitialStore() {
 		hasNaN: false,
 		lastTenTicks: [],
 		showTPS: true,
+		theme: "paper",
 		...modInfo.getStartingData()
 	}
 }

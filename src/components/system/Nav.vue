@@ -1,46 +1,49 @@
 <template>
-	<div class="nav" v-if="useHeader">
-		<img v-if="banner" :src="banner" height="100%" :alt="title" />
-		<div v-else class="title">{{ title }}</div>
-		<div class="version" @click="showTab('changelog-tab')">v{{ version }}</div>
-		<div style="flex-grow: 1"></div>
-		<div class="discord">
-			<img src="images/discord.png" @click="window.open(discordLink, 'mywindow')" />
-			<ul class="discord-links">
-				<li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
-					<a :href="discordLink" target="_blank">{{ discordName }}</a>
-				</li>
-				<li><a href="https://discord.gg/WzejVAx" target="_blank">TMT-X Server</a></li>
-				<li><a href="https://discord.gg/F3xveHV" target="_blank">TMT Server</a></li>
-				<li><a href="http://discord.gg/wwQfgPa" target="_blank">TPT Server</a></li>
-			</ul>
+	<div>
+		<div class="nav" v-if="useHeader">
+			<img v-if="banner" :src="banner" height="100%" :alt="title" />
+			<div v-else class="title">{{ title }}</div>
+			<div class="version" @click="openDialog('Changelog')">v{{ version }}</div>
+			<div style="flex-grow: 1"></div>
+			<div class="discord">
+				<img src="images/discord.png" @click="window.open(discordLink, 'mywindow')" />
+				<ul class="discord-links">
+					<li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
+						<a :href="discordLink" target="_blank">{{ discordName }}</a>
+					</li>
+					<li><a href="https://discord.gg/WzejVAx" target="_blank">The Paper Pilot Community</a></li>
+					<li><a href="https://discord.gg/F3xveHV" target="_blank">The Modding Tree</a></li>
+					<li><a href="http://discord.gg/wwQfgPa" target="_blank">Jacorb's Games</a></li>
+				</ul>
+			</div>
+			<div class="info" @click="openDialog('Info')"><br/>i</div>
+			<img class="options" src="images/options_wheel.png" @click="openDialog('Options')" />
 		</div>
-		<div v-if="tab !== 'info-tab'" class="info" @click="showTab('info-tab')"><br/>i</div>
-		<img v-if="tab !== 'options-tab'" class="options" src="images/options_wheel.png"
-			@click="showTab('options-tab')" />
-	</div>
-	<div v-else>
-		<div class="discord overlay">
-			<img src="images/discord.png" @click="openDiscord" />
-			<ul class="discord-links">
-				<li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
-					<a :href="discordLink" target="_blank">{{ discordName }}</a>
-				</li>
-				<li><a href="https://discord.gg/WzejVAx" target="_blank">TMT-X Server</a></li>
-				<li><a href="https://discord.gg/F3xveHV" target="_blank">TMT Server</a></li>
-				<li><a href="http://discord.gg/wwQfgPa" target="_blank">TPT Server</a></li>
-			</ul>
+		<div v-else>
+			<div class="discord overlay">
+				<img src="images/discord.png" @click="openDiscord" />
+				<ul class="discord-links">
+					<li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
+						<a :href="discordLink" target="_blank">{{ discordName }}</a>
+					</li>
+					<li><a href="https://discord.gg/WzejVAx" target="_blank">The Paper Pilot Community</a></li>
+					<li><a href="https://discord.gg/F3xveHV" target="_blank">The Modding Tree</a></li>
+					<li><a href="http://discord.gg/wwQfgPa" target="_blank">Jacorb's Games</a></li>
+				</ul>
+			</div>
+			<div class="info overlay" @click="openDialog('Info')"><br/>i</div>
+			<img class="options overlay" src="images/options_wheel.png" @click="openDialog('Options')" />
+			<div class="version overlay" @click="openDialog('Changelog')">v{{ version }}</div>
 		</div>
-		<div v-if="tab !== 'info-tab'" class="info overlay" @click="showTab('info-tab')"><br/>i</div>
-		<img v-if="tab !== 'options-tab'" class="options overlay" src="images/options_wheel.png"
-			@click="showTab('options-tab')" />
-		<div class="version overlay" @click="showTab('changelog-tab')">v{{ version }}</div>
+		<Info :show="showInfo" @openDialog="openDialog" @closeDialog="closeDialog" />
+		<Options :show="showOptions" @closeDialog="closeDialog" />
 	</div>
 </template>
 
 <script>
-import { mapState } from 'vuex';
 import modInfo from '../../data/mod.js';
+import Info from './Info';
+import Options from './Options';
 
 export default {
 	name: 'Nav',
@@ -51,17 +54,24 @@ export default {
 			title: modInfo.title,
 			discordName: modInfo.discordName,
 			discordLink: modInfo.discordLink,
-			version: modInfo.versionNumber
+			version: modInfo.versionNumber,
+			showInfo: false,
+			showOptions: false,
+			showChangelog: false
 		}
 	},
-	computed: mapState([ 'tab' ]),
+	components: {
+		Info, Options
+	},
 	methods: {
 		openDiscord() {
 			window.open(this.discordLink, 'mywindow');
 		},
-		showTab(tab) {
-			console.log("TODO show tab", tab);
-			// tabs.splice(1, tabs.length, tab);
+		openDialog(dialog) {
+			this[`show${dialog}`] = true;
+		},
+		closeDialog(dialog) {
+			this[`show${dialog}`] = false;
 		}
 	}
 };
@@ -69,13 +79,12 @@ export default {
 
 <style scoped>
 	.nav {
-		background-color: var(--background_nav);
+		background-color: var(--secondary-background);
 		display: flex;
 		left: 0;
 		right: 0;
 		top: 0;
 		height: 50px;
-		z-index: 9999999;
 		width: 100%;
 	}
 
@@ -83,6 +92,10 @@ export default {
 		font-size: 36px;
 		text-align: left;
 		margin-left: 12px;
+	}
+
+	.overlay {
+		z-index: 100;
 	}
 
 	.discord {
@@ -105,11 +118,11 @@ export default {
 	.discord-links {
 		position: fixed;
 		top: 45px;
-		padding: 30px;
+		padding: 20px;
 		right: -280px;
 		width: 200px;
 		transition: right .25s ease;
-		background: var(--background_nav);
+		background: var(--secondary-background);
 	}
 
 	.discord.overlay .discord-links {
@@ -117,6 +130,10 @@ export default {
 		right: unset;
 		left: -280px;
 		transition: left .25s ease;
+	}
+
+	.discord-links li {
+		margin-bottom: 4px;
 	}
 
 	.discord:not(.overlay):hover .discord-links {

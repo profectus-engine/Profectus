@@ -1,14 +1,12 @@
-// import TreeTab from '../components/system/TreeTab.vue';
 // Import Decimal and numberUtils from a different file to globally change which big num library gets used
 import Decimal, * as numberUtils from '../util/break_eternity.js';
 
-export default {
+const modInfo = {
 	// General Info
 	title: "The Modding Tree X",
-	banner: null,
 	id: "tmt-x",
 	author: "thepaperpilot",
-	discordName: "TMT-X Server",
+	discordName: "TMT-X",
 	discordLink: "https://discord.gg/WzejVAx",
 
 	// Gameplay Options
@@ -17,9 +15,13 @@ export default {
 			points: new Decimal(10),
 		}
 	},
-	// TODO getPointGen or some abstract version?
 	hasWon() {
 		return false;
+	},
+	update(delta) {
+		let gain = new Decimal(1);
+		// TODO add gain to player.deltas
+		gain.times(delta);
 	},
 
 	// Version
@@ -28,8 +30,11 @@ export default {
 
 	// UI options
 	allowSmall: false,
-	useHeader: true,
-	//defaultTab: TreeTab
+	defaultDecimalsShown: 2,
+	useHeader: false,
+	banner: null,
+	logo: null,
+	initialTabs: ["tree-tab", "info-tab", "dummy"],
 
 	// Advanced Options
 	/* eslint-disable-next-line no-unused-vars */
@@ -38,3 +43,7 @@ export default {
 	bigNum: { Decimal, ...numberUtils },
 	maxTickLength: 3600
 };
+
+document.title = modInfo.title;
+
+export default modInfo;

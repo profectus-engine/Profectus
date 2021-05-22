@@ -2,7 +2,9 @@
 	<div class="tabs">
 		<div v-for="(tab, index) in tabs" class="tab" :key="index">
 			<button v-if="index > 0" class="goBack" @click="goBack(index)">←</button>
-			{{ tab }}
+			<component :is="layers[tab].component" :index="index" v-if="tab in layers && layers[tab].component" />
+			<tab-layer :layer="tab" :index="index" v-else-if="tab in layers" />
+			<component :is="tab" :index="index" v-else />
 			<div class="separator" v-if="index !== tabs.length - 1"></div>
 		</div>
 	</div>
@@ -10,13 +12,19 @@
 
 <script>
 import { mapState } from 'vuex';
+import { SET_TABS } from '../../store/mutations.js';
 
 export default {
 	name: 'Tabs',
+	data() {
+		return {
+			layers: this.$root.layers
+		};
+	},
 	computed: mapState([ 'tabs' ]),
 	methods: {
-		goBack(/* index */) {
-			// TODO tabs.splice(index)
+		goBack(index) {
+			this.$store.commit(SET_TABS, this.$store.state.tabs.slice(0, index));
 		}
 	}
 };
@@ -55,5 +63,10 @@ export default {
     font-size: 40px;
     cursor: pointer;
     line-height: 40px;
+}
+
+.goBack:hover {
+    transform: scale(1.1, 1.1);
+    text-shadow: 0 0 7px var(--color);
 }
 </style>

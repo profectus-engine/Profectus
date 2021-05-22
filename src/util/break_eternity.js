@@ -12,7 +12,7 @@ export function exponentialFormat(num, precision, mantissa = true) {
 		m = decimalOne;
 		e = e.add(1);
 	}
-	e = (e.gte(1e9) ? format(e, 3) : (e.gte(10000) ? commaFormat(e, 0) : e.toStringWithDecimalPlaces(0)))
+	e = (e.gte(1e9) ? format(e, Math.max(Math.max(precision, 3), modInfo.defaultDecimalsShown)) : (e.gte(10000) ? commaFormat(e, 0) : e.toStringWithDecimalPlaces(0)))
 	if (mantissa) {
 		return m.toStringWithDecimalPlaces(precision)+"e"+e;
 	} else {
@@ -42,12 +42,13 @@ export function regularFormat(num, precision) {
 		return (0).toFixed(precision);
 	}
 	if (num.mag < 0.1 && precision !== 0) {
-		precision = Math.max(precision, 4);
+		precision = Math.max(Math.max(precision, 4), modInfo.defaultDecimalsShown);
 	}
 	return num.toStringWithDecimalPlaces(precision);
 }
 
-export function format(decimal, precision=2, small) {
+export function format(decimal, precision = null, small) {
+	if (precision == null) precision = modInfo.defaultDecimalsShown;
 	small = small || modInfo.allowSmall;
 	decimal = new Decimal(decimal);
 	if (isNaN(decimal.sign)||isNaN(decimal.layer)||isNaN(decimal.mag)) {
@@ -96,10 +97,10 @@ export function formatWhole(decimal) {
 		return "-"+formatWhole(decimal.neg());
 	}
 	if (decimal.gte(1e9)) {
-		return format(decimal, 2);
+		return format(decimal);
 	}
 	if (decimal.lte(0.98) && !decimal.eq(0)) {
-		return format(decimal, 2);
+		return format(decimal);
 	}
 	return format(decimal, 0);
 }
@@ -128,7 +129,7 @@ export function toPlaces(x, precision, maxAccepted) {
 }
 
 // Will also display very small numbers
-export function formatSmall(x, precision=2) {
+export function formatSmall(x, precision = null) {
 	return format(x, precision, true);
 }
 
