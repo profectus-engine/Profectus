@@ -1,11 +1,9 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
-import { getInitialStore } from '../util/load.js';
-import mutations from './mutations';
+import { getInitialStore } from '../util/load';
 
-Vue.use(Vuex)
+Vue.use(Vuex);
 
 export default new Vuex.Store({
-	state: getInitialStore(),
-	mutations
-})
+	state: getInitialStore()
+});

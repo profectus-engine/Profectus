@@ -2,8 +2,10 @@
 	<div class="tabs">
 		<div v-for="(tab, index) in tabs" class="tab" :key="index">
 			<button v-if="index > 0" class="goBack" @click="goBack(index)">←</button>
-			<component :is="layers[tab].component" :index="index" v-if="tab in layers && layers[tab].component" />
-			<tab-layer :layer="tab" :index="index" v-else-if="tab in layers" />
+			<LayerProvider :layer="tab" :index="index" v-if="tab in layers && layers[tab].component">
+				<component :is="layers[tab].component" />
+			</LayerProvider>
+			<layer-tab :layer="tab" :index="index" v-else-if="tab in layers" />
 			<component :is="tab" :index="index" v-else />
 			<div class="separator" v-if="index !== tabs.length - 1"></div>
 		</div>
@@ -11,8 +13,10 @@
 </template>
 
 <script>
+import LayerProvider from './LayerProvider';
+import LayerTab from './LayerTab';
 import { mapState } from 'vuex';
-import { SET_TABS } from '../../store/mutations.js';
+import { player } from '../../store/proxies';
 
 export default {
 	name: 'Tabs',
@@ -21,10 +25,13 @@ export default {
 			layers: this.$root.layers
 		};
 	},
+	components: {
+		LayerProvider, LayerTab
+	},
 	computed: mapState([ 'tabs' ]),
 	methods: {
 		goBack(index) {
-			this.$store.commit(SET_TABS, this.$store.state.tabs.slice(0, index));
+			player.tabs.splice(0, index);
 		}
 	}
 };

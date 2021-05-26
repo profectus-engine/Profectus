@@ -7,10 +7,10 @@
 </template>
 
 <script>
-import Nav from './components/system/Nav.vue';
-import Tabs from './components/system/Tabs.vue';
-import TPS from './components/system/TPS.vue';
-import themes from './data/themes.js';
+import Nav from './components/system/Nav';
+import Tabs from './components/system/Tabs';
+import TPS from './components/system/TPS';
+import themes from './data/themes';
 import { mapState } from 'vuex';
 
 export default {

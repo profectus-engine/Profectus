@@ -54,9 +54,9 @@
 </template>
 
 <script>
-import Modal from './Modal.vue';
-import modInfo from '../../data/mod.js';
-import { formatTime } from '../../util/bignum.js';
+import Modal from './Modal';
+import modInfo from '../../data/modInfo';
+import { formatTime } from '../../util/bignum';
 
 export default {
 	name: 'Info',

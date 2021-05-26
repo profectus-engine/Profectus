@@ -19,13 +19,13 @@
 </template>
 
 <script>
-import Modal from './Modal.vue';
-import Toggle from './fields/Toggle.vue';
-import Select from './fields/Select.vue';
-import themes from '../../data/themes.js';
-import { camelToTitle } from '../../util/common.js';
+import Modal from './Modal';
+import Toggle from '../fields/Toggle';
+import Select from '../fields/Select';
+import themes from '../../data/themes';
+import { camelToTitle } from '../../util/common';
 import { mapState } from 'vuex';
-import { SET_SETTING } from '../../store/mutations.js';
+import { player } from '../../store/proxies';
 
 export default {
 	name: 'Options',
@@ -43,10 +43,10 @@ export default {
 	computed: mapState([ "autosave", "offlineProd", "showTPS", "theme" ]),
 	methods: {
 		toggleOption(option) {
-			this.$store.commit(SET_SETTING, { setting: option });
+			player[option] = !player[option];
 		},
 		setTheme(theme) {
-			this.$store.commit(SET_SETTING, { setting: "theme", value: theme });
+			player.theme = theme;
 		},
 		save() {
 

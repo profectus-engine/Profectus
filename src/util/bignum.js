@@ -1,10 +1,8 @@
-// This class is just used to lookup the correct bignum library set in modInfo and pass it, along with its format utility functions, through this file
-// This way switching out big number libraries just needs to happen in mod.js, not every file that needs big numbers
-
-import modInfo from '../data/mod.js';
+// Import Decimal and numberUtils from a different file to globally change which big num library gets used
+// This way switching out big number libraries just needs to happen here, not every file that needs big numbers
+import Decimal, * as numberUtils from '../util/break_eternity';
 
 export const {
-	Decimal,
 	exponentialFormat,
 	commaFormat,
 	regularFormat,
@@ -14,6 +12,6 @@ export const {
 	toPlaces,
 	formatSmall,
 	invertOOM
-} = modInfo.bigNum;
+} = numberUtils;
 
 export default Decimal;

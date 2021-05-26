@@ -1,11 +1,10 @@
 import Vue from 'vue';
-import App from './App.vue';
+import App from './App';
 import store from './store';
-import { layers, hotkeys } from './data/layers.js';
+import { layers, hotkeys } from './store/layers';
 
 // Setup
 Vue.config.productionTip = false;
-window.player = store.state;
 
 // Create Vue
 window.vue = new Vue({

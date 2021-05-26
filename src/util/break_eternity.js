@@ -1,5 +1,5 @@
-import Decimal from '../lib/break_eternity.js';
-import modInfo from '../data/mod.js';
+import Decimal from '../lib/break_eternity';
+import modInfo from '../data/modInfo';
 
 export default Decimal;
 

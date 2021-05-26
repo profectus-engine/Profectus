@@ -1,4 +1,5 @@
-import modInfo from '../data/mod.js';
+import modInfo from '../data/modInfo';
+import { getStartingData, initialLayers } from '../data/mod';
 
 export function getInitialStore() {
 	return {
@@ -12,6 +13,10 @@ export function getInitialStore() {
 		lastTenTicks: [],
 		showTPS: true,
 		theme: "paper",
-		...modInfo.getStartingData()
+		...getStartingData(),
+		...initialLayers.reduce((acc, layer) => {
+			acc[layer.name] = layer.startData();
+			return acc;
+		}, {})
 	}
 }

@@ -41,7 +41,7 @@
 </template>
 
 <script>
-import modInfo from '../../data/mod.js';
+import modInfo from '../../data/modInfo';
 import Info from './Info';
 import Options from './Options';
 

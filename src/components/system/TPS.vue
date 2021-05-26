@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import Decimal, { format } from '../../util/bignum.js';
+import Decimal, { format } from '../../util/bignum';
 
 export default {
 	name: 'TPS',

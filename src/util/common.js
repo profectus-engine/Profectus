@@ -4,3 +4,11 @@ export function camelToTitle(camel) {
 	title = title.charAt(0).toUpperCase() + title.slice(1);
 	return title;
 }
+
+export function isPlainObject(object) {
+	return Object.prototype.toString.call(object) === '[object Object]';
+}
+
+export function isFunction(func) {
+	return typeof func === 'function';
+}
