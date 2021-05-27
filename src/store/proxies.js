@@ -1,5 +1,6 @@
 import { layers } from './layers';
 import { isFunction, isPlainObject } from '../util/common';
+import Decimal from '../util/bignum';
 import store from './index';
 import Vue from 'vue';
 
@@ -13,26 +14,46 @@ export const tmp = new Proxy({}, {
 	}
 });
 
-export const player = window.player = new Proxy(store.state, {
+const playerHandler = {
+	get(target, key) {
+		if (key == 'isProxy') {
+			return true;
+		}
+
+		if (typeof target[key] == "undefined") {
+			return;
+		}
+
+		if (!target[key].isProxy && !(target[key] instanceof Decimal) && isPlainObject(target[key])) {
+			// Note that player isn't pre-created since it (shouldn't) have functions or getters
+			// so creating proxies as they're requested is A-OK
+			target[key] = new Proxy(target[key], playerHandler);
+			return target[key];
+		}
+
+		return target[key];
+	},
 	set(target, property, value) {
 		Vue.set(target, property, value);
+		return true;
 	}
-});
+};
+export const player = window.player = new Proxy(store.state, playerHandler);
 
-export function createProxy(layer, object, getters, prefix = "") {
-	const objectProxy = new Proxy(object, getHandler(`${layer}/${prefix}`));
-	travel(createProxy, layer, object, objectProxy, getters, prefix);
+export function createProxy(object, getters, prefix) {
+	const objectProxy = new Proxy(object, getHandler(prefix));
+	travel(createProxy, object, objectProxy, getters, prefix);
 	return objectProxy;
 }
 
 // TODO cache grid values? Currently they'll be calculated every render they're visible
-export function createGridProxy(layer, object, getters, prefix = "") {
-	const objectProxy = new Proxy(object, getGridHandler(`${layer}/${prefix}`));
-	travel(createGridProxy, layer, object, objectProxy, getters, prefix);
+export function createGridProxy(object, getters, prefix) {
+	const objectProxy = new Proxy(object, getGridHandler(prefix));
+	travel(createGridProxy, object, objectProxy, getters, prefix);
 	return objectProxy;
 }
 
-function travel(callback, layer, object, objectProxy, getters, prefix) {
+function travel(callback, object, objectProxy, getters, prefix) {
 	for (let key in object) {
 		if (object[key].isProxy) {
 			continue;
@@ -46,7 +67,7 @@ function travel(callback, layer, object, objectProxy, getters, prefix) {
 				return object[key].call(objectProxy);
 			}
 		} else if (isPlainObject(object[key])) {
-			object[key] = callback(layer, object[key], getters, `${prefix}${key}-`);
+			object[key] = callback(object[key], getters, `${prefix}${key}-`);
 		}
 	}
 }
@@ -72,7 +93,7 @@ function getHandler(prefix) {
 			} else if (isFunction(target[key])) {
 				const getterID = `${prefix}${key}`;
 				if (getterID in store.getters) {
-					return store.getters[getterID]();
+					return store.getters[getterID];
 				} else {
 					return target[key].bind(receiver);
 				}

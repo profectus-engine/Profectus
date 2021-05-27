@@ -13,9 +13,10 @@ export function getInitialStore() {
 		lastTenTicks: [],
 		showTPS: true,
 		theme: "paper",
+		subtabs: {},
 		...getStartingData(),
 		...initialLayers.reduce((acc, layer) => {
-			acc[layer.name] = layer.startData();
+			acc[layer.id] = layer.startData();
 			return acc;
 		}, {})
 	}

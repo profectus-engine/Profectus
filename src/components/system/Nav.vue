@@ -42,8 +42,6 @@
 
 <script>
 import modInfo from '../../data/modInfo';
-import Info from './Info';
-import Options from './Options';
 
 export default {
 	name: 'Nav',
@@ -59,9 +57,6 @@ export default {
 			showOptions: false,
 			showChangelog: false
 		}
-	},
-	components: {
-		Info, Options
 	},
 	methods: {
 		openDiscord() {

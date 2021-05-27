@@ -54,7 +54,6 @@
 </template>
 
 <script>
-import Modal from './Modal';
 import modInfo from '../../data/modInfo';
 import { formatTime } from '../../util/bignum';
 
@@ -66,9 +65,6 @@ export default {
 	},
 	props: {
 		show: Boolean
-	},
-	components: {
-		Modal
 	},
 	computed: {
 		timePlayed() {

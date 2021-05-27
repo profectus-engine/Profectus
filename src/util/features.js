@@ -24,6 +24,10 @@ export function challengeCompletions(layer, id) {
 	return layers[layer].challenges[id].completions;
 }
 
+export function inChallenge(layer, id) {
+	return layers[layer].challenges[id].active;
+}
+
 export function getBuyableAmount(layer, id) {
 	return layers[layer].buyables[id].amount;
 }

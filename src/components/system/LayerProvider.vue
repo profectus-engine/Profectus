@@ -1,5 +1,7 @@
 <template>
-	<span><slot /></span>
+	<fragment>
+		<slot />
+	</fragment>
 </template>
 
 <script>

@@ -14,4 +14,15 @@ export const {
 	invertOOM
 } = numberUtils;
 
+window.Decimal = Decimal;
+window.exponentialFormat = exponentialFormat;
+window.commaFormat = commaFormat;
+window.regularFormat = regularFormat;
+window.format = format;
+window.formatWhole = formatWhole;
+window.formatTime = formatTime;
+window.toPlaces = toPlaces;
+window.formatSmall = formatSmall;
+window.invertOOM = invertOOM;
+
 export default Decimal;

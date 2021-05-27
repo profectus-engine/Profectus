@@ -5,10 +5,10 @@ import Decimal from '../util/bignum';
 import modInfo from './modInfo';
 
 // Import initial layers
-//import demo from './layers/demo.js';
-//import demoInfinity from './layers/demo-infinity.js';
+import demo from './layers/demo.js';
+import demoInfinity from './layers/demo-infinity.js';
 
-export const initialLayers = [];
+export const initialLayers = [ demo, demoInfinity ];
 
 export function update(delta) {
 	let gain = new Decimal(3.19)

@@ -19,9 +19,6 @@
 </template>
 
 <script>
-import Modal from './Modal';
-import Toggle from '../fields/Toggle';
-import Select from '../fields/Select';
 import themes from '../../data/themes';
 import { camelToTitle } from '../../util/common';
 import { mapState } from 'vuex';
@@ -37,9 +34,6 @@ export default {
 			themes: Object.keys(themes).map(theme => ({ label: camelToTitle(theme), value: theme }))
 		}
 	},
-	components: {
-		Modal, Toggle, Select
-	},
 	computed: mapState([ "autosave", "offlineProd", "showTPS", "theme" ]),
 	methods: {
 		toggleOption(option) {
@@ -49,16 +43,16 @@ export default {
 			player.theme = theme;
 		},
 		save() {
-
+			console.warn("Not yet implemented!");
 		},
 		hardReset() {
-
+			console.warn("Not yet implemented!");
 		},
 		exportSave() {
-
+			console.warn("Not yet implemented!");
 		},
 		importSave() {
-
+			console.warn("Not yet implemented!");
 		}
 	}
 };

@@ -1,6 +1,11 @@
+import Decimal, { format } from '../../util/bignum';
+import { player } from '../../store/proxies';
+import { layers } from '../../store/layers';
+import { hasUpgrade, hasMilestone, getBuyableAmount, setBuyableAmount, hasChallenge } from '../../util/features';
+import { canReset, doReset } from '../../util/layers';
+
 export default {
 	id: "p",
-	row: 0,
 	position: 0,
 	startData() { return {
 		unlocked: true,
@@ -26,7 +31,7 @@ export default {
 	type: "normal", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
 	exponent: 0.5, // Prestige currency exponent
 	gainMult() { // Calculate the multiplier for main currency from bonuses
-		mult = new Decimal(1)
+		let mult = new Decimal(1)
 		if (hasUpgrade(this.layer,131))mult=mult.times(10)
 			if (player.i.unlocked)mult=mult.times(player.i.points.plus(1).pow(hasUpgrade("p",235)?6.9420:1))
 				if (hasUpgrade(this.layer,222))mult=mult.times(getBuyableAmount(this.layer,22).plus(1))
@@ -562,7 +567,7 @@ challenges:{
 						rows: 99,
 						cols: 4,
 						11: {
-							cost(x) { return new Decimal(0)},
+							cost() { return new Decimal(0)},
 							display() { return "Reset all upgrades and challenges, but get a boost. You have reset "+getBuyableAmount(this.layer,this.id)+" times.<br>"+(getBuyableAmount(this.layer,this.id).eq(6)?"You can't buy more than 6 boosts!":"You need all upgrades to reset.") },
 							canAfford() { return (player[this.layer].points.gte(this.cost())&&hasUpgrade(this.layer,74)&&hasUpgrade(this.layer,64))&&getBuyableAmount(this.layer,this.id).lt(6) },
 							buy() {
@@ -581,7 +586,7 @@ challenges:{
 									unlocked(){return (hasUpgrade(this.layer,74)&&hasUpgrade(this.layer,64))||hasMilestone(this.layer,0)}
 								},
 								12: {
-									cost(x) { return new Decimal(1).times(new Decimal(hasChallenge(this.layer,21)?4:10).sub(hasUpgrade(this.layer,122)?2:0).pow(player.p.buyables[this.id])).div(hasUpgrade(this.layer,224)?(hasUpgrade("p",132)?player.p.gp.plus(1).pow(new Decimal(1).div(2)):hasUpgrade("p",101)?player.p.gp.plus(1).pow(new Decimal(1).div(3)):hasUpgrade("p",93)?player.p.gp.plus(1).pow(0.2):player.p.gp.plus(1).log10()):1)},
+									cost() { return new Decimal(1).times(new Decimal(hasChallenge(this.layer,21)?4:10).sub(hasUpgrade(this.layer,122)?2:0).pow(player.p.buyables[this.id])).div(hasUpgrade(this.layer,224)?(hasUpgrade("p",132)?player.p.gp.plus(1).pow(new Decimal(1).div(2)):hasUpgrade("p",101)?player.p.gp.plus(1).pow(new Decimal(1).div(3)):hasUpgrade("p",93)?player.p.gp.plus(1).pow(0.2):player.p.gp.plus(1).log10()):1)},
 									display() { return "Buy a generator for "+format(this.cost())+" points" },
 									canAfford() { return (player.points.gte(this.cost())&&hasMilestone(this.layer,5)) },
 									buy() {
@@ -592,7 +597,7 @@ challenges:{
 									unlocked(){return (hasMilestone(this.layer,5))}
 								},
 								13: {
-									cost(x) { return new Decimal(1).times(new Decimal(2).pow(player.p.buyables[this.id])).div(hasUpgrade(this.layer,224)?(hasUpgrade("p",132)?player.p.gp.plus(1).pow(new Decimal(1).div(2)):hasUpgrade("p",101)?player.p.gp.plus(1).pow(new Decimal(1).div(3)):hasUpgrade("p",93)?player.p.gp.plus(1).pow(0.2):player.p.gp.plus(1).log10()):1)},
+									cost() { return new Decimal(1).times(new Decimal(2).pow(player.p.buyables[this.id])).div(hasUpgrade(this.layer,224)?(hasUpgrade("p",132)?player.p.gp.plus(1).pow(new Decimal(1).div(2)):hasUpgrade("p",101)?player.p.gp.plus(1).pow(new Decimal(1).div(3)):hasUpgrade("p",93)?player.p.gp.plus(1).pow(0.2):player.p.gp.plus(1).log10()):1)},
 									display() { return "Buy a generator for "+format(this.cost())+" prestige points" },
 									canAfford() { return (player.p.points.gte(this.cost())&&hasUpgrade("p",82)) },
 									buy() {
@@ -603,7 +608,7 @@ challenges:{
 									unlocked(){return (hasUpgrade(this.layer,82))}
 								},
 								14: {
-									cost(x) { return new Decimal(900).mul(new Decimal(1.01).pow(getBuyableAmount(this.layer,this.id))).round().div(hasUpgrade(this.layer,234)?getBuyableAmount(this.layer,23).pow(0.3).plus(1):1)},
+									cost() { return new Decimal(900).mul(new Decimal(1.01).pow(getBuyableAmount(this.layer,this.id))).round().div(hasUpgrade(this.layer,234)?getBuyableAmount(this.layer,23).pow(0.3).plus(1):1)},
 									display() { return "Buy a generator for "+format(this.cost())+" Infinity points" },
 									canAfford() { return (player.i.points.gte(this.cost())&&hasUpgrade("p",232)) },
 									buy() {
@@ -614,7 +619,7 @@ challenges:{
 									unlocked(){return (hasUpgrade(this.layer,232))}
 								},
 								21: {
-									cost(x) { return new Decimal(20).plus(getBuyableAmount(this.layer, this.id).pow(new Decimal(2).sub(new Decimal(hasUpgrade(this.layer,221)?0.9:hasUpgrade(this.layer,214)?0.6:0.3).times(hasUpgrade(this.layer,212)?(new Decimal(1).sub(new Decimal(0.75).pow(getBuyableAmount(this.layer,22)))):0))))},
+									cost() { return new Decimal(20).plus(getBuyableAmount(this.layer, this.id).pow(new Decimal(2).sub(new Decimal(hasUpgrade(this.layer,221)?0.9:hasUpgrade(this.layer,214)?0.6:0.3).times(hasUpgrade(this.layer,212)?(new Decimal(1).sub(new Decimal(0.75).pow(getBuyableAmount(this.layer,22)))):0))))},
 									display() { return "Reset your generators for +1 pointy point! Cost: "+format(this.cost())+" Generators" },
 									canAfford() { return (player.p.g.gte(this.cost())&&hasUpgrade("p",104)) },
 									buy() {
@@ -627,7 +632,7 @@ challenges:{
 										unlocked(){return (hasUpgrade(this.layer,104))}
 									},
 									22: {
-										cost(x) { return new Decimal(8).plus(getBuyableAmount(this.layer,this.id))},
+										cost() { return new Decimal(8).plus(getBuyableAmount(this.layer,this.id))},
 										display() { return "Gain a pointy prestige point. Cost: "+format(this.cost())+" Pointy Points" },
 										canAfford() { return (getBuyableAmount(this.layer,21).gte(this.cost())&&(hasMilestone("i",5))) },
 										buy() {
@@ -637,7 +642,7 @@ challenges:{
 										unlocked(){return (hasMilestone("i",5))}
 									},
 									23: {
-										cost(x) { return new Decimal(124).plus(getBuyableAmount(this.layer,this.id).times(2).pow(2))},
+										cost() { return new Decimal(124).plus(getBuyableAmount(this.layer,this.id).times(2).pow(2))},
 										display() { return "Gain a booster. Cost: "+format(this.cost())+" Pointy Points" },
 										canAfford() { return (getBuyableAmount(this.layer,21).gte(this.cost())&&(hasMilestone("i",5))) },
 										buy() {
@@ -659,7 +664,7 @@ challenges:{
 												unlocked(){return (hasUpgrade("p",225)||getBuyableAmount("p",23).gt(0))}
 											},
 											31: {
-												cost(x) { return new Decimal(1e93).times(new Decimal(1.5).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(1.1).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
+												cost() { return new Decimal(1e93).times(new Decimal(1.5).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(1.1).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
 												effect(){return new Decimal(2).plus(layers.p.buyables[33].effect()).pow(getBuyableAmount(this.layer,this.id).plus(layers.p.buyables[51].effect()))},
 												display() { return "Double point gain. \nCurrently: x"+format(this.effect())+"\nCost: "+format(this.cost())+" Prestige points" },
 												canAfford() { return (player.p.points.gte(this.cost())&&(hasMilestone("p",13))) },
@@ -670,7 +675,7 @@ challenges:{
 												unlocked(){return (hasMilestone("p",13))}
 											},
 											32: {
-												cost(x) { return new Decimal(1e95).times(new Decimal(2).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(1.01).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
+												cost() { return new Decimal(1e95).times(new Decimal(2).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(1.01).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
 												display() { return "Double prestige point gain. \nCurrently: x"+format(new Decimal(2).plus(layers.p.buyables[33].effect()).pow(getBuyableAmount(this.layer,this.id)))+"\nCost: "+format(this.cost())+" Prestige points" },
 												canAfford() { return (player.p.points.gte(this.cost())&&(hasMilestone("p",13))) },
 												buy() {
@@ -680,7 +685,7 @@ challenges:{
 												unlocked(){return (hasMilestone("p",13)&&getBuyableAmount(this.layer,31).gte(5))}
 											},
 											33: {
-												cost(x) { return new Decimal(1e100).times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(1.01).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
+												cost() { return new Decimal(1e100).times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(1.01).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
 												effect(){return new Decimal(0.01).mul(getBuyableAmount(this.layer,this.id)).times(layers.p.buyables[43].effect())},
 												display() { return "Add 0.01 to the previous 2 buyable bases. \nCurrently: +"+format(this.effect())+"\nCost: "+format(this.cost())+" Prestige points" },
 												canAfford() { return (player.p.points.gte(this.cost())&&(hasMilestone("p",13))) },
@@ -691,7 +696,7 @@ challenges:{
 												unlocked(){return (hasMilestone("p",13)&&(getBuyableAmount(this.layer,this.id).gt(0)||player.p.points.gte(1e100)))}
 											},
 											41: {
-												cost(x) { return new Decimal(1e110).times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
+												cost() { return new Decimal(1e110).times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
 												effect(){return new Decimal(0.01).mul(getBuyableAmount(this.layer,this.id).plus(layers.p.buyables[51].effect()))},
 												display() { return "Add 0.01 to the booster effect base. \nCurrently: +"+format(this.effect())+"\nCost: "+format(this.cost())+" Prestige points" },
 												canAfford() { return (player.p.points.gte(this.cost())&&(hasMilestone("p",13))) },
@@ -702,7 +707,7 @@ challenges:{
 												unlocked(){return (hasMilestone("p",13)&&(getBuyableAmount(this.layer,this.id).gt(0)||player.p.points.gte(1e110)))}
 											},
 											42: {
-												cost(x) { let c =  new Decimal(1e270).times(new Decimal(2).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(1.01).pow(getBuyableAmount(this.layer,this.id).pow(2)))
+												cost() { let c =  new Decimal(1e270).times(new Decimal(2).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(1.01).pow(getBuyableAmount(this.layer,this.id).pow(2)))
 
 													return c
 												},
@@ -722,7 +727,7 @@ challenges:{
 														unlocked(){return (hasMilestone("p",13)&&(getBuyableAmount(this.layer,this.id).gt(0)||player.p.points.gte(1e270)))}
 													},
 													43: {
-														cost(x) { return new Decimal("1e375").times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
+														cost() { return new Decimal("1e375").times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
 														effect(){return new Decimal(0.01).mul(getBuyableAmount(this.layer,this.id)).plus(1)},
 														display() { return "Multiply the above buyable effect. \nCurrently: *"+format(this.effect())+"\nCost: "+format(this.cost())+" Prestige points" },
 														canAfford() { return (player.p.points.gte(this.cost())&&(hasMilestone("p",13))) },
@@ -733,7 +738,7 @@ challenges:{
 														unlocked(){return (hasMilestone("p",13)&&(getBuyableAmount(this.layer,this.id).gt(0)||player.p.points.gte("1e375")))}
 													},
 													51: {
-														cost(x) { return new Decimal("1e1740").times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(1e10).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
+														cost() { return new Decimal("1e1740").times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(1e10).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
 														effect(){return getBuyableAmount(this.layer,this.id).pow(0.55)},
 														display() { return "Add free levels to the above 2 buyables \nCurrently: "+format(this.effect())+"\nCost: "+format(this.cost())+" Prestige points" },
 														canAfford() { return (player.p.points.gte(this.cost())&&(hasMilestone("p",13))) },

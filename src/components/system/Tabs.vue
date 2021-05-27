@@ -2,7 +2,7 @@
 	<div class="tabs">
 		<div v-for="(tab, index) in tabs" class="tab" :key="index">
 			<button v-if="index > 0" class="goBack" @click="goBack(index)">←</button>
-			<LayerProvider :layer="tab" :index="index" v-if="tab in layers && layers[tab].component">
+			<LayerProvider :layer="tab" :index="index" v-if="tab in layers && layers[tab].component != undefined">
 				<component :is="layers[tab].component" />
 			</LayerProvider>
 			<layer-tab :layer="tab" :index="index" v-else-if="tab in layers" />
@@ -13,25 +13,21 @@
 </template>
 
 <script>
-import LayerProvider from './LayerProvider';
-import LayerTab from './LayerTab';
 import { mapState } from 'vuex';
+import { layers } from '../../store/layers';
 import { player } from '../../store/proxies';
 
 export default {
 	name: 'Tabs',
-	data() {
-		return {
-			layers: this.$root.layers
-		};
+	computed: {
+		...mapState([ 'tabs' ]),
+		layers() {
+			return layers;
+		}
 	},
-	components: {
-		LayerProvider, LayerTab
-	},
-	computed: mapState([ 'tabs' ]),
 	methods: {
 		goBack(index) {
-			player.tabs.splice(0, index);
+			player.tabs = player.tabs.slice(0, index);
 		}
 	}
 };
@@ -49,6 +45,7 @@ export default {
     height: 100%;
     width: 100%;
     padding: 0 10px;
+    padding-top: 50px;
 }
 
 .separator {

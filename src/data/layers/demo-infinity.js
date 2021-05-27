@@ -1,3 +1,9 @@
+import Decimal, { format } from '../../util/bignum';
+import { player } from '../../store/proxies';
+import { layers } from '../../store/layers';
+import { hasUpgrade, hasMilestone, getBuyableAmount, setBuyableAmount, hasChallenge } from '../../util/features';
+import { canReset, doReset } from '../../util/layers';
+
 export default {
     id: "i",
     position: 0, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
@@ -75,7 +81,7 @@ unlocked(){return hasMilestone(this.layer,this.id-1)}
     },
   resetsNothing(){return hasMilestone(this.layer,6)},
   autoPrestige(){return hasMilestone(this.layer,6)},
-update(diff){
+update(){
   if (hasMilestone(this.layer,0)){
     if (!hasMilestone("p",0)){
       player.p.milestones.push(0)

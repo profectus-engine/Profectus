@@ -13,7 +13,7 @@
 	"useHeader": false,
 	"banner": null,
 	"logo": null,
-	"initialTabs": ["tree-tab", "p"],
+	"initialTabs": ["tree-tab", "p", "i"],
 
 	"maxTickLength": 3600
 }
