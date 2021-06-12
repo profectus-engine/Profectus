@@ -2,7 +2,7 @@
 	<perfect-scrollbar class="tabs-container">
 		<div class="tabs">
 			<div v-for="(tab, index) in tabs" :key="index" class="tab">
-				<button v-if="index > 0" class="goBack" @click="goBack(index)">←</button>
+				<button v-if="index > 0 && allowGoBack" class="goBack" @click="goBack(index)">←</button>
 				<perfect-scrollbar>
 					<div class="inner-tab">
 						<LayerProvider :layer="tab" :index="index" v-if="tab in components && components[tab]">
@@ -22,9 +22,13 @@
 import { mapState } from 'vuex';
 import { layers } from '../../store/layers';
 import { player } from '../../store/proxies';
+import modInfo from '../../data/modInfo.json';
 
 export default {
 	name: 'Tabs',
+	data() {
+		return { allowGoBack: modInfo.allowGoBack };
+	},
 	computed: {
 		...mapState([ 'tabs' ]),
 		components() {

@@ -2,7 +2,7 @@
 	<LayerProvider :layer="layer" :index="index">
 		<div class="layer-tab" :style="style" :class="{ hasSubtabs: subtabs }">
 			<branches>
-				<sticky v-if="subtabs" class="subtabs" :class="{ floating, firstTab }">
+				<sticky v-if="subtabs" class="subtabs" :class="{ floating, firstTab: firstTab || !allowGoBack }">
 					<tab-button v-for="(subtab, id) in subtabs" @selectTab="selectSubtab(id)" :key="id" :activeTab="id === activeSubtab"
 						:options="subtab" :text="id" />
 				</sticky>
@@ -18,6 +18,7 @@ import { layers } from '../../store/layers';
 import { player } from '../../store/proxies';
 import { coerceComponent } from '../../util/vue';
 import { isPlainObject } from '../../util/common';
+import modInfo from '../../data/modInfo.json';
 import themes from '../../data/themes';
 
 export default {
@@ -26,6 +27,9 @@ export default {
 		layer: String,
 		index: Number,
 		forceFirstTab: Boolean
+	},
+	data() {
+		return { allowGoBack: modInfo.allowGoBack };
 	},
 	computed: {
 		floating() {
@@ -129,6 +133,11 @@ export default {
 	margin-left: 0;
 	margin-right: 0;
 	padding-left: 0;
+}
+
+.subtabs:not(.floating).firstTab {
+    padding-left: 0;
+    padding-right: 0;
 }
 
 .subtabs:not(.floating):first-child {
