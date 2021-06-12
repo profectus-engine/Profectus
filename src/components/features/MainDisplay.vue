@@ -16,30 +16,31 @@ import { coerceComponent } from '../../util/vue';
 
 export default {
 	name: 'main-display',
-	inject: [ 'layer' ],
+	inject: [ 'tab' ],
 	props: {
+		layer: String,
 		precision: Number
 	},
 	computed: {
 		style() {
-			return layers[this.layer].componentStyles?.['main-display'];
+			return layers[this.layer || this.tab.layer].componentStyles?.['main-display'];
 		},
 		resource() {
-			return layers[this.layer].resource;
+			return layers[this.layer || this.tab.layer].resource;
 		},
 		effectDescription() {
-			return coerceComponent(layers[this.layer].effectDescription);
+			return coerceComponent(layers[this.layer || this.tab.layer].effectDescription);
 		},
 		showPrefix() {
-			return player[this.layer].points.lt('1e1000');
+			return player[this.layer || this.tab.layer].points.lt('1e1000');
 		},
 		color() {
-			return layers[this.layer].color;
+			return layers[this.layer || this.tab.layer].color;
 		},
 		amount() {
 			return this.precision == undefined ?
-				formatWhole(player[this.layer].points) :
-				format(player[this.layer].points, this.precision);
+				formatWhole(player[this.layer || this.tab.layer].points) :
+				format(player[this.layer || this.tab.layer].points, this.precision);
 		}
 	}
 };

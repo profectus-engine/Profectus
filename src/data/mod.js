@@ -5,10 +5,43 @@ import Decimal from '../util/bignum';
 import modInfo from './modInfo';
 
 // Import initial layers
-import demo from './layers/demo.js';
-import demoInfinity from './layers/demo-infinity.js';
+import f from './layers/aca/f.js';
+import c from './layers/aca/c.js';
+import a from './layers/aca/a.js';
+const g = {
+	id: "g",
+	symbol: "TH",
+	branches: ["c"],
+	color: '#6d3678',
+	layerShown: true,
+	canClick() {return player.points.gte(10)},
+	tooltip: "Thanos your points",
+	onClick() {
+		player.points = player.points.div(2);
+		console.log(this.layer);
+	}
+};
+const h = {
+	id: "h",
+	branches: ["g", { target: 'flatBoi', featureType: 'bar', endOffset: { x: () => -50 + 100 * layers.c.bars.flatBoi.progress.toNumber() } }],
+	layerShown: true,
+	tooltip() {return "Restore your points to " + player.c.otherThingy},
+	row: "side",
+	canClick() {return player.points.lt(player.c.otherThingy)},
+	onClick() {player.points = new Decimal(player.c.otherThingy)}
+};
+const spook = {
+	id: "spook",
+	row: 1,
+	layerShown: "ghost",
+};
 
-export const initialLayers = [ demo, demoInfinity ];
+const main = {
+	id: 'main',
+	display: '<tree />'
+}
+
+export const initialLayers = [ main, f, c, a, g, h, spook ];
 
 export function update(delta) {
 	let gain = new Decimal(3.19)

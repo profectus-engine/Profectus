@@ -1,6 +1,6 @@
 <template>
 	<div class="field">
-		<span class="field-title">{{ title }}</span>
+		<span class="field-title" v-if="title">{{ title }}</span>
 		<v-select :options="options" :value="value" @input="setSelected" />
 	</div>
 </template>
@@ -15,8 +15,8 @@ export default {
 	props: {
 		title: String,
 		options: Array, // https://vue-select.org/guide/options.html#options-prop
-		value: String,
-		default: String
+		value: [ String, Object ],
+		default: [ String, Object ]
 	},
 	components: {
 		vSelect

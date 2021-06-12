@@ -1,37 +1,49 @@
-import { isPlainObject } from '../util/common';
+import { isFunction, isPlainObject } from '../util/common';
 import { createProxy, createGridProxy, player } from './proxies';
 import Decimal from '../util/bignum';
 import store from './index';
-
-// Add layers on second frame so dependencies can resolve
-requestAnimationFrame(async () => {
-	const { initialLayers } = await import('../data/mod');
-	initialLayers.forEach(addLayer);
-});
+import { resetLayer, noCache, getStartingBuyables, getStartingClickables, getStartingChallenges } from '../util/layers';
 
 export const layers = {};
 export const hotkeys = [];
+window.layers = layers;
 
 export function addLayer(layer) {
 	// Check for required properties
-	if (requiredProperties.some(prop => !(prop in layer))) {
-		console.error(`Cannot add layer without a ${requiredProperties.find(prop => !(prop in layer))} property!`, layer);
+	if (!('id' in layer)) {
+		console.error(`Cannot add layer without a "id" property!`, layer);
 		return;
+	}
+	if (layer.type === "static" || layer.type === "normal") {
+		const missingProperty = [ 'baseAmount', 'requires' ].find(prop => !(prop in layer));
+		if (missingProperty) {
+			console.error(`Cannot add layer without a "${missingProperty}" property!`, layer);
+			return;
+		}
+	}
+	if (layer.type === "static" && (layer.base == undefined || Decimal.lte(layer.base, 1))) {
+		layer.base = 2;
 	}
 
 	// Set default property values
 	layer = Object.assign({}, defaultLayerProperties, layer);
 	layer.layer = layer.id;
+	if (layer.shown == undefined) {
+		layer.shown = true;
+	}
+	if (layer.onClick != undefined) {
+		layer.onClick.forceCached = false;
+	}
 
 	const getters = {};
 
 	// Process each feature
-	for (let property in gridProperties) {
+	for (let property of gridProperties) {
 		if (layer[property]) {
 			setRowCol(layer[property]);
 		}
 	}
-	for (let property in featureProperties) {
+	for (let property of featureProperties) {
 		if (layer[property]) {
 			setupFeature(layer.id, layer[property]);
 		}
@@ -44,6 +56,69 @@ export function addLayer(layer) {
 			if (isPlainObject(layer.upgrades[id])) {
 				layer.upgrades[id].bought = function() {
 					return !this.deactivated && player[layer.id].upgrades.some(upgrade => upgrade == id);
+				}
+				if (layer.upgrades[id].canAfford == undefined) {
+					layer.upgrades[id].canAfford = function() {
+						if (this.currencyInternalName) {
+							let name = this.currencyInternalName;
+							if (this.currencyLocation) {
+								return !(this.currencyLocation[name].lt(this.cost));
+							} else if (this.currencyLayer) {
+								let lr = this.currencyLayer;
+								return !(player[lr][name].lt(this.cost));
+							} else {
+								return !(player[name].lt(this.cost));
+							}
+						} else {
+							return !(player[this.layer].points.lt(this.cost))
+						}
+					}
+				}
+				if (layer.upgrades[id].pay == undefined) {
+					layer.upgrades[id].pay = noCache(function() {
+						if (this.bought || !this.canAfford) {
+							return;
+						}
+						if (this.currencyInternalName) {
+							let name = this.currencyInternalName
+							if (this.currencyLocation) {
+								if (this.currencyLocation[name].lt(this.cost)) {
+									return;
+								}
+								this.currencyLocation[name] = this.currencyLocation[name].sub(this.cost);
+							} else if (this.currencyLayer) {
+								let lr = this.currencyLayer;
+								if (player[lr][name].lt(this.cost)) {
+									return;
+								}
+								player[lr][name] = player[lr][name].sub(this.cost);
+							} else {
+								if (player[name].lt(this.cost)) {
+									return;
+								}
+								player[name] = player[name].sub(this.cost);
+							}
+						} else {
+							if (player[this.layer].points.lt(this.cost)) {
+								return;
+							}
+							player[this.layer].points = player[this.layer].points.sub(this.cost);
+						}
+					});
+				} else {
+					layer.upgrades[id].pay.forceCached = false;
+				}
+				if (layer.upgrades[id].buy == undefined) {
+					layer.upgrades[id].buy = noCache(function() {
+						if (this.bought || !this.canAfford) {
+							return;
+						}
+						this.pay();
+						player[this.layer].upgrades.push(this.id);
+						this.onPurchase?.();
+					});
+				} else {
+					layer.upgrades[id].buy.forceCached = false;
 				}
 			}
 		}
@@ -62,7 +137,7 @@ export function addLayer(layer) {
 	}
 	if (layer.challenges) {
 		if (player[layer.id].challenges == undefined) {
-			player[layer.id].challenges = {};
+			player[layer.id].challenges = getStartingChallenges(layer);
 		}
 		for (let id in layer.challenges) {
 			if (isPlainObject(layer.challenges[id])) {
@@ -75,21 +150,73 @@ export function addLayer(layer) {
 				layer.challenges[id].maxed = function() {
 					return !this.deactivated && Decimal.gte(player[layer.id].challenges[id], this.completionLimit);
 				}
-				if (layer.challenges[id].marked == undefined) {
-					layer.challenges[id].marked = function() {
+				if (layer.challenges[id].mark == undefined) {
+					layer.challenges[id].mark = function() {
 						return this.maxed;
 					}
 				}
 				layer.challenges[id].active = function() {
-					// TODO search for other rows that "count as" this challenge as well
-					return !this.deactivated && (player[layer.id].activeChallenge === id || layers[layer.id].challenges[player[layer.id].activeChallenge]?.countsAs?.includes(id));
+					return !this.deactivated && player[layer.id].activeChallenge === id;
+				}
+				if (layer.challenges[id].canComplete == undefined) {
+					layer.challenges[id].canComplete = function() {
+						if (this.active) {
+							return false;
+						}
+
+						if (this.currencyInternalName) {
+							let name = this.currencyInternalName;
+							if (this.currencyLocation) {
+								return !(this.currencyLocation[name].lt(this.goal));
+							} else if (this.currencyLayer) {
+								let lr = this.currencyLayer;
+								return !(player[lr][name].lt(this.goal));
+							} else {
+								return !(player[name].lt(this.goal));
+							}
+						} else {
+							return !(player.points.lt(this.goal));
+						}
+					}
+				}
+				if (layer.challenges[id].completionLimit == undefined) {
+					layer.challenges[id].completionLimit = new Decimal(1);
+				}
+				layer.challenges[id].toggle = function() {
+					let exiting = player[layer.id].activeChallenge === id;
+					if (exiting) {
+						if (this.canComplete && !this.maxed) {
+							let completions = this.canComplete;
+							if (completions === true) {
+								completions = 1;
+							}
+							player[layer.id].challenges[id] =
+								Decimal.min(player[layer.id].challenges[id].add(completions), this.completionLimit);
+							this.onComplete?.();
+						}
+						player[layer.id].activeChallenge = null;
+						this.onExit?.();
+						resetLayer(layer.id, true);
+					} else if (!exiting && this.canStart) {
+						resetLayer(layer.id, true);
+						player[layer.id].activeChallenge = id;
+						this.onEnter?.();
+					}
+				}
+				if (layer.challenges[id].canStart == undefined) {
+					layer.challenges[id].canStart = true;
 				}
 			}
 		}
 	}
 	if (layer.buyables) {
 		if (player[layer.id].buyables == undefined) {
-			player[layer.id].buyables = {};
+			player[layer.id].buyables = getStartingBuyables(layer);
+		}
+		if (layer.buyables.reset == undefined) {
+			layer.buyables.reset = noCache(function() {
+				player[this.layer].buyables = getStartingBuyables(layer);
+			});
 		}
 		for (let id in layer.buyables) {
 			if (isPlainObject(layer.buyables[id])) {
@@ -100,17 +227,32 @@ export function addLayer(layer) {
 					player[layer.id].buyables[id] = amount;
 				}
 				layer.buyables[id].canBuy = function() {
-					return !this.deactivated && this.unlocked !== false && this.canAfford !== false && Decimal.lt(player[layer.id].buyables[id], this.purchaseLimit);
+					return !this.deactivated && this.unlocked !== false && this.canAfford !== false &&
+						Decimal.lt(player[layer.id].buyables[id], this.purchaseLimit);
 				}
 				if (layer.buyables[id].purchaseLimit == undefined) {
 					layer.buyables[id].purchaseLimit = new Decimal(Infinity);
+				}
+				if (layer.buyables[id].cost != undefined && layer.buyables[id].buy == undefined) {
+					layer.buyables[id].buy = noCache(function() {
+						player[this.layer].points = player[this.layer].points.sub(this.cost());
+						this.amount = this.amount.add(1);
+					});
+				} else {
+					layer.buyables[id].buy.forceCached = false;
+				}
+				if (layer.buyables[id].sellOne != undefined) {
+					layer.buyables[id].sellOne.forceCached = false;
+				}
+				if (layer.buyables[id].sellAll != undefined) {
+					layer.buyables[id].sellAll.forceCached = false;
 				}
 			}
 		}
 	}
 	if (layer.clickables) {
 		if (player[layer.id].clickables == undefined) {
-			player[layer.id].clickables = {};
+			player[layer.id].clickables = getStartingClickables(layer);
 		}
 		for (let id in layer.clickables) {
 			if (isPlainObject(layer.clickables[id])) {
@@ -129,6 +271,26 @@ export function addLayer(layer) {
 		}
 		for (let id in layer.milestones) {
 			if (isPlainObject(layer.milestones[id])) {
+				layer.milestones[id].shown = function() {
+					if (!this.unlocked) {
+						return false;
+					}
+
+					switch (player.msDisplay) {
+						default:
+						case "all":
+							return true;
+						case "last":
+							return this.optionsDisplay || !this.earned ||
+								player[this.layer].milestones[player[this.layer].milestones.length - 1] === this.id;
+						case "configurable":
+							return this.optionsDisplay || !this.earned;
+						case "incomplete":
+							return !this.earned;
+						case "none":
+							return false;
+					}
+				}
 				layer.milestones[id].earned = function() {
 					return !this.deactivated && player[layer.id].milestones.some(milestone => milestone == id);
 				}
@@ -150,23 +312,62 @@ export function addLayer(layer) {
 				if (layer.grids[id].getCanClick == undefined) {
 					layer.grids[id].getCanClick = true;
 				}
+				if (layer.grids[id].getStartData == undefined) {
+					layer.grids[id].getStartData = "";
+				}
 				layer.grids[id].data = function(cell) {
-					return player[layer.id].grids[id][cell];
+					if (player[layer.id].grids[id][cell] != undefined) {
+						return player[layer.id].grids[id][cell];
+					}
+					if (isFunction(this.getStartData)) {
+						return this.getStartData(cell);
+					}
+					return this.getStartData;
 				}
 				layer.grids[id].dataSet = function(cell, data) {
 					player[layer.id].grids[id][cell] = data;
 				}
-				createGridProxy(layer.grids[id], getters, `${layer.id}/grids-${id}-`);
+				layer.grids[id] = createGridProxy(layer.grids[id], getters, `${layer.id}/grids-${id}-`);
 			}
 		}
 	}
 	if (layer.subtabs) {
+		for (let id in layer.subtabs) {
+			if (isPlainObject(layer.subtabs[id])) {
+				layer.subtabs[id].active = function() {
+					return player.subtabs[this.layer]?.mainTabs === this.id;
+				}
+			}
+		}
 		layer.activeSubtab = function() {
 			if (this.subtabs != undefined) {
-				if (player.subtabs[layer.id] in this.subtabs && this.subtabs[player.subtabs[layer.id]].unlocked !== false) {
-					return player.subtabs[layer.id];
+				if (this.subtabs[player.subtabs[layer.id]?.mainTabs] &&
+					this.subtabs[player.subtabs[layer.id].mainTabs].unlocked !== false) {
+					return this.subtabs[player.subtabs[layer.id].mainTabs];
 				}
-				return Object.keys(this.subtabs).find(subtab => this.subtabs[subtab].unlocked !== false);
+				// Default to first unlocked tab
+				return Object.values(this.subtabs).find(subtab => subtab.unlocked !== false);
+			}
+		}
+	}
+	if (layer.microtabs) {
+		for (let family in layer.microtabs) {
+			for (let id in layer.microtabs[family]) {
+				if (isPlainObject(layer.microtabs[family][id])) {
+					layer.microtabs[family][id].layer = layer.id;
+					layer.microtabs[family][id].family = family;
+					layer.microtabs[family][id].id = id;
+					layer.microtabs[family][id].active = function() {
+						return player.subtabs[this.layer]?.[this.family] === this.id;
+					}
+				}
+			}
+			layer.microtabs[family].activeMicrotab = function() {
+				if (this[player.subtabs[layer.id][family]]?.unlocked !== false) {
+					return this[player.subtabs[layer.id][family]];
+				}
+				// Default to first unlocked tab
+				return Object.values(this).find(microtab => microtab.unlocked !== false);
 			}
 		}
 	}
@@ -205,14 +406,176 @@ export function reloadLayer(layer) {
 	addLayer(layer);
 }
 
-const requiredProperties = [ 'id' ];
-const defaultLayerProperties = {
+export const defaultLayerProperties = {
 	type: "none",
 	layerShown: true,
-	glowColor: "red"
+	glowColor: "red",
+	displayRow() {
+		return this.row;
+	},
+	symbol() {
+		return this.id;
+	},
+	unlocked() {
+		if (player[this.id].unlocked) {
+			return true;
+		}
+		if (this.type !== "none" && this.canReset && this.layerShown) {
+			return true;
+		}
+		return false;
+	},
+	trueGlowColor() {
+		if (this.subtabs) {
+			for (let subtab of Object.values(this.subtabs)) {
+				if (subtab.notify) {
+					return subtab.glowColor || "red";
+				}
+			}
+		}
+		if (this.microtabs) {
+			for (let microtab of Object.values(this.microtabs)) {
+				if (microtab.notify) {
+					return microtab.glowColor || "red";
+				}
+			}
+		}
+		return this.glowColor || "red";
+	},
+	resetGain() {
+		if (this.type === "none" || this.type === "custom") {
+			return new Decimal(0);
+		}
+		if (this.gainExp?.eq(0)) {
+			return new Decimal(0);
+		}
+		if (this.baseAmount.lt(this.requires)) {
+			return new Decimal(0);
+		}
+		if (this.type === "static") {
+			if (!this.canBuyMax) {
+				return new Decimal(1);
+			}
+			let gain = this.baseAmount.div(this.requires).div(this.gainMult || 1).max(1).log(this.base)
+				.times(this.gainExp || 1).pow(Decimal.pow(this.exponent || 1, -1));
+			gain = gain.times(this.directMult || 1);
+			return gain.floor().sub(player[this.layer].points).add(1).max(1);
+		}
+		if (this.type === "normal") {
+			let gain = this.baseAmount.div(this.requires).pow(this.exponent || 1).times(this.gainMult || 1)
+				.pow(this.gainExp || 1);
+			if (this.softcap && gain.gte(this.softcap)) {
+				gain = gain.pow(this.softcapPower).times(this.softcap.pow(Decimal.sub(1, this.softcapPower)));
+			}
+			gain = gain.times(this.directMult || 1);
+			return gain.floor().max(0);
+		}
+		// Unknown prestige type
+		return new Decimal(0);
+	},
+	nextAt() {
+		if (this.type === "none" || this.type === "custom") {
+			return new Decimal(Infinity);
+		}
+		if (this.gainMult?.lte(0) || this.gainExp?.lte(0)) {
+			return new Decimal(Infinity);
+		}
+		if (this.type === "static") {
+			const amount = player[this.layer].points.div(this.directMult || 1);
+			const extraCost = Decimal.pow(this.base, amount.pow(this.exponent || 1).div(this.gainExp || 1))
+				.times(this.gainMult || 1);
+			let cost = extraCost.times(this.requires).max(this.requires);
+			if (this.roundUpCost) {
+				cost = cost.ceil();
+			}
+			return cost;
+		}
+		if (this.type === "normal") {
+			let next = this.resetGain.div(this.directMult || 1);
+			if (this.softcap && next.gte(this.softcap)) {
+				next = next.div(this.softcap.pow(Decimal.sub(1, this.softcapPower)))
+					.pow(Decimal.div(1, this.softcapPower));
+			}
+			next = next.root(this.gainExp || 1).div(this.gainMult || 1).root(this.exponent || 1)
+				.times(this.requires).max(this.requires);
+			if (this.roundUpCost) {
+				next = next.ceil();
+			}
+			return next;
+		}
+		// Unknown prestige type
+		return new Decimal(0);
+	},
+	nextAtMax() {
+		if (!this.canBuyMax || this.type !== "static") {
+			return this.nextAt;
+		}
+		const amount = player[this.layer].points.plus(this.resetGain).div(this.directMult || 1);
+		const extraCost = Decimal.pow(this.base, amount.pow(this.exponent || 1).div(this.gainExp || 1))
+			.times(this.gainMult || 1);
+		let cost = extraCost.times(this.requires).max(this.requires);
+		if (this.roundUpCost) {
+			cost = cost.ceil();
+		}
+		return cost;
+	},
+	canReset() {
+		if (this.type === "normal") {
+			return this.baseAmount.gte(this.requires);
+		}
+		if (this.type === "static") {
+			return this.baseAmount.gte(this.nextAt);
+		}
+		return false;
+	},
+	notify() {
+		if (this.upgrades) {
+			if (Object.values(this.upgrades).some(upgrade => upgrade.canAfford && !upgrade.bought && upgrade.unlocked)) {
+				return true;
+			}
+		}
+		if (player[this.layer].activeChallenge && this.challenges[player[this.layer].activeChallenge].canComplete) {
+			return true;
+		}
+		if (this.subtabs) {
+			if (Object.values(this.subtabs).some(subtab => subtab.notify)) {
+				return true;
+			}
+		}
+		if (this.microtabs) {
+			if (Object.values(this.microtabs).some(subtab => subtab.notify)) {
+				return true;
+			}
+		}
+
+		return false;
+	},
+	resetNotify() {
+		if (this.subtabs) {
+			if (Object.values(this.subtabs).some(subtab => subtab.prestigeNotify)) {
+				return true;
+			}
+		}
+		if (this.microtabs) {
+			if (Object.values(this.microtabs).some(microtab => microtab.prestigeNotify)) {
+				return true;
+			}
+		}
+		if (this.autoPrestige || this.passiveGeneration) {
+			return false;
+		}
+		if (this.type === "static") {
+			return this.canReset;
+		}
+		if (this.type === "normal") {
+			return this.canReset && this.resetGain.gte(player[this.layer].points.div(10));
+		}
+		return false;
+	}
 };
 const gridProperties = [ 'upgrades', 'achievements', 'challenges', 'buyables', 'clickables' ];
-const featureProperties = [ 'upgrades', 'achievements', 'challenges', 'buyables', 'clickables', 'milestones', 'bars', 'infoboxes', 'grids', 'hotkeys', 'subtabs' ];
+const featureProperties = [ 'upgrades', 'achievements', 'challenges', 'buyables', 'clickables', 'milestones', 'bars',
+	'infoboxes', 'grids', 'hotkeys', 'subtabs' ];
 
 function setRowCol(features) {
 	if (features.rows && features.cols) {
@@ -235,11 +598,15 @@ function setRowCol(features) {
 }
 
 function setupFeature(layer, features) {
+	features.layer = layer;
 	for (let id in features) {
 		const feature = features[id];
 		if (isPlainObject(feature)) {
 			feature.id = id;
 			feature.layer = layer;
+			if (feature.unlocked == undefined) {
+				feature.unlocked = true;
+			}
 		}
 	}
 }

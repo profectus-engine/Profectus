@@ -2,7 +2,7 @@ import Decimal, { format } from '../../util/bignum';
 import { player } from '../../store/proxies';
 import { layers } from '../../store/layers';
 import { hasUpgrade, hasMilestone, getBuyableAmount, setBuyableAmount, hasChallenge } from '../../util/features';
-import { canReset, doReset } from '../../util/layers';
+import { resetLayer } from '../../util/layers';
 
 export default {
 	id: "p",
@@ -47,7 +47,7 @@ export default {
 	},
 	row: 0, // Row the layer is in on the tree (0 is the first row)
 	hotkeys: [
-	{key: "p", description: "P: Reset for prestige points", onPress(){if (canReset(this.layer)) doReset(this.layer)}},
+	{key: "p", description: "P: Reset for prestige points", onPress(){if (layers.p.canReset) resetLayer(this.layer)}},
 	],
 	layerShown(){return true},
 	upgrades:{
@@ -375,7 +375,7 @@ export default {
 				cost(){return new Decimal(1)},
 				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
-				unlocked(){return (hasMilestone("i",5)&&player.subtabs.p.mainTabs!="Upgrades")},
+				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades")},
 			},
 			212:{
 				title: "Pointy",
@@ -383,7 +383,7 @@ export default {
 				cost(){return new Decimal(2)},
 				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
-				unlocked(){return (hasMilestone("i",5)&&player.subtabs.p.mainTabs!="Upgrades"&&hasUpgrade(this.layer,211))},
+				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,211))},
 			},
 			213:{
 				title: "Time",
@@ -391,7 +391,7 @@ export default {
 				cost(){return new Decimal(6)},
 				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
-				unlocked(){return (hasMilestone("i",5)&&player.subtabs.p.mainTabs!="Upgrades"&&hasUpgrade(this.layer,212))},
+				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,212))},
 			},
 			214:{
 				title: "^0",
@@ -399,7 +399,7 @@ export default {
 				cost(){return new Decimal(11)},
 				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
-				unlocked(){return (hasMilestone("i",5)&&player.subtabs.p.mainTabs!="Upgrades"&&hasUpgrade(this.layer,213))},
+				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,213))},
 			},
 			215:{
 				title: "bulk",
@@ -407,7 +407,7 @@ export default {
 				cost(){return new Decimal(27)},
 				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
-				unlocked(){return (hasMilestone("i",5)&&player.subtabs.p.mainTabs!="Upgrades"&&hasUpgrade(this.layer,214))},
+				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,214))},
 			},
 			221:{
 				title: "^-1",
@@ -415,7 +415,7 @@ export default {
 				cost(){return new Decimal(28)},
 				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
-				unlocked(){return (hasMilestone("i",5)&&player.subtabs.p.mainTabs!="Upgrades"&&hasUpgrade(this.layer,215))},
+				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,215))},
 			},
 			222:{
 				title: "???",
@@ -423,7 +423,7 @@ export default {
 				cost(){return new Decimal(90)},
 				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
-				unlocked(){return (hasMilestone("i",5)&&player.subtabs.p.mainTabs!="Upgrades"&&hasUpgrade(this.layer,221))},
+				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,221))},
 			},
 			223:{
 				title: "more automation",
@@ -431,7 +431,7 @@ export default {
 				cost(){return new Decimal(96)},
 				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
-				unlocked(){return (hasMilestone("i",5)&&player.subtabs.p.mainTabs!="Upgrades"&&hasUpgrade(this.layer,222))},
+				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,222))},
 			},
 			224:{
 				title: "Generation",
@@ -439,7 +439,7 @@ export default {
 				cost(){return new Decimal(100)},
 				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
-				unlocked(){return (hasMilestone("i",5)&&player.subtabs.p.mainTabs!="Upgrades"&&hasUpgrade(this.layer,223))},
+				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,223))},
 			},
 			225:{
 				title: "Boosters",
@@ -447,7 +447,7 @@ export default {
 				cost(){return new Decimal(135)},
 				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
-				unlocked(){return (hasMilestone("i",5)&&player.subtabs.p.mainTabs!="Upgrades"&&hasUpgrade(this.layer,224))},
+				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,224))},
 			},
 			231:{
 				title: "Blue",
@@ -455,7 +455,7 @@ export default {
 				cost(){return new Decimal(4)},
 				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost()))},
-				unlocked(){return (player.subtabs.p.mainTabs!="Upgrades"&&hasMilestone(this.layer,11))},
+				unlocked(){return (layers.p.activeSubtab!="Upgrades"&&hasMilestone(this.layer,11))},
 				currencyDisplayName: "pointy boosters"
 			},
 			232:{
@@ -464,7 +464,7 @@ export default {
 				cost(){return new Decimal(5)},
 				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost()))},
-				unlocked(){return (player.subtabs.p.mainTabs!="Upgrades"&&hasMilestone(this.layer,12))},
+				unlocked(){return (layers.p.activeSubtab!="Upgrades"&&hasMilestone(this.layer,12))},
 				currencyDisplayName: "pointy boosters"
 			},
 			233:{
@@ -473,7 +473,7 @@ export default {
 				cost(){return new Decimal(5)},
 				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost()))},
-				unlocked(){return (player.subtabs.p.mainTabs!="Upgrades"&&hasMilestone(this.layer,12))},
+				unlocked(){return (layers.p.activeSubtab!="Upgrades"&&hasMilestone(this.layer,12))},
 				currencyDisplayName: "pointy boosters"
 			},
 			234:{
@@ -482,7 +482,7 @@ export default {
 				cost(){return new Decimal(6)},
 				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost()))},
-				unlocked(){return (player.subtabs.p.mainTabs!="Upgrades"&&hasMilestone(this.layer,12))},
+				unlocked(){return (layers.p.activeSubtab!="Upgrades"&&hasMilestone(this.layer,12))},
 				currencyDisplayName: "pointy boosters"
 			},
 			235:{
@@ -491,7 +491,7 @@ export default {
 				cost(){return new Decimal(8)},
 				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost())},
 				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost()))},
-				unlocked(){return (player.subtabs.p.mainTabs!="Upgrades"&&hasMilestone(this.layer,12))},
+				unlocked(){return (layers.p.activeSubtab!="Upgrades"&&hasMilestone(this.layer,12))},
 				currencyDisplayName: "pointy boosters"
 			},
 		},
@@ -754,55 +754,55 @@ challenges:{
 														requirementDescription: "1 reset",
 														effectDescription: "Add 0.01 to base point gain and prestige requirement, and <b>1</b> doesn't reset upgrades",
 														done() { return getBuyableAmount("p",11).gte(1) },
-														unlocked(){return player.subtabs.p.mainTabs!="Pointy points"}
+														unlocked(){return layers.p.activeSubtab!="Pointy points"}
 													},
 													1: {
 														requirementDescription: "2 resets",
 														effectDescription: "<b>2</b> and <b>3</b> don't reset upgrades, and start with the first 8 upgrades on reset",
 														done() { return getBuyableAmount("p",11).gte(2) },
-														unlocked(){return hasMilestone(this.layer,this.id-1)&&player.subtabs.p.mainTabs!="Pointy points"}
+														unlocked(){return hasMilestone(this.layer,this.id-1)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													2: {
 														requirementDescription: "3 resets",
 														effectDescription: "<b>4</b> doesn't reset upgrades, and permanently fix the bug where you can't buy upgrades when you have 1 prestige point",
 														done() { return getBuyableAmount("p",11).gte(3) },
-														unlocked(){return hasMilestone(this.layer,this.id-1)&&player.subtabs.p.mainTabs!="Pointy points"}
+														unlocked(){return hasMilestone(this.layer,this.id-1)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													3: {
 														requirementDescription: "4 resets",
 														effectDescription: "Don't reset challenges, add 1 to <b>Point</b> maximum completions, and start with 24 upgrades",
 														done() { return getBuyableAmount("p",11).gte(4) },
-														unlocked(){return hasMilestone(this.layer,this.id-1)&&player.subtabs.p.mainTabs!="Pointy points"}
+														unlocked(){return hasMilestone(this.layer,this.id-1)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													4: {
 														requirementDescription: "5 resets",
 														effectDescription: "Each useless upgrade adds 0.1 to base point gain",
 														done() { return getBuyableAmount("p",11).gte(5) },
-														unlocked(){return hasMilestone(this.layer,this.id-1)&&player.subtabs.p.mainTabs!="Pointy points"}
+														unlocked(){return hasMilestone(this.layer,this.id-1)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													5: {
 														requirementDescription: "6 resets",
 														effectDescription: "Unlock something",
 														done() { return getBuyableAmount("p",11).gte(6) },
-														unlocked(){return hasMilestone(this.layer,this.id-1)&&player.subtabs.p.mainTabs!="Pointy points"}
+														unlocked(){return hasMilestone(this.layer,this.id-1)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													6: {
 														requirementDescription: "1 pointy point",
 														effectDescription: "Unlock the upgrade tree",
 														done() { return getBuyableAmount("p",21).gte(1) },
-														unlocked(){return hasMilestone(this.layer,this.id-1)&&(hasUpgrade(this.layer,104)||player.i.unlocked)&&player.subtabs.p.mainTabs!="Pointy points"}
+														unlocked(){return hasMilestone(this.layer,this.id-1)&&(hasUpgrade(this.layer,104)||player.i.unlocked)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													7: {
 														requirementDescription: "7 pointy points",
 														effectDescription: "You can now buy both first and second row upgrade tree upgrades",
 														done() { return getBuyableAmount("p",21).gte(7) },
-														unlocked(){return hasMilestone(this.layer,this.id-1)&&(hasUpgrade(this.layer,111)||player.i.unlocked)&&player.subtabs.p.mainTabs!="Pointy points"}
+														unlocked(){return hasMilestone(this.layer,this.id-1)&&(hasUpgrade(this.layer,111)||player.i.unlocked)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													8: {
 														requirementDescription: "8 pointy points",
 														effectDescription: "Unlock another layer",
 														done() { return getBuyableAmount("p",21).gte(8) },
-														unlocked(){return hasMilestone(this.layer,this.id-1)&&(hasUpgrade(this.layer,141)||hasUpgrade(this.layer,143)||hasUpgrade(this.layer,142)||player.i.unlocked)&&player.subtabs.p.mainTabs!="Pointy points"}
+														unlocked(){return hasMilestone(this.layer,this.id-1)&&(hasUpgrade(this.layer,141)||hasUpgrade(this.layer,143)||hasUpgrade(this.layer,142)||player.i.unlocked)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													11: {
 														requirementDescription: "3 boosters",

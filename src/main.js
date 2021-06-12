@@ -1,20 +1,25 @@
 import Vue from 'vue';
 import App from './App';
 import store from './store';
-import { layers, hotkeys } from './store/layers';
+import { addLayer} from './store/layers';
 import { setVue } from './util/vue';
 import './components/index';
 
 // Setup
 Vue.config.productionTip = false;
 
-// Create Vue
-const vue = window.vue = new Vue({
-	store,
-	render: h => h(App),
-	data: { layers, hotkeys }
-}).$mount('#app');
+requestAnimationFrame(async () => {
+	// Add layers on second frame so dependencies can resolve
+	const { initialLayers } = await import('./data/mod');
+	initialLayers.forEach(addLayer);
 
-setVue(vue);
+	// Create Vue
+	const vue = window.vue = new Vue({
+		store,
+		render: h => h(App)
+	});
+	setVue(vue);
+	vue.$mount('#app');
 
-// Start game loop
+	// Start game loop
+});

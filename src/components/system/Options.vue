@@ -5,15 +5,17 @@
 		</div>
 		<div slot="body">
 			<div class="actions">
-				<button @click="save">Manually Save</button>
-				<button @click="exportSave">Export</button>
-				<button @click="importSave" class="danger">Import</button>
-				<button @click="hardReset" class="danger">Hard Reset</button>
+				<button class="button" @click="save">Manually Save</button>
+				<button @click="exportSave" class="button" >Export</button>
+				<button @click="importSave" class="button danger">Import</button>
+				<button @click="hardReset" class="button danger">Hard Reset</button>
 			</div>
+			<Select title="Theme" :options="themes" :value="theme" @change="setTheme" default="classic" />
+			<Select title="Show Milestones" :options="msDisplayOptions" :value="msDisplay" @change="setMSDisplay" default="all" />
 			<Toggle title="Autosave" :value="autosave" @change="toggleOption('autosave')" />
 			<Toggle title="Offline Production" :value="offlineProd" @change="toggleOption('offlineProd')" />
 			<Toggle title="Show TPS" :value="showTPS" @change="toggleOption('showTPS')" />
-			<Select title="Theme" :options="themes" :value="theme" @change="setTheme" default="default" />
+			<Toggle title="Hide Maxed Challenges" :value="hideChallenges" @change="toggleOption('hideChallenges')" />
 		</div>
 	</Modal>
 </template>
@@ -31,16 +33,29 @@ export default {
 	},
 	data() {
 		return {
-			themes: Object.keys(themes).map(theme => ({ label: camelToTitle(theme), value: theme }))
+			themes: Object.keys(themes).map(theme => ({ label: camelToTitle(theme), value: theme })),
+			msDisplayOptions: [ "all", "last", "configurable", "incomplete", "none" ]
+				.map(option => ({ label: camelToTitle(option), value: option }))
 		}
 	},
-	computed: mapState([ "autosave", "offlineProd", "showTPS", "theme" ]),
+	computed: {
+		...mapState([ "autosave", "offlineProd", "showTPS", "hideChallenges" ]),
+		theme() {
+			return { label: camelToTitle(player.theme), value: player.theme };
+		},
+		msDisplay() {
+			return { label: camelToTitle(player.msDisplay), value: player.msDisplay };
+		}
+	},
 	methods: {
 		toggleOption(option) {
 			player[option] = !player[option];
 		},
 		setTheme(theme) {
 			player.theme = theme;
+		},
+		setMSDisplay(msDisplay) {
+			player.msDisplay = msDisplay;
 		},
 		save() {
 			console.warn("Not yet implemented!");

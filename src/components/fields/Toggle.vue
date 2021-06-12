@@ -17,7 +17,7 @@ export default {
 	},
 	methods: {
 		handleInput(e) {
-			this.$emit('change', e.target.value);
+			this.$emit('change', e.target.checked);
 		}
 	}
 };

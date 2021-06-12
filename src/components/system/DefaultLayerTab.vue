@@ -1,8 +1,8 @@
 <template>
-	<fragment>
+	<div v-frag>
 		<infobox v-if="infobox != undefined" :id="infobox" />
 		<main-display />
-		<prestige-button v-if="type !== 'none'" />
+		<sticky v-if="showPrestigeButton"><prestige-button /></sticky>
 		<resource-display />
 		<milestones />
 		<component v-if="midsection" :is="midsection" />
@@ -11,25 +11,32 @@
 		<upgrades />
 		<challenges />
 		<achievements />
-	</fragment>
+	</div>
 </template>
 
 <script>
 import { layers } from '../../store/layers';
+import { coerceComponent } from '../../util/vue';
 
 export default {
 	name: 'default-layer-tab',
-	inject: [ 'layer' ],
+	inject: [ 'tab' ],
+	props: {
+		layer: String
+	},
 	computed: {
 		infobox() {
-			return layers[this.layer].infoboxes && Object.keys(layers[this.layer].infoboxes)[0];
-		},
-		type() {
-			return layers[this.layer].type;
+			return layers[this.layer || this.tab.layer].infoboxes && Object.keys(layers[this.layer || this.tab.layer].infoboxes)[0];
 		},
 		midsection() {
-			return layers[this.layer].midsection;
-		}
+			if (layers[this.layer || this.tab.layer].midsection) {
+				return coerceComponent(layers[this.layer || this.tab.layer].midsection);
+			}
+			return null;
+		},
+		showPrestigeButton() {
+			return layers[this.layer || this.tab.layer].type !== "none";
+		},
 	}
 };
 </script>

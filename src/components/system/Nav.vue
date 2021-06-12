@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div v-frag>
 		<div class="nav" v-if="useHeader">
 			<img v-if="banner" :src="banner" height="100%" :alt="title" />
 			<div v-else class="title">{{ title }}</div>
@@ -79,8 +79,9 @@ export default {
 		left: 0;
 		right: 0;
 		top: 0;
-		height: 50px;
+		height: 46px;
 		width: 100%;
+		border-bottom: 4px solid var(--separator);
 	}
 
 	.title {

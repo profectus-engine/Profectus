@@ -24,7 +24,7 @@ const playerHandler = {
 			return;
 		}
 
-		if (!target[key].isProxy && !(target[key] instanceof Decimal) && isPlainObject(target[key])) {
+		if (!target[key].isProxy && !(target[key] instanceof Decimal) && (isPlainObject(target[key]) || Array.isArray(target[key]))) {
 			// Note that player isn't pre-created since it (shouldn't) have functions or getters
 			// so creating proxies as they're requested is A-OK
 			target[key] = new Proxy(target[key], playerHandler);
@@ -41,6 +41,9 @@ const playerHandler = {
 export const player = window.player = new Proxy(store.state, playerHandler);
 
 export function createProxy(object, getters, prefix) {
+	if (object.isProxy) {
+		console.warn("Creating a proxy out of a proxy! This may cause unintentional function calls and stack overflows.");
+	}
 	const objectProxy = new Proxy(object, getHandler(prefix));
 	travel(createProxy, object, objectProxy, getters, prefix);
 	return objectProxy;
@@ -48,6 +51,9 @@ export function createProxy(object, getters, prefix) {
 
 // TODO cache grid values? Currently they'll be calculated every render they're visible
 export function createGridProxy(object, getters, prefix) {
+	if (object.isProxy) {
+		console.warn("Creating a proxy out of a proxy! This may cause unintentional function calls and stack overflows.");
+	}
 	const objectProxy = new Proxy(object, getGridHandler(prefix));
 	travel(createGridProxy, object, objectProxy, getters, prefix);
 	return objectProxy;
@@ -59,14 +65,13 @@ function travel(callback, object, objectProxy, getters, prefix) {
 			continue;
 		}
 		if (isFunction(object[key])) {
-			// Skip any functions that require a parameter, since they can't be cached through vuex
-			if (object[key].length !== 0) {
+			if ((object[key].length !== 0 && object[key].forceCached !== true) || object[key].forceCached === false) {
 				continue;
 			}
 			getters[`${prefix}${key}`] = () => {
 				return object[key].call(objectProxy);
 			}
-		} else if (isPlainObject(object[key])) {
+		} else if ((isPlainObject(object[key]) || Array.isArray(object[key])) && !(object[key] instanceof Decimal)) {
 			object[key] = callback(object[key], getters, `${prefix}${key}-`);
 		}
 	}
@@ -83,9 +88,9 @@ function getHandler(prefix) {
 				return;
 			}
 
-			if (target[key].isProxy) {
+			if (target[key].isProxy || target[key] instanceof Decimal) {
 				return target[key];
-			} else if (isPlainObject(target[key])) {
+			} else if ((isPlainObject(target[key]) || Array.isArray(target[key])) && key.slice(0, 2) !== '__') {
 				console.warn("Creating proxy outside `createProxy`. This may cause issues when calling proxied functions.",
 					target, key);
 				target[key] = new Proxy(target[key], getHandler(`${prefix}${key}-`));
@@ -103,6 +108,7 @@ function getHandler(prefix) {
 		set(target, key, value, receiver) {
 			if (`${key}Set` in target && isFunction(target[`${key}Set`]) && target[`${key}Set`].length < 2) {
 				target[`${key}Set`].call(receiver, value);
+				return true;
 			} else {
 				console.warn(`No setter for "${key}".`, target);
 			}
@@ -117,9 +123,9 @@ function getGridHandler(prefix) {
 				return true;
 			}
 
-			if (target[key].isProxy) {
+			if (target[key] && (target[key].isProxy || target[key] instanceof Decimal)) {
 				return target[key];
-			} else if (isPlainObject(target[key])) {
+			} else if (isPlainObject(target[key]) || Array.isArray(target[key])) {
 				console.warn("Creating proxy outside `createProxy`. This may cause issues when calling proxied functions.",
 					target, key);
 				target[key] = new Proxy(target[key], getHandler(`${prefix}${key}-`));
@@ -132,7 +138,7 @@ function getGridHandler(prefix) {
 					return target[key].bind(receiver);
 				}
 			}
-			if (!isNaN(key) && parseInt(key) > 100) {
+			if (!isNaN(key)) {
 				target[key] = new Proxy(target, getCellHandler(key));
 			}
 			return target[key];
@@ -140,6 +146,7 @@ function getGridHandler(prefix) {
 		set(target, key, value, receiver) {
 			if (`${key}Set` in target && isFunction(target[`${key}Set`]) && target[`${key}Set`].length < 2) {
 				target[`${key}Set`].call(receiver, value);
+				return true;
 			} else {
 				console.warn(`No setter for "${key}".`, target);
 			}
@@ -156,31 +163,36 @@ function getCellHandler(id) {
 
 			let prop = target[key];
 			if (isFunction(prop)) {
-				// TODO explicitly list functions that don't receive cell data?
-				if (prop.length < 2) {
-					return prop.call(receiver, id);
-				} else {
-					return prop.call(receiver, receiver.data, id);
-				}
+				return prop.call(receiver, id, target.data(id));
 			} else if (prop != undefined) {
 				return prop;
 			}
 
-			prop = target[`get${key.slice(0, 1).toUpperCase() + key.slice(1)}`];
-			if (isFunction(prop)) {
-				// TODO explicitly list functions that don't receive cell data?
-				if (prop.length < 2) {
-					return prop.call(receiver, id);
-				} else {
-					return prop.call(receiver, receiver.data, id);
-				}
-			} else {
+			if (key.slice == undefined) {
 				return prop;
 			}
+
+			key = key.slice(0, 1).toUpperCase() + key.slice(1);
+			prop = target[`get${key}`];
+			if (isFunction(prop)) {
+				return prop.call(receiver, id, target.data(id));
+			} else if (prop != undefined) {
+				return prop;
+			}
+
+			prop = target[`on${key}`];
+			if (isFunction(prop)) {
+				return () => prop.call(receiver, id, target.data(id));
+			} else if (prop != undefined) {
+				return prop;
+			}
+
+			return target[key];
 		},
 		set(target, key, value, receiver) {
 			if (`${key}Set` in target && isFunction(target[`${key}Set`]) && target[`${key}Set`].length < 3) {
 				target[`${key}Set`].call(receiver, id, value);
+				return true;
 			} else {
 				console.warn(`No setter for "${key}".`, target);
 			}

@@ -1,5 +1,6 @@
 import modInfo from '../data/modInfo';
 import { getStartingData, initialLayers } from '../data/mod';
+import { getStartingBuyables, getStartingClickables, getStartingChallenges } from './layers';
 
 export function getInitialStore() {
 	return {
@@ -12,11 +13,22 @@ export function getInitialStore() {
 		hasNaN: false,
 		lastTenTicks: [],
 		showTPS: true,
+		msDisplay: "all",
+		hideChallenges: false,
 		theme: "paper",
 		subtabs: {},
 		...getStartingData(),
 		...initialLayers.reduce((acc, layer) => {
-			acc[layer.id] = layer.startData();
+			acc[layer.id] = {
+				upgrades: [],
+				achievements: [],
+				milestones: [],
+				infoboxes: {},
+				buyables: getStartingBuyables(layer),
+				clickables: getStartingClickables(layer),
+				challenges: getStartingChallenges(layer),
+				...layer.startData?.()
+			};
 			return acc;
 		}, {})
 	}

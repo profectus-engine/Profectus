@@ -1,7 +1,7 @@
 .field {
 	display: flex;
 	position: relative;
-    height: 2em;
+    min-height: 2em;
     margin: 10px 0;
 	user-select: none;
     justify-content: space-between;

@@ -10,10 +10,10 @@
 
 	"allowSmall": false,
 	"defaultDecimalsShown": 2,
-	"useHeader": false,
+	"useHeader": true,
 	"banner": null,
 	"logo": null,
-	"initialTabs": ["tree-tab", "p", "i"],
+	"initialTabs": [ "main", "c" ],
 
 	"maxTickLength": 3600
 }

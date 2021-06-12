@@ -3,24 +3,23 @@
 		<div class="modal-mask" v-show="show" v-on:pointerdown.self="$emit('close')">
 			<div class="modal-wrapper">
 				<div class="modal-container">
-
 					<div class="modal-header">
 						<slot name="header">
 							default header
 						</slot>
 					</div>
-
-					<div class="modal-body">
-						<slot name="body">
-							default body
-						</slot>
-					</div>
-
+					<perfect-scrollbar class="modal-body">
+						<branches>
+							<slot name="body">
+								default body
+							</slot>
+						</branches>
+					</perfect-scrollbar>
 					<div class="modal-footer">
 						<slot name="footer">
 							<div class="modal-default-footer">
 								<div class="modal-default-flex-grow"></div>
-								<button class="modal-default-button" @click="$emit('close')">
+								<button class="button modal-default-button" @click="$emit('close')">
 									Close
 								</button>
 							</div>
@@ -61,18 +60,31 @@ export default {
 }
 
 .modal-container {
-	width: 400px;
-	max-width: calc(95vw - 40px);
+	width: 640px;
+	max-width: 95vw;
+    max-height: 95vh;
 	background-color: var(--background);
 	padding: 20px;
 	border-radius: 5px;
 	transition: all 0.3s ease;
 	text-align: left;
 	border: var(--modal-border);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    width: 100%;
 }
 
 .modal-body {
 	margin: 20px 0;
+    width: 100%;
+}
+
+.modal-footer {
+    width: 100%;
 }
 
 .modal-default-footer {
@@ -95,5 +107,11 @@ export default {
 .modal-leave-active .modal-container {
 	-webkit-transform: scale(1.1);
 	transform: scale(1.1);
+}
+</style>
+
+<style>
+.modal-body > .ps__rail-y {
+    z-index: 100;
 }
 </style>

@@ -1,0 +1,32 @@
+.feature,
+.feature button {
+    position: relative;
+    padding-top: 5px;
+    border-radius: var(--border-radius);
+    border: 2px solid rgba(0, 0, 0, 0.125);
+    margin: var(--feature-margin);
+    box-sizing: border-box;
+}
+
+.can,
+.can button {
+	cursor: pointer;
+}
+
+.can:hover,
+.can:hover button {
+    transform: scale(1.15, 1.15);
+    box-shadow: 0 0 20px var(--points);
+}
+
+.locked,
+.locked button {
+    background-color: var(--locked);
+    cursor: not-allowed;
+}
+
+.bought,
+.bought button {
+    background-color: var(--bought);
+    cursor: default;
+}

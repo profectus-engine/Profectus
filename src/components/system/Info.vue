@@ -44,6 +44,7 @@
 			<br>
 			<div>Time Played: {{ timePlayed }}</div>
 			<div v-if="hotkeys.length > 0">
+				<br>
 				<h4>Hotkeys</h4>
 				<div v-for="key in hotkeys" :key="key.key">
 					{{ key.key }}: {{ key.description }}
@@ -56,6 +57,7 @@
 <script>
 import modInfo from '../../data/modInfo';
 import { formatTime } from '../../util/bignum';
+import { hotkeys } from '../../store/layers';
 
 export default {
 	name: 'Info',
@@ -72,7 +74,7 @@ export default {
 		},
 		hotkeys() {
 			// TODO check layer is unlocked and hotkey is unlocked
-			return this.$root.hotkeys.filter(hotkey => hotkey || true);
+			return hotkeys.filter(hotkey => hotkey || true);
 		}
 	}
 };

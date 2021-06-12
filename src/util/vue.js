@@ -8,25 +8,44 @@ export function setVue(vm) {
 }
 
 // Pass in various data that the template could potentially use
-const defaultComputed = {
+const computed = {
 	player() { return player; },
 	layers() { return layers; }
 };
-const defaultData = function() {
+const data = function() {
 	return { Decimal, ...numberUtils };
 }
-export function coerceComponent(component) {
-	if (typeof component === 'string' && !(component in vue.$options.components)) {
-		let computed = defaultComputed;
-		let data = defaultData;
-		if (component.charAt(0) !== '<') {
-			// Not a template string, so make it one and remove the data
-			component = `<span>${component}</span>`;
-			computed = null;
-			data = null;
-		}
+export function coerceComponent(component, defaultWrapper = 'span') {
+	if (typeof component === 'number') {
+		component = "" + component;
+	}
+	if (typeof component === 'string') {
+		component = component.trim();
+		if (!(component in vue.$options.components)) {
+			if (component.charAt(0) !== '<') {
+				component = `<${defaultWrapper}>${component}</${defaultWrapper}>`;
+			}
 
-		return { template: component, computed, data };
+			return { template: component, computed, data, inject: [ 'tab' ] };
+		}
 	}
 	return component;
 }
+
+export function getFiltered(objects, filter = null) {
+	if (filter) {
+		return Object.keys(objects)
+			.filter(key => key in filter)
+			.reduce((acc, curr) => {
+				acc[curr] = objects[curr];
+				return acc;
+			}, {});
+	}
+	return objects;
+}
+
+export const UP = 'UP';
+export const DOWN = 'DOWN';
+export const LEFT = 'LEFT';
+export const RIGHT = 'RIGHT';
+export const DEFAULT = 'DEFAULT';

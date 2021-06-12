@@ -2,7 +2,7 @@ import Decimal, { format } from '../../util/bignum';
 import { player } from '../../store/proxies';
 import { layers } from '../../store/layers';
 import { hasUpgrade, hasMilestone, getBuyableAmount, setBuyableAmount, hasChallenge } from '../../util/features';
-import { canReset, doReset } from '../../util/layers';
+import { resetLayer } from '../../util/layers';
 
 export default {
     id: "i",
@@ -26,13 +26,13 @@ export default {
     getResetGain(){
 
       if (hasMilestone("p",12)){return getBuyableAmount("p",21).div(2).floor().times(2).times(5).sub(30).sub(player.i.points)}
-      return (player.p.buyables[21].gte(layers.i.requires())?1:0)}, // Prestige currency exponent
+      return (player.p.buyables[21].gte(layers.i.requires)?1:0)}, // Prestige currency exponent
     getNextAt(){return new Decimal(100)},
-  canReset(){return player.p.buyables[21].gte(layers.i.requires())},
-  prestigeButtonText(){return "Reset everything for +"+format(layers.i.getResetGain())+" Infinity.<br>You need "+format(layers.i.requires())+" pointy points to reset."},
+  canReset(){return player.p.buyables[21].gte(layers.i.requires)},
+  prestigeButtonText(){return "Reset everything for +"+format(layers.i.getResetGain)+" Infinity.<br>You need "+format(layers.i.requires())+" pointy points to reset."},
     row: 1, // Row the layer is in on the tree (0 is the first row)
     hotkeys: [
-        {key: "i", description: "I: Infinity", onPress(){if (canReset(this.layer)) doReset(this.layer)}},
+        {key: "i", description: "I: Infinity", onPress(){if (layers.i.canReset) resetLayer(this.layer)}},
     ],
     layerShown(){return player[this.layer].unlocked||new Decimal(player.p.buyables[21]).gte(8)},
     milestones: {
