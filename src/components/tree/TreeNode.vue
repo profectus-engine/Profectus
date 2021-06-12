@@ -31,7 +31,8 @@ export default {
 	name: 'tree-node',
 	props: {
 		id: [ String, Number ],
-		small: Boolean
+		small: Boolean,
+		append: Boolean
 	},
 	inject: [ 'tab' ],
 	computed: {
@@ -94,6 +95,13 @@ export default {
 				this.layer.onClick();
 			} else if (this.layer.modal) {
 				this.$emit('show-modal', this.id);
+			} else if (this.append) {
+				if (player.tabs.includes(this.id)) {
+					const index = player.tabs.lastIndexOf(this.id);
+					player.tabs = [...player.tabs.slice(0, index), ...player.tabs.slice(index + 1)];
+				} else {
+					player.tabs = [...player.tabs, this.id];
+				}
 			} else {
 				player.tabs = [...player.tabs.slice(0, this.tab.index + 1), this.id];
 			}

@@ -1,10 +1,10 @@
 <template>
 	<div v-frag>
 		<span class="row" v-for="(row, index) in rows" :key="index">
-			<tree-node v-for="(node, nodeIndex) in row" :key="nodeIndex" :id="node" @show-modal="openModal" />
+			<tree-node v-for="(node, nodeIndex) in row" :key="nodeIndex" :id="node" @show-modal="openModal" :append="append" />
 		</span>
 		<span class="side-nodes" v-if="rows.side">
-			<tree-node v-for="(node, nodeIndex) in rows.side" :key="nodeIndex" :id="node" @show-modal="openModal" small />
+			<tree-node v-for="(node, nodeIndex) in rows.side" :key="nodeIndex" :id="node" @show-modal="openModal" :append="append" small />
 		</span>
 		<modal :show="showModal" @close="closeModal">
 			<div slot="header"><h2 v-if="modalHeader">{{ modalHeader }}</h2></div>
@@ -26,7 +26,8 @@ export default {
 		};
 	},
 	props: {
-		nodes: Array
+		nodes: Array,
+		append: Boolean
 	},
 	inject: [ 'tab' ],
 	computed: {
