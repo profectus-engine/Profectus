@@ -20,6 +20,7 @@ export default {
 		otherThingy: 10,
 		spentOnBuyables: new Decimal(0)
 	}},
+	minWidth: 800,
 	color: "#4BDC13",
 	requires: new Decimal(10), // Can be a function that takes requirement increases into account
 	resource: "lollipops", // Name of prestige currency

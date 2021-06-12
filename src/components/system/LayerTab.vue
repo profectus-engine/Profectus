@@ -39,6 +39,7 @@ export default {
 			if (layers[this.layer].activeSubtab?.style) {
 				style.push(layers[this.layer].activeSubtab.style);
 			}
+			style.push({ minWidth: `${layers[this.layer].minWidth}px` });
 			return style;
 		},
 		display() {

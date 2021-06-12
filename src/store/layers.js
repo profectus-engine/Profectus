@@ -410,6 +410,7 @@ export const defaultLayerProperties = {
 	type: "none",
 	layerShown: true,
 	glowColor: "red",
+	minWidth: 640,
 	displayRow() {
 		return this.row;
 	},
