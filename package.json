@@ -9,6 +9,7 @@
 	},
 	"dependencies": {
 		"core-js": "^3.6.5",
+		"portal-vue": "^2.1.7",
 		"vue": "^2.6.11",
 		"vue-frag": "^1.1.5",
 		"vue-reactive-provide": "^0.3.0",

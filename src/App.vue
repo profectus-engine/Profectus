@@ -3,6 +3,7 @@
 		<Nav />
 		<Tabs />
 		<TPS v-if="showTPS" />
+		<portal-target name="modal-root" multiple />
 	</div>
 </template>
 

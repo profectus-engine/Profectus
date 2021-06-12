@@ -1,34 +1,36 @@
 <template>
-	<transition name="modal">
-		<div class="modal-mask" v-show="show" v-on:pointerdown.self="$emit('close')">
-			<div class="modal-wrapper">
-				<div class="modal-container">
-					<div class="modal-header">
-						<slot name="header">
-							default header
-						</slot>
-					</div>
-					<perfect-scrollbar class="modal-body">
-						<branches>
-							<slot name="body">
-								default body
+	<portal to="modal-root">
+		<transition name="modal">
+			<div class="modal-mask" v-show="show" v-on:pointerdown.self="$emit('close')">
+				<div class="modal-wrapper">
+					<div class="modal-container">
+						<div class="modal-header">
+							<slot name="header">
+								default header
 							</slot>
-						</branches>
-					</perfect-scrollbar>
-					<div class="modal-footer">
-						<slot name="footer">
-							<div class="modal-default-footer">
-								<div class="modal-default-flex-grow"></div>
-								<button class="button modal-default-button" @click="$emit('close')">
-									Close
-								</button>
-							</div>
-						</slot>
+						</div>
+						<perfect-scrollbar class="modal-body">
+							<branches>
+								<slot name="body">
+									default body
+								</slot>
+							</branches>
+						</perfect-scrollbar>
+						<div class="modal-footer">
+							<slot name="footer">
+								<div class="modal-default-footer">
+									<div class="modal-default-flex-grow"></div>
+									<button class="button modal-default-button" @click="$emit('close')">
+										Close
+									</button>
+								</div>
+							</slot>
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
-	</transition>
+		</transition>
+	</portal>
 </template>
 
 <script>

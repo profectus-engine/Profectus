@@ -67,6 +67,7 @@ import 'vue-transition-expand/dist/vue-transition-expand.css';
 import PerfectScrollbar from 'vue2-perfect-scrollbar';
 import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css';
 import VueTextareaAutosize from 'vue-textarea-autosize';
+import PortalVue from 'portal-vue';
 
 /* features */
 Vue.component(Achievement.name, Achievement);
@@ -130,3 +131,4 @@ Vue.directive('frag', frag);
 Vue.use(TransitionExpand);
 Vue.use(PerfectScrollbar);
 Vue.use(VueTextareaAutosize);
+Vue.use(PortalVue);
