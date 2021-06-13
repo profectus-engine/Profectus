@@ -181,7 +181,7 @@ export default {
 	.version {
 		margin-left: 12px;
 		margin-right: 12px;
-		margin-bottom: 7px;
+		margin-bottom: 5px;
 		color: var(--points);
 		cursor: pointer;
 	}

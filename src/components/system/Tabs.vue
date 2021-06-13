@@ -1,14 +1,14 @@
 <template>
 	<perfect-scrollbar class="tabs-container">
 		<div class="tabs">
-			<div v-for="(tab, index) in tabs" :key="index" class="tab">
-				<button v-if="index > 0 && allowGoBack" class="goBack" @click="goBack(index)">←</button>
+			<div v-for="(tab, index) in tabs" :key="index" class="tab" :ref="`tab-${index}`">
 				<perfect-scrollbar>
 					<div class="inner-tab">
 						<LayerProvider :layer="tab" :index="index" v-if="tab in components && components[tab]">
 							<component :is="components[tab]" />
 						</LayerProvider>
-						<layer-tab :layer="tab" :index="index" v-else-if="tab in components" />
+						<layer-tab :layer="tab" :index="index" v-else-if="tab in components"
+							:tab="() => $refs[`tab-${index}`] && $refs[`tab-${index}`][0]" />
 						<component :is="tab" :index="index" v-else />
 					</div>
 				</perfect-scrollbar>
@@ -21,14 +21,9 @@
 <script>
 import { mapState } from 'vuex';
 import { layers } from '../../store/layers';
-import { player } from '../../store/proxies';
-import modInfo from '../../data/modInfo.json';
 
 export default {
 	name: 'Tabs',
-	data() {
-		return { allowGoBack: modInfo.allowGoBack };
-	},
 	computed: {
 		...mapState([ 'tabs' ]),
 		components() {
@@ -36,11 +31,6 @@ export default {
 				acc[curr] = layers[curr].component || false;
 				return acc;
 			}, {});
-		}
-	},
-	methods: {
-		goBack(index) {
-			player.tabs = player.tabs.slice(0, index);
 		}
 	}
 };
@@ -60,7 +50,8 @@ export default {
 .tab {
     position: relative;
     height: 100%;
-    width: 100%;
+    flex-grow: 1;
+    transition-duration: 0s;
 }
 
 .tab .ps {
@@ -83,24 +74,6 @@ export default {
 	width: 6px;
 	background: var(--separator);
     z-index: 1;
-}
-
-.goBack {
-    position: absolute;
-    top: 0;
-    left: 20px;
-    background-color: transparent;
-    border: 1px solid transparent;
-    color: var(--color);
-    font-size: 40px;
-    cursor: pointer;
-    line-height: 40px;
-    z-index: 7;
-}
-
-.goBack:hover {
-    transform: scale(1.1, 1.1);
-    text-shadow: 0 0 7px var(--color);
 }
 </style>
 

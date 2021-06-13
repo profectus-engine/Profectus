@@ -29,6 +29,7 @@ export default {
     base: 3,
     roundUpCost: true,
     canBuyMax() {return false},
+    name: "Farms",
     //directMult() {return new Decimal(player.c.otherThingy)},
 
     row: 1,

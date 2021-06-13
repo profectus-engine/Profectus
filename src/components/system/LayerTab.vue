@@ -1,14 +1,19 @@
 <template>
 	<LayerProvider :layer="layer" :index="index">
-		<div class="layer-tab" :style="style" :class="{ hasSubtabs: subtabs }">
-			<branches>
-				<sticky v-if="subtabs" class="subtabs" :class="{ floating, firstTab: firstTab || !allowGoBack }">
-					<tab-button v-for="(subtab, id) in subtabs" @selectTab="selectSubtab(id)" :key="id" :activeTab="id === activeSubtab"
-						:options="subtab" :text="id" />
-				</sticky>
-				<component v-if="display" :is="display" />
-				<default-layer-tab v-else />
-			</branches>
+		<div class="layer-container">
+			<button v-if="index > 0 && allowGoBack && !minimized" class="goBack" @click="goBack(index)">←</button>
+			<button class="layer-tab minimized" v-if="minimized" @click="toggleMinimized"><div>{{ name }}</div></button>
+			<div class="layer-tab" :style="style" :class="{ hasSubtabs: subtabs }" v-else>
+				<branches>
+					<sticky v-if="subtabs" class="subtabs" :class="{ floating, firstTab: firstTab || !allowGoBack }">
+						<tab-button v-for="(subtab, id) in subtabs" @selectTab="selectSubtab(id)" :key="id"
+							:activeTab="id === activeSubtab" :options="subtab" :text="id" />
+					</sticky>
+					<component v-if="display" :is="display" />
+					<default-layer-tab v-else />
+				</branches>
+			</div>
+			<button v-if="!disableMinimize" class="minimize" @click="toggleMinimized">▼</button>
 		</div>
 	</LayerProvider>
 </template>
@@ -26,12 +31,20 @@ export default {
 	props: {
 		layer: String,
 		index: Number,
-		forceFirstTab: Boolean
+		forceFirstTab: Boolean,
+		disableMinimize: Boolean,
+		tab: Function
 	},
 	data() {
 		return { allowGoBack: modInfo.allowGoBack };
 	},
 	computed: {
+		minimized() {
+			return !this.disableMinimize && player.minimized[this.layer];
+		},
+		name() {
+			return layers[this.layer].name;
+		},
 		floating() {
 			return themes[player.theme].floatingTabs;
 		},
@@ -76,19 +89,67 @@ export default {
 			return this.index === 0;
 		}
 	},
+	watch: {
+		minimized(newValue) {
+			const tab = this.tab();
+			if (tab != undefined) {
+				if (newValue) {
+					tab.style.flexGrow = 0;
+					tab.style.flexShrink = 0;
+					tab.style.width = "60px";
+					tab.style.margin = 0;
+				} else {
+					tab.style.flexGrow = null;
+					tab.style.flexShrink = null;
+					tab.style.width = null;
+					tab.style.margin = null;
+				}
+			}
+		}
+	},
+	mounted() {
+		const tab = this.tab();
+		if (tab != undefined) {
+			if (this.minimized) {
+				tab.style.flexGrow = 0;
+				tab.style.flexShrink = 0;
+				tab.style.width = "60px";
+				tab.style.margin = 0;
+			} else {
+				tab.style.flexGrow = null;
+				tab.style.flexShrink = null;
+				tab.style.width = null;
+				tab.style.margin = null;
+			}
+		} else {
+			this.$nextTick(this.mounted);
+		}
+	},
 	methods: {
 		selectSubtab(subtab) {
 			if (player.subtabs[this.layer] == undefined) {
 				player.subtabs[this.layer] = {};
 			}
 			player.subtabs[this.layer].mainTabs = subtab;
+		},
+		toggleMinimized() {
+			player.minimized[this.layer] = !player.minimized[this.layer];
+		},
+		goBack(index) {
+			player.tabs = player.tabs.slice(0, index);
 		}
 	}
 };
 </script>
 
 <style scoped>
-.layer-tab {
+.layer-container {
+	min-width: 100%;
+	min-height: 100%;
+	margin: 0;
+}
+
+.layer-tab:not(.minimized) {
 	padding-top: 50px;
 	padding-bottom: 20px;
 	min-height: 100%;
@@ -97,7 +158,31 @@ export default {
     position: relative;
 }
 
-.inner-tab > .layer-tab {
+.layer-tab.minimized {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    padding: 0;
+    padding-top: 50px;
+    margin: 0;
+    cursor: pointer;
+    font-size: 40px;
+    color: var(--color);
+    border: none;
+    background-color: transparent;
+}
+
+.layer-tab.minimized div {
+    margin: 0;
+	writing-mode: vertical-rl;
+    padding-left: 10px;
+    width: 50px;
+}
+
+.inner-tab > .layer-container > .layer-tab:not(.minimized) {
 	margin: -50px -10px;
 	padding: 50px 10px;
 }
@@ -147,5 +232,41 @@ export default {
 
 .subtabs:not(.floating):not(.firstTab) {
 	padding-left: 70px;
+}
+
+.minimize {
+    position: absolute;
+    top: 0;
+    right: 15px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    color: var(--color);
+    font-size: 40px;
+    cursor: pointer;
+    line-height: 40px;
+    z-index: 7;
+}
+
+.minimized + .minimize {
+	transform: rotate(-90deg);
+    top: 3px;
+}
+
+.goBack {
+    position: absolute;
+    top: 0;
+    left: 20px;
+    background-color: transparent;
+    border: 1px solid transparent;
+    color: var(--color);
+    font-size: 40px;
+    cursor: pointer;
+    line-height: 40px;
+    z-index: 7;
+}
+
+.goBack:hover {
+    transform: scale(1.1, 1.1);
+    text-shadow: 0 0 7px var(--color);
 }
 </style>

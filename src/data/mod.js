@@ -38,7 +38,8 @@ const spook = {
 
 const main = {
 	id: 'main',
-	display: '<tree :append="true" />'
+	display: '<tree :append="true" />',
+	name: "Tree"
 }
 
 export const initialLayers = [ main, f, c, a, g, h, spook ];

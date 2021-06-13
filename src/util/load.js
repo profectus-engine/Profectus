@@ -17,6 +17,7 @@ export function getInitialStore() {
 		hideChallenges: false,
 		theme: "paper",
 		subtabs: {},
+		minimized: {},
 		...getStartingData(),
 		...initialLayers.reduce((acc, layer) => {
 			acc[layer.id] = {
