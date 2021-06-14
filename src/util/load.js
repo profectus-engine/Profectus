@@ -1,6 +1,7 @@
 import modInfo from '../data/modInfo';
 import { getStartingData, initialLayers } from '../data/mod';
 import { getStartingBuyables, getStartingClickables, getStartingChallenges } from './layers';
+import Decimal from './bignum';
 
 export function getInitialStore() {
 	return {
@@ -8,7 +9,7 @@ export function getInitialStore() {
 		time: Date.now(),
 		autosave: true,
 		offlineProd: true,
-		timePlayed: 0,
+		timePlayed: new Decimal(0),
 		keepGoing: false,
 		hasNaN: false,
 		lastTenTicks: [],

@@ -1,18 +1,18 @@
 <template>
-	<div class="tpsDisplay">
+	<div class="tpsDisplay" v-if="tps !== 'NaN'">
 		TPS: {{ tps }}
 	</div>
 </template>
 
 <script>
-import Decimal, { format } from '../../util/bignum';
+import Decimal, { formatWhole } from '../../util/bignum';
+import { player } from '../../store/proxies';
 
 export default {
 	name: 'TPS',
 	computed: {
 		tps() {
-			const lastTenTicks = this.$store.state.lastTenTicks;
-			return format(Decimal.div(lastTenTicks.length, lastTenTicks.reduce((acc, curr) => acc + curr, 0)))
+			return formatWhole(Decimal.div(player.lastTenTicks.length, player.lastTenTicks.reduce((acc, curr) => acc + curr, 0)))
 		}
 	}
 };

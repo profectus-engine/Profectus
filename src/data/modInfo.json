@@ -16,5 +16,6 @@
 	"logo": null,
 	"initialTabs": [ "main", "c" ],
 
-	"maxTickLength": 3600
+	"maxTickLength": 3600,
+	"offlineLimit": 1
 }

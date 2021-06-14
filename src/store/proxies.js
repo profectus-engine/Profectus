@@ -16,7 +16,7 @@ export const tmp = new Proxy({}, {
 
 const playerHandler = {
 	get(target, key) {
-		if (key == 'isProxy') {
+		if (key === 'isProxy') {
 			return true;
 		}
 
@@ -35,6 +35,17 @@ const playerHandler = {
 	},
 	set(target, property, value) {
 		Vue.set(target, property, value);
+		if (property === 'points') {
+			if (target.best != undefined) {
+				target.best = Decimal.max(target.best, value);
+			}
+			if (target.total != undefined) {
+				const diff = Decimal.sub(value, target.points);
+				if (diff.gt(0)) {
+					target.total = target.total.add(diff);
+				}
+			}
+		}
 		return true;
 	}
 };
@@ -80,7 +91,7 @@ function travel(callback, object, objectProxy, getters, prefix) {
 function getHandler(prefix) {
 	return {
 		get(target, key, receiver) {
-			if (key == 'isProxy') {
+			if (key === 'isProxy') {
 				return true;
 			}
 
@@ -119,7 +130,7 @@ function getHandler(prefix) {
 function getGridHandler(prefix) {
 	return {
 		get(target, key, receiver) {
-			if (key == 'isProxy') {
+			if (key === 'isProxy') {
 				return true;
 			}
 
@@ -157,7 +168,7 @@ function getGridHandler(prefix) {
 function getCellHandler(id) {
 	return {
 		get(target, key, receiver) {
-			if (key == 'isProxy') {
+			if (key === 'isProxy') {
 				return true;
 			}
 

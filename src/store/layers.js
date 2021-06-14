@@ -34,6 +34,9 @@ export function addLayer(layer) {
 	if (layer.onClick != undefined) {
 		layer.onClick.forceCached = false;
 	}
+	if (layer.update != undefined) {
+		layer.update.forceCached = false;
+	}
 
 	const getters = {};
 
@@ -55,7 +58,7 @@ export function addLayer(layer) {
 		for (let id in layer.upgrades) {
 			if (isPlainObject(layer.upgrades[id])) {
 				layer.upgrades[id].bought = function() {
-					return !this.deactivated && player[layer.id].upgrades.some(upgrade => upgrade == id);
+					return !layer.deactivated && player[layer.id].upgrades.some(upgrade => upgrade == id);
 				}
 				if (layer.upgrades[id].canAfford == undefined) {
 					layer.upgrades[id].canAfford = function() {
@@ -130,7 +133,7 @@ export function addLayer(layer) {
 		for (let id in layer.achievements) {
 			if (isPlainObject(layer.achievements[id])) {
 				layer.achievements[id].earned = function() {
-					return !this.deactivated && player[layer.id].achievements.some(achievement => achievement == id);
+					return !layer.deactivated && player[layer.id].achievements.some(achievement => achievement == id);
 				}
 			}
 		}
@@ -142,13 +145,13 @@ export function addLayer(layer) {
 		for (let id in layer.challenges) {
 			if (isPlainObject(layer.challenges[id])) {
 				layer.challenges[id].completed = function() {
-					return !this.deactivated && !!player[layer.id].challenges[id];
+					return !layer.deactivated && !!player[layer.id].challenges[id];
 				}
 				layer.challenges[id].completions = function() {
 					return player[layer.id].challenges[id];
 				}
 				layer.challenges[id].maxed = function() {
-					return !this.deactivated && Decimal.gte(player[layer.id].challenges[id], this.completionLimit);
+					return !layer.deactivated && Decimal.gte(player[layer.id].challenges[id], this.completionLimit);
 				}
 				if (layer.challenges[id].mark == undefined) {
 					layer.challenges[id].mark = function() {
@@ -156,7 +159,7 @@ export function addLayer(layer) {
 					}
 				}
 				layer.challenges[id].active = function() {
-					return !this.deactivated && player[layer.id].activeChallenge === id;
+					return !layer.deactivated && player[layer.id].activeChallenge === id;
 				}
 				if (layer.challenges[id].canComplete == undefined) {
 					layer.challenges[id].canComplete = function() {
@@ -227,7 +230,7 @@ export function addLayer(layer) {
 					player[layer.id].buyables[id] = amount;
 				}
 				layer.buyables[id].canBuy = function() {
-					return !this.deactivated && this.unlocked !== false && this.canAfford !== false &&
+					return !layer.deactivated && this.unlocked !== false && this.canAfford !== false &&
 						Decimal.lt(player[layer.id].buyables[id], this.purchaseLimit);
 				}
 				if (layer.buyables[id].purchaseLimit == undefined) {
@@ -292,7 +295,7 @@ export function addLayer(layer) {
 					}
 				}
 				layer.milestones[id].earned = function() {
-					return !this.deactivated && player[layer.id].milestones.some(milestone => milestone == id);
+					return !layer.deactivated && player[layer.id].milestones.some(milestone => milestone == id);
 				}
 			}
 		}
@@ -572,6 +575,12 @@ export const defaultLayerProperties = {
 			return this.canReset && this.resetGain.gte(player[this.layer].points.div(10));
 		}
 		return false;
+	},
+	reset(force = false) {
+		console.warn("Not yet implemented!", force);
+	},
+	resetData(keep = []) {
+		console.warn("Not yet implemented!", keep);
 	}
 };
 const gridProperties = [ 'upgrades', 'achievements', 'challenges', 'buyables', 'clickables' ];

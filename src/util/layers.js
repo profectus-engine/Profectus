@@ -1,14 +1,13 @@
 import Decimal from './bignum';
 import { isPlainObject } from './common';
+import { layers } from '../store/layers';
 
-// TODO make layer.reset(force = false)
 export function resetLayer(layer, force = false) {
-	console.warn("Not yet implemented!", layer, force);
+	layers[layer].reset(force);
 }
 
-// TODO make layer.resetData(keep = [])
 export function resetLayerData(layer, keep = []) {
-	console.warn("Not yet implemented!", layer, keep);
+	layers[layer].resetData(keep);
 }
 
 export function cache(func) {

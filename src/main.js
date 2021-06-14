@@ -3,6 +3,7 @@ import App from './App';
 import store from './store';
 import { addLayer} from './store/layers';
 import { setVue } from './util/vue';
+import { startGameLoop } from './store/game';
 import './components/index';
 
 // Setup
@@ -21,5 +22,5 @@ requestAnimationFrame(async () => {
 	setVue(vue);
 	vue.$mount('#app');
 
-	// Start game loop
+	startGameLoop();
 });
