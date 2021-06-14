@@ -38,9 +38,21 @@ const spook = {
 
 const main = {
 	id: 'main',
-	display: '<tree :append="true" />',
+	display: `<div v-frag>
+		<div v-if="player.devSpeed && player.devSpeed !== 1">Dev Speed: {{ format(player.devSpeed) }}x</div>
+		<div v-if="player.offTime != undefined">Offline Time: {{ formatTime(player.offTime.remain) }}</div>
+		<div>
+			<span v-if="player.points.lt('1e1000')">You have </span>
+			<h2>{{ format(player.points) }}</h2>
+			<span v-if="player.points.lt('1e1e6')"> points</span>
+		</div>
+		<div v-if="Decimal.gt($store.getters.pointGain, 0)">
+			({{ player.oompsMag != 0 ? format(player.oomps) + " OOM" + (player.oompsMag < 0 ? "^OOM" : player.oompsMag > 1 ? "^" + player.oompsMag : "") + "s" : formatSmall($store.getters.pointGain) }}/sec)
+		</div>
+		<tree :append="true" />
+	</div>`,
 	name: "Tree"
-}
+};
 
 export const initialLayers = [ main, f, c, a, g, h, spook ];
 
@@ -52,7 +64,7 @@ export function getStartingData() {
 
 export const getters = {
 	hasWon() {
-		return false
+		return false;
 	},
 	pointGain() {
 		if(!hasUpgrade("c", 11))

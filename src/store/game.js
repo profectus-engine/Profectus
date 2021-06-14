@@ -13,6 +13,80 @@ function updateParticles(/* diff */) {
 	// TODO
 }
 
+function updateOOMPS(diff) {
+	if (player.points != undefined) {
+		player.oompsMag = 0;
+		if (player.points.lte(new Decimal(1e100))) {
+			return;
+		}
+
+		let curr = new Decimal(player.points);
+		let prev = player.lastPoints || new Decimal(0);
+		if (curr.gt(prev)) {
+			if (curr.gte("10^^8")) {
+				curr = curr.slog(1e10);
+				prev = prev.slog(1e10);
+				player.oomps = curr.sub(prev).div(diff);
+				player.oompsMag = -1;
+			} else {
+				while (curr.div(prev).log(10).div(diff).gte("100") && player.oompsMag <= 5 && prev.gt(0)) {
+					curr = curr.log(10);
+					prev = prev.log(10);
+					player.oomps = curr.sub(prev).div(diff);
+					player.oompsMag++;
+				}
+			}
+		}
+	}
+}
+
+function updateLayers(diff) {
+	// Update each active layer
+	const activeLayers = Object.keys(layers).filter(layer => !layers[layer].deactivated);
+	activeLayers.forEach(layer => {
+		if (player[layer].resetTime != undefined) {
+			player[layer].resetTime = player[layer].resetTime.add(diff);
+		}
+		if (layers[layer].passiveGeneration) {
+			player[layer].points =
+				player[layer].points.add(Decimal.times(layers[layer].resetGain, layers[layer].passiveGeneration).times(diff));
+		}
+		layers[layer].update?.(diff);
+	});
+	// Automate each active layer
+	activeLayers.forEach(layer => {
+		if (layers[layer].autoReset && layers[layer].canReset) {
+			layers[layer].reset();
+		}
+		layers[layer].automate?.();
+		if (layers[layer].upgrades && layers[layer].autoUpgrade) {
+			Object.values(layers[layer].upgrades).forEach(upgrade => upgrade.buy());
+		}
+	});
+	// Check each active layer for newly unlocked achievements or milestones
+	activeLayers.forEach(layer => {
+		if (layers[layer].milestones) {
+			Object.values(layers[layer].milestones).forEach(milestone => {
+				if (milestone.unlocked !== false && !milestone.earned && milestone.done) {
+					player[layer].milestones.push(milestone.id);
+					milestone.onComplete?.();
+					// TODO popup notification
+					player[layer].lastMilestone = milestone.id;
+				}
+			});
+		}
+		if (layers[layer].achievements) {
+			Object.values(layers[layer].achievements).forEach(achievement => {
+				if (achievement.unlocked !== false && !achievement.earned && achievement.done) {
+					player[layer].achievements.push(achievement.id);
+					achievement.onComplete?.();
+					// TODO popup notification
+				}
+			});
+		}
+	});
+}
+
 function update() {
 	let now = Date.now();
 	let diff = (now - player.time) / 1e3;
@@ -66,50 +140,8 @@ function update() {
 		player.points = player.points.add(Decimal.times(store.getters.pointGain, diff));
 	}
 	modUpdate(diff);
-	// Update each active layer
-	const activeLayers = Object.keys(layers).filter(layer => !layers[layer].deactivated);
-	activeLayers.forEach(layer => {
-		if (player[layer].resetTime != undefined) {
-			player[layer].resetTime = player[layer].resetTime.add(diff);
-		}
-		if (layers[layer].passiveGeneration) {
-			player[layer].points =
-				player[layer].points.add(Decimal.times(layers[layer].resetGain, layers[layer].passiveGeneration).times(diff));
-		}
-		layers[layer].update?.(diff);
-	});
-	// Automate each active layer
-	activeLayers.forEach(layer => {
-		if (layers[layer].autoReset && layers[layer].canReset) {
-			layers[layer].reset();
-		}
-		layers[layer].automate?.();
-		if (layers[layer].upgrades && layers[layer].autoUpgrade) {
-			Object.values(layers[layer].upgrades).forEach(upgrade => upgrade.buy());
-		}
-	});
-	// Check each active layer for newly unlocked achievements or milestones
-	activeLayers.forEach(layer => {
-		if (layers[layer].milestones) {
-			Object.values(layers[layer].milestones).forEach(milestone => {
-				if (milestone.unlocked !== false && !milestone.earned && milestone.done) {
-					player[layer].milestones.push(milestone.id);
-					milestone.onComplete?.();
-					// TODO popup notification
-					player[layer].lastMilestone = milestone.id;
-				}
-			});
-		}
-		if (layers[layer].achievements) {
-			Object.values(layers[layer].achievements).forEach(achievement => {
-				if (achievement.unlocked !== false && !achievement.earned && achievement.done) {
-					player[layer].achievements.push(achievement.id);
-					achievement.onComplete?.();
-					// TODO popup notification
-				}
-			});
-		}
-	});
+	updateOOMPS(trueDiff);
+	updateLayers(diff);
 }
 
 export function startGameLoop() {

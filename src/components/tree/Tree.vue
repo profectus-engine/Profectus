@@ -73,7 +73,7 @@ export default {
 
 .side-nodes {
     position: absolute;
-    right: 55px;
+    right: 15px;
     top: 65px;
 }
 </style>
