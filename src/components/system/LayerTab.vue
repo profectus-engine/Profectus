@@ -147,6 +147,8 @@ export default {
 	min-width: 100%;
 	min-height: 100%;
 	margin: 0;
+    flex-grow: 1;
+    display: flex;
 }
 
 .layer-tab:not(.minimized) {
