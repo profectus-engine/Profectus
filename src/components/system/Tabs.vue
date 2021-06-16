@@ -7,7 +7,7 @@
 						<LayerProvider :layer="tab" :index="index" v-if="tab in components && components[tab]">
 							<component :is="components[tab]" />
 						</LayerProvider>
-						<layer-tab :layer="tab" :index="index" v-else-if="tab in components"
+						<layer-tab :layer="tab" :index="index" v-else-if="tab in components" :minimizable="true"
 							:tab="() => $refs[`tab-${index}`] && $refs[`tab-${index}`][0]" />
 						<component :is="tab" :index="index" v-else />
 					</div>

@@ -1,8 +1,15 @@
 <template>
-	<div v-if="shown" :style="style" :class="{ challenge: true, [challengeClass]: true }">
+	<div v-if="shown" :style="style"
+		:class="{
+			feature: true,
+			challenge: true,
+			resetNotify: challenge.active,
+			notify: challenge.active && challenge.canComplete,
+			done: challenge.completed,
+			maxed: challenge.maxed
+		}">
 		<div v-if="title"><component :is="title" /></div>
-		<button :class="{ [layer || tab.layer]: true, longUpg: true, can: true }" :style="{ backgroundColor: buttonColor }"
-			@click="toggle">
+		<button :style="{ backgroundColor: challenge.maxed ? null : buttonColor }" @click="toggle">
 			{{ buttonText }}
 		</button>
 		<component v-if="fullDisplay" :is="fullDisplay" />
@@ -32,15 +39,6 @@ export default {
 		shown() {
 			return this.challenge.unlocked && !(player.hideChallenges && this.challenge.maxes);
 		},
-		challengeClass() {
-			if (this.challenge.canComplete) {
-				return "canComplete";
-			}
-			if (this.challenge.completed) {
-				return "done";
-			}
-			return "locked";
-		},
 		style() {
 			return [
 				layers[this.layer || this.tab.layer].componentStyles?.challenge,
@@ -48,8 +46,11 @@ export default {
 			];
 		},
 		title() {
-			if (this.challenge.title) {
-				return coerceComponent(this.challenge.titleDisplay, 'h3');
+			if (this.challenge.titleDisplay) {
+				return coerceComponent(this.challenge.titleDisplay, 'div');
+			}
+			if (this.challenge.name) {
+				return coerceComponent(this.challenge.name, 'h3');
 			}
 			return null;
 		},
@@ -82,6 +83,30 @@ export default {
 
 <style scoped>
 .challenge {
-    margin: var(--feature-margin);
+    background-color: var(--locked);
+    width: 250px;
+    min-height: 250px;
+    color: black;
+    font-size: 15px;
+    display: flex;
+    flex-flow: column;
+    align-items: center;
+}
+
+.challenge.done {
+    background-color: var(--bought);
+}
+
+.challenge button {
+    min-height: 50px;
+    width: 120px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    box-shadow: none !important;
+    background: transparent;
+}
+
+.challenge.maxed button {
+    cursor:  unset;
 }
 </style>

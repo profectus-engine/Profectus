@@ -1,7 +1,9 @@
 <template>
 	<div class="field">
 		<span class="field-title" v-if="title">{{ title }}</span>
-		<input type="range" :value="value" @input="e => $emit('change', e.target.value)" :min="min" :max="max" />
+		<tooltip :text="`${value}`">
+			<input type="range" :value="value" @input="e => $emit('change', parseInt(e.target.value))" :min="min" :max="max" />
+		</tooltip>
 	</div>
 </template>
 
@@ -9,7 +11,7 @@
 import './fields.css';
 
 export default {
-	name: 'TextField',
+	name: 'Slider',
 	props: {
 		title: String,
 		value: Number,
@@ -20,4 +22,11 @@ export default {
 </script>
 
 <style scoped>
+input {
+	margin-right: 0;
+}
+
+.value {
+	margin-left: 10px;
+}
 </style>

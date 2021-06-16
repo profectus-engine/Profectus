@@ -17,11 +17,13 @@ function updateOOMPS(diff) {
 	if (player.points != undefined) {
 		player.oompsMag = 0;
 		if (player.points.lte(new Decimal(1e100))) {
+			player.lastPoints = player.points;
 			return;
 		}
 
-		let curr = new Decimal(player.points);
+		let curr = player.points;
 		let prev = player.lastPoints || new Decimal(0);
+		player.lastPoints = curr;
 		if (curr.gt(prev)) {
 			if (curr.gte("10^^8")) {
 				curr = curr.slog(1e10);

@@ -20,7 +20,7 @@ const playerHandler = {
 			return true;
 		}
 
-		if (typeof target[key] == "undefined") {
+		if (target[key] == undefined) {
 			return;
 		}
 
@@ -95,7 +95,7 @@ function getHandler(prefix) {
 				return true;
 			}
 
-			if (typeof target[key] == "undefined") {
+			if (target[key] == undefined) {
 				return;
 			}
 

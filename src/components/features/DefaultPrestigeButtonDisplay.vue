@@ -58,7 +58,13 @@ export default {
 
 					return `${prefix} ${baseAmount} / ${nextAt} ${baseResource}`;
 				} else {
-					return `Next at ${formatWhole(layers[this.layer || this.tab.layer].baseAmount)} ${layers[this.layer || this.tab.layer].baseResource}`;
+					let amount;
+					if (layers[this.layer || this.tab.layer].roundUpCost) {
+						amount = formatWhole(layers[this.layer || this.tab.layer].nextAt);
+					} else {
+						amount = format(layers[this.layer || this.tab.layer].nextAt);
+					}
+					return `Next at ${amount} ${layers[this.layer || this.tab.layer].baseResource}`;
 				}
 			}
 			return "";

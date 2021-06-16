@@ -20,7 +20,7 @@
 			<button @click="buyable.sellOne" v-if="buyable.sellOne !== undefined && buyable.canSellOne !== false"
 				:class="{ 'buyable-button': true, can: buyable.unlocked, locked: !buyable.unlocked, feature: true }"
 				:style="{ 'background-color': buyable.canSellOne ? layerColor : '' }">
-				Sell All
+				Sell One
 			</button>
 		</div>
 	</div>

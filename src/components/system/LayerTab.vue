@@ -13,7 +13,7 @@
 					<default-layer-tab v-else />
 				</branches>
 			</div>
-			<button v-if="!disableMinimize" class="minimize" @click="toggleMinimized">▼</button>
+			<button v-if="minimizable" class="minimize" @click="toggleMinimized">▼</button>
 		</div>
 	</LayerProvider>
 </template>
@@ -32,7 +32,7 @@ export default {
 		layer: String,
 		index: Number,
 		forceFirstTab: Boolean,
-		disableMinimize: Boolean,
+		minimizable: Boolean,
 		tab: Function
 	},
 	data() {
@@ -40,7 +40,7 @@ export default {
 	},
 	computed: {
 		minimized() {
-			return !this.disableMinimize && player.minimized[this.layer];
+			return this.minimizable && player.minimized[this.layer];
 		},
 		name() {
 			return layers[this.layer].name;
@@ -91,6 +91,9 @@ export default {
 	},
 	watch: {
 		minimized(newValue) {
+			if (this.tab == undefined) {
+				return;
+			}
 			const tab = this.tab();
 			if (tab != undefined) {
 				if (newValue) {
@@ -108,6 +111,9 @@ export default {
 		}
 	},
 	mounted() {
+		if (this.tab == undefined) {
+			return;
+		}
 		const tab = this.tab();
 		if (tab != undefined) {
 			if (this.minimized) {
@@ -152,12 +158,16 @@ export default {
 }
 
 .layer-tab:not(.minimized) {
-	padding-top: 50px;
+	padding-top: 20px;
 	padding-bottom: 20px;
 	min-height: 100%;
     flex-grow: 1;
     text-align: center;
     position: relative;
+}
+
+.inner-tab > .layer-container > .layer-tab:not(.minimized) {
+	padding-top: 50px;
 }
 
 .layer-tab.minimized {
@@ -205,6 +215,11 @@ export default {
 	box-sizing: border-box;
 	text-align: left;
 	padding-left: 14px;
+}
+
+.subtabs.floating {
+	justify-content: center;
+	margin-top: -25px;
 }
 
 .modal-body .layer-tab {

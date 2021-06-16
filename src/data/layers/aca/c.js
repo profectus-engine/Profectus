@@ -73,7 +73,7 @@ export default {
 			done() {return player[this.layer].best.gte(4)},
 			effectDisplay: "You can toggle beep and boop (which do nothing)",
 			optionsDisplay: `
-				<div>
+				<div style="display: flex; justify-content: center">
 					<Toggle :value="player.c.beep" @change="value => player.c.beep = value" />
 					<Toggle :value="player.f.boop" @change="value => player.f.boop = value" />
 				</div>
@@ -160,21 +160,23 @@ export default {
 	},
 	buyables: {
 		showRespec: true,
-		respec() { // Optional, reset things and give back your currency. Having this function makes a respec button appear
+		reset() { // Optional, reset things and give back your currency. Having this function makes a respec button appear
 			player[this.layer].points = player[this.layer].points.add(player[this.layer].spentOnBuyables) // A built-in thing to keep track of this but only keeps a single value
-			this.reset;
+			this.reset();
 			resetLayer(this.layer, true) // Force a reset
 		},
 		respecText: "Respec Thingies", // Text on Respec button, optional
 		respecMessage: "Are you sure? Respeccing these doesn't accomplish much.",
 		11: {
 			title: "Exhancers", // Optional, displayed at the top in a larger font
-			cost(x) { // cost for buying xth buyable, can be an object if there are multiple currencies
+			cost() { // cost for buying xth buyable, can be an object if there are multiple currencies
+				let x = this.amount;
 				if (x.gte(25)) x = x.pow(2).div(25)
 				let cost = Decimal.pow(2, x.pow(1.5))
 				return cost.floor()
 			},
-			effect(x) { // Effects of owning x of the items, x is a decimal
+			effect() { // Effects of owning x of the items, x is a decimal
+				let x = this.amount;
 				let eff = {}
 				if (x.gte(0)) eff.first = Decimal.pow(25, x.pow(1.1))
 				else eff.first = Decimal.pow(1/25, x.times(-1).pow(1.1))
@@ -212,7 +214,6 @@ export default {
 	doReset(resettingLayer){ // Triggers when this layer is being reset, along with the layer doing the resetting. Not triggered by lower layers resetting, but is by layers on the same row.
 		if(layers[resettingLayer].row > this.row) resetLayerData(this.layer, ["points"]) // This is actually the default behavior
 	},
-	layerShown() {return true}, // Condition for when layer appears on the tree
 	automate() {
 	}, // Do any automation inherent to this layer if appropriate
 	resetsNothing() {return false},
@@ -229,15 +230,13 @@ export default {
 	microtabs: {
 		stuff: {
 			first: {
-				content: ["upgrades", ["display-text", function() {return "confirmed"}]]
+				display: `<div v-frag>
+					<upgrades />
+					<div>confirmed</div>
+				</div>`
 			},
 			second: {
-				embedLayer: "f",
-
-				content: [["upgrade", 11],
-						["row", [["upgrade", 11], "blank", "blank", ["upgrade", 11],]],
-
-					["display-text", function() {return "double confirmed"}]]
+				embedLayer: "f"
 			},
 		},
 		otherStuff: {
@@ -377,7 +376,7 @@ export default {
 				<div v-frag>
 					<h1> C O N F I R M E D </h1>
 					<spacer />
-					<microtab family="stuff" style="width: 600px; height: 350px; background-color: brown; border-style: solid" />
+					<microtab family="stuff" style="width: 660px; height: 370px; background-color: brown; border: solid white; margin: auto" />
 					<div>Adjust how many points H gives you!</div>
 					<Slider :value="player.c.otherThingy" @change="value => player.c.otherThingy = value" :min="1" :max="30" />
 				</div>

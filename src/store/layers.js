@@ -2,7 +2,7 @@ import { isFunction, isPlainObject } from '../util/common';
 import { createProxy, createGridProxy, player } from './proxies';
 import Decimal from '../util/bignum';
 import store from './index';
-import { resetLayer, noCache, getStartingBuyables, getStartingClickables, getStartingChallenges } from '../util/layers';
+import { noCache, getStartingBuyables, getStartingClickables, getStartingChallenges, defaultLayerProperties } from '../util/layers';
 
 export const layers = {};
 export const hotkeys = [];
@@ -28,19 +28,15 @@ export function addLayer(layer) {
 	// Set default property values
 	layer = Object.assign({}, defaultLayerProperties, layer);
 	layer.layer = layer.id;
-	if (layer.shown == undefined) {
-		layer.shown = true;
-	}
-	if (layer.onClick != undefined) {
-		layer.onClick.forceCached = false;
-	}
-	if (layer.update != undefined) {
-		layer.update.forceCached = false;
-	}
 
 	const getters = {};
 
 	// Process each feature
+	for (let property of uncachedProperties) {
+		if (layer[property]) {
+			layer[property].forceCached = false;
+		}
+	}
 	for (let property of gridProperties) {
 		if (layer[property]) {
 			setRowCol(layer[property]);
@@ -144,8 +140,17 @@ export function addLayer(layer) {
 		}
 		for (let id in layer.challenges) {
 			if (isPlainObject(layer.challenges[id])) {
+				if (layer.challenges[id].onComplete != undefined) {
+					layer.challenges[id].onComplete.forceCached = false;
+				}
+				if (layer.challenges[id].onEnter != undefined) {
+					layer.challenges[id].onEnter.forceCached = false;
+				}
+				if (layer.challenges[id].onExit != undefined) {
+					layer.challenges[id].onExit.forceCached = false;
+				}
 				layer.challenges[id].completed = function() {
-					return !layer.deactivated && !!player[layer.id].challenges[id];
+					return !layer.deactivated && player[layer.id].challenges[id]?.gt(0);
 				}
 				layer.challenges[id].completions = function() {
 					return player[layer.id].challenges[id];
@@ -185,7 +190,7 @@ export function addLayer(layer) {
 				if (layer.challenges[id].completionLimit == undefined) {
 					layer.challenges[id].completionLimit = new Decimal(1);
 				}
-				layer.challenges[id].toggle = function() {
+				layer.challenges[id].toggle = noCache(function() {
 					let exiting = player[layer.id].activeChallenge === id;
 					if (exiting) {
 						if (this.canComplete && !this.maxed) {
@@ -199,17 +204,20 @@ export function addLayer(layer) {
 						}
 						player[layer.id].activeChallenge = null;
 						this.onExit?.();
-						resetLayer(layer.id, true);
+						layer.reset(true);
 					} else if (!exiting && this.canStart) {
-						resetLayer(layer.id, true);
+						layer.reset(true);
 						player[layer.id].activeChallenge = id;
 						this.onEnter?.();
 					}
-				}
+				});
 				if (layer.challenges[id].canStart == undefined) {
 					layer.challenges[id].canStart = true;
 				}
 			}
+		}
+		layer.activeChallenge = function() {
+			return Object.values(this.challenges).find(challenge => challenge.active);
 		}
 	}
 	if (layer.buyables) {
@@ -220,6 +228,8 @@ export function addLayer(layer) {
 			layer.buyables.reset = noCache(function() {
 				player[this.layer].buyables = getStartingBuyables(layer);
 			});
+		} else {
+			layer.buyables.reset.forceCached = false;
 		}
 		for (let id in layer.buyables) {
 			if (isPlainObject(layer.buyables[id])) {
@@ -366,11 +376,18 @@ export function addLayer(layer) {
 				}
 			}
 			layer.microtabs[family].activeMicrotab = function() {
-				if (this[player.subtabs[layer.id][family]]?.unlocked !== false) {
+				if (this[player.subtabs[layer.id][family]] && this[player.subtabs[layer.id][family]].unlocked !== false) {
 					return this[player.subtabs[layer.id][family]];
 				}
 				// Default to first unlocked tab
-				return Object.values(this).find(microtab => microtab.unlocked !== false);
+				return this[Object.keys(this).find(microtab => microtab !== 'activeMicrotab' && this[microtab].unlocked !== false)];
+			}
+		}
+	}
+	if (layer.hotkeys) {
+		for (let id in layer.hotkeys) {
+			if (layer.hotkeys[id].onPress) {
+				layer.hotkeys[id].onPress.forceCached = false;
 			}
 		}
 	}
@@ -409,180 +426,7 @@ export function reloadLayer(layer) {
 	addLayer(layer);
 }
 
-export const defaultLayerProperties = {
-	type: "none",
-	layerShown: true,
-	glowColor: "red",
-	minWidth: 640,
-	displayRow() {
-		return this.row;
-	},
-	symbol() {
-		return this.id;
-	},
-	unlocked() {
-		if (player[this.id].unlocked) {
-			return true;
-		}
-		if (this.type !== "none" && this.canReset && this.layerShown) {
-			return true;
-		}
-		return false;
-	},
-	trueGlowColor() {
-		if (this.subtabs) {
-			for (let subtab of Object.values(this.subtabs)) {
-				if (subtab.notify) {
-					return subtab.glowColor || "red";
-				}
-			}
-		}
-		if (this.microtabs) {
-			for (let microtab of Object.values(this.microtabs)) {
-				if (microtab.notify) {
-					return microtab.glowColor || "red";
-				}
-			}
-		}
-		return this.glowColor || "red";
-	},
-	resetGain() {
-		if (this.type === "none" || this.type === "custom") {
-			return new Decimal(0);
-		}
-		if (this.gainExp?.eq(0)) {
-			return new Decimal(0);
-		}
-		if (this.baseAmount.lt(this.requires)) {
-			return new Decimal(0);
-		}
-		if (this.type === "static") {
-			if (!this.canBuyMax) {
-				return new Decimal(1);
-			}
-			let gain = this.baseAmount.div(this.requires).div(this.gainMult || 1).max(1).log(this.base)
-				.times(this.gainExp || 1).pow(Decimal.pow(this.exponent || 1, -1));
-			gain = gain.times(this.directMult || 1);
-			return gain.floor().sub(player[this.layer].points).add(1).max(1);
-		}
-		if (this.type === "normal") {
-			let gain = this.baseAmount.div(this.requires).pow(this.exponent || 1).times(this.gainMult || 1)
-				.pow(this.gainExp || 1);
-			if (this.softcap && gain.gte(this.softcap)) {
-				gain = gain.pow(this.softcapPower).times(this.softcap.pow(Decimal.sub(1, this.softcapPower)));
-			}
-			gain = gain.times(this.directMult || 1);
-			return gain.floor().max(0);
-		}
-		// Unknown prestige type
-		return new Decimal(0);
-	},
-	nextAt() {
-		if (this.type === "none" || this.type === "custom") {
-			return new Decimal(Infinity);
-		}
-		if (this.gainMult?.lte(0) || this.gainExp?.lte(0)) {
-			return new Decimal(Infinity);
-		}
-		if (this.type === "static") {
-			const amount = player[this.layer].points.div(this.directMult || 1);
-			const extraCost = Decimal.pow(this.base, amount.pow(this.exponent || 1).div(this.gainExp || 1))
-				.times(this.gainMult || 1);
-			let cost = extraCost.times(this.requires).max(this.requires);
-			if (this.roundUpCost) {
-				cost = cost.ceil();
-			}
-			return cost;
-		}
-		if (this.type === "normal") {
-			let next = this.resetGain.div(this.directMult || 1);
-			if (this.softcap && next.gte(this.softcap)) {
-				next = next.div(this.softcap.pow(Decimal.sub(1, this.softcapPower)))
-					.pow(Decimal.div(1, this.softcapPower));
-			}
-			next = next.root(this.gainExp || 1).div(this.gainMult || 1).root(this.exponent || 1)
-				.times(this.requires).max(this.requires);
-			if (this.roundUpCost) {
-				next = next.ceil();
-			}
-			return next;
-		}
-		// Unknown prestige type
-		return new Decimal(0);
-	},
-	nextAtMax() {
-		if (!this.canBuyMax || this.type !== "static") {
-			return this.nextAt;
-		}
-		const amount = player[this.layer].points.plus(this.resetGain).div(this.directMult || 1);
-		const extraCost = Decimal.pow(this.base, amount.pow(this.exponent || 1).div(this.gainExp || 1))
-			.times(this.gainMult || 1);
-		let cost = extraCost.times(this.requires).max(this.requires);
-		if (this.roundUpCost) {
-			cost = cost.ceil();
-		}
-		return cost;
-	},
-	canReset() {
-		if (this.type === "normal") {
-			return this.baseAmount.gte(this.requires);
-		}
-		if (this.type === "static") {
-			return this.baseAmount.gte(this.nextAt);
-		}
-		return false;
-	},
-	notify() {
-		if (this.upgrades) {
-			if (Object.values(this.upgrades).some(upgrade => upgrade.canAfford && !upgrade.bought && upgrade.unlocked)) {
-				return true;
-			}
-		}
-		if (player[this.layer].activeChallenge && this.challenges[player[this.layer].activeChallenge].canComplete) {
-			return true;
-		}
-		if (this.subtabs) {
-			if (Object.values(this.subtabs).some(subtab => subtab.notify)) {
-				return true;
-			}
-		}
-		if (this.microtabs) {
-			if (Object.values(this.microtabs).some(subtab => subtab.notify)) {
-				return true;
-			}
-		}
-
-		return false;
-	},
-	resetNotify() {
-		if (this.subtabs) {
-			if (Object.values(this.subtabs).some(subtab => subtab.prestigeNotify)) {
-				return true;
-			}
-		}
-		if (this.microtabs) {
-			if (Object.values(this.microtabs).some(microtab => microtab.prestigeNotify)) {
-				return true;
-			}
-		}
-		if (this.autoPrestige || this.passiveGeneration) {
-			return false;
-		}
-		if (this.type === "static") {
-			return this.canReset;
-		}
-		if (this.type === "normal") {
-			return this.canReset && this.resetGain.gte(player[this.layer].points.div(10));
-		}
-		return false;
-	},
-	reset(force = false) {
-		console.warn("Not yet implemented!", force);
-	},
-	resetData(keep = []) {
-		console.warn("Not yet implemented!", keep);
-	}
-};
+const uncachedProperties = [ 'startData', 'onClick', 'update', 'reset', 'hardReset' ];
 const gridProperties = [ 'upgrades', 'achievements', 'challenges', 'buyables', 'clickables' ];
 const featureProperties = [ 'upgrades', 'achievements', 'challenges', 'buyables', 'clickables', 'milestones', 'bars',
 	'infoboxes', 'grids', 'hotkeys', 'subtabs' ];

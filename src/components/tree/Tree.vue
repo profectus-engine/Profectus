@@ -8,7 +8,7 @@
 		</span>
 		<modal :show="showModal" @close="closeModal">
 			<div slot="header"><h2 v-if="modalHeader">{{ modalHeader }}</h2></div>
-			<layer-tab slot="body" v-if="modal" :layer="modal" :index="tab.index" :forceFirstTab="true" :disableMinimize="true" />
+			<layer-tab slot="body" v-if="modal" :layer="modal" :index="tab.index" :forceFirstTab="true" />
 		</modal>
 	</div>
 </template>

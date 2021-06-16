@@ -26,6 +26,10 @@ h1, h2, h3, b, input {
 	display: inline;
 }
 
+button {
+	color: black;
+}
+
 a,
 .button,
 .link {

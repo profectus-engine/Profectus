@@ -13,7 +13,7 @@ const g = {
 	symbol: "TH",
 	branches: ["c"],
 	color: '#6d3678',
-	layerShown: true,
+	shown: true,
 	canClick() {return player.points.gte(10)},
 	tooltip: "Thanos your points",
 	onClick() {
@@ -23,8 +23,7 @@ const g = {
 };
 const h = {
 	id: "h",
-	branches: ["g", { target: 'flatBoi', featureType: 'bar', endOffset: { x: () => -50 + 100 * layers.c.bars.flatBoi.progress.toNumber() } }],
-	layerShown: true,
+	branches: ["g", () => ({ target: 'flatBoi', featureType: 'bar', endOffset: { x: -50 + 100 * layers.c.bars.flatBoi.progress.toNumber() } })],
 	tooltip() {return "Restore your points to " + player.c.otherThingy},
 	row: "side",
 	canClick() {return player.points.lt(player.c.otherThingy)},
@@ -49,6 +48,7 @@ const main = {
 		<div v-if="Decimal.gt($store.getters.pointGain, 0)">
 			({{ player.oompsMag != 0 ? format(player.oomps) + " OOM" + (player.oompsMag < 0 ? "^OOM" : player.oompsMag > 1 ? "^" + player.oompsMag : "") + "s" : formatSmall($store.getters.pointGain) }}/sec)
 		</div>
+		<spacer />
 		<tree :append="true" />
 	</div>`,
 	name: "Tree"

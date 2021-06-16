@@ -1,5 +1,5 @@
 <template>
-	<div v-if="milestone.shown" :style="style" :class="{ feature: true,  milestone: !milestone.earned, milestoneDone: milestone.earned }">
+	<div v-if="milestone.shown" :style="style" :class="{ feature: true,  milestone: true, done: milestone.earned }">
 		<div v-if="requirementDisplay"><component :is="requirementDisplay" /></div>
 		<div v-if="effectDisplay"><component :is="effectDisplay" /></div>
 		<component v-if="optionsDisplay" :is="optionsDisplay" />
@@ -42,7 +42,7 @@ export default {
 			return null;
 		},
 		optionsDisplay() {
-			if (this.milestone.optionsDisplay) {
+			if (this.milestone.optionsDisplay && this.milestone.earned) {
 				return coerceComponent(this.milestone.optionsDisplay, 'div');
 			}
 			return null;
@@ -62,5 +62,11 @@ export default {
     border-width: 4px;
     border-radius: 5px;
     color: rgba(0, 0, 0, 0.5);
+    margin: 0;
+}
+
+.milestone.done {
+    background-color: var(--bought);
+    cursor: default;
 }
 </style>

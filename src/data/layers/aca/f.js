@@ -33,7 +33,6 @@ export default {
     //directMult() {return new Decimal(player.c.otherThingy)},
 
     row: 1,
-    layerShown() {return true},
     branches: [{ target: "c", 'stroke-width': '25px', 'stroke': 'blue', style: 'filter: blur(5px)' }], // When this layer appears, a branch will appear from this layer to any layers here. Each entry can be a pair consisting of a layer id and a color.
 
     tooltipLocked() { // Optional, tooltip displays when the layer is locked

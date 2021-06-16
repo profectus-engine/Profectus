@@ -32,14 +32,11 @@ export default {
 			return coerceComponent(`format(${this.goal}) ${this.currencyDisplayName || 'points'}`);
 		},
 		rewardDescription() {
-			return coerceComponent(this.challenge.goalDescription);
+			return coerceComponent(this.challenge.rewardDescription);
 		},
 		rewardDisplay() {
 			if (this.challenge.rewardDisplay) {
-				return coerceComponent(this.challenge.rewardDisplay);
-			}
-			if (this.challenge.rewardEffect) {
-				return coerceComponent(`Currently: ${this.challenge.rewardEffect}`);
+				return coerceComponent(`Currently: ${this.challenge.rewardDisplay}`);
 			}
 			return null;
 		},

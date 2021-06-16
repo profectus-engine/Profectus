@@ -1,7 +1,7 @@
 .feature,
 .feature button {
     position: relative;
-    padding-top: 5px;
+    padding: 5px;
     border-radius: var(--border-radius);
     border: 2px solid rgba(0, 0, 0, 0.125);
     margin: var(--feature-margin);
