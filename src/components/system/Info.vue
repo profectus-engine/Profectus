@@ -18,9 +18,9 @@
 			<div class="link" @click="$emit('openDialog', 'Changelog')">Changelog</div>
 			<br>
 			<div>
-				<a :href="discordLink" v-if="discordLink !== 'https://discord.gg/WzejVAx'">
+				<a :href="discordLink" v-if="discordLink !== 'https://discord.gg/WzejVAx'" class="info-modal-discord-link">
 					<img src="images/discord.png" class="info-modal-discord" />
-					{{ discordLink }}
+					{{ discordName }}
 				</a>
 			</div>
 			<div>
@@ -55,7 +55,7 @@
 </template>
 
 <script>
-import modInfo from '../../data/modInfo';
+import modInfo from '../../data/modInfo.json';
 import { formatTime } from '../../util/bignum';
 import { hotkeys } from '../../store/layers';
 

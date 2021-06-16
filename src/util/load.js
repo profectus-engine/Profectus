@@ -11,7 +11,6 @@ export function getInitialStore() {
 		offlineProd: true,
 		timePlayed: new Decimal(0),
 		keepGoing: false,
-		hasNaN: false,
 		lastTenTicks: [],
 		showTPS: true,
 		msDisplay: "all",
@@ -32,6 +31,12 @@ export function getInitialStore() {
 				...layer.startData?.()
 			};
 			return acc;
-		}, {})
+		}, {}),
+
+		// Values that don't get saved
+		hasNaN: false,
+		NaNProperty: "",
+		NaNReceiver: null,
+		NaNPrevious: null
 	}
 }

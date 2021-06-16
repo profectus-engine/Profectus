@@ -13,15 +13,9 @@
 			<div>Please check the Discord to discuss the game or to check for new content updates!</div>
 			<br>
 			<div>
-				<a :href="discordLink" v-if="discordLink !== 'https://discord.gg/WzejVAx'">
+				<a :href="discordLink">
 					<img src="images/discord.png" class="game-over-modal-discord" />
-					{{ discordLink }}
-				</a>
-			</div>
-			<div>
-				<a href="https://discord.gg/WzejVAx" class="game-over-modal-discord-link">
-					<img src="images/discord.png" class="game-over-modal-discord" />
-					The Paper Pilot Community
+					{{ discordName }}
 				</a>
 			</div>
 		</div>
@@ -33,7 +27,7 @@
 </template>
 
 <script>
-import modInfo from '../../data/modInfo';
+import modInfo from '../../data/modInfo.json';
 import { formatTime } from '../../util/bignum';
 import { player } from '../../store/proxies';
 

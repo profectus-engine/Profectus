@@ -4,6 +4,7 @@
 		<Tabs />
 		<TPS v-if="showTPS" />
 		<GameOverScreen />
+		<NaNScreen />
 		<portal-target name="modal-root" multiple />
 	</div>
 </template>

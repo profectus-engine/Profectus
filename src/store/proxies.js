@@ -33,7 +33,17 @@ const playerHandler = {
 
 		return target[key];
 	},
-	set(target, property, value) {
+	set(target, property, value, receiver) {
+		if (!player.hasNaN && value instanceof Decimal && (isNaN(value.sign) || isNaN(value.layer) || isNaN(value.mag))) {
+			player.autosave = false;
+			player.hasNaN = true;
+			player.NaNProperty = property;
+			player.NaNReceiver = receiver;
+			player.NaNPrevious = target[property];
+			Vue.set(target, property, value);
+			console.error(`Attempted to set NaN value`, target, property);
+			throw 'Attempted to set NaN value. See above for details';
+		}
 		Vue.set(target, property, value);
 		if (property === 'points') {
 			if (target.best != undefined) {

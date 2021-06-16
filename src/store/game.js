@@ -107,6 +107,10 @@ function update() {
 	if (store.getters.hasWon && !player.keepGoing) {
 		return;
 	}
+	// Stop here if the player had a NaN value
+	if (player.hasNaN) {
+		return;
+	}
 
 	diff = new Decimal(diff).max(0);
 
