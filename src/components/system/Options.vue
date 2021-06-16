@@ -6,7 +6,7 @@
 		<div slot="body">
 			<div class="actions">
 				<button class="button" @click="save">Manually Save</button>
-				<button @click="exportSave" class="button" >Export</button>
+				<button @click="exportSave" class="button">Export</button>
 				<button @click="importSave" class="button danger">Import</button>
 				<button @click="hardReset" class="button danger">Hard Reset</button>
 			</div>

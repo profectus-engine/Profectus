@@ -37,6 +37,7 @@ import Toggle from './fields/Toggle';
 /* system */
 import Column from './system/Column';
 import DefaultLayerTab from './system/DefaultLayerTab';
+import GameOverScreen from './system/GameOverScreen';
 import Info from './system/Info';
 import LayerProvider from './system/LayerProvider';
 import LayerTab from './system/LayerTab';
@@ -103,6 +104,7 @@ Vue.component(Toggle.name, Toggle);
 /* system */
 Vue.component(Column.name, Column);
 Vue.component(DefaultLayerTab.name, DefaultLayerTab);
+Vue.component(GameOverScreen.name, GameOverScreen);
 Vue.component(Info.name, Info);
 Vue.component(LayerProvider.name, LayerProvider);
 Vue.component(LayerTab.name, LayerTab);
