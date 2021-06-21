@@ -17,6 +17,7 @@
 				</ul>
 			</div>
 			<div class="info" @click="openDialog('Info')"><br/>i</div>
+			<img class="options" src="images/options_wheel.png" @click="openDialog('Saves')" />
 			<img class="options" src="images/options_wheel.png" @click="openDialog('Options')" />
 		</div>
 		<div v-else>
@@ -32,10 +33,12 @@
 				</ul>
 			</div>
 			<div class="info overlay" @click="openDialog('Info')"><br/>i</div>
+			<img class="options overlay" src="images/options_wheel.png" @click="openDialog('Saves')" />
 			<img class="options overlay" src="images/options_wheel.png" @click="openDialog('Options')" />
 			<div class="version overlay" @click="openDialog('Changelog')">v{{ version }}</div>
 		</div>
 		<Info :show="showInfo" @openDialog="openDialog" @closeDialog="closeDialog" />
+		<SavesManager :show="showSaves" @closeDialog="closeDialog" />
 		<Options :show="showOptions" @closeDialog="closeDialog" />
 	</div>
 </template>
@@ -54,6 +57,7 @@ export default {
 			discordLink: modInfo.discordLink,
 			version: modInfo.versionNumber,
 			showInfo: false,
+			showSaves: false,
 			showOptions: false,
 			showChangelog: false
 		}
@@ -119,6 +123,7 @@ export default {
 		width: 200px;
 		transition: right .25s ease;
 		background: var(--secondary-background);
+		z-index: 1;
 	}
 
 	.discord.overlay .discord-links {

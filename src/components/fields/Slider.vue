@@ -22,11 +22,4 @@ export default {
 </script>
 
 <style scoped>
-input {
-	margin-right: 0;
-}
-
-.value {
-	margin-left: 10px;
-}
 </style>

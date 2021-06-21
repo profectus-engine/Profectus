@@ -29,15 +29,9 @@ export default {
 		};
 	},
 	mounted() {
-		this.$nextTick(() => {
-			if (this.$refs.resizeListener == undefined) {
-				this.mounted();
-			} else {
-				// ResizeListener exists because ResizeObserver's don't work when told to observe an SVG element
-				this.resizeObserver.observe(this.$refs.resizeListener);
-				this.updateNodes();
-			}
-		});
+		// ResizeListener exists because ResizeObserver's don't work when told to observe an SVG element
+		this.resizeObserver.observe(this.$refs.resizeListener);
+		this.updateNodes();
 	},
 	provide() {
 		return {
@@ -77,7 +71,7 @@ export default {
 			});
 		},
 		unregisterNode(id) {
-			delete this.nodes[id];
+			Vue.delete(this.nodes, id);
 		},
 		registerBranch(start, options) {
 			const end = typeof options === 'string' ? options : options.target;

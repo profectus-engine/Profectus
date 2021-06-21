@@ -1,0 +1,169 @@
+import modInfo from '../data/modInfo';
+import { getStartingData, getInitialLayers, fixOldSave } from '../data/mod';
+import { getStartingBuyables, getStartingClickables, getStartingChallenges } from './layers';
+import { player } from '../store/proxies';
+import Decimal from './bignum';
+
+export const NOT_IMPORTING = false;
+export const IMPORTING = true;
+export const IMPORTING_FAILED = "FAILED";
+export const IMPORTING_WRONG_ID = "WRONG_ID";
+export const IMPORTING_FORCE = "FORCE";
+
+export function getInitialStore(playerData = {}) {
+	playerData = applyPlayerData({
+		id: `${modInfo.id}-0`,
+		name: "Default Save",
+		tabs: modInfo.initialTabs.slice(),
+		time: Date.now(),
+		autosave: true,
+		offlineProd: true,
+		timePlayed: new Decimal(0),
+		keepGoing: false,
+		lastTenTicks: [],
+		showTPS: true,
+		msDisplay: "all",
+		hideChallenges: false,
+		theme: "paper",
+		subtabs: {},
+		minimized: {},
+		modID: modInfo.id,
+		modVersion: modInfo.versionNumber,
+		...getStartingData(),
+
+		// Values that don't get loaded/saved
+		hasNaN: false,
+		NaNProperty: "",
+		NaNReceiver: null,
+		NaNPrevious: null,
+		importing: NOT_IMPORTING,
+		saveToImport: "",
+		saveToExport: ""
+	}, playerData);
+
+	Object.assign(playerData, getInitialLayers(playerData).reduce((acc, layer) => {
+		acc[layer.id] = applyPlayerData({
+			upgrades: [],
+			achievements: [],
+			milestones: [],
+			infoboxes: {},
+			buyables: getStartingBuyables(layer),
+			clickables: getStartingClickables(layer),
+			challenges: getStartingChallenges(layer),
+			...layer.startData?.()
+		}, playerData[layer.id]);
+		return acc;
+	}, {}));
+
+	return playerData;
+}
+
+export function save() {
+	/* eslint-disable-next-line no-unused-vars */
+	let { hasNaN, NaNProperty, NaNReceiver, NaNPrevious, importing, saveToImport, saveToExport, ...playerData } = player;
+	player.saveToExport = btoa(unescape(encodeURIComponent(JSON.stringify(playerData))));
+
+	localStorage.setItem(player.id, player.saveToExport);
+}
+
+export async function load() {
+	try {
+		let modData = localStorage.getItem(modInfo.id);
+		if (modData == null) {
+			await loadSave(newSave());
+			return;
+		}
+		modData = JSON.parse(decodeURIComponent(escape(atob(modData))));
+		if (modData?.active == null) {
+			await loadSave(newSave());
+			return;
+		}
+		const save = localStorage.getItem(modData.active);
+		const playerData = JSON.parse(decodeURIComponent(escape(atob(save))));
+		if (playerData.modID !== modInfo.id) {
+			await loadSave(newSave());
+			return;
+		}
+		await loadSave(playerData);
+	} catch (e) {
+		await loadSave(newSave());
+	}
+}
+
+export async function newSave() {
+	const id = getUniqueID();
+	const playerData = getInitialStore({ id });
+	localStorage.setItem(id, btoa(unescape(encodeURIComponent(JSON.stringify(playerData)))));
+
+	if (!localStorage.getItem(modInfo.id)) {
+		const modData = { active: id, saves: [ id ] };
+		localStorage.setItem(modInfo.id, btoa(unescape(encodeURIComponent(JSON.stringify(modData)))));
+	} else {
+		const modData = JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)))));
+		modData.saves.push(id);
+		localStorage.setItem(modInfo.id, btoa(unescape(encodeURIComponent(JSON.stringify(modData)))));
+	}
+
+	return playerData;
+}
+
+export function getUniqueID() {
+	let id, i = 0;
+	do {
+		id = `${modInfo.id}-${i++}`;
+	} while (localStorage.getItem(id));
+	return id;
+}
+
+export async function loadSave(playerData) {
+	const { layers, removeLayer, addLayer } = await import('../store/layers');
+
+	for (let layer in layers) {
+		removeLayer(layer);
+	}
+	getInitialLayers(playerData).forEach(addLayer);
+
+	playerData = getInitialStore(playerData);
+	if (playerData.offlineProd) {
+		if (playerData.offTime === undefined)
+			playerData.offTime = { remain: 0 };
+		playerData.offTime.remain += (Date.now() - playerData.time) / 1000;
+	}
+	playerData.time = Date.now();
+	if (playerData.modVersion !== modInfo.versionNumber) {
+		fixOldSave(playerData.modVersion, playerData);
+	}
+
+	Object.assign(player, playerData);
+	for (let prop in player) {
+		if (!(prop in playerData)) {
+			delete player[prop];
+		}
+	}
+}
+
+function applyPlayerData(target, source) {
+	for (let prop in source) {
+		if (target[prop] == null) {
+			target[prop] = source[prop];
+		} else if (target[prop] instanceof Decimal) {
+			target[prop] = new Decimal(source[prop]);
+		} else if (Array.isArray(target[prop]) || typeof target[prop] === 'object') {
+			target[prop] = applyPlayerData(target[prop], source[prop]);
+		} else {
+			target[prop] = source[prop];
+		}
+	}
+	return target;
+}
+
+setInterval(() => {
+	if (player.autosave) {
+		save();
+	}
+}, 1000);
+window.onbeforeunload = () => {
+	if (player.autosave) {
+		save();
+	}
+};

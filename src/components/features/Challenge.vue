@@ -1,5 +1,5 @@
 <template>
-	<div v-if="shown" :style="style"
+	<div v-if="challenge.shown" :style="style"
 		:class="{
 			feature: true,
 			challenge: true,
@@ -21,7 +21,6 @@
 
 <script>
 import { layers } from '../../store/layers';
-import { player } from '../../store/proxies';
 import { coerceComponent } from '../../util/vue';
 import './features.css';
 
@@ -35,9 +34,6 @@ export default {
 	computed: {
 		challenge() {
 			return layers[this.layer || this.tab.layer].challenges[this.id];
-		},
-		shown() {
-			return this.challenge.unlocked && !(player.hideChallenges && this.challenge.maxes);
 		},
 		style() {
 			return [

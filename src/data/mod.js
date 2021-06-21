@@ -54,7 +54,7 @@ const main = {
 	name: "Tree"
 };
 
-export const initialLayers = [ main, f, c, a, g, h, spook ];
+export const getInitialLayers = () => [ main, f, c, a, g, h, spook ];
 
 export function getStartingData() {
 	return {
@@ -80,7 +80,7 @@ export function update(delta) {
 }
 
 /* eslint-disable-next-line no-unused-vars */
-export function fixOldSave(oldVersion) {
+export function fixOldSave(oldVersion, playerData) {
 }
 
 document.title = modInfo.title;

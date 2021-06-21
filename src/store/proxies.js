@@ -57,6 +57,10 @@ const playerHandler = {
 			}
 		}
 		return true;
+	},
+	deleteProperty(target, prop) {
+		Vue.delete(target, prop);
+		return true;
 	}
 };
 export const player = window.player = new Proxy(store.state, playerHandler);

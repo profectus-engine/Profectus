@@ -311,7 +311,7 @@ export default {
 					<spacer height="5px" />
 					<button onclick='console.log("yeet")'>'HI'</button>
 					<div>Name your points!</div>
-					<TextField :value="player.c.thingy" @change="value => player.c.thingy = value" />
+					<TextField :value="player.c.thingy" @input="value => player.c.thingy = value" :field="false" />
 					<sticky style="color: red; font-size: 32px; font-family: Comic Sans MS;">I have {{ format(player.points) }} {{ player.c.thingy }} points!</sticky>
 					<hr />
 					<milestones />

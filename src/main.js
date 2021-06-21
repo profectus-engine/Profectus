@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import App from './App';
 import store from './store';
-import { addLayer} from './store/layers';
+import { load } from './util/save';
 import { setVue } from './util/vue';
 import { startGameLoop } from './store/game';
 import './components/index';
@@ -10,9 +10,7 @@ import './components/index';
 Vue.config.productionTip = false;
 
 requestAnimationFrame(async () => {
-	// Add layers on second frame so dependencies can resolve
-	const { initialLayers } = await import('./data/mod');
-	initialLayers.forEach(addLayer);
+	await load();
 
 	// Create Vue
 	const vue = window.vue = new Vue({

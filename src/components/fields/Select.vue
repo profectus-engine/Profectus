@@ -30,20 +30,14 @@ export default {
 };
 </script>
 
-<style scoped>
-span {
-	margin: 0;
-}
-</style>
-
 <style>
 .v-select {
     width: 50%;
-    margin: 0;
 }
 
 .v-select .vs__dropdown-toggle {
 	border-color: rgba(var(--color), .26);
+    margin: -1px 0;
 }
 
 .v-select .vs__selected {
@@ -63,5 +57,9 @@ span {
 
 .v-select .vs__dropdown-option {
 	color: var(--color);
+}
+
+.v-select .vs__open-indicator {
+	cursor: pointer;
 }
 </style>

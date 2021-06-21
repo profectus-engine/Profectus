@@ -48,6 +48,14 @@ a:hover,
 		-3px 0 12px var(--link);
 }
 
+.button:disabled {
+	opacity: .5;
+	cursor: not-allowed;
+}
+.button:disabled:hover {
+	text-shadow: none;
+}
+
 ul {
 	list-style-type: none;
 }

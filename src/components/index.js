@@ -30,6 +30,8 @@ import RespecButton from './features/RespecButton';
 import Upgrade from './features/Upgrade';
 import Upgrades from './features/Upgrades';
 /* fields */
+import DangerButton from './fields/DangerButton';
+import FeedbackButton from './fields/FeedbackButton';
 import Select from './fields/Select';
 import Slider from './fields/Slider';
 import Text from './fields/Text';
@@ -48,6 +50,8 @@ import Nav from './system/Nav';
 import Options from './system/Options';
 import Resource from './system/Resource';
 import Row from './system/Row';
+import Save from './system/Save';
+import SavesManager from './system/SavesManager';
 import Spacer from './system/Spacer';
 import Sticky from './system/Sticky';
 import Subtab from './system/Subtab';
@@ -70,6 +74,7 @@ import PerfectScrollbar from 'vue2-perfect-scrollbar';
 import 'vue2-perfect-scrollbar/dist/vue2-perfect-scrollbar.css';
 import VueTextareaAutosize from 'vue-textarea-autosize';
 import PortalVue from 'portal-vue';
+import Sortable from 'vue-sortable';
 
 /* features */
 Vue.component(Achievement.name, Achievement);
@@ -98,6 +103,8 @@ Vue.component(RespecButton.name, RespecButton);
 Vue.component(Upgrade.name, Upgrade);
 Vue.component(Upgrades.name, Upgrades);
 /* fields */
+Vue.component(DangerButton.name, DangerButton);
+Vue.component(FeedbackButton.name, FeedbackButton);
 Vue.component(Select.name, Select);
 Vue.component(Slider.name, Slider);
 Vue.component(Text.name, Text);
@@ -116,6 +123,8 @@ Vue.component(Nav.name, Nav);
 Vue.component(Options.name, Options);
 Vue.component(Resource.name, Resource);
 Vue.component(Row.name, Row);
+Vue.component(Save.name, Save);
+Vue.component(SavesManager.name, SavesManager);
 Vue.component(Spacer.name, Spacer);
 Vue.component(Sticky.name, Sticky);
 Vue.component(Subtab.name, Subtab);
@@ -136,3 +145,4 @@ Vue.use(TransitionExpand);
 Vue.use(PerfectScrollbar);
 Vue.use(VueTextareaAutosize);
 Vue.use(PortalVue);
+Vue.use(Sortable);

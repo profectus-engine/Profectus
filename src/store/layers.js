@@ -1,3 +1,5 @@
+import Vue from 'vue';
+import clone from 'lodash.clonedeep';
 import { isFunction, isPlainObject } from '../util/common';
 import { createProxy, createGridProxy, player } from './proxies';
 import Decimal from '../util/bignum';
@@ -21,13 +23,16 @@ export function addLayer(layer) {
 			return;
 		}
 	}
-	if (layer.type === "static" && (layer.base == undefined || Decimal.lte(layer.base, 1))) {
-		layer.base = 2;
-	}
+
+	// Clone object to prevent modifying the original
+	layer = clone(layer);
 
 	// Set default property values
 	layer = Object.assign({}, defaultLayerProperties, layer);
 	layer.layer = layer.id;
+	if (layer.type === "static" && (layer.base == undefined || Decimal.lte(layer.base, 1))) {
+		layer.base = 2;
+	}
 
 	const getters = {};
 
@@ -148,6 +153,9 @@ export function addLayer(layer) {
 				}
 				if (layer.challenges[id].onExit != undefined) {
 					layer.challenges[id].onExit.forceCached = false;
+				}
+				layer.challenges[id].shown = function() {
+					return this.unlocked !== false && (player.hideChallenges === false || !this.maxed);
 				}
 				layer.challenges[id].completed = function() {
 					return !layer.deactivated && player[layer.id].challenges[id]?.gt(0);
@@ -411,7 +419,7 @@ export function removeLayer(layer) {
 	// Un-set hotkeys
 	if (layers[layer].hotkeys) {
 		for (let id in layers[layer].hotkeys) {
-			delete hotkeys[id];
+			Vue.delete(hotkeys, id);
 		}
 	}
 
