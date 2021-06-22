@@ -55,7 +55,7 @@ export default {
 			if (typeof branch === 'string') {
 				return branch.includes('@') ? branch : `${this.featureType}@${branch}`;
 			}
-			if (!branch.target.includes('@')) {
+			if (!branch.target?.includes('@')) {
 				return { ...branch, target: `${branch.featureType || this.featureType}@${branch.target}` };
 			}
 			return branch;

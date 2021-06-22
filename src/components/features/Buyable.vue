@@ -2,7 +2,7 @@
 	<div v-if="buyable.unlocked" style="display: grid">
 		<button :style="style" @click="buyable.buy" @mousedown="start" @mouseleave="stop" @mouseup="stop" @touchstart="start"
 			:class="{ feature: true, [layer || tab.layer]: true, buyable: true, can: buyable.canBuy, locked: !buyable.canAfford, bought }"
-			@touchend="stop" @touchcancel="stop">
+			@touchend="stop" @touchcancel="stop" :disabled="!buyable.canBuy">
 			<div v-if="title">
 				<component :is="title" />
 			</div>

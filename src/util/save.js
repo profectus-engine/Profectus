@@ -1,6 +1,5 @@
 import modInfo from '../data/modInfo';
 import { getStartingData, getInitialLayers, fixOldSave } from '../data/mod';
-import { getStartingBuyables, getStartingClickables, getStartingChallenges } from './layers';
 import { player } from '../store/proxies';
 import Decimal from './bignum';
 
@@ -11,7 +10,7 @@ export const IMPORTING_WRONG_ID = "WRONG_ID";
 export const IMPORTING_FORCE = "FORCE";
 
 export function getInitialStore(playerData = {}) {
-	playerData = applyPlayerData({
+	return applyPlayerData({
 		id: `${modInfo.id}-0`,
 		name: "Default Save",
 		tabs: modInfo.initialTabs.slice(),
@@ -40,22 +39,6 @@ export function getInitialStore(playerData = {}) {
 		saveToImport: "",
 		saveToExport: ""
 	}, playerData);
-
-	Object.assign(playerData, getInitialLayers(playerData).reduce((acc, layer) => {
-		acc[layer.id] = applyPlayerData({
-			upgrades: [],
-			achievements: [],
-			milestones: [],
-			infoboxes: {},
-			buyables: getStartingBuyables(layer),
-			clickables: getStartingClickables(layer),
-			challenges: getStartingChallenges(layer),
-			...layer.startData?.()
-		}, playerData[layer.id]);
-		return acc;
-	}, {}));
-
-	return playerData;
 }
 
 export function save() {
@@ -121,7 +104,7 @@ export async function loadSave(playerData) {
 	for (let layer in layers) {
 		removeLayer(layer);
 	}
-	getInitialLayers(playerData).forEach(addLayer);
+	getInitialLayers(playerData).forEach(layer => addLayer(layer, playerData));
 
 	playerData = getInitialStore(playerData);
 	if (playerData.offlineProd) {
@@ -136,22 +119,29 @@ export async function loadSave(playerData) {
 
 	Object.assign(player, playerData);
 	for (let prop in player) {
-		if (!(prop in playerData)) {
+		if (!(prop in playerData) && !(prop in layers)) {
 			delete player[prop];
 		}
 	}
 }
 
-function applyPlayerData(target, source) {
+export function applyPlayerData(target, source, destructive = false) {
 	for (let prop in source) {
 		if (target[prop] == null) {
 			target[prop] = source[prop];
 		} else if (target[prop] instanceof Decimal) {
 			target[prop] = new Decimal(source[prop]);
 		} else if (Array.isArray(target[prop]) || typeof target[prop] === 'object') {
-			target[prop] = applyPlayerData(target[prop], source[prop]);
+			target[prop] = applyPlayerData(target[prop], source[prop], destructive);
 		} else {
 			target[prop] = source[prop];
+		}
+	}
+	if (destructive) {
+		for (let prop in target) {
+			if (!(prop in source)) {
+				delete target[prop];
+			}
 		}
 	}
 	return target;

@@ -1,16 +1,19 @@
 import Vue from 'vue';
 import clone from 'lodash.clonedeep';
 import { isFunction, isPlainObject } from '../util/common';
-import { createProxy, createGridProxy, player } from './proxies';
+import { createProxy, createGridProxy, player as playerProxy } from './proxies';
 import Decimal from '../util/bignum';
 import store from './index';
 import { noCache, getStartingBuyables, getStartingClickables, getStartingChallenges, defaultLayerProperties } from '../util/layers';
+import { applyPlayerData } from '../util/save';
 
 export const layers = {};
 export const hotkeys = [];
 window.layers = layers;
 
-export function addLayer(layer) {
+export function addLayer(layer, player = null) {
+	player = player || playerProxy;
+
 	// Check for required properties
 	if (!('id' in layer)) {
 		console.error(`Cannot add layer without a "id" property!`, layer);
@@ -26,6 +29,18 @@ export function addLayer(layer) {
 
 	// Clone object to prevent modifying the original
 	layer = clone(layer);
+
+	player[layer.id] = applyPlayerData({
+		upgrades: [],
+		achievements: [],
+		milestones: [],
+		infoboxes: {},
+		buyables: getStartingBuyables(layer),
+		clickables: getStartingClickables(layer),
+		challenges: getStartingChallenges(layer),
+		grids: {},
+		...layer.startData?.()
+	}, player[layer.id]);
 
 	// Set default property values
 	layer = Object.assign({}, defaultLayerProperties, layer);
@@ -53,9 +68,6 @@ export function addLayer(layer) {
 		}
 	}
 	if (layer.upgrades) {
-		if (player[layer.id].upgrades == undefined) {
-			player[layer.id].upgrades = [];
-		}
 		for (let id in layer.upgrades) {
 			if (isPlainObject(layer.upgrades[id])) {
 				layer.upgrades[id].bought = function() {
@@ -128,9 +140,6 @@ export function addLayer(layer) {
 		}
 	}
 	if (layer.achievements) {
-		if (player[layer.id].achievements == undefined) {
-			player[layer.id].achievements = [];
-		}
 		for (let id in layer.achievements) {
 			if (isPlainObject(layer.achievements[id])) {
 				layer.achievements[id].earned = function() {
@@ -140,9 +149,6 @@ export function addLayer(layer) {
 		}
 	}
 	if (layer.challenges) {
-		if (player[layer.id].challenges == undefined) {
-			player[layer.id].challenges = getStartingChallenges(layer);
-		}
 		for (let id in layer.challenges) {
 			if (isPlainObject(layer.challenges[id])) {
 				if (layer.challenges[id].onComplete != undefined) {
@@ -229,9 +235,6 @@ export function addLayer(layer) {
 		}
 	}
 	if (layer.buyables) {
-		if (player[layer.id].buyables == undefined) {
-			player[layer.id].buyables = getStartingBuyables(layer);
-		}
 		if (layer.buyables.reset == undefined) {
 			layer.buyables.reset = noCache(function() {
 				player[this.layer].buyables = getStartingBuyables(layer);
@@ -272,9 +275,6 @@ export function addLayer(layer) {
 		}
 	}
 	if (layer.clickables) {
-		if (player[layer.id].clickables == undefined) {
-			player[layer.id].clickables = getStartingClickables(layer);
-		}
 		for (let id in layer.clickables) {
 			if (isPlainObject(layer.clickables[id])) {
 				layer.clickables[id].state = function() {
@@ -287,9 +287,6 @@ export function addLayer(layer) {
 		}
 	}
 	if (layer.milestones) {
-		if (player[layer.id].milestones == undefined) {
-			player[layer.id].milestones = [];
-		}
 		for (let id in layer.milestones) {
 			if (isPlainObject(layer.milestones[id])) {
 				layer.milestones[id].shown = function() {
@@ -319,10 +316,10 @@ export function addLayer(layer) {
 		}
 	}
 	if (layer.grids) {
-		if (player[layer.id].grids == undefined) {
-			player[layer.id].grids = {};
-		}
 		for (let id in layer.grids) {
+			if (player[layer.id].grids[id] == undefined) {
+				player[layer.id].grids[id] = {};
+			}
 			if (isPlainObject(layer.grids[id])) {
 				if (player[layer.id].grids[id] == undefined) {
 					player[layer.id].grids[id] = {};

@@ -12,7 +12,7 @@
 			small
 		}">
 		<LayerProvider :index="tab.index" :layer="id">
-			<button v-if="layer.shown" @click="clickTab" :style="style">
+			<button v-if="layer.shown" @click="clickTab" :style="style" :disabled="!unlocked">
 				<component :is="display" />
 				<branch-node :branches="layer.branches" :id="id" featureType="tree-node" />
 			</button>

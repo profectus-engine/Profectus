@@ -7,7 +7,7 @@
 			can: upgrade.canAfford && !upgrade.bought,
 			locked: !upgrade.canAfford && !upgrade.bought,
 			bought: upgrade.bought
-		}">
+		}" :disabled="!upgrade.canAfford && !upgrade.bought">
 		<component v-if="fullDisplay" :is="fullDisplay" />
 		<default-upgrade-display v-else :id="id" />
 		<branch-node :branches="upgrade.branches" :id="id" featureType="upgrade" />

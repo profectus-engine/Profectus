@@ -1,7 +1,7 @@
 <template>
-	<button v-if="gridable.unlocked" :class="{ feature: true, tile: true, can: gridable.canClick, locked: !gridable.canClick}"
-		:style="style" @click="gridable.click"  @mousedown="start" @mouseleave="stop" @mouseup="stop" @touchstart="start"
-		@touchend="stop" @touchcancel="stop">
+	<button v-if="gridable.unlocked" :class="{ feature: true, tile: true, can: canClick, locked: !canClick}"
+		:style="style" @click="gridable.click" @mousedown="start" @mouseleave="stop" @mouseup="stop" @touchstart="start"
+		@touchend="stop" @touchcancel="stop" :disabled="!canClick">
 		<div v-if="title"><component :is="title" /></div>
 		<component :is="display" style="white-space: pre-line;" />
 		<branch-node :branches="gridable.branches" :id="id" featureType="gridable" />
@@ -33,9 +33,12 @@ export default {
 		gridable() {
 			return layers[this.layer || this.tab.layer].grids[this.id][this.cell];
 		},
+		canClick() {
+			return this.gridable.canClick;
+		},
 		style() {
 			return [
-				this.gridable.canClick ? { 'background-color': layers[this.layer || this.tab.layer].color } : {},
+				this.canClick ? { 'background-color': layers[this.layer || this.tab.layer].color } : {},
 				layers[this.layer || this.tab.layer].componentStyles?.gridable,
 				this.gridable.style
 			];

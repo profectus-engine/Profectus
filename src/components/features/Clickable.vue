@@ -2,7 +2,7 @@
 	<div v-if="clickable.unlocked">
 		<button :class="{ feature: true, [layer || tab.layer]: true, can: clickable.canClick, locked: !clickable.canClick }" :style="style"
 			@click="clickable.click" @mousedown="start" @mouseleave="stop" @mouseup="stop" @touchstart="start"
-			@touchend="stop" @touchcancel="stop">
+			@touchend="stop" @touchcancel="stop" :disabled="!clickable.canClick">
 			<div v-if="titleDisplay">
 				<component :is="titleDisplay" />
 			</div>
