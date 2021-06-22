@@ -87,4 +87,29 @@ export default {
 		visibility: visible;
 	}
 }
+
+.tooltip-left[tooltip]:before,
+.side-nodes [tooltip]:before {
+	bottom: unset;
+	left: unset;
+	right: 100%;
+	top: 50%;
+	margin-left: unset;
+	margin-bottom: unset;
+	margin-right: 5px;
+    transform: translateY(-50%);
+}
+
+.tooltip-left[tooltip]:after,
+.side-nodes [tooltip]:after {
+	bottom: unset;
+	left: unset;
+	right: 100%;
+	top: 50%;
+    transform: translateY(-50%);
+    border-left: 5px solid var(--background-tooltip);
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: unset;
+}
 </style>
