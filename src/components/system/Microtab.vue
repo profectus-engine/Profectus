@@ -73,3 +73,10 @@ export default {
 	height: 50px;
 }
 </style>
+
+<style>
+.microtabs .sticky {
+	margin-left: unset !important;
+	margin-right: unset !important;
+}
+</style>

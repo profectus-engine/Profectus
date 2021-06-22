@@ -59,6 +59,8 @@ export default {
     min-height: calc(100% - 100px);
     display: flex;
     flex-direction: column;
+    margin: 0;
+    flex-grow: 1;
 }
 
 .separator {
@@ -89,12 +91,6 @@ export default {
 	margin: 7px 0;
 }
 
-.tabs-container > .simplebar-wrapper,
-.simplebar-content-wrapper,
-.simplebar-content {
-	min-height: 100%;
-}
-
 .tabs-container > .simplebar-wrapper > .simplebar-mask > .simplebar-offset > .simplebar-content-wrapper > .simplebar-content {
 	display: flex;
 	height: 100vh;
@@ -106,5 +102,10 @@ export default {
 
 .tab > [data-simplebar] > .simplebar-wrapper > .simplebar-mask > .simplebar-offset > .simplebar-content-wrapper {
 	position: static;
+}
+
+.tab > [data-simplebar] > .simplebar-wrapper > .simplebar-mask > .simplebar-offset > .simplebar-content-wrapper > .simplebar-content {
+    flex-direction: column;
+    min-height: 100%;
 }
 </style>

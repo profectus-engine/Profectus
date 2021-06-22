@@ -376,7 +376,7 @@ export default {
 				<div v-frag>
 					<h1> C O N F I R M E D </h1>
 					<spacer />
-					<microtab family="stuff" style="width: 660px; height: 370px; background-color: brown; border: solid white; margin: auto" />
+					<microtab family="stuff" style="width: 660px; height: 370px; background-color: brown; --background: brown; border: solid white; margin: auto" />
 					<div>Adjust how many points H gives you!</div>
 					<Slider :value="player.c.otherThingy" @change="value => player.c.otherThingy = value" :min="1" :max="30" />
 				</div>
