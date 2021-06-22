@@ -1,5 +1,5 @@
 <template>
-	<div id="app" @mousemove="updateMouse" :style="theme">
+	<div id="app" @mousemove="updateMouse" :style="theme" :class="{ useHeader }">
 		<Nav />
 		<Tabs />
 		<TPS v-if="showTPS" />
@@ -16,12 +16,16 @@ import TPS from './components/system/TPS';
 import themes from './data/themes';
 import { mapState } from 'vuex';
 import { player } from './store/proxies';
+import modInfo from './data/modInfo.json';
 import './main.css';
 
 export default {
 	name: 'App',
 	components: {
 		Nav, Tabs, TPS
+	},
+	data() {
+		return { useHeader: modInfo.useHeader };
 	},
 	computed: {
 		...mapState([ 'showTPS' ]),

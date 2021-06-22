@@ -11,8 +11,6 @@
 </template>
 
 <script>
-import './fields.css';
-
 export default {
 	name: 'TextField',
 	props: {

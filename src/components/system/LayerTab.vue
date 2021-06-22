@@ -56,7 +56,6 @@ export default {
 			if (layers[this.layer].activeSubtab?.style) {
 				style.push(layers[this.layer].activeSubtab.style);
 			}
-			style.push({ minWidth: `${layers[this.layer].minWidth}px` });
 			return style;
 		},
 		display() {
@@ -100,11 +99,13 @@ export default {
 					tab.style.flexGrow = 0;
 					tab.style.flexShrink = 0;
 					tab.style.width = "60px";
+					tab.style.minWidth = null;
 					tab.style.margin = 0;
 				} else {
 					tab.style.flexGrow = null;
 					tab.style.flexShrink = null;
 					tab.style.width = null;
+					tab.style.minWidth = `${layers[this.layer].minWidth}px`;
 					tab.style.margin = null;
 				}
 			}
@@ -120,11 +121,13 @@ export default {
 				tab.style.flexGrow = 0;
 				tab.style.flexShrink = 0;
 				tab.style.width = "60px";
+				tab.style.minWidth = null;
 				tab.style.margin = 0;
 			} else {
 				tab.style.flexGrow = null;
 				tab.style.flexShrink = null;
 				tab.style.width = null;
+				tab.style.minWidth = `${layers[this.layer].minWidth}px`;
 				tab.style.margin = null;
 			}
 		} else {

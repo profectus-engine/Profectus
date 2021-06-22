@@ -2,7 +2,7 @@
 	<span>
 		{{ resetDescription }}<b>{{ resetGain }}</b>
 		{{ resource }}
-		<br/><br/>
+		<br v-if="nextAt"/><br v-if="nextAt"/>
 		{{ nextAt }}
 	</span>
 </template>

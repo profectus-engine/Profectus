@@ -7,7 +7,6 @@
 
 <script>
 import vSelect from 'vue-select';
-import './fields.css';
 import 'vue-select/dist/vue-select.css';
 
 export default {

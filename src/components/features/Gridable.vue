@@ -11,7 +11,6 @@
 <script>
 import { layers } from '../../store/layers';
 import { coerceComponent } from '../../util/vue';
-import './features.css';
 
 export default {
 	name: 'gridable',

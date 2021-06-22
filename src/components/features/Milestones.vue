@@ -7,7 +7,6 @@
 <script>
 import { layers } from '../../store/layers';
 import { getFiltered } from '../../util/vue';
-import './table.css';
 
 export default {
 	name: 'milestones',

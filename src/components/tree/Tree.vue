@@ -15,7 +15,6 @@
 
 <script>
 import { layers } from '../../store/layers';
-import '../features/table.css';
 
 export default {
 	name: 'tree',

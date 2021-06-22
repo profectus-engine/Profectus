@@ -7,8 +7,6 @@
 </template>
 
 <script>
-import '../features/table.css';
-
 export default {
      name: 'column'
 };

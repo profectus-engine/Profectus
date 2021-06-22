@@ -9,13 +9,13 @@
 								default header
 							</slot>
 						</div>
-						<perfect-scrollbar class="modal-body">
+						<simplebar class="modal-body">
 							<branches>
 								<slot name="body">
 									default body
 								</slot>
 							</branches>
-						</perfect-scrollbar>
+						</simplebar>
 						<div class="modal-footer">
 							<slot name="footer">
 								<div class="modal-default-footer">
@@ -81,8 +81,11 @@ export default {
 }
 
 .modal-body {
+	display: flex;
 	margin: 20px 0;
     width: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .modal-footer {
@@ -109,11 +112,5 @@ export default {
 .modal-leave-active .modal-container {
 	-webkit-transform: scale(1.1);
 	transform: scale(1.1);
-}
-</style>
-
-<style>
-.modal-body > .ps__rail-y {
-    z-index: 100;
 }
 </style>

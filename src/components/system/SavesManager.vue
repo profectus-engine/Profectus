@@ -33,7 +33,6 @@ import Vue from 'vue';
 import { newSave, getUniqueID, loadSave, save } from '../../util/save';
 import { player } from '../../store/proxies';
 import modInfo from '../../data/modInfo.json';
-import '../fields/fields.css';
 
 export default {
 	name: 'SavesManager',

@@ -9,7 +9,6 @@
 import { layers } from '../../store/layers';
 import { player } from '../../store/proxies';
 import themes from '../../data/themes';
-import '../common/notify.css';
 
 export default {
 	name: 'tab-button',

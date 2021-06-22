@@ -33,7 +33,6 @@
 import { layers } from '../../store/layers';
 import { player } from '../../store/proxies';
 import { coerceComponent } from '../../util/vue';
-import './features.css';
 
 export default {
 	name: 'respec-button',

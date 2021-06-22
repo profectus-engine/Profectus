@@ -10,7 +10,6 @@
 
 <script>
 import { layers } from '../../store/layers';
-import './table.css';
 
 export default {
 	name: 'grid',

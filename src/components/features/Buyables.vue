@@ -21,7 +21,6 @@
 import { layers } from '../../store/layers';
 import { player } from '../../store/proxies';
 import { getFiltered } from '../../util/vue';
-import './table.css';
 
 export default {
 	name: 'buyables',

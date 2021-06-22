@@ -1,21 +1,19 @@
 <template>
-	<perfect-scrollbar class="tabs-container">
-		<div class="tabs">
-			<div v-for="(tab, index) in tabs" :key="index" class="tab" :ref="`tab-${index}`">
-				<perfect-scrollbar>
-					<div class="inner-tab">
-						<LayerProvider :layer="tab" :index="index" v-if="tab in components && components[tab]">
-							<component :is="components[tab]" />
-						</LayerProvider>
-						<layer-tab :layer="tab" :index="index" v-else-if="tab in components" :minimizable="true"
-							:tab="() => $refs[`tab-${index}`] && $refs[`tab-${index}`][0]" />
-						<component :is="tab" :index="index" v-else />
-					</div>
-				</perfect-scrollbar>
-				<div class="separator" v-if="index !== tabs.length - 1"></div>
-			</div>
+	<simplebar class="tabs-container">
+		<div v-for="(tab, index) in tabs" :key="index" class="tab" :ref="`tab-${index}`">
+			<simplebar>
+				<div class="inner-tab">
+					<LayerProvider :layer="tab" :index="index" v-if="tab in components && components[tab]">
+						<component :is="components[tab]" />
+					</LayerProvider>
+					<layer-tab :layer="tab" :index="index" v-else-if="tab in components" :minimizable="true"
+						:tab="() => $refs[`tab-${index}`] && $refs[`tab-${index}`][0]" />
+					<component :is="tab" :index="index" v-else />
+				</div>
+			</simplebar>
+			<div class="separator" v-if="index !== tabs.length - 1"></div>
 		</div>
-	</perfect-scrollbar>
+	</simplebar>
 </template>
 
 <script>
@@ -40,6 +38,8 @@ export default {
 .tabs-container {
 	width: 100vw;
     flex-grow: 1;
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
 .tabs {
@@ -52,11 +52,6 @@ export default {
     height: 100%;
     flex-grow: 1;
     transition-duration: 0s;
-}
-
-.tab .ps {
-	height: 100%;
-	z-index: 0;
 }
 
 .inner-tab {
@@ -75,13 +70,14 @@ export default {
 	background: var(--separator);
     z-index: 1;
 }
+
+.tab > [data-simplebar] {
+    height: 100%;
+    overflow-x: hidden;
+}
 </style>
 
 <style>
-.tabs-container > .ps__rail-x {
-	z-index: 120;
-}
-
 .tab hr {
     height: 4px;
     border: none;
@@ -93,8 +89,22 @@ export default {
 	margin: 7px 0;
 }
 
-.tab > .ps > .ps__rail-y {
-    margin-right: 6px;
-    z-index: 10;
+.tabs-container > .simplebar-wrapper,
+.simplebar-content-wrapper,
+.simplebar-content {
+	min-height: 100%;
+}
+
+.tabs-container > .simplebar-wrapper > .simplebar-mask > .simplebar-offset > .simplebar-content-wrapper > .simplebar-content {
+	display: flex;
+	height: 100vh;
+}
+
+.useHeader .tabs-container > .simplebar-wrapper > .simplebar-mask > .simplebar-offset > .simplebar-content-wrapper > .simplebar-content {
+	height: calc(100vh - 50px);
+}
+
+.tab > [data-simplebar] > .simplebar-wrapper > .simplebar-mask > .simplebar-offset > .simplebar-content-wrapper {
+	position: static;
 }
 </style>

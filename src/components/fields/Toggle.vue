@@ -6,8 +6,6 @@
 </template>
 
 <script>
-import './fields.css';
-
 // Reference: https://codepen.io/finnhvman/pen/pOeyjE
 export default {
 	name: 'Toggle',

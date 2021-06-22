@@ -8,8 +8,6 @@
 </template>
 
 <script>
-import './fields.css';
-
 export default {
 	name: 'Slider',
 	props: {
