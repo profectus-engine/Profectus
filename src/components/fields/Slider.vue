@@ -1,7 +1,7 @@
 <template>
 	<div class="field">
 		<span class="field-title" v-if="title">{{ title }}</span>
-		<tooltip :text="`${value}`">
+		<tooltip :text="`${value}`" :class="{ fullWidth: !title }">
 			<input type="range" :value="value" @input="e => $emit('change', parseInt(e.target.value))" :min="min" :max="max" />
 		</tooltip>
 	</div>
@@ -20,4 +20,7 @@ export default {
 </script>
 
 <style scoped>
+.fullWidth {
+	width: 100%;
+}
 </style>
