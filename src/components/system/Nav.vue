@@ -3,8 +3,10 @@
 		<div class="nav" v-if="useHeader">
 			<img v-if="banner" :src="banner" height="100%" :alt="title" />
 			<div v-else class="title">{{ title }}</div>
-			<tooltip display="Changelog" bottom><div class="version" @click="openDialog('Changelog')">v{{ version }}</div></tooltip>
-			<div style="flex-grow: 1"></div>
+			<div @click="openDialog('Changelog')" class="version-container">
+				<tooltip display="Changelog" bottom class="version"><span>v{{ version }}</span></tooltip>
+			</div>
+			<div style="flex-grow: 1; cursor: unset;"></div>
 			<div class="discord">
 				<img src="images/discord.png" @click="window.open(discordLink, 'mywindow')" />
 				<ul class="discord-links">
@@ -16,18 +18,34 @@
 					<li><a href="http://discord.gg/wwQfgPa" target="_blank">Jacorb's Games</a></li>
 				</ul>
 			</div>
-			<tooltip display="<span>Info</span>" bottom yoffset="4px">
-				<div class="info" @click="openDialog('Info')"><br/>i</div>
-			</tooltip>
-			<tooltip display="Saves" bottom xoffset="-24px" style="margin-top: 6px">
-				<div class="material-icons saves" @click="openDialog('Saves')">library_books</div>
-			</tooltip>
-			<tooltip display="<span>Options</span>" bottom xoffset="-64px" yoffset="-8px">
-				<img class="options" src="images/options_wheel.png" @click="openDialog('Options')" />
-			</tooltip>
+			<div @click="openDialog('Info')">
+				<tooltip display="<span>Info</span>" bottom class="info"><span>i</span></tooltip>
+			</div>
+			<div @click="openDialog('Saves')">
+				<tooltip display="Saves" bottom class="saves" xoffset="-20px">
+					<span class="material-icons">library_books</span>
+				</tooltip>
+			</div>
+			<div @click="openDialog('Options')">
+				<tooltip display="<span>Options</span>" bottom class="options" xoffset="-70px">
+					<img src="images/options_wheel.png" />
+				</tooltip>
+			</div>
 		</div>
-		<div v-else>
-			<div class="discord overlay">
+		<div v-else class="overlay-nav">
+			<div @click="openDialog('Changelog')" class="version-container">
+				<tooltip display="Changelog" right xoffset="25%" class="version"><span>v{{ version }}</span></tooltip>
+			</div>
+			<div @click="openDialog('Saves')">
+				<tooltip display="Saves" right class="saves"><span class="material-icons">library_books</span></tooltip>
+			</div>
+			<div @click="openDialog('Options')">
+				<tooltip display="<span>Options</span>" right class="options"><img src="images/options_wheel.png" /></tooltip>
+			</div>
+			<div @click="openDialog('Info')">
+				<tooltip display="<span>Info</span>" right class="info"><span>i</span></tooltip>
+			</div>
+			<div class="discord">
 				<img src="images/discord.png" @click="openDiscord" />
 				<ul class="discord-links">
 					<li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
@@ -38,19 +56,6 @@
 					<li><a href="http://discord.gg/wwQfgPa" target="_blank">Jacorb's Games</a></li>
 				</ul>
 			</div>
-			<div class="info overlay" @click="openDialog('Info')"><br/>i</div>
-			<tooltip display="<span>Info</span>" right>
-				<img class="options overlay" src="images/options_wheel.png" @click="openDialog('Saves')" />
-			</tooltip>
-			<tooltip display="Saves" right>
-				<div class="material-icons saves overlay" @click="openDialog('Saves')">library_books</div>
-			</tooltip>
-			<tooltip display="<span>Options</span>" right>
-				<img class="options overlay" src="images/options_wheel.png" @click="openDialog('Options')" />
-			</tooltip>
-			<tooltip display="Changelog" right>
-				<div class="version overlay" @click="openDialog('Changelog')">v{{ version }}</div>
-			</tooltip>
 		</div>
 		<Info :show="showInfo" @openDialog="openDialog" @closeDialog="closeDialog" />
 		<SavesManager :show="showSaves" @closeDialog="closeDialog" />
@@ -92,142 +97,158 @@ export default {
 </script>
 
 <style scoped>
-	.nav {
-		background-color: var(--secondary-background);
-		display: flex;
-		left: 0;
-		right: 0;
-		top: 0;
-		height: 46px;
-		width: 100%;
-		border-bottom: 4px solid var(--separator);
-	}
+.nav {
+	background-color: var(--secondary-background);
+	display: flex;
+	left: 0;
+	right: 0;
+	top: 0;
+	height: 46px;
+	width: 100%;
+	border-bottom: 4px solid var(--separator);
+}
 
-	.title {
-		font-size: 36px;
-		text-align: left;
-		margin-left: 12px;
-	}
+.nav > * {
+    height: 46px;
+    width: 46px;
+    display: flex;
+	cursor: pointer;
+}
 
-	.overlay {
-		z-index: 100;
-	}
+.overlay-nav {
+	position: absolute;
+	top: 10px;
+	left: 10px;
+	display: flex;
+	flex-direction: column;
+	z-index: 1;
+}
 
-	.discord {
-		width: 40px;
-		height: 40px;
-		cursor: pointer;
-	}
+.overlay-nav > * {
+    height: 50px;
+    width: 50px;
+    display: flex;
+	cursor: pointer;
+	margin: 0;
+    align-items: center;
+    justify-content: center;
+}
 
-	.discord.overlay {
-		position: absolute;
-		top: 120px;
-		left: 4px;
-	}
+.title {
+	font-size: 36px;
+	text-align: left;
+	margin-left: 12px;
+	cursor: unset;
+}
 
-	.discord img {
-		width: 100%;
-		height: 100%;
-	}
+.nav > .title {
+	width: unset;
+}
 
-	.discord-links {
-		position: fixed;
-		top: 45px;
-		padding: 20px;
-		right: -280px;
-		width: 200px;
-		transition: right .25s ease;
-		background: var(--secondary-background);
-		z-index: 1;
-	}
+.nav .saves,
+.nav .info {
+    display: flex;
+}
 
-	.discord.overlay .discord-links {
-		top: 160px;
-		right: unset;
-		left: -280px;
-		transition: left .25s ease;
-	}
+.tooltip-container {
+	width: 100%;
+	height: 100%;
+    display: flex;
+}
 
-	.discord-links li {
-		margin-bottom: 4px;
-	}
+.overlay-nav .discord {
+	position: relative;
+}
 
-	.discord:not(.overlay):hover .discord-links {
-		right: 0;
-	}
+.discord img {
+	width: 100%;
+	height: 100%;
+}
 
-	.discord.overlay:hover .discord-links {
-		left: 0;
-	}
+.discord-links {
+	position: fixed;
+	top: 45px;
+	padding: 20px;
+	right: -280px;
+	width: 200px;
+	transition: right .25s ease;
+	background: var(--secondary-background);
+	z-index: 1;
+}
 
-	.info {
-		font-size: 20px;
-		color: var(--link);
-		line-height: 14px;
-		width: 40px;
-		height: 40px;
-		cursor: pointer;
-	}
+.overlay-nav .discord-links {
+	position: absolute;
+    left: -280px;
+    right: unset;
+    transition: left .25s ease;
+}
 
-	.info.overlay {
-		position: absolute;
-		top: 60px;
-		left: 4px;
-	}
+.overlay-nav .discord:hover .discord-links {
+    left: -10px;
+}
 
-	.info:hover {
-		transform: scale(1.2, 1.2);
-		text-shadow: 5px 0 10px var(--link),
-			-3px 0 12px var(--link);
-	}
+.discord-links li {
+	margin-bottom: 4px;
+}
 
-	.saves {
-		font-size: 36px;
-		cursor: pointer;
-	}
+.discord-links li:first-child {
+    font-size: 1.2em;
+}
 
-	.saves:hover {
-		transform: scale(1.2, 1.2);
-		text-shadow: 5px 0 10px var(--color),
-			-3px 0 12px var(--color);
-	}
+*:not(.overlay-nav) .discord:hover .discord-links {
+	right: 0;
+}
 
-	.options {
-		height: 50px;
-		width: 50px;
-		cursor: pointer;
-		transition-duration: .5s;
-	}
+.info {
+	font-size: 30px;
+	color: var(--link);
+	line-height: 14px;
+}
 
-	.options.overlay {
-		position: absolute;
-		top: 0;
-		left: 0;
-	}
+.info:hover span {
+	transform: scale(1.2, 1.2);
+	text-shadow: 5px 0 10px var(--link),
+		-3px 0 12px var(--link);
+}
 
-	.options:hover {
-		transform: rotate(360deg);
-	}
+.saves span {
+	font-size: 36px;
+}
 
-	.version {
-		color: var(--points);
-		cursor: pointer;
-	}
+.saves:hover span {
+	transform: scale(1.2, 1.2);
+	text-shadow: 5px 0 10px var(--color),
+		-3px 0 12px var(--color);
+}
 
-	.version.overlay {
-		position: absolute;
-		right: 4px;
-		top: 4px;
-	}
+.options img {
+	width: 100%;
+	height: 100%;
+}
 
-	.version:hover {
-		transform: scale(1.2, 1.2);
-		text-shadow: 5px 0 10px var(--points), -3px 0 12px var(--points);
-	}
+.options:hover img {
+	transform: rotate(360deg);
+}
 
-	.nav > .title + .tooltip-container {
-		margin-left: 12px;
-		margin-right: 12px;
-		margin-bottom: 5px;
-	}
+.nav .version-container {
+    display: flex;
+    height: 25px;
+    margin-bottom: 0;
+    margin-left: 10px;
+}
+
+.overlay-nav .version-container {
+	width: unset;
+	height: 25px;
+}
+
+.version {
+	color: var(--points);
+}
+
+.version:hover span {
+	transform-origin: 0% 50%;
+	transform: scale(1.2, 1.2);
+	text-shadow: 5px 0 10px var(--points), -3px 0 12px var(--points);
+}
 </style>

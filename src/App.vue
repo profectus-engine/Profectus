@@ -1,6 +1,6 @@
 <template>
 	<div id="app" @mousemove="updateMouse" :style="theme" :class="{ useHeader }">
-		<Nav />
+		<Nav v-if="useHeader" />
 		<Tabs />
 		<TPS v-if="showTPS" />
 		<GameOverScreen />

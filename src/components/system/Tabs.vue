@@ -1,6 +1,7 @@
 <template>
 	<simplebar class="tabs-container">
 		<div v-for="(tab, index) in tabs" :key="index" class="tab" :ref="`tab-${index}`">
+			<Nav v-if="index === 0 && !useHeader" />
 			<simplebar>
 				<div class="inner-tab">
 					<LayerProvider :layer="tab" :index="index" v-if="tab in components && components[tab]">
@@ -17,11 +18,15 @@
 </template>
 
 <script>
+import modInfo from '../../data/modInfo.json';
 import { mapState } from 'vuex';
 import { layers } from '../../store/layers';
 
 export default {
 	name: 'Tabs',
+	data() {
+		return { useHeader: modInfo.useHeader };
+	},
 	computed: {
 		...mapState([ 'tabs' ]),
 		components() {
