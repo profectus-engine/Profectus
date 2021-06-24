@@ -60,7 +60,19 @@ export default {
                 this.data++
             },
             getTitle(cell) {
-                return "Gridable #" + cell
+                let direction;
+                if (cell === '101') {
+                    direction = 'top';
+                } else if (cell === '102') {
+                    direction = 'bottom';
+                } else if (cell === '201') {
+                    direction = 'left';
+                } else if (cell === '202') {
+                    direction = 'right';
+                }
+                return `<tooltip display='${JSON.stringify(this.style)}' ${direction}>
+                    <h3>Gridable #${cell}</h3>
+                </tooltip>`
             },
             getDisplay(cell, data) {
                 return data
