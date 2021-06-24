@@ -1,6 +1,6 @@
 <template>
 	<div style="display: flex">
-		<tooltip text="Disable respec confirmation">
+		<tooltip display="Disable respec confirmation">
 			<Toggle :value="confirmRespec" @change="setConfirmRespec" />
 		</tooltip>
 		<button @click="respec" :class="{ feature: true, respec: true, can: unlocked, locked: !unlocked }"

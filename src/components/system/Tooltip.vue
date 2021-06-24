@@ -1,115 +1,143 @@
 <template>
-	<div :tooltip="text">
+	<div class="tooltip-container" :class="{ force }">
+		<div class="tooltip" :class="{ top, left, right, bottom }"
+		:style="{ '--xoffset': xoffset, '--yoffset': yoffset }">
+			<component :is="tooltipDisplay" />
+		</div>
 		<slot />
 	</div>
 </template>
 
 <script>
+import { coerceComponent } from '../../util/vue';
+
 export default {
 	name: 'tooltip',
 	props: {
-		text: String
+		force: Boolean,
+		display: String,
+		top: Boolean,
+		left: Boolean,
+		right: Boolean,
+		bottom: Boolean,
+		xoffset: String,
+		yoffset: String
+	},
+	computed: {
+		tooltipDisplay() {
+			return coerceComponent(this.display);
+		}
+	},
+	provide: {
+		tab() {
+			return {};
+		}
 	}
 };
 </script>
 
 <style scoped>
-[tooltip] {
-	position: relative;
+.tooltip-container {
+    position: relative;
+	--xoffset: 0px;
+	--yoffset: 0px;
 }
 
-[tooltip]:before,
-[tooltip]:after {
-	visibility: hidden;
-	-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
-	filter: progid: DXImageTransform.Microsoft.Alpha(Opacity=0);
-	opacity: 0;
+.tooltip, .tooltip::after {
 	pointer-events: none;
-	white-space: pre-wrap;
+	position: absolute;
+}
+
+.tooltip {
+    text-align: center;
+    width: 150px;
+    font-size: 14px;
+    line-height: 1.2;
+    bottom: calc(100% + var(--yoffset));
+    left: calc(50% + var(--xoffset));
+    margin-bottom: 5px;
+    transform: translateX(-50%);
+    padding: 7px;
+    border-radius: 3px;
+    opacity: 0;
+    background-color: var(--background-tooltip);
+    color: var(--points);
+}
+
+.tooltip-container:hover,
+.force {
+	z-index: 1;
+}
+
+.tooltip-container:hover > .tooltip,
+.force > .tooltip {
+	opacity: 1;
 	z-index: 100 !important;
 }
 
-[tooltip]:before {
-	position: absolute;
-	bottom: 100%;
-	left: 50%;
-	margin-bottom: 5px;
-	margin-left: -80px;
-	padding: 7px;
-	width: 160px;
-	-webkit-border-radius: 3px;
-	-moz-border-radius: 3px;
-	border-radius: 3px;
-	background-color: var(--background-tooltip);
-	color: var(--points);
-	content: attr(tooltip);
-	text-align: center;
-	font-size: 14px;
-	line-height: 1.2;
-	white-space: pre-wrap;
-}
-
-[tooltip]:after {
-	position: absolute;
-	bottom: 100%;
-	left: 50%;
-	margin-left: -5px;
-	width: 0;
-	border-top: 5px solid var(--background-tooltip);
-	border-right: 5px solid transparent;
-	border-left: 5px solid transparent;
+.tooltip::after {
 	content: " ";
-	font-size: 0;
-	line-height: 0;
-	white-space: pre-wrap;
+	position: absolute;
+	top: 100%;
+	bottom: 100%;
+	left: calc(50% - var(--xoffset));
+	width: 0;
+	margin-left: -5px;
+	border-width: 5px;
+	border-style: solid;
+	border-color: var(--background-tooltip) transparent transparent transparent;
 }
 
-[tooltip]:hover:before,
-[tooltip].forceTooltip:before,
-[tooltip]:hover:after,
-[tooltip].forceTooltip:after {
-	animation: tooltip 0.25s linear 1;
-	animation-fill-mode: forwards;
-	white-space: pre-wrap;
-}
-
-@keyframes tooltip {
-	0% {
-		-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=0)";
-		filter: progid: DXImageTransform.Microsoft.Alpha(Opacity=0);
-		opacity: 0;
-		visibility: hidden;
-	}
-	100% {
-		-ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=100)";
-		filter: progid: DXImageTransform.Microsoft.Alpha(Opacity=100);
-		opacity: 1;
-		visibility: visible;
-	}
-}
-
-.tooltip-left[tooltip]:before,
-.side-nodes [tooltip]:before {
-	bottom: unset;
+.tooltip.left,
+.side-nodes .tooltip:not(.right):not(.bottom):not(.top) {
+	bottom: calc(50% + var(--yoffset));
 	left: unset;
-	right: 100%;
-	top: 50%;
-	margin-left: unset;
+	right: calc(100% + var(--xoffset));
 	margin-bottom: unset;
 	margin-right: 5px;
-    transform: translateY(-50%);
+    transform: translateY(50%);
 }
 
-.tooltip-left[tooltip]:after,
-.side-nodes [tooltip]:after {
+.tooltip.left::after,
+.side-nodes .tooltip:not(.right):not(.bottom):not(.top)::after {
+	top: calc(50% + var(--yoffset));
 	bottom: unset;
-	left: unset;
+	left: 100%;
 	right: 100%;
-	top: 50%;
-    transform: translateY(-50%);
-    border-left: 5px solid var(--background-tooltip);
-    border-top: 5px solid transparent;
-    border-bottom: 5px solid transparent;
-    border-right: unset;
+	margin-left: unset;
+	margin-top: -5px;
+	border-color: transparent transparent transparent var(--background-tooltip);
+}
+
+.tooltip.right {
+	bottom: calc(50% + var(--yoffset));
+	left: calc(100% + var(--xoffset));
+	margin-bottom: unset;
+	margin-left: 5px;
+    transform: translateY(50%);
+}
+
+.tooltip.right::after {
+	top: calc(50% + var(--yoffset));
+	left: 0;
+	right: 100%;
+	margin-left: -10px;
+	margin-top: -5px;
+	border-color: transparent var(--background-tooltip) transparent transparent;
+}
+
+.tooltip.bottom {
+	top: calc(100% + var(--yoffset));
+	bottom: unset;
+	left: calc(50% + var(--xoffset));
+	margin-bottom: unset;
+	margin-top: 5px;
+    transform: translateX(-50%);
+}
+
+.tooltip.bottom::after {
+	top: 0;
+	margin-top: -10px;
+	border-color: transparent transparent var(--background-tooltip) transparent;
 }
 </style>

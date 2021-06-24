@@ -3,7 +3,7 @@
 		<div class="nav" v-if="useHeader">
 			<img v-if="banner" :src="banner" height="100%" :alt="title" />
 			<div v-else class="title">{{ title }}</div>
-			<div class="version" @click="openDialog('Changelog')">v{{ version }}</div>
+			<tooltip display="Changelog" bottom><div class="version" @click="openDialog('Changelog')">v{{ version }}</div></tooltip>
 			<div style="flex-grow: 1"></div>
 			<div class="discord">
 				<img src="images/discord.png" @click="window.open(discordLink, 'mywindow')" />
@@ -16,9 +16,15 @@
 					<li><a href="http://discord.gg/wwQfgPa" target="_blank">Jacorb's Games</a></li>
 				</ul>
 			</div>
-			<div class="info" @click="openDialog('Info')"><br/>i</div>
-			<img class="options" src="images/options_wheel.png" @click="openDialog('Saves')" />
-			<img class="options" src="images/options_wheel.png" @click="openDialog('Options')" />
+			<tooltip display="<span>Info</span>" bottom yoffset="4px">
+				<div class="info" @click="openDialog('Info')"><br/>i</div>
+			</tooltip>
+			<tooltip display="Saves" bottom xoffset="-24px" style="margin-top: 6px">
+				<div class="material-icons saves" @click="openDialog('Saves')">library_books</div>
+			</tooltip>
+			<tooltip display="<span>Options</span>" bottom xoffset="-64px" yoffset="-8px">
+				<img class="options" src="images/options_wheel.png" @click="openDialog('Options')" />
+			</tooltip>
 		</div>
 		<div v-else>
 			<div class="discord overlay">
@@ -33,9 +39,18 @@
 				</ul>
 			</div>
 			<div class="info overlay" @click="openDialog('Info')"><br/>i</div>
-			<img class="options overlay" src="images/options_wheel.png" @click="openDialog('Saves')" />
-			<img class="options overlay" src="images/options_wheel.png" @click="openDialog('Options')" />
-			<div class="version overlay" @click="openDialog('Changelog')">v{{ version }}</div>
+			<tooltip display="<span>Info</span>" right>
+				<img class="options overlay" src="images/options_wheel.png" @click="openDialog('Saves')" />
+			</tooltip>
+			<tooltip display="Saves" right>
+				<div class="material-icons saves overlay" @click="openDialog('Saves')">library_books</div>
+			</tooltip>
+			<tooltip display="<span>Options</span>" right>
+				<img class="options overlay" src="images/options_wheel.png" @click="openDialog('Options')" />
+			</tooltip>
+			<tooltip display="Changelog" right>
+				<div class="version overlay" @click="openDialog('Changelog')">v{{ version }}</div>
+			</tooltip>
 		</div>
 		<Info :show="showInfo" @openDialog="openDialog" @closeDialog="closeDialog" />
 		<SavesManager :show="showSaves" @closeDialog="closeDialog" />
@@ -68,6 +83,7 @@ export default {
 		},
 		openDialog(dialog) {
 			this[`show${dialog}`] = true;
+			console.log(`show${dialog}`, this[`show${dialog}`]);
 		},
 		closeDialog(dialog) {
 			this[`show${dialog}`] = false;
@@ -166,6 +182,17 @@ export default {
 			-3px 0 12px var(--link);
 	}
 
+	.saves {
+		font-size: 36px;
+		cursor: pointer;
+	}
+
+	.saves:hover {
+		transform: scale(1.2, 1.2);
+		text-shadow: 5px 0 10px var(--color),
+			-3px 0 12px var(--color);
+	}
+
 	.options {
 		height: 50px;
 		width: 50px;
@@ -184,9 +211,6 @@ export default {
 	}
 
 	.version {
-		margin-left: 12px;
-		margin-right: 12px;
-		margin-bottom: 5px;
 		color: var(--points);
 		cursor: pointer;
 	}
@@ -200,5 +224,11 @@ export default {
 	.version:hover {
 		transform: scale(1.2, 1.2);
 		text-shadow: 5px 0 10px var(--points), -3px 0 12px var(--points);
+	}
+
+	.nav > .title + .tooltip-container {
+		margin-left: 12px;
+		margin-right: 12px;
+		margin-bottom: 5px;
 	}
 </style>

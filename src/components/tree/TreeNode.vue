@@ -1,6 +1,5 @@
 <template>
-	<tooltip :text="tooltip" :class="{
-			forceTooltip,
+	<tooltip :display="tooltip" :force="forceTooltip" :class="{
 			ghost: layer.layerShown === 'ghost',
 			treeNode: true,
 			[id]: true,

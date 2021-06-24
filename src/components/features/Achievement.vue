@@ -1,5 +1,5 @@
 <template>
-	<tooltip v-if="achievement.unlocked" :text="tooltip">
+	<tooltip v-if="achievement.unlocked" :display="tooltip">
 		<div :style="style"
 			:class="{ [layer || tab.layer]: true, feature: true, achievement: true, locked: !achievement.earned,
 				bought: achievement.earned }">
