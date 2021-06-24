@@ -83,7 +83,6 @@ export default {
 		},
 		openDialog(dialog) {
 			this[`show${dialog}`] = true;
-			console.log(`show${dialog}`, this[`show${dialog}`]);
 		},
 		closeDialog(dialog) {
 			this[`show${dialog}`] = false;

@@ -72,7 +72,7 @@ export default {
 					return this.layer.tooltipLocked || this.layer.tooltip || 'I am a button!';
 				}
 			}
-			if (this.layer.unlocked) {
+			if (player[this.id].unlocked) {
 				return this.layer.tooltip || `${formatWhole(player[this.id].points)} ${this.layer.resource}`;
 			} else {
 				return this.layer.tooltipLocked ||
