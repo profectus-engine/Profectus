@@ -40,7 +40,6 @@ export default {
 			return getFiltered(layers[this.layer || this.tab.layer].clickables, this.clickables);
 		},
 		showMasterButton() {
-			console.log(layers[this.layer || this.tab.layer].clickables?.masterButtonClick, this.showMaster, layers[this.layer || this.tab.layer].clickables?.showMaster)
 			if (layers[this.layer || this.tab.layer].clickables?.masterButtonClick == undefined) {
 				return false;
 			}
