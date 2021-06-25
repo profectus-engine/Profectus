@@ -1,5 +1,5 @@
 <template>
-	<button @click="press" :class="{ longUpg: true, can: unlocked, locked: !unlocked }" :style="style">
+	<button @click="press" :class="{ feature: true, can: unlocked, locked: !unlocked }" :style="style">
 		<component :is="masterButtonDisplay" />
 	</button>
 </template>
@@ -28,6 +28,9 @@ export default {
 		masterButtonDisplay() {
 			if (this.display) {
 				return coerceComponent(this.display);
+			}
+			if (layers[this.layer || this.tab.layer].clickables?.masterButtonDisplay) {
+				return coerceComponent(layers[this.layer || this.tab.layer].clickables?.masterButtonDisplay);
 			}
 			return coerceComponent("Click Me!");
 		}

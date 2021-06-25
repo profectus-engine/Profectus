@@ -283,7 +283,16 @@ export function addLayer(layer, player = null) {
 				layer.clickables[id].stateSet = function(state) {
 					player[layer.id].clickables[id] = state;
 				}
+				if (layer.clickables[id].click != undefined) {
+					layer.clickables[id].click.forceCached = false;
+				}
 			}
+		}
+		if (layer.clickables.masterButtonClick != undefined) {
+			layer.clickables.masterButtonClick.forceCached = false;
+		}
+		if (layer.clickables.showMaster == undefined && layer.clickables.masterButtonDisplay != undefined) {
+			layer.clickables.showMaster = true;
 		}
 	}
 	if (layer.milestones) {

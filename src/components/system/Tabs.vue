@@ -112,5 +112,6 @@ export default {
 .tab > [data-simplebar] > .simplebar-wrapper > .simplebar-mask > .simplebar-offset > .simplebar-content-wrapper > .simplebar-content {
     flex-direction: column;
     min-height: 100%;
+    display: flex;
 }
 </style>

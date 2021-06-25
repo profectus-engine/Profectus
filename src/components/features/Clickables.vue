@@ -26,7 +26,10 @@ export default {
 	props: {
 		layer: String,
 		clickables: Array,
-		showMaster: Boolean,
+		showMaster: {
+			type: Boolean,
+			default: null
+		},
 		height: {
 			type: [ Number, String ],
 			default: "inherit"
@@ -37,18 +40,19 @@ export default {
 			return getFiltered(layers[this.layer || this.tab.layer].clickables, this.clickables);
 		},
 		showMasterButton() {
-			if (layers[this.layer || this.tab.layer].clickables.masterButtonPress == undefined) {
+			console.log(layers[this.layer || this.tab.layer].clickables?.masterButtonClick, this.showMaster, layers[this.layer || this.tab.layer].clickables?.showMaster)
+			if (layers[this.layer || this.tab.layer].clickables?.masterButtonClick == undefined) {
 				return false;
 			}
 			if (this.showMaster != undefined) {
 				return this.showMaster;
 			}
-			return layers[this.layer || this.tab.layer].clickables.showMaster;
+			return layers[this.layer || this.tab.layer].clickables?.showMaster;
 		}
 	},
 	methods: {
-		respec() {
-			layers[this.layer || this.tab.layer].clickables.masterButtonPress();
+		press() {
+			layers[this.layer || this.tab.layer].clickables.masterButtonClick();
 		}
 	}
 };

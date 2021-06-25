@@ -1,8 +1,8 @@
 <template>
 	<div v-if="clickable.unlocked">
-		<button :class="{ feature: true, [layer || tab.layer]: true, can: clickable.canClick, locked: !clickable.canClick }" :style="style"
-			@click="clickable.click" @mousedown="start" @mouseleave="stop" @mouseup="stop" @touchstart="start"
-			@touchend="stop" @touchcancel="stop" :disabled="!clickable.canClick">
+		<button :style="style" @click="clickable.click" @mousedown="start" @mouseleave="stop" @mouseup="stop" @touchstart="start"
+			@touchend="stop" @touchcancel="stop" :disabled="!clickable.canClick"
+			:class="{ feature: true, [layer || tab.layer]: true, clickable: true, can: clickable.canClick, locked: !clickable.canClick }">
 			<div v-if="titleDisplay">
 				<component :is="titleDisplay" />
 			</div>
@@ -21,6 +21,7 @@ export default {
 	name: 'clickable',
 	inject: [ 'tab' ],
 	props: {
+		layer: String,
 		id: [ Number, String ],
 		size: {
 			type: [ Number, String ]
@@ -70,4 +71,9 @@ export default {
 </script>
 
 <style scoped>
+.clickable {
+    min-height: 120px;
+    width: 120px;
+    font-size: 10px;
+}
 </style>

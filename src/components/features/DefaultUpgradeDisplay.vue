@@ -26,7 +26,7 @@ export default {
 		},
 		title() {
 			if (this.upgrade.title) {
-				return coerceComponent(this.upgrade.title, 'h2');
+				return coerceComponent(this.upgrade.title, 'h3');
 			}
 			return null;
 		},

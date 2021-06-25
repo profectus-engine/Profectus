@@ -50,21 +50,21 @@ export default {
     // This is also non minimal, a Clickable!
     clickables: {
 
-        masterButtonPress() {
+        masterButtonClick() {
             if (getClickableState(this.layer, 11) == "Borkened...")
                 player[this.layer].clickables[11] = "Start"
         },
-        masterButtonText() {return (getClickableState(this.layer, 11) == "Borkened...") ? "Fix the clickable!" : "Does nothing"}, // Text on Respec button, optional
+        masterButtonDisplay() {return (getClickableState(this.layer, 11) == "Borkened...") ? "Fix the clickable!" : "Does nothing"}, // Text on Respec button, optional
         11: {
-            title: "Clicky clicky!", // Optional, displayed at the top in a larger font
-            display() { // Everything else displayed in the buyable button after the title
+            titleDisplay: "Clicky clicky!", // Optional, displayed at the top in a larger font
+            descriptionDisplay() { // Everything else displayed in the buyable button after the title
                 let data = getClickableState(this.layer, this.id)
                 return "Current state:<br>" + data
             },
             unlocked() { return player[this.layer].unlocked },
             canClick() {
                 return getClickableState(this.layer, this.id) !== "Borkened..."},
-            onClick() {
+            click() {
                 switch(getClickableState(this.layer, this.id)){
                     case "Start":
                         player[this.layer].clickables[this.id] = "A new state!"

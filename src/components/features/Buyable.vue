@@ -90,8 +90,9 @@ export default {
 
 <style scoped>
 .buyable {
-    height: 200px;
+    min-height: 200px;
     width: 200px;
+    font-size: 10px;
 }
 
 .buyable-button {
