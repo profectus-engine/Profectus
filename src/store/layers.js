@@ -391,8 +391,15 @@ export function addLayer(layer, player = null) {
 	}
 	if (layer.hotkeys) {
 		for (let id in layer.hotkeys) {
-			if (layer.hotkeys[id].onPress) {
-				layer.hotkeys[id].onPress.forceCached = false;
+			if (isPlainObject(layer.hotkeys[id])) {
+				if (layer.hotkeys[id].onPress) {
+					layer.hotkeys[id].onPress.forceCached = false;
+				}
+				if (layer.hotkeys[id].unlocked == undefined) {
+					layer.hotkeys[id].unlocked = function() {
+						return layer.unlocked;
+					}
+				}
 			}
 		}
 	}
@@ -407,7 +414,7 @@ export function addLayer(layer, player = null) {
 	// Register hotkeys
 	if (layer.hotkeys) {
 		for (let id in layer.hotkeys) {
-			hotkeys[id] = layer.hotkeys[id];
+			hotkeys[layer.hotkeys[id].key] = layer.hotkeys[id];
 		}
 	}
 }

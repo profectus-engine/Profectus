@@ -1,6 +1,6 @@
 import Decimal from './bignum';
 import { isPlainObject } from './common';
-import { layers } from '../store/layers';
+import { layers, hotkeys } from '../store/layers';
 import { player } from '../store/proxies';
 
 export function resetLayer(layer, force = false) {
@@ -292,3 +292,22 @@ export const defaultLayerProperties = {
 		}
 	}
 };
+
+document.onkeydown = function(e) {
+	if (player.hasWon && !player.keepGoing) {
+		return;
+	}
+	let key = e.key;
+	if (e.shiftKey) {
+		key = "shift+" + key;
+	}
+	if (e.ctrlKey) {
+		key = "ctrl+" + key;
+	}
+	if (hotkeys[key]) {
+		e.preventDefault();
+		if (hotkeys[key].unlocked) {
+			hotkeys[key].onPress?.();
+		}
+	}
+}
