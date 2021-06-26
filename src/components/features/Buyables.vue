@@ -53,12 +53,7 @@ export default {
 			}
 		},
 		respec() {
-			// If they're controlling confirmRespec, assume they're also controlling what's being respecced
-			if (this.confirmRespec != undefined) {
-				this.$emit("respec");
-			} else {
-				layers[this.layer || this.tab.layer].buyables.respec();
-			}
+			layers[this.layer || this.tab.layer].buyables.respec?.();
 		}
 	}
 };

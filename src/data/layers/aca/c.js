@@ -160,7 +160,7 @@ export default {
 	},
 	buyables: {
 		showRespec: true,
-		reset() { // Optional, reset things and give back your currency. Having this function makes a respec button appear
+		respec() { // Optional, reset things and give back your currency. Having this function makes a respec button appear
 			player[this.layer].points = player[this.layer].points.add(player[this.layer].spentOnBuyables) // A built-in thing to keep track of this but only keeps a single value
 			this.reset();
 			resetLayer(this.layer, true) // Force a reset

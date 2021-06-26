@@ -242,6 +242,9 @@ export function addLayer(layer, player = null) {
 		} else {
 			layer.buyables.reset.forceCached = false;
 		}
+		if (layer.buyables.respec != undefined) {
+			layer.buyables.respec.forceCached = false;
+		}
 		for (let id in layer.buyables) {
 			if (isPlainObject(layer.buyables[id])) {
 				layer.buyables[id].amount = function() {

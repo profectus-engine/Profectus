@@ -18,7 +18,8 @@ export default {
 		}
 	},
 	props: {
-		disabled: Boolean
+		disabled: Boolean,
+		skipConfirm: Boolean
 	},
 	watch: {
 		confirming(newValue) {
@@ -27,6 +28,10 @@ export default {
 	},
 	methods: {
 		click() {
+			if (this.skipConfirm) {
+				this.$emit('click');
+				return;
+			}
 			if (this.confirming) {
 				this.$emit('click');
 			}

@@ -17,12 +17,8 @@
 			<div slot="footer">
 				<div class="modal-footer">
 					<div class="modal-flex-grow"></div>
-					<button class="button modal-button danger" @click="cancel">
-						Yes!
-					</button>
-					<button class="button modal-button" @click="cancel">
-						Cancel
-					</button>
+					<danger-button class="button modal-button" @click="confirm" skipConfirm>Yes</danger-button>
+					<button class="button modal-button" @click="cancel">Cancel</button>
 				</div>
 			</div>
 		</Modal>
