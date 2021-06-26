@@ -345,7 +345,7 @@ export function addLayer(layer, player = null) {
 				if (layer.grids[id].getStartData == undefined) {
 					layer.grids[id].getStartData = "";
 				}
-				layer.grids[id].data = function(cell) {
+				layer.grids[id].getData = function(cell) {
 					if (player[layer.id].grids[id][cell] != undefined) {
 						return player[layer.id].grids[id][cell];
 					}

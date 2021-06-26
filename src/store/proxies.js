@@ -158,12 +158,12 @@ function getGridHandler(prefix) {
 			} else if (isFunction(target[key])) {
 				const getterID = `${prefix}${key}`;
 				if (getterID in store.getters) {
-					return store.getters[getterID]();
+					return store.getters[getterID];
 				} else {
 					return target[key].bind(receiver);
 				}
 			}
-			if (!isNaN(key)) {
+			if (typeof key !== 'symbol' && !isNaN(key)) {
 				target[key] = new Proxy(target, getCellHandler(key));
 			}
 			return target[key];
@@ -187,9 +187,7 @@ function getCellHandler(id) {
 			}
 
 			let prop = target[key];
-			if (isFunction(prop)) {
-				return prop.call(receiver, id, target.data(id));
-			} else if (prop != undefined) {
+			if (prop != undefined) {
 				return prop;
 			}
 
@@ -200,14 +198,14 @@ function getCellHandler(id) {
 			key = key.slice(0, 1).toUpperCase() + key.slice(1);
 			prop = target[`get${key}`];
 			if (isFunction(prop)) {
-				return prop.call(receiver, id, target.data(id));
+				return prop.call(receiver, id, target.getData(id));
 			} else if (prop != undefined) {
 				return prop;
 			}
 
 			prop = target[`on${key}`];
 			if (isFunction(prop)) {
-				return () => prop.call(receiver, id, target.data(id));
+				return () => prop.call(receiver, id, target.getData(id));
 			} else if (prop != undefined) {
 				return prop;
 			}
