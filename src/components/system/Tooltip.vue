@@ -1,10 +1,13 @@
 <template>
-	<div class="tooltip-container" :class="{ force }">
-		<div class="tooltip" :class="{ top, left, right, bottom }"
-		:style="{ '--xoffset': xoffset, '--yoffset': yoffset }">
-			<component :is="tooltipDisplay" />
-		</div>
+	<div class="tooltip-container" :class="{ shown }" @mouseenter="setHover(true)" @mouseleave="setHover(false)">
 		<slot />
+		<!-- Make sure slot is *before* the transition in case the slot uses v-frag, which messes up the tooltip -->
+		<transition name="fade">
+			<div v-if="shown" class="tooltip" :class="{ top, left, right, bottom }"
+				:style="{ '--xoffset': xoffset, '--yoffset': yoffset }">
+				<component :is="tooltipDisplay" />
+			</div>
+		</transition>
 	</div>
 </template>
 
@@ -13,6 +16,11 @@ import { coerceComponent } from '../../util/vue';
 
 export default {
 	name: 'tooltip',
+	data() {
+		return {
+			hover: false
+		};
+	},
 	props: {
 		force: Boolean,
 		display: String,
@@ -26,11 +34,19 @@ export default {
 	computed: {
 		tooltipDisplay() {
 			return coerceComponent(this.display);
+		},
+		shown() {
+			return this.force || this.hover;
 		}
 	},
 	provide: {
 		tab() {
 			return {};
+		}
+	},
+	methods: {
+		setHover(hover) {
+			this.hover = hover;
 		}
 	}
 };
@@ -59,20 +75,17 @@ export default {
     transform: translateX(-50%);
     padding: 7px;
     border-radius: 3px;
-    opacity: 0;
     background-color: var(--background-tooltip);
     color: var(--points);
+	z-index: 100 !important;
 }
 
-.tooltip-container:hover,
-.force {
+.shown {
 	z-index: 1;
 }
 
-.tooltip-container:hover > .tooltip,
-.force > .tooltip {
-	opacity: 1;
-	z-index: 100 !important;
+.fade-enter, .fade-leave-to {
+    opacity: 0;
 }
 
 .tooltip::after {

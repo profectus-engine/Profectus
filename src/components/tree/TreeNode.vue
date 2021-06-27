@@ -24,7 +24,6 @@
 import { layers } from '../../store/layers';
 import { player } from '../../store/proxies';
 import { coerceComponent } from '../../util/vue';
-import { formatWhole } from '../../util/bignum';
 
 export default {
 	name: 'tree-node',
@@ -73,10 +72,10 @@ export default {
 				}
 			}
 			if (player[this.id].unlocked) {
-				return this.layer.tooltip || `${formatWhole(player[this.id].points)} ${this.layer.resource}`;
+				return this.layer.tooltip || `{{ formatWhole(player.${this.id}.points) }} {{ layers.${this.id}.resource }}`;
 			} else {
 				return this.layer.tooltipLocked ||
-					`Reach ${formatWhole(this.layer.requires)} ${this.layer.baseResource} to unlock (You have ${formatWhole(this.layer.baseAmount)} ${this.layer.baseResource})`;
+					`Reach {{ formatWhole(layers.${this.id}.requires) }} {{ layers.${this.id}.baseResource }} to unlock (You have {{ formatWhole(layers.${this.id}.baseAmount) }} {{ layers.${this.id}.baseResource }})`;
 			}
 		},
 		components() {
