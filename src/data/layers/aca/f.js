@@ -36,7 +36,7 @@ export default {
     branches: [{ target: "c", 'stroke-width': '25px', 'stroke': 'blue', style: 'filter: blur(5px)' }], // When this layer appears, a branch will appear from this layer to any layers here. Each entry can be a pair consisting of a layer id and a color.
 
     tooltipLocked() { // Optional, tooltip displays when the layer is locked
-        return ("This weird farmer dinosaur will only see you if you have at least " + this.requires + " points. You only have " + formatWhole(player.points))
+        return ("This weird farmer dinosaur will only see you if you have at least {{layers.f.requires}} points. You only have {{ formatWhole(player.points) }}")
     },
     midsection: '<div><br/><img src="https://images.beano.com/store/24ab3094eb95e5373bca1ccd6f330d4406db8d1f517fc4170b32e146f80d?auto=compress%2Cformat&dpr=1&w=390" /><div>Bork Bork!</div></div>',
     // The following are only currently used for "custom" Prestige type:

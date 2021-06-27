@@ -24,7 +24,7 @@ const g = {
 const h = {
 	id: "h",
 	branches: ["g", () => ({ target: 'flatBoi', featureType: 'bar', endOffset: { x: -50 + 100 * layers.c.bars.flatBoi.progress.toNumber() } })],
-	tooltip() {return "Restore your points to " + player.c.otherThingy},
+	tooltip() {return "Restore your points to {{ player.c.otherThingy }}"},
 	row: "side",
 	canClick() {return player.points.lt(player.c.otherThingy)},
 	onClick() {player.points = new Decimal(player.c.otherThingy)}
