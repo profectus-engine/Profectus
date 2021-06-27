@@ -1,23 +1,23 @@
 <template>
 	<portal to="modal-root">
-		<transition name="modal">
+		<transition name="modal" @before-enter="setAnimating(true)" @after-leave="setAnimating(false)">
 			<div class="modal-mask" v-show="show" v-on:pointerdown.self="$emit('close')">
 				<div class="modal-wrapper">
 					<div class="modal-container">
 						<div class="modal-header">
-							<slot name="header">
+							<slot name="header" :shown="isVisible">
 								default header
 							</slot>
 						</div>
 						<simplebar class="modal-body">
 							<branches>
-								<slot name="body">
+								<slot name="body" :shown="isVisible">
 									default body
 								</slot>
 							</branches>
 						</simplebar>
 						<div class="modal-footer">
-							<slot name="footer">
+							<slot name="footer" :shown="isVisible">
 								<div class="modal-default-footer">
 									<div class="modal-default-flex-grow"></div>
 									<button class="button modal-default-button" @click="$emit('close')">
@@ -36,8 +36,23 @@
 <script>
 export default {
 	name: 'Modal',
+	data() {
+		return {
+			isAnimating: false
+		}
+	},
 	props: {
 		show: Boolean
+	},
+	computed: {
+		isVisible() {
+			return this.show || this.isAnimating;
+		}
+	},
+	methods: {
+		setAnimating(isAnimating) {
+			this.isAnimating = isAnimating;
+		}
 	}
 }
 </script>

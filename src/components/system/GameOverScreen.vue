@@ -7,18 +7,20 @@
 				<h4>You've beaten {{ title }} v{{ versionNumber }}: {{ versionTitle }}</h4>
 			</div>
 		</div>
-		<div slot="body">
-			<div>It took you {{ timePlayed }} to beat the game.</div>
-			<br>
-			<div>Please check the Discord to discuss the game or to check for new content updates!</div>
-			<br>
-			<div>
-				<a :href="discordLink">
-					<img src="images/discord.png" class="game-over-modal-discord" />
-					{{ discordName }}
-				</a>
+		<template v-slot:body="{ shown }">
+			<div v-if="shown">
+				<div>It took you {{ timePlayed }} to beat the game.</div>
+				<br>
+				<div>Please check the Discord to discuss the game or to check for new content updates!</div>
+				<br>
+				<div>
+					<a :href="discordLink">
+						<img src="images/discord.png" class="game-over-modal-discord" />
+						{{ discordName }}
+					</a>
+				</div>
 			</div>
-		</div>
+		</template>
 		<div slot="footer" class="game-over-footer">
 			<button @click="keepGoing" class="button">Keep Going</button>
 			<button @click="playAgain" class="button danger">Play Again</button>

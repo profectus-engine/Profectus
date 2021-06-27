@@ -7,50 +7,52 @@
 				<h4>v{{ versionNumber}}: {{ versionTitle }}</h4>
 			</div>
 		</div>
-		<div slot="body">
-			<div v-if="author">
-				By {{ author }}
-			</div>
-			<div>
-				Made in TMT-X, by thepaperpilot with inspiration from Acameada, Jacorb, and Aarex
-			</div>
-			<br/>
-			<div class="link" @click="$emit('openDialog', 'Changelog')">Changelog</div>
-			<br>
-			<div>
-				<a :href="discordLink" v-if="discordLink !== 'https://discord.gg/WzejVAx'" class="info-modal-discord-link">
-					<img src="images/discord.png" class="info-modal-discord" />
-					{{ discordName }}
-				</a>
-			</div>
-			<div>
-				<a href="https://discord.gg/WzejVAx" class="info-modal-discord-link">
-					<img src="images/discord.png" class="info-modal-discord" />
-					The Paper Pilot Community
-				</a>
-			</div>
-			<div>
-				<a href="https://discord.gg/F3xveHV" class="info-modal-discord-link">
-					<img src="images/discord.png" class="info-modal-discord" />
-					The Modding Tree
-				</a>
-			</div>
-			<div>
-				<a href="https://discord.gg/wwQfgPa" class="info-modal-discord-link">
-					<img src="images/discord.png" class="info-modal-discord" />
-					Jacorb's Games
-				</a>
-			</div>
-			<br>
-			<div>Time Played: {{ timePlayed }}</div>
-			<div v-if="hotkeys.length > 0">
+		<template v-slot:body="{ shown }">
+			<div v-if="shown">
+				<div v-if="author">
+					By {{ author }}
+				</div>
+				<div>
+					Made in TMT-X, by thepaperpilot with inspiration from Acameada, Jacorb, and Aarex
+				</div>
+				<br/>
+				<div class="link" @click="$emit('openDialog', 'Changelog')">Changelog</div>
 				<br>
-				<h4>Hotkeys</h4>
-				<div v-for="key in hotkeys" :key="key.key">
-					{{ key.key }}: {{ key.description }}
+				<div>
+					<a :href="discordLink" v-if="discordLink !== 'https://discord.gg/WzejVAx'" class="info-modal-discord-link">
+						<img src="images/discord.png" class="info-modal-discord" />
+						{{ discordName }}
+					</a>
+				</div>
+				<div>
+					<a href="https://discord.gg/WzejVAx" class="info-modal-discord-link">
+						<img src="images/discord.png" class="info-modal-discord" />
+						The Paper Pilot Community
+					</a>
+				</div>
+				<div>
+					<a href="https://discord.gg/F3xveHV" class="info-modal-discord-link">
+						<img src="images/discord.png" class="info-modal-discord" />
+						The Modding Tree
+					</a>
+				</div>
+				<div>
+					<a href="https://discord.gg/wwQfgPa" class="info-modal-discord-link">
+						<img src="images/discord.png" class="info-modal-discord" />
+						Jacorb's Games
+					</a>
+				</div>
+				<br>
+				<div>Time Played: {{ timePlayed }}</div>
+				<div v-if="hotkeys.length > 0">
+					<br>
+					<h4>Hotkeys</h4>
+					<div v-for="key in hotkeys" :key="key.key">
+						{{ key.key }}: {{ key.description }}
+					</div>
 				</div>
 			</div>
-		</div>
+		</template>
 	</Modal>
 </template>
 
