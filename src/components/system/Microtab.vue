@@ -34,7 +34,8 @@ export default {
 		},
 		microtabs() {
 			return Object.keys(this.tabFamily)
-				.filter(microtab => microtab !== 'activeMicrotab' && this.tabFamily[microtab].unlocked !== false)
+				.filter(microtab =>
+					microtab !== 'activeMicrotab' && this.tabFamily[microtab].isProxy && this.tabFamily[microtab].unlocked !== false)
 				.reduce((acc, curr) => {
 					acc[curr] = this.tabFamily[curr];
 					return acc;
