@@ -145,6 +145,9 @@ export function addLayer(layer, player = null) {
 				layer.achievements[id].earned = function() {
 					return !layer.deactivated && player[layer.id].achievements.some(achievement => achievement == id);
 				}
+				if (layer.achievements[id].onComplete != undefined) {
+					layer.achievements[id].onComplete.forceCached = false;
+				}
 			}
 		}
 	}
@@ -289,8 +292,12 @@ export function addLayer(layer, player = null) {
 				if (layer.clickables[id].click != undefined) {
 					layer.clickables[id].click.forceCached = false;
 				}
+				if (layer.clickables[id].onHold != undefined) {
+					layer.clickables[id].onHold.forceCached = false;
+				}
 			}
 		}
+		layer.clickables.layer = layer.id;
 		if (layer.clickables.masterButtonClick != undefined) {
 			layer.clickables.masterButtonClick.forceCached = false;
 		}
@@ -338,12 +345,33 @@ export function addLayer(layer, player = null) {
 				}
 				if (layer.grids[id].getUnlocked == undefined) {
 					layer.grids[id].getUnlocked = true;
+				} else {
+					layer.grids[id].getUnlocked.forceCached = false;
 				}
 				if (layer.grids[id].getCanClick == undefined) {
 					layer.grids[id].getCanClick = true;
+				} else {
+					layer.grids[id].getCanClick.forceCached = false;
 				}
 				if (layer.grids[id].getStartData == undefined) {
 					layer.grids[id].getStartData = "";
+				} else {
+					layer.grids[id].getStartData.forceCached = false;
+				}
+				if (layer.grids[id].getStyle != undefined) {
+					layer.grids[id].getStyle.forceCached = false;
+				}
+				if (layer.grids[id].onClick != undefined) {
+					layer.grids[id].onClick.forceCached = false;
+				}
+				if (layer.grids[id].onHold != undefined) {
+					layer.grids[id].onHold.forceCached = false;
+				}
+				if (layer.grids[id].getTitle != undefined) {
+					layer.grids[id].getTitle.forceCached = false;
+				}
+				if (layer.grids[id].getDisplay != undefined) {
+					layer.grids[id].getDisplay.forceCached = false;
 				}
 				layer.grids[id].getData = function(cell) {
 					if (player[layer.id].grids[id][cell] != undefined) {
@@ -362,16 +390,22 @@ export function addLayer(layer, player = null) {
 		}
 	}
 	if (layer.subtabs) {
+		if (player.subtabs[layer.id] == undefined) {
+			player.subtabs[layer.id] = {};
+		}
+		if (player.subtabs[layer.id].mainTabs == undefined) {
+			player.subtabs[layer.id].mainTabs = Object.keys(layer.subtabs)[0];
+		}
 		for (let id in layer.subtabs) {
 			if (isPlainObject(layer.subtabs[id])) {
 				layer.subtabs[id].active = function() {
-					return player.subtabs[this.layer]?.mainTabs === this.id;
+					return player.subtabs[this.layer].mainTabs === this.id;
 				}
 			}
 		}
 		layer.activeSubtab = function() {
 			if (this.subtabs != undefined) {
-				if (this.subtabs[player.subtabs[layer.id]?.mainTabs] &&
+				if (this.subtabs[player.subtabs[layer.id].mainTabs] &&
 					this.subtabs[player.subtabs[layer.id].mainTabs].unlocked !== false) {
 					return this.subtabs[player.subtabs[layer.id].mainTabs];
 				}
@@ -381,7 +415,13 @@ export function addLayer(layer, player = null) {
 		}
 	}
 	if (layer.microtabs) {
+		if (player.subtabs[layer.id] == undefined) {
+			player.subtabs[layer.id] = {};
+		}
 		for (let family in layer.microtabs) {
+			if (player.subtabs[layer.id][family] == undefined) {
+				player.subtabs[layer.id][family] = Object.keys(layer.microtabs[family])[0];
+			}
 			for (let id in layer.microtabs[family]) {
 				if (isPlainObject(layer.microtabs[family][id])) {
 					layer.microtabs[family][id].layer = layer.id;
@@ -392,9 +432,11 @@ export function addLayer(layer, player = null) {
 					}
 				}
 			}
+			layer.microtabs[family].layer = layer.id;
+			layer.microtabs[family].family = family;
 			layer.microtabs[family].activeMicrotab = function() {
-				if (this[player.subtabs[layer.id][family]] && this[player.subtabs[layer.id][family]].unlocked !== false) {
-					return this[player.subtabs[layer.id][family]];
+				if (this[player.subtabs[this.layer]?.[family]] && this[player.subtabs[this.layer][family]].unlocked !== false) {
+					return this[player.subtabs[this.layer][family]];
 				}
 				// Default to first unlocked tab
 				return this[Object.keys(this).find(microtab => microtab !== 'activeMicrotab' && this[microtab].unlocked !== false)];

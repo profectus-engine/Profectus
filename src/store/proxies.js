@@ -143,7 +143,7 @@ function getHandler(prefix) {
 
 function getGridHandler(prefix) {
 	return {
-		get(target, key, receiver) {
+		get(target, key) {
 			if (key === 'isProxy') {
 				return true;
 			}
@@ -159,9 +159,8 @@ function getGridHandler(prefix) {
 				const getterID = `${prefix}${key}`;
 				if (getterID in store.getters) {
 					return store.getters[getterID];
-				} else {
-					return target[key].bind(receiver);
 				}
+				// Non-cached functions are going to be cell-specific, so don't call them with the grid handler
 			}
 			if (typeof key !== 'symbol' && !isNaN(key)) {
 				target[key] = new Proxy(target, getCellHandler(key));

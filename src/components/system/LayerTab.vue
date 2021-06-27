@@ -136,9 +136,6 @@ export default {
 	},
 	methods: {
 		selectSubtab(subtab) {
-			if (player.subtabs[this.layer] == undefined) {
-				player.subtabs[this.layer] = {};
-			}
 			player.subtabs[this.layer].mainTabs = subtab;
 		},
 		toggleMinimized() {
