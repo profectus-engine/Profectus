@@ -121,6 +121,9 @@ export default {
 		openSave(id) {
 			this.saves[player.id].time = player.time;
 			loadSave(this.saves[id]);
+			const modData = JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)))));
+			modData.active = id;
+			localStorage.setItem(modInfo.id, btoa(unescape(encodeURIComponent(JSON.stringify(modData)))));
 		},
 		async newSave() {
 			const playerData = await newSave();
