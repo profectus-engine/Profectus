@@ -3,7 +3,7 @@
 		<div slot="header">
 			<h2>Saves Manager</h2>
 		</div>
-		<div slot="body" v-sortable="{ onUpdate, handle: '.handle' }">
+		<div slot="body" v-sortable="{ update, handle: '.handle' }">
 			<save v-for="(save, index) in saves" :key="index" :save="save" @open="openSave(save.id)" @export="exportSave(save.id)"
 				@editSave="name => editSave(save.id, name)" @duplicate="duplicateSave(save.id)" @delete="deleteSave(save.id)" />
 		</div>
@@ -169,7 +169,7 @@ export default {
 				this.importingFailed = false;
 			}
 		},
-		onUpdate(e) {
+		update(e) {
 			this.saves.splice(e.newIndex, 0, this.saves.splive(e.oldIndex, 1)[0]);
 
 			const modData = JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)))));

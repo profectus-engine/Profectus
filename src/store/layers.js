@@ -292,8 +292,8 @@ export function addLayer(layer, player = null) {
 				if (layer.clickables[id].click != undefined) {
 					layer.clickables[id].click.forceCached = false;
 				}
-				if (layer.clickables[id].onHold != undefined) {
-					layer.clickables[id].onHold.forceCached = false;
+				if (layer.clickables[id].hold != undefined) {
+					layer.clickables[id].hold.forceCached = false;
 				}
 			}
 		}
@@ -361,11 +361,11 @@ export function addLayer(layer, player = null) {
 				if (layer.grids[id].getStyle != undefined) {
 					layer.grids[id].getStyle.forceCached = false;
 				}
-				if (layer.grids[id].onClick != undefined) {
-					layer.grids[id].onClick.forceCached = false;
+				if (layer.grids[id].click != undefined) {
+					layer.grids[id].click.forceCached = false;
 				}
-				if (layer.grids[id].onHold != undefined) {
-					layer.grids[id].onHold.forceCached = false;
+				if (layer.grids[id].hold != undefined) {
+					layer.grids[id].hold.forceCached = false;
 				}
 				if (layer.grids[id].getTitle != undefined) {
 					layer.grids[id].getTitle.forceCached = false;
@@ -446,8 +446,8 @@ export function addLayer(layer, player = null) {
 	if (layer.hotkeys) {
 		for (let id in layer.hotkeys) {
 			if (isPlainObject(layer.hotkeys[id])) {
-				if (layer.hotkeys[id].onPress) {
-					layer.hotkeys[id].onPress.forceCached = false;
+				if (layer.hotkeys[id].press) {
+					layer.hotkeys[id].press.forceCached = false;
 				}
 				if (layer.hotkeys[id].unlocked == undefined) {
 					layer.hotkeys[id].unlocked = function() {
@@ -492,7 +492,7 @@ export function reloadLayer(layer) {
 	addLayer(layer);
 }
 
-const uncachedProperties = [ 'startData', 'onClick', 'update', 'reset', 'hardReset' ];
+const uncachedProperties = [ 'startData', 'click', 'update', 'reset', 'hardReset' ];
 const gridProperties = [ 'upgrades', 'achievements', 'challenges', 'buyables', 'clickables' ];
 const featureProperties = [ 'upgrades', 'achievements', 'challenges', 'buyables', 'clickables', 'milestones', 'bars',
 	'infoboxes', 'grids', 'hotkeys', 'subtabs' ];

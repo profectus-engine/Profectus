@@ -32,7 +32,7 @@ export default {
   prestigeButtonText(){return "Reset everything for +"+format(layers.i.getResetGain)+" Infinity.<br>You need "+format(layers.i.requires())+" pointy points to reset."},
     row: 1, // Row the layer is in on the tree (0 is the first row)
     hotkeys: [
-        {key: "i", description: "I: Infinity", onPress(){if (layers.i.canReset) resetLayer(this.layer)}},
+        {key: "i", description: "I: Infinity", press(){if (layers.i.canReset) resetLayer(this.layer)}},
     ],
     layerShown(){return player[this.layer].unlocked||new Decimal(player.p.buyables[21]).gte(8)},
     milestones: {

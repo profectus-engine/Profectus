@@ -186,11 +186,11 @@ function getCellHandler(id) {
 			}
 
 			let prop = target[key];
-			if (prop != undefined) {
-				return prop;
-			}
 
-			if (key.slice == undefined) {
+			if (isFunction(prop) && prop.forceCached === false) {
+				return () => prop.call(receiver, id, target.getData(id));
+			}
+			if (prop != undefined || key.slice == undefined) {
 				return prop;
 			}
 

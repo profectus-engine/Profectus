@@ -16,7 +16,7 @@ const g = {
 	shown: true,
 	canClick() {return player.points.gte(10)},
 	tooltip: "Thanos your points",
-	onClick() {
+	click() {
 		player.points = player.points.div(2);
 		console.log(this.layer);
 	}
@@ -27,7 +27,7 @@ const h = {
 	tooltip() {return "Restore your points to {{ player.c.otherThingy }}"},
 	row: "side",
 	canClick() {return player.points.lt(player.c.otherThingy)},
-	onClick() {player.points = new Decimal(player.c.otherThingy)}
+	click() {player.points = new Decimal(player.c.otherThingy)}
 };
 const spook = {
 	id: "spook",

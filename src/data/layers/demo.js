@@ -47,7 +47,7 @@ export default {
 	},
 	row: 0, // Row the layer is in on the tree (0 is the first row)
 	hotkeys: [
-	{key: "p", description: "P: Reset for prestige points", onPress(){if (layers.p.canReset) resetLayer(this.layer)}},
+	{key: "p", description: "P: Reset for prestige points", press(){if (layers.p.canReset) resetLayer(this.layer)}},
 	],
 	layerShown(){return true},
 	upgrades:{
@@ -503,7 +503,7 @@ export default {
 
 				display() {return "Multiply generator efficiency by "+format(player.p.cmult)+((player.p.cmult.min(100).eq(100)&&!hasUpgrade(this.layer,111))?" (hardcapped)":"")},
 				unlocked(){return hasUpgrade("p",94)},
-				onClick(){player.p.cmult=player.p.cmult.plus(hasUpgrade("p",141)?1:0.01)
+				click(){player.p.cmult=player.p.cmult.plus(hasUpgrade("p",141)?1:0.01)
 				if (!hasUpgrade(this.layer,111))player.p.cmult=player.p.cmult.min(100)
 			},
 		canClick(){return player.p.cmult.lt(100)||hasUpgrade(this.layer,111)},

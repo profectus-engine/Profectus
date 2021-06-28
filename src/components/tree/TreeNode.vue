@@ -89,8 +89,8 @@ export default {
 		clickTab(e) {
 			if (e.shiftKey) {
 				player[this.id].forceTooltip = !player[this.id].forceTooltip;
-			} else if (this.layer.onClick != undefined) {
-				this.layer.onClick();
+			} else if (this.layer.click != undefined) {
+				this.layer.click();
 			} else if (this.layer.modal) {
 				this.$emit('show-modal', this.id);
 			} else if (this.append) {

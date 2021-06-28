@@ -56,7 +56,7 @@ export default {
             getStyle(cell, data) {
                 return {'background-color': '#'+ (data*1234%999999)}
             },
-            onClick() { // Don't forget onHold
+            click() { // Don't forget onHold
                 this.data++
             },
             getTitle(cell) {

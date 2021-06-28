@@ -307,7 +307,7 @@ document.onkeydown = function(e) {
 	if (hotkeys[key]) {
 		e.preventDefault();
 		if (hotkeys[key].unlocked) {
-			hotkeys[key].onPress?.();
+			hotkeys[key].press?.();
 		}
 	}
 }

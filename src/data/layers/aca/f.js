@@ -84,7 +84,7 @@ export default {
                         break;
                 }
             },
-            onHold(){
+            hold(){
                 console.log("Clickkkkk...")
             },
             style() {

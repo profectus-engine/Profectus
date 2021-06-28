@@ -222,8 +222,8 @@ export default {
 	}, // Useful for if you gain secondary resources or have other interesting things happen to this layer when you reset it. You gain the currency after this function ends.
 
 	hotkeys: [
-		{key: "c", description: "reset for lollipops or whatever", onPress(){if (layers[this.layer].canReset) resetLayer(this.layer)}},
-		{key: "ctrl+c", description: "respec things", onPress(){layers[this.layer].buyables.respec()}, unlocked() {return hasUpgrade('c', '22')}}  ,
+		{key: "c", description: "reset for lollipops or whatever", press(){if (layers[this.layer].canReset) resetLayer(this.layer)}},
+		{key: "ctrl+c", description: "respec things", press(){layers[this.layer].buyables.respec()}, unlocked() {return hasUpgrade('c', '22')}}  ,
 	],
 	increaseUnlockOrder: [], // Array of layer names to have their order increased when this one is first unlocked
 
