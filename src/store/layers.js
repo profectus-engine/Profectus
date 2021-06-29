@@ -73,69 +73,59 @@ export function addLayer(layer, player = null) {
 				layer.upgrades[id].bought = function() {
 					return !layer.deactivated && playerProxy[layer.id].upgrades.some(upgrade => upgrade == id);
 				}
-				if (layer.upgrades[id].canAfford == undefined) {
-					layer.upgrades[id].canAfford = function() {
-						if (this.currencyInternalName) {
-							let name = this.currencyInternalName;
-							if (this.currencyLocation) {
-								return !(this.currencyLocation[name].lt(this.cost));
-							} else if (this.currencyLayer) {
-								let lr = this.currencyLayer;
-								return !(playerProxy[lr][name].lt(this.cost));
-							} else {
-								return !(playerProxy[name].lt(this.cost));
-							}
+				setDefault(layer.upgrades[id], 'canAfford', function() {
+					if (this.currencyInternalName) {
+						let name = this.currencyInternalName;
+						if (this.currencyLocation) {
+							return !(this.currencyLocation[name].lt(this.cost));
+						} else if (this.currencyLayer) {
+							let lr = this.currencyLayer;
+							return !(playerProxy[lr][name].lt(this.cost));
 						} else {
-							return !(playerProxy[this.layer].points.lt(this.cost))
+							return !(playerProxy[name].lt(this.cost));
 						}
+					} else {
+						return !(playerProxy[this.layer].points.lt(this.cost))
 					}
-				}
-				if (layer.upgrades[id].pay == undefined) {
-					layer.upgrades[id].pay = noCache(function() {
-						if (this.bought || !this.canAfford) {
-							return;
-						}
-						if (this.currencyInternalName) {
-							let name = this.currencyInternalName
-							if (this.currencyLocation) {
-								if (this.currencyLocation[name].lt(this.cost)) {
-									return;
-								}
-								this.currencyLocation[name] = this.currencyLocation[name].sub(this.cost);
-							} else if (this.currencyLayer) {
-								let lr = this.currencyLayer;
-								if (playerProxy[lr][name].lt(this.cost)) {
-									return;
-								}
-								playerProxy[lr][name] = playerProxy[lr][name].sub(this.cost);
-							} else {
-								if (playerProxy[name].lt(this.cost)) {
-									return;
-								}
-								playerProxy[name] = playerProxy[name].sub(this.cost);
-							}
-						} else {
-							if (playerProxy[this.layer].points.lt(this.cost)) {
+				});
+				setDefault(layer.upgrades[id], 'pay', function() {
+					if (this.bought || !this.canAfford) {
+						return;
+					}
+					if (this.currencyInternalName) {
+						let name = this.currencyInternalName
+						if (this.currencyLocation) {
+							if (this.currencyLocation[name].lt(this.cost)) {
 								return;
 							}
-							playerProxy[this.layer].points = playerProxy[this.layer].points.sub(this.cost);
+							this.currencyLocation[name] = this.currencyLocation[name].sub(this.cost);
+						} else if (this.currencyLayer) {
+							let lr = this.currencyLayer;
+							if (playerProxy[lr][name].lt(this.cost)) {
+								return;
+							}
+							playerProxy[lr][name] = playerProxy[lr][name].sub(this.cost);
+						} else {
+							if (playerProxy[name].lt(this.cost)) {
+								return;
+							}
+							playerProxy[name] = playerProxy[name].sub(this.cost);
 						}
-					});
-				} else {
-					layer.upgrades[id].pay.forceCached = false;
-				}
-				if (layer.upgrades[id].buy == undefined) {
-					layer.upgrades[id].buy = noCache(function() {
-						if (this.bought || !this.canAfford) {
+					} else {
+						if (playerProxy[this.layer].points.lt(this.cost)) {
 							return;
 						}
-						this.pay();
-						playerProxy[this.layer].upgrades.push(this.id);
-						this.onPurchase?.();
-					});
-				} else {
-					layer.upgrades[id].buy.forceCached = false;
-				}
+						playerProxy[this.layer].points = playerProxy[this.layer].points.sub(this.cost);
+					}
+				}, false);
+				setDefault(layer.upgrades[id], 'buy', function() {
+					if (this.bought || !this.canAfford) {
+						return;
+					}
+					this.pay();
+					playerProxy[this.layer].upgrades.push(this.id);
+					this.onPurchase?.();
+				}, false);
 			}
 		}
 	}
@@ -145,24 +135,16 @@ export function addLayer(layer, player = null) {
 				layer.achievements[id].earned = function() {
 					return !layer.deactivated && playerProxy[layer.id].achievements.some(achievement => achievement == id);
 				}
-				if (layer.achievements[id].onComplete != undefined) {
-					layer.achievements[id].onComplete.forceCached = false;
-				}
+				setDefault(layer.achievements[id], 'onComplete', null, false);
 			}
 		}
 	}
 	if (layer.challenges) {
+		layer.activeChallenge = function() {
+			return Object.values(this.challenges).find(challenge => challenge.active);
+		}
 		for (let id in layer.challenges) {
 			if (isPlainObject(layer.challenges[id])) {
-				if (layer.challenges[id].onComplete != undefined) {
-					layer.challenges[id].onComplete.forceCached = false;
-				}
-				if (layer.challenges[id].onEnter != undefined) {
-					layer.challenges[id].onEnter.forceCached = false;
-				}
-				if (layer.challenges[id].onExit != undefined) {
-					layer.challenges[id].onExit.forceCached = false;
-				}
 				layer.challenges[id].shown = function() {
 					return this.unlocked !== false && (playerProxy.hideChallenges === false || !this.maxed);
 				}
@@ -175,37 +157,8 @@ export function addLayer(layer, player = null) {
 				layer.challenges[id].maxed = function() {
 					return !layer.deactivated && Decimal.gte(playerProxy[layer.id].challenges[id], this.completionLimit);
 				}
-				if (layer.challenges[id].mark == undefined) {
-					layer.challenges[id].mark = function() {
-						return this.maxed;
-					}
-				}
 				layer.challenges[id].active = function() {
 					return !layer.deactivated && playerProxy[layer.id].activeChallenge === id;
-				}
-				if (layer.challenges[id].canComplete == undefined) {
-					layer.challenges[id].canComplete = function() {
-						if (this.active) {
-							return false;
-						}
-
-						if (this.currencyInternalName) {
-							let name = this.currencyInternalName;
-							if (this.currencyLocation) {
-								return !(this.currencyLocation[name].lt(this.goal));
-							} else if (this.currencyLayer) {
-								let lr = this.currencyLayer;
-								return !(playerProxy[lr][name].lt(this.goal));
-							} else {
-								return !(playerProxy[name].lt(this.goal));
-							}
-						} else {
-							return !(playerProxy.points.lt(this.goal));
-						}
-					}
-				}
-				if (layer.challenges[id].completionLimit == undefined) {
-					layer.challenges[id].completionLimit = new Decimal(1);
 				}
 				layer.challenges[id].toggle = noCache(function() {
 					let exiting = playerProxy[layer.id].activeChallenge === id;
@@ -228,26 +181,40 @@ export function addLayer(layer, player = null) {
 						this.onEnter?.();
 					}
 				});
-				if (layer.challenges[id].canStart == undefined) {
-					layer.challenges[id].canStart = true;
-				}
+				setDefault(layer.challenges[id], 'onComplete', null, false);
+				setDefault(layer.challenges[id], 'onEnter', null, false);
+				setDefault(layer.challenges[id], 'onExit', null, false);
+				setDefault(layer.challenges[id], 'canStart', true);
+				setDefault(layer.challenges[id], 'completionLimit', new Decimal(1));
+				setDefault(layer.challenges[id], 'mark', function() {
+					return Decimal.gt(this.completionLimit, 1) && this.maxed;
+				});
+				setDefault(layer.challenges[id], 'canComplete', function() {
+					if (this.active) {
+						return false;
+					}
+					if (this.currencyInternalName) {
+						let name = this.currencyInternalName;
+						if (this.currencyLocation) {
+							return !(this.currencyLocation[name].lt(this.goal));
+						} else if (this.currencyLayer) {
+							let lr = this.currencyLayer;
+							return !(playerProxy[lr][name].lt(this.goal));
+						} else {
+							return !(playerProxy[name].lt(this.goal));
+						}
+					} else {
+						return !(playerProxy.points.lt(this.goal));
+					}
+				});
 			}
-		}
-		layer.activeChallenge = function() {
-			return Object.values(this.challenges).find(challenge => challenge.active);
 		}
 	}
 	if (layer.buyables) {
-		if (layer.buyables.reset == undefined) {
-			layer.buyables.reset = noCache(function() {
-				playerProxy[this.layer].buyables = getStartingBuyables(layer);
-			});
-		} else {
-			layer.buyables.reset.forceCached = false;
-		}
-		if (layer.buyables.respec != undefined) {
-			layer.buyables.respec.forceCached = false;
-		}
+		setDefault(layer.buyables, 'respec', null, false);
+		setDefault(layer.buyables, 'reset', function() {
+			playerProxy[this.layer].buyables = getStartingBuyables(layer);
+		}, false);
 		for (let id in layer.buyables) {
 			if (isPlainObject(layer.buyables[id])) {
 				layer.buyables[id].amount = function() {
@@ -260,27 +227,24 @@ export function addLayer(layer, player = null) {
 					return !layer.deactivated && this.unlocked !== false && this.canAfford !== false &&
 						Decimal.lt(playerProxy[layer.id].buyables[id], this.purchaseLimit);
 				}
-				if (layer.buyables[id].purchaseLimit == undefined) {
-					layer.buyables[id].purchaseLimit = new Decimal(Infinity);
-				}
-				if (layer.buyables[id].cost != undefined && layer.buyables[id].buy == undefined) {
-					layer.buyables[id].buy = noCache(function() {
+				setDefault(layer.buyables[id], 'purchaseLimit', new Decimal(Infinity));
+				setDefault(layer.buyables[id], 'sellOne', null, false);
+				setDefault(layer.buyables[id], 'sellAll', null, false);
+				if (layer.buyables[id].cost != undefined) {
+					setDefault(layer.buyables[id], 'buy', function() {
 						playerProxy[this.layer].points = playerProxy[this.layer].points.sub(this.cost());
 						this.amount = this.amount.add(1);
-					});
-				} else {
-					layer.buyables[id].buy.forceCached = false;
-				}
-				if (layer.buyables[id].sellOne != undefined) {
-					layer.buyables[id].sellOne.forceCached = false;
-				}
-				if (layer.buyables[id].sellAll != undefined) {
-					layer.buyables[id].sellAll.forceCached = false;
+					}, false);
 				}
 			}
 		}
 	}
 	if (layer.clickables) {
+		layer.clickables.layer = layer.id;
+		setDefault(layer.clickables, 'masterButtonClick', null, false);
+		if (layer.clickables.masterButtonDisplay != undefined) {
+			setDefault(layer.clickables, 'showMaster', true);
+		}
 		for (let id in layer.clickables) {
 			if (isPlainObject(layer.clickables[id])) {
 				layer.clickables[id].state = function() {
@@ -289,30 +253,21 @@ export function addLayer(layer, player = null) {
 				layer.clickables[id].stateSet = function(state) {
 					playerProxy[layer.id].clickables[id] = state;
 				}
-				if (layer.clickables[id].click != undefined) {
-					layer.clickables[id].click.forceCached = false;
-				}
-				if (layer.clickables[id].hold != undefined) {
-					layer.clickables[id].hold.forceCached = false;
-				}
+				setDefault(layer.clickables[id], 'click', null, false);
+				setDefault(layer.clickables[id], 'hold', null, false);
 			}
-		}
-		layer.clickables.layer = layer.id;
-		if (layer.clickables.masterButtonClick != undefined) {
-			layer.clickables.masterButtonClick.forceCached = false;
-		}
-		if (layer.clickables.showMaster == undefined && layer.clickables.masterButtonDisplay != undefined) {
-			layer.clickables.showMaster = true;
 		}
 	}
 	if (layer.milestones) {
 		for (let id in layer.milestones) {
 			if (isPlainObject(layer.milestones[id])) {
+				layer.milestones[id].earned = function() {
+					return !layer.deactivated && playerProxy[layer.id].milestones.some(milestone => milestone == id);
+				}
 				layer.milestones[id].shown = function() {
 					if (!this.unlocked) {
 						return false;
 					}
-
 					switch (playerProxy.msDisplay) {
 						default:
 						case "all":
@@ -328,51 +283,13 @@ export function addLayer(layer, player = null) {
 							return false;
 					}
 				}
-				layer.milestones[id].earned = function() {
-					return !layer.deactivated && playerProxy[layer.id].milestones.some(milestone => milestone == id);
-				}
 			}
 		}
 	}
 	if (layer.grids) {
 		for (let id in layer.grids) {
-			if (player[layer.id].grids[id] == undefined) {
-				player[layer.id].grids[id] = {};
-			}
 			if (isPlainObject(layer.grids[id])) {
-				if (player[layer.id].grids[id] == undefined) {
-					player[layer.id].grids[id] = {};
-				}
-				if (layer.grids[id].getUnlocked == undefined) {
-					layer.grids[id].getUnlocked = true;
-				} else {
-					layer.grids[id].getUnlocked.forceCached = false;
-				}
-				if (layer.grids[id].getCanClick == undefined) {
-					layer.grids[id].getCanClick = true;
-				} else {
-					layer.grids[id].getCanClick.forceCached = false;
-				}
-				if (layer.grids[id].getStartData == undefined) {
-					layer.grids[id].getStartData = "";
-				} else {
-					layer.grids[id].getStartData.forceCached = false;
-				}
-				if (layer.grids[id].getStyle != undefined) {
-					layer.grids[id].getStyle.forceCached = false;
-				}
-				if (layer.grids[id].click != undefined) {
-					layer.grids[id].click.forceCached = false;
-				}
-				if (layer.grids[id].hold != undefined) {
-					layer.grids[id].hold.forceCached = false;
-				}
-				if (layer.grids[id].getTitle != undefined) {
-					layer.grids[id].getTitle.forceCached = false;
-				}
-				if (layer.grids[id].getDisplay != undefined) {
-					layer.grids[id].getDisplay.forceCached = false;
-				}
+				setDefault(player[layer.id].grids, id, {});
 				layer.grids[id].getData = function(cell) {
 					if (playerProxy[layer.id].grids[id][cell] != undefined) {
 						return playerProxy[layer.id].grids[id][cell];
@@ -385,24 +302,19 @@ export function addLayer(layer, player = null) {
 				layer.grids[id].dataSet = function(cell, data) {
 					playerProxy[layer.id].grids[id][cell] = data;
 				}
+				setDefault(layer.grids[id], 'getUnlocked', true, false);
+				setDefault(layer.grids[id], 'getCanClick', true, false);
+				setDefault(layer.grids[id], 'getStartData', "", false);
+				setDefault(layer.grids[id], 'getStyle', null, false);
+				setDefault(layer.grids[id], 'click', null, false);
+				setDefault(layer.grids[id], 'hold', null, false);
+				setDefault(layer.grids[id], 'getTitle', null, false);
+				setDefault(layer.grids[id], 'getDisplay', null, false);
 				layer.grids[id] = createGridProxy(layer.grids[id], getters, `${layer.id}/grids-${id}-`);
 			}
 		}
 	}
 	if (layer.subtabs) {
-		if (player.subtabs[layer.id] == undefined) {
-			player.subtabs[layer.id] = {};
-		}
-		if (player.subtabs[layer.id].mainTabs == undefined) {
-			player.subtabs[layer.id].mainTabs = Object.keys(layer.subtabs)[0];
-		}
-		for (let id in layer.subtabs) {
-			if (isPlainObject(layer.subtabs[id])) {
-				layer.subtabs[id].active = function() {
-					return playerProxy.subtabs[this.layer].mainTabs === this.id;
-				}
-			}
-		}
 		layer.activeSubtab = function() {
 			if (this.subtabs != undefined) {
 				if (this.subtabs[player.subtabs[layer.id].mainTabs] &&
@@ -413,15 +325,29 @@ export function addLayer(layer, player = null) {
 				return Object.values(this.subtabs).find(subtab => subtab.unlocked !== false);
 			}
 		}
+		setDefault(player.subtabs, layer.id, {});
+		setDefault(player.subtabs[layer.id], 'mainTabs', Object.keys(layer.subtabs)[0]);
+		for (let id in layer.subtabs) {
+			if (isPlainObject(layer.subtabs[id])) {
+				layer.subtabs[id].active = function() {
+					return playerProxy.subtabs[this.layer].mainTabs === this.id;
+				}
+			}
+		}
 	}
 	if (layer.microtabs) {
-		if (player.subtabs[layer.id] == undefined) {
-			player.subtabs[layer.id] = {};
-		}
+		setDefault(player.subtabs, layer.id, {});
 		for (let family in layer.microtabs) {
-			if (player.subtabs[layer.id][family] == undefined) {
-				player.subtabs[layer.id][family] = Object.keys(layer.microtabs[family])[0];
+			layer.microtabs[family].activeMicrotab = function() {
+				if (this[player.subtabs[this.layer]?.[family]] && this[player.subtabs[this.layer][family]].unlocked !== false) {
+					return this[player.subtabs[this.layer][family]];
+				}
+				// Default to first unlocked tab
+				return this[Object.keys(this).find(microtab => microtab !== 'activeMicrotab' && this[microtab].unlocked !== false)];
 			}
+			setDefault(player.subtabs[layer.id], family, Object.keys(layer.microtabs[family])[0]);
+			layer.microtabs[family].layer = layer.id;
+			layer.microtabs[family].family = family;
 			for (let id in layer.microtabs[family]) {
 				if (isPlainObject(layer.microtabs[family][id])) {
 					layer.microtabs[family][id].layer = layer.id;
@@ -432,28 +358,15 @@ export function addLayer(layer, player = null) {
 					}
 				}
 			}
-			layer.microtabs[family].layer = layer.id;
-			layer.microtabs[family].family = family;
-			layer.microtabs[family].activeMicrotab = function() {
-				if (this[player.subtabs[this.layer]?.[family]] && this[player.subtabs[this.layer][family]].unlocked !== false) {
-					return this[player.subtabs[this.layer][family]];
-				}
-				// Default to first unlocked tab
-				return this[Object.keys(this).find(microtab => microtab !== 'activeMicrotab' && this[microtab].unlocked !== false)];
-			}
 		}
 	}
 	if (layer.hotkeys) {
 		for (let id in layer.hotkeys) {
 			if (isPlainObject(layer.hotkeys[id])) {
-				if (layer.hotkeys[id].press) {
-					layer.hotkeys[id].press.forceCached = false;
-				}
-				if (layer.hotkeys[id].unlocked == undefined) {
-					layer.hotkeys[id].unlocked = function() {
-						return layer.unlocked;
-					}
-				}
+				setDefault(layer.hotkeys[id], 'press', null, false);
+				setDefault(layer.hotkeys[id], 'unlocked', function() {
+					return layer.unlocked;
+				});
 			}
 		}
 	}
@@ -528,5 +441,14 @@ function setupFeature(layer, features) {
 				feature.unlocked = true;
 			}
 		}
+	}
+}
+
+function setDefault(object, key, value, forceCached) {
+	if (object[key] == undefined && value != undefined) {
+		object[key] = value;
+	}
+	if (object[key] != undefined && isFunction(object[key]) && forceCached != undefined) {
+		object[key].forceCached = forceCached;
 	}
 }
