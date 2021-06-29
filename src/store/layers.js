@@ -71,7 +71,7 @@ export function addLayer(layer, player = null) {
 		for (let id in layer.upgrades) {
 			if (isPlainObject(layer.upgrades[id])) {
 				layer.upgrades[id].bought = function() {
-					return !layer.deactivated && player[layer.id].upgrades.some(upgrade => upgrade == id);
+					return !layer.deactivated && playerProxy[layer.id].upgrades.some(upgrade => upgrade == id);
 				}
 				if (layer.upgrades[id].canAfford == undefined) {
 					layer.upgrades[id].canAfford = function() {
@@ -81,12 +81,12 @@ export function addLayer(layer, player = null) {
 								return !(this.currencyLocation[name].lt(this.cost));
 							} else if (this.currencyLayer) {
 								let lr = this.currencyLayer;
-								return !(player[lr][name].lt(this.cost));
+								return !(playerProxy[lr][name].lt(this.cost));
 							} else {
-								return !(player[name].lt(this.cost));
+								return !(playerProxy[name].lt(this.cost));
 							}
 						} else {
-							return !(player[this.layer].points.lt(this.cost))
+							return !(playerProxy[this.layer].points.lt(this.cost))
 						}
 					}
 				}
@@ -104,21 +104,21 @@ export function addLayer(layer, player = null) {
 								this.currencyLocation[name] = this.currencyLocation[name].sub(this.cost);
 							} else if (this.currencyLayer) {
 								let lr = this.currencyLayer;
-								if (player[lr][name].lt(this.cost)) {
+								if (playerProxy[lr][name].lt(this.cost)) {
 									return;
 								}
-								player[lr][name] = player[lr][name].sub(this.cost);
+								playerProxy[lr][name] = playerProxy[lr][name].sub(this.cost);
 							} else {
-								if (player[name].lt(this.cost)) {
+								if (playerProxy[name].lt(this.cost)) {
 									return;
 								}
-								player[name] = player[name].sub(this.cost);
+								playerProxy[name] = playerProxy[name].sub(this.cost);
 							}
 						} else {
-							if (player[this.layer].points.lt(this.cost)) {
+							if (playerProxy[this.layer].points.lt(this.cost)) {
 								return;
 							}
-							player[this.layer].points = player[this.layer].points.sub(this.cost);
+							playerProxy[this.layer].points = playerProxy[this.layer].points.sub(this.cost);
 						}
 					});
 				} else {
@@ -130,7 +130,7 @@ export function addLayer(layer, player = null) {
 							return;
 						}
 						this.pay();
-						player[this.layer].upgrades.push(this.id);
+						playerProxy[this.layer].upgrades.push(this.id);
 						this.onPurchase?.();
 					});
 				} else {
@@ -143,7 +143,7 @@ export function addLayer(layer, player = null) {
 		for (let id in layer.achievements) {
 			if (isPlainObject(layer.achievements[id])) {
 				layer.achievements[id].earned = function() {
-					return !layer.deactivated && player[layer.id].achievements.some(achievement => achievement == id);
+					return !layer.deactivated && playerProxy[layer.id].achievements.some(achievement => achievement == id);
 				}
 				if (layer.achievements[id].onComplete != undefined) {
 					layer.achievements[id].onComplete.forceCached = false;
@@ -164,16 +164,16 @@ export function addLayer(layer, player = null) {
 					layer.challenges[id].onExit.forceCached = false;
 				}
 				layer.challenges[id].shown = function() {
-					return this.unlocked !== false && (player.hideChallenges === false || !this.maxed);
+					return this.unlocked !== false && (playerProxy.hideChallenges === false || !this.maxed);
 				}
 				layer.challenges[id].completed = function() {
-					return !layer.deactivated && player[layer.id].challenges[id]?.gt(0);
+					return !layer.deactivated && playerProxy[layer.id].challenges[id]?.gt(0);
 				}
 				layer.challenges[id].completions = function() {
-					return player[layer.id].challenges[id];
+					return playerProxy[layer.id].challenges[id];
 				}
 				layer.challenges[id].maxed = function() {
-					return !layer.deactivated && Decimal.gte(player[layer.id].challenges[id], this.completionLimit);
+					return !layer.deactivated && Decimal.gte(playerProxy[layer.id].challenges[id], this.completionLimit);
 				}
 				if (layer.challenges[id].mark == undefined) {
 					layer.challenges[id].mark = function() {
@@ -181,7 +181,7 @@ export function addLayer(layer, player = null) {
 					}
 				}
 				layer.challenges[id].active = function() {
-					return !layer.deactivated && player[layer.id].activeChallenge === id;
+					return !layer.deactivated && playerProxy[layer.id].activeChallenge === id;
 				}
 				if (layer.challenges[id].canComplete == undefined) {
 					layer.challenges[id].canComplete = function() {
@@ -195,12 +195,12 @@ export function addLayer(layer, player = null) {
 								return !(this.currencyLocation[name].lt(this.goal));
 							} else if (this.currencyLayer) {
 								let lr = this.currencyLayer;
-								return !(player[lr][name].lt(this.goal));
+								return !(playerProxy[lr][name].lt(this.goal));
 							} else {
-								return !(player[name].lt(this.goal));
+								return !(playerProxy[name].lt(this.goal));
 							}
 						} else {
-							return !(player.points.lt(this.goal));
+							return !(playerProxy.points.lt(this.goal));
 						}
 					}
 				}
@@ -208,23 +208,23 @@ export function addLayer(layer, player = null) {
 					layer.challenges[id].completionLimit = new Decimal(1);
 				}
 				layer.challenges[id].toggle = noCache(function() {
-					let exiting = player[layer.id].activeChallenge === id;
+					let exiting = playerProxy[layer.id].activeChallenge === id;
 					if (exiting) {
 						if (this.canComplete && !this.maxed) {
 							let completions = this.canComplete;
 							if (completions === true) {
 								completions = 1;
 							}
-							player[layer.id].challenges[id] =
-								Decimal.min(player[layer.id].challenges[id].add(completions), this.completionLimit);
+							playerProxy[layer.id].challenges[id] =
+								Decimal.min(playerProxy[layer.id].challenges[id].add(completions), this.completionLimit);
 							this.onComplete?.();
 						}
-						player[layer.id].activeChallenge = null;
+						playerProxy[layer.id].activeChallenge = null;
 						this.onExit?.();
 						layer.reset(true);
 					} else if (!exiting && this.canStart) {
 						layer.reset(true);
-						player[layer.id].activeChallenge = id;
+						playerProxy[layer.id].activeChallenge = id;
 						this.onEnter?.();
 					}
 				});
@@ -240,7 +240,7 @@ export function addLayer(layer, player = null) {
 	if (layer.buyables) {
 		if (layer.buyables.reset == undefined) {
 			layer.buyables.reset = noCache(function() {
-				player[this.layer].buyables = getStartingBuyables(layer);
+				playerProxy[this.layer].buyables = getStartingBuyables(layer);
 			});
 		} else {
 			layer.buyables.reset.forceCached = false;
@@ -251,21 +251,21 @@ export function addLayer(layer, player = null) {
 		for (let id in layer.buyables) {
 			if (isPlainObject(layer.buyables[id])) {
 				layer.buyables[id].amount = function() {
-					return player[layer.id].buyables[id];
+					return playerProxy[layer.id].buyables[id];
 				}
 				layer.buyables[id].amountSet = function(amount) {
-					player[layer.id].buyables[id] = amount;
+					playerProxy[layer.id].buyables[id] = amount;
 				}
 				layer.buyables[id].canBuy = function() {
 					return !layer.deactivated && this.unlocked !== false && this.canAfford !== false &&
-						Decimal.lt(player[layer.id].buyables[id], this.purchaseLimit);
+						Decimal.lt(playerProxy[layer.id].buyables[id], this.purchaseLimit);
 				}
 				if (layer.buyables[id].purchaseLimit == undefined) {
 					layer.buyables[id].purchaseLimit = new Decimal(Infinity);
 				}
 				if (layer.buyables[id].cost != undefined && layer.buyables[id].buy == undefined) {
 					layer.buyables[id].buy = noCache(function() {
-						player[this.layer].points = player[this.layer].points.sub(this.cost());
+						playerProxy[this.layer].points = playerProxy[this.layer].points.sub(this.cost());
 						this.amount = this.amount.add(1);
 					});
 				} else {
@@ -284,10 +284,10 @@ export function addLayer(layer, player = null) {
 		for (let id in layer.clickables) {
 			if (isPlainObject(layer.clickables[id])) {
 				layer.clickables[id].state = function() {
-					return player[layer.id].clickables[id];
+					return playerProxy[layer.id].clickables[id];
 				}
 				layer.clickables[id].stateSet = function(state) {
-					player[layer.id].clickables[id] = state;
+					playerProxy[layer.id].clickables[id] = state;
 				}
 				if (layer.clickables[id].click != undefined) {
 					layer.clickables[id].click.forceCached = false;
@@ -313,13 +313,13 @@ export function addLayer(layer, player = null) {
 						return false;
 					}
 
-					switch (player.msDisplay) {
+					switch (playerProxy.msDisplay) {
 						default:
 						case "all":
 							return true;
 						case "last":
 							return this.optionsDisplay || !this.earned ||
-								player[this.layer].milestones[player[this.layer].milestones.length - 1] === this.id;
+								playerProxy[this.layer].milestones[playerProxy[this.layer].milestones.length - 1] === this.id;
 						case "configurable":
 							return this.optionsDisplay || !this.earned;
 						case "incomplete":
@@ -329,7 +329,7 @@ export function addLayer(layer, player = null) {
 					}
 				}
 				layer.milestones[id].earned = function() {
-					return !layer.deactivated && player[layer.id].milestones.some(milestone => milestone == id);
+					return !layer.deactivated && playerProxy[layer.id].milestones.some(milestone => milestone == id);
 				}
 			}
 		}
@@ -374,8 +374,8 @@ export function addLayer(layer, player = null) {
 					layer.grids[id].getDisplay.forceCached = false;
 				}
 				layer.grids[id].getData = function(cell) {
-					if (player[layer.id].grids[id][cell] != undefined) {
-						return player[layer.id].grids[id][cell];
+					if (playerProxy[layer.id].grids[id][cell] != undefined) {
+						return playerProxy[layer.id].grids[id][cell];
 					}
 					if (isFunction(this.getStartData)) {
 						return this.getStartData(cell);
@@ -383,7 +383,7 @@ export function addLayer(layer, player = null) {
 					return this.getStartData;
 				}
 				layer.grids[id].dataSet = function(cell, data) {
-					player[layer.id].grids[id][cell] = data;
+					playerProxy[layer.id].grids[id][cell] = data;
 				}
 				layer.grids[id] = createGridProxy(layer.grids[id], getters, `${layer.id}/grids-${id}-`);
 			}
@@ -399,7 +399,7 @@ export function addLayer(layer, player = null) {
 		for (let id in layer.subtabs) {
 			if (isPlainObject(layer.subtabs[id])) {
 				layer.subtabs[id].active = function() {
-					return player.subtabs[this.layer].mainTabs === this.id;
+					return playerProxy.subtabs[this.layer].mainTabs === this.id;
 				}
 			}
 		}
