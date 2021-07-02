@@ -15,6 +15,7 @@
 				</div>
 				<br>
 				<Toggle title="Autosave" :value="autosave" @change="setAutosave" />
+				<Toggle title="Pause game" :value="paused" @change="togglePaused" />
 			</div>
 			<div slot="footer" class="nan-footer">
 				<button @click="toggleSavesManager" class="button">Open Saves Manager</button>
@@ -51,6 +52,9 @@ export default {
 		},
 		previous() {
 			return player.NaNPrevious;
+		},
+		paused() {
+			return player.devSpeed === 0;
 		}
 	},
 	methods: {
@@ -74,6 +78,9 @@ export default {
 		},
 		toggleSavesManager() {
 			this.showSaves = !this.showSaves;
+		},
+		togglePaused() {
+			player.devSpeed = this.paused ? 1 : 0;
 		}
 	}
 };

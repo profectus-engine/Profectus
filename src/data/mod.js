@@ -41,7 +41,8 @@ const spook = {
 const main = {
 	id: 'main',
 	display: `<div v-frag>
-		<div v-if="player.devSpeed && player.devSpeed !== 1">Dev Speed: {{ format(player.devSpeed) }}x</div>
+		<div v-if="player.devSpeed === 0">Game Paused</div>
+		<div v-else-if="player.devSpeed && player.devSpeed !== 1">Dev Speed: {{ format(player.devSpeed) }}x</div>
 		<div v-if="player.offTime != undefined">Offline Time: {{ formatTime(player.offTime.remain) }}</div>
 		<div>
 			<span v-if="player.points.lt('1e1000')">You have </span>

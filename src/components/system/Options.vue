@@ -6,8 +6,9 @@
 		<div slot="body">
 			<Select title="Theme" :options="themes" :value="theme" @change="setTheme" default="classic" />
 			<Select title="Show Milestones" :options="msDisplayOptions" :value="msDisplay" @change="setMSDisplay" default="all" />
-			<Toggle title="Autosave" :value="autosave" @change="toggleOption('autosave')" />
 			<Toggle title="Offline Production" :value="offlineProd" @change="toggleOption('offlineProd')" />
+			<Toggle title="Autosave" :value="autosave" @change="toggleOption('autosave')" />
+			<Toggle title="Pause game" :value="paused" @change="togglePaused" />
 			<Toggle title="Show TPS" :value="showTPS" @change="toggleOption('showTPS')" />
 			<Toggle title="Hide Maxed Challenges" :value="hideChallenges" @change="toggleOption('hideChallenges')" />
 		</div>
@@ -39,6 +40,9 @@ export default {
 		},
 		msDisplay() {
 			return { label: camelToTitle(player.msDisplay), value: player.msDisplay };
+		},
+		paused() {
+			return player.devSpeed === 0;
 		}
 	},
 	methods: {
@@ -50,6 +54,9 @@ export default {
 		},
 		setMSDisplay(msDisplay) {
 			player.msDisplay = msDisplay;
+		},
+		togglePaused() {
+			player.devSpeed = this.paused ? 1 : 0;
 		}
 	}
 };
