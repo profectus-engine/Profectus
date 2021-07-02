@@ -50,7 +50,7 @@ export default {
 		waffleBoost: Decimal.pow(player[this.layer].points, 0.2),
 		icecreamCap: (player[this.layer].points * 10)
 	}},
-	effectDescription() { // Optional text to describe the effects
+	effectDisplay() { // Optional text to describe the effects
 		let eff = this.effect;
 		const waffleBoost = eff.waffleBoost.times(buyableEffect(this.layer, 11).first)
 		return "which are boosting waffles by "+format(waffleBoost)+" and increasing the Ice Cream cap by "+format(eff.icecreamCap)

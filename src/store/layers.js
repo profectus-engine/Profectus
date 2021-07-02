@@ -190,7 +190,7 @@ export function addLayer(layer, player = null) {
 					return Decimal.gt(this.completionLimit, 1) && this.maxed;
 				});
 				setDefault(layer.challenges[id], 'canComplete', function() {
-					if (this.active) {
+					if (!this.active) {
 						return false;
 					}
 					if (this.currencyInternalName) {
@@ -232,8 +232,10 @@ export function addLayer(layer, player = null) {
 				setDefault(layer.buyables[id], 'sellAll', null, false);
 				if (layer.buyables[id].cost != undefined) {
 					setDefault(layer.buyables[id], 'buy', function() {
-						playerProxy[this.layer].points = playerProxy[this.layer].points.sub(this.cost());
-						this.amount = this.amount.add(1);
+						if (this.canBuy) {
+							playerProxy[this.layer].points = playerProxy[this.layer].points.sub(this.cost());
+							this.amount = this.amount.add(1);
+						}
 					}, false);
 				}
 			}

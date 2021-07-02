@@ -21,6 +21,7 @@ export default {
 	top: -10px;
 	width: 30px;
 	height: 30px;
+	z-index: 1;
 	pointer-events: none;
     margin-left: 0.9em;
     margin-right: 0.9em;
@@ -35,7 +36,6 @@ export default {
 	left: -10px;
 	width: 0;
 	height: 0;
-	z-index: 10000;
 	margin-left: 0.9em;
 	margin-right: 0.9em;
 	margin-bottom: 1.2em;

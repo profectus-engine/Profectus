@@ -3,10 +3,10 @@
 		<button :style="style" @click="clickable.click" @mousedown="start" @mouseleave="stop" @mouseup="stop" @touchstart="start"
 			@touchend="stop" @touchcancel="stop" :disabled="!clickable.canClick"
 			:class="{ feature: true, [layer || tab.layer]: true, clickable: true, can: clickable.canClick, locked: !clickable.canClick }">
-			<div v-if="titleDisplay">
-				<component :is="titleDisplay" />
+			<div v-if="title">
+				<component :is="title" />
 			</div>
-			<component :is="descriptionDisplay" style="white-space: pre-line;" />
+			<component :is="display" style="white-space: pre-line;" />
 			<mark-node :mark="clickable.mark" />
 			<branch-node :branches="clickable.branches" :id="id" featureType="clickable" />
 		</button>
@@ -45,14 +45,14 @@ export default {
 				this.clickable.style
 			];
 		},
-		titleDisplay() {
-			if (this.clickable.titleDisplay) {
-				return coerceComponent(this.clickable.titleDisplay, 'h2');
+		title() {
+			if (this.clickable.title) {
+				return coerceComponent(this.clickable.title, 'h2');
 			}
 			return null;
 		},
-		descriptionDisplay() {
-			return coerceComponent(this.clickable.descriptionDisplay, 'div');
+		display() {
+			return coerceComponent(this.clickable.display, 'div');
 		}
 	},
 	methods: {

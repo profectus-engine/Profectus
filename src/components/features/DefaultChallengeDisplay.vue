@@ -29,7 +29,7 @@ export default {
 			if (this.challenge.goalDescription) {
 				return coerceComponent(this.challenge.goalDescription);
 			}
-			return coerceComponent(`format(${this.goal}) ${this.currencyDisplayName || 'points'}`);
+			return coerceComponent(`{{ format(${this.challenge.goal}) }} ${this.currencyDisplayName || 'points'}`);
 		},
 		rewardDescription() {
 			return coerceComponent(this.challenge.rewardDescription);

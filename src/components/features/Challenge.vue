@@ -79,8 +79,8 @@ export default {
 <style scoped>
 .challenge {
     background-color: var(--locked);
-    width: 250px;
-    min-height: 250px;
+    width: 300px;
+    min-height: 300px;
     color: black;
     font-size: 15px;
     display: flex;

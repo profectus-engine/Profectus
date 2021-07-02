@@ -4,6 +4,7 @@
 	transform: scale(1.05, 1.05);
     border-color: rgba(0, 0, 0, 0.125);
     box-shadow: -4px -4px 4px rgba(0, 0, 0, 0.25) inset, 0 0 20px #ff0000;
+    z-index: 1;
 }
 
 .subtabs > .notify:not(.floating) {
@@ -13,6 +14,7 @@
 *:not(.subtabs) > .resetNotify:not(.notify),
 *:not(.subtabs) > .resetNotify:not(.notify) button {
 	box-shadow: -4px -4px 4px rgba(0, 0, 0, 0.25) inset, 0 0 8px #ffffff;
+	z-index: 1;
 }
 
 .subtabs > .resetNotify:not(.notify):not(.floating) {

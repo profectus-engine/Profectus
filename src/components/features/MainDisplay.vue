@@ -3,7 +3,7 @@
 		<span v-if="showPrefix">You have</span>
 		<resource :amount="amount" :color="color" />
 		{{ resource }}<!-- remove whitespace -->
-		<span v-if="effectDescription">, <component :is="effectDescription" /></span>
+		<span v-if="effectDisplay">, <component :is="effectDisplay" /></span>
 		<br><br>
 	</div>
 </template>
@@ -28,8 +28,8 @@ export default {
 		resource() {
 			return layers[this.layer || this.tab.layer].resource;
 		},
-		effectDescription() {
-			return coerceComponent(layers[this.layer || this.tab.layer].effectDescription);
+		effectDisplay() {
+			return coerceComponent(layers[this.layer || this.tab.layer].effectDisplay);
 		},
 		showPrefix() {
 			return player[this.layer || this.tab.layer].points.lt('1e1000');

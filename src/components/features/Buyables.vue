@@ -10,10 +10,10 @@
 				</div>
 			</div>
 		</div>
-		<frament v-else>
-			<buyable v-for="(buyable, id) in filteredBuyables" :key="id" class="align buyable-container" :style="{ height }"
-						:id="id" :size="height === 'inherit' ? null : height" />
-		</frament>
+		<row v-frag v-else>
+			<buyable v-for="(buyable, id) in filteredBuyables" :key="id" class="align buyable-container"
+				:style="{ height }" :id="id" :size="height === 'inherit' ? null : height" />
+		</row>
 	</div>
 </template>
 

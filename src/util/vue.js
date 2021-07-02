@@ -1,5 +1,6 @@
 import { player } from '../store/proxies';
 import { layers } from '../store/layers';
+import { hasUpgrade, hasMilestone, hasAchievement, hasChallenge, maxedChallenge, challengeCompletions, inChallenge, getBuyableAmount, setBuyableAmount, getClickableState, setClickableState, getGridData, setGridData, upgradeEffect, challengeEffect, buyableEffect, clickableEffect, achievementEffect, gridEffect } from './features';
 import Decimal, * as numberUtils from './bignum';
 
 let vue;
@@ -26,7 +27,7 @@ export function coerceComponent(component, defaultWrapper = 'span') {
 				component = `<${defaultWrapper}>${component}</${defaultWrapper}>`;
 			}
 
-			return { template: component, computed, data, inject: [ 'tab' ] };
+			return { template: component, computed, data, inject: [ 'tab' ], methods: { hasUpgrade, hasMilestone, hasAchievement, hasChallenge, maxedChallenge, challengeCompletions, inChallenge, getBuyableAmount, setBuyableAmount, getClickableState, setClickableState, getGridData, setGridData, upgradeEffect, challengeEffect, buyableEffect, clickableEffect, achievementEffect, gridEffect } };
 		}
 	}
 	return component;
@@ -34,8 +35,9 @@ export function coerceComponent(component, defaultWrapper = 'span') {
 
 export function getFiltered(objects, filter = null) {
 	if (filter) {
+		filter = filter.map(v => v.toString());
 		return Object.keys(objects)
-			.filter(key => key in filter)
+			.filter(key => filter.includes(key))
 			.reduce((acc, curr) => {
 				acc[curr] = objects[curr];
 				return acc;

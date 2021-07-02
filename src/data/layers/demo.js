@@ -19,10 +19,10 @@ export default {
 	requires(){
 		let require = new Decimal(68.99)
 		if (hasMilestone(this.layer,0))require=require.plus(0.01)
-		if (hasUpgrade(this.layer,21))require=require.tetrate(hasUpgrade("p",34)?(new Decimal(1).div(new Decimal(1).plus(layers.p.upgrades[34].effect()))):1)
-		if (hasUpgrade(this.layer,22))require=require.pow(hasUpgrade("p",34)?(new Decimal(1).div(new Decimal(1).plus(layers.p.upgrades[34].effect()))):1)
-		if (hasUpgrade(this.layer,23))require=require.div(hasUpgrade("p",34)?(new Decimal(1).plus(layers.p.upgrades[34].effect())):1)
-		if (hasUpgrade(this.layer,24))require=require.sub(hasUpgrade("p",34)?(new Decimal(1).plus(layers.p.upgrades[34].effect())):1)
+		if (hasUpgrade(this.layer,21))require=require.tetrate(hasUpgrade("p",34)?(new Decimal(1).div(new Decimal(1).plus(layers.p.upgrades[34].effect))):1)
+		if (hasUpgrade(this.layer,22))require=require.pow(hasUpgrade("p",34)?(new Decimal(1).div(new Decimal(1).plus(layers.p.upgrades[34].effect))):1)
+		if (hasUpgrade(this.layer,23))require=require.div(hasUpgrade("p",34)?(new Decimal(1).plus(layers.p.upgrades[34].effect)):1)
+		if (hasUpgrade(this.layer,24))require=require.sub(hasUpgrade("p",34)?(new Decimal(1).plus(layers.p.upgrades[34].effect)):1)
 		return require.max(1)
 	},
 	resource: "prestige points",
@@ -39,13 +39,14 @@ export default {
 						let asdf = (hasUpgrade("p",132)?player.p.gp.plus(1).pow(new Decimal(1).div(2)):hasUpgrade("p",101)?player.p.gp.plus(1).pow(new Decimal(1).div(3)):hasUpgrade("p",93)?player.p.gp.plus(1).pow(0.2):player.p.gp.plus(1).log10())
 						mult=mult.mul(asdf.plus(1))
 					}
-					if (hasMilestone(this.layer,13))mult=mult.mul(new Decimal(2).plus(layers.p.buyables[33].effect()).pow(getBuyableAmount(this.layer,32)))
+					if (hasMilestone(this.layer,13))mult=mult.mul(new Decimal(2).plus(layers.p.buyables[33].effect).pow(getBuyableAmount(this.layer,32)))
 						return mult
 				},
 	gainExp() { // Calculate the exponent on main currency from bonuses
 		return new Decimal(1)
 	},
 	row: 0, // Row the layer is in on the tree (0 is the first row)
+	displayRow: 2,
 	hotkeys: [
 	{key: "p", description: "P: Reset for prestige points", press(){if (layers.p.canReset) resetLayer(this.layer)}},
 	],
@@ -123,40 +124,40 @@ export default {
 			},
 			34:{
 				title: "Increase",
-				description(){return "Add 0.01 to all above upgrades. Currently: +"+format(this.effect())},
+				description(){return "Add 0.01 to all above upgrades. Currently: +"+format(this.effect)},
 				cost(){return new Decimal(1)},
 				unlocked(){return hasUpgrade(this.layer,33)},
 				effect(){
-					let r = (hasUpgrade("p",41)?new Decimal(0.01).times(layers.p.upgrades[41].effect()):new Decimal(0.01))
-					r=r.times(new Decimal(1).plus(new Decimal(player[this.layer].challenges[11]+1).pow(hasUpgrade(this.layer,121)?1.2:1)))
+					let r = (hasUpgrade("p",41)?new Decimal(0.01).times(layers.p.upgrades[41].effect):new Decimal(0.01))
+					r=r.times(new Decimal(1).plus(new Decimal(player[this.layer].challenges[11]).add(1).pow(hasUpgrade(this.layer,121)?1.2:1)))
 					if (hasUpgrade(this.layer,92)) r=r.plus(new Decimal(0.001).times(player[this.layer].g.plus(1)).min(0.05))
 						return r
 				}
 			},
 			41:{
 				title: "Increase again",
-				description(){return "Multiply the previous upgrade by 1.01. Currently: x"+format(this.effect())},
+				description(){return "Multiply the previous upgrade by 1.01. Currently: x"+format(this.effect)},
 				cost(){return new Decimal(1)},
 				unlocked(){return hasUpgrade(this.layer,34)},
-				effect(){return new Decimal(1.01).pow(hasUpgrade("p",42)?layers.p.upgrades[42].effect():1).times(hasUpgrade("p",63)?2:1)}
+				effect(){return new Decimal(1.01).pow(hasUpgrade("p",42)?layers.p.upgrades[42].effect:1).times(hasUpgrade("p",63)?2:1)}
 			},
 			42:{
 				title: "Increase again",
-				description(){return "Exponentiate the previous upgrade by 1.01. Currently: ^"+format(this.effect())},
+				description(){return "Exponentiate the previous upgrade by 1.01. Currently: ^"+format(this.effect)},
 				cost(){return new Decimal(1)},
 				unlocked(){return hasUpgrade(this.layer,41)},
-				effect(){return new Decimal(1.01).tetrate(hasUpgrade("p",43)?layers.p.upgrades[43].effect():1).times(hasUpgrade("p",63)?2:1).times(hasUpgrade("p",64)?2:1)}
+				effect(){return new Decimal(1.01).tetrate(hasUpgrade("p",43)?layers.p.upgrades[43].effect:1).times(hasUpgrade("p",63)?2:1).times(hasUpgrade("p",64)?2:1)}
 			},
 			43:{
 				title: "Increase again",
-				description(){return "Tetrate the previous upgrade by 1.01. Currently: ^^"+format(this.effect())},
+				description(){return "Tetrate the previous upgrade by 1.01. Currently: ^^"+format(this.effect)},
 				cost(){return new Decimal(1)},
 				unlocked(){return hasUpgrade(this.layer,42)},
-				effect(){return new Decimal(1.01).pentate(hasUpgrade("p",44)?layers.p.upgrades[44].effect():1).times(hasUpgrade("p",63)?2:1).times(hasUpgrade("p",64)?2:1)}
+				effect(){return new Decimal(1.01).pentate(hasUpgrade("p",44)?layers.p.upgrades[44].effect:1).times(hasUpgrade("p",63)?2:1).times(hasUpgrade("p",64)?2:1)}
 			},
 			44:{
 				title: "Increase again",
-				description(){return "Pentate the previous upgrade by 1.01. Currently: ^^^"+format(this.effect())},
+				description(){return "Pentate the previous upgrade by 1.01. Currently: ^^^"+format(this.effect)},
 				cost(){return new Decimal(1)},
 				unlocked(){return hasUpgrade(this.layer,43)},
 				effect(){return new Decimal(1.01).times(hasUpgrade("p",63)?2:1).times(hasUpgrade("p",64)?2:1)}
@@ -373,88 +374,88 @@ export default {
 				title: "Prestige",
 				description: "Pointy points multiply points",
 				cost(){return new Decimal(1)},
-				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost))},
 				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades")},
 			},
 			212:{
 				title: "Pointy",
 				description: "Pointy prestige points reduce the cost scaling of pointy points",
 				cost(){return new Decimal(2)},
-				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost))},
 				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,211))},
 			},
 			213:{
 				title: "Time",
 				description: "Generator power also multiplies point gain",
 				cost(){return new Decimal(6)},
-				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost))},
 				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,212))},
 			},
 			214:{
 				title: "^0",
 				description: "Further reduce the pointy point scaling",
 				cost(){return new Decimal(11)},
-				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost))},
 				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,213))},
 			},
 			215:{
 				title: "bulk",
 				description: "Auto-pointy points now buys 10 per tick",
 				cost(){return new Decimal(27)},
-				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost))},
 				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,214))},
 			},
 			221:{
 				title: "^-1",
 				description: "^0 is even more powerful",
 				cost(){return new Decimal(28)},
-				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost))},
 				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,215))},
 			},
 			222:{
 				title: "???",
 				description: "square <b>bulk</b> and pointy prestige points multiply prestige points",
 				cost(){return new Decimal(90)},
-				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost))},
 				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,221))},
 			},
 			223:{
 				title: "more automation",
 				description: "Automatically gain pointy prestige points",
 				cost(){return new Decimal(96)},
-				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost))},
 				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,222))},
 			},
 			224:{
 				title: "Generation",
 				description: "Generator costs are divided by generator effect",
 				cost(){return new Decimal(100)},
-				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost))},
 				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,223))},
 			},
 			225:{
 				title: "Boosters",
 				description: "Unlock boosters (next update)",
 				cost(){return new Decimal(135)},
-				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,22).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,22,getBuyableAmount(this.layer,22).sub(this.cost))},
 				unlocked(){return (hasMilestone("i",5)&&layers.p.activeSubtab!="Upgrades"&&hasUpgrade(this.layer,224))},
 			},
 			231:{
 				title: "Blue",
 				description: "The generator effect also affects prestige points",
 				cost(){return new Decimal(4)},
-				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost))},
 				unlocked(){return (layers.p.activeSubtab!="Upgrades"&&hasMilestone(this.layer,11))},
 				currencyDisplayName: "pointy boosters"
 			},
@@ -462,8 +463,8 @@ export default {
 				title: "Red",
 				description: "Unlock a third way to buy generators",
 				cost(){return new Decimal(5)},
-				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost))},
 				unlocked(){return (layers.p.activeSubtab!="Upgrades"&&hasMilestone(this.layer,12))},
 				currencyDisplayName: "pointy boosters"
 			},
@@ -471,8 +472,8 @@ export default {
 				title: "Green",
 				description: "Prestige points do not reset your pointy points and boosters don't reset generators",
 				cost(){return new Decimal(5)},
-				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost))},
 				unlocked(){return (layers.p.activeSubtab!="Upgrades"&&hasMilestone(this.layer,12))},
 				currencyDisplayName: "pointy boosters"
 			},
@@ -480,8 +481,8 @@ export default {
 				title: "Yellow",
 				description: "Divide the cost of the third generator buyable based on boosters",
 				cost(){return new Decimal(6)},
-				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost))},
 				unlocked(){return (layers.p.activeSubtab!="Upgrades"&&hasMilestone(this.layer,12))},
 				currencyDisplayName: "pointy boosters"
 			},
@@ -489,8 +490,8 @@ export default {
 				title: "Orange",
 				description: "Raise the Infinity effect to the 6.9420th power",
 				cost(){return new Decimal(8)},
-				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost())},
-				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost()))},
+				canAfford(){return getBuyableAmount(this.layer,23).gte(this.cost)},
+				pay(){setBuyableAmount(this.layer,23,getBuyableAmount(this.layer,23).sub(this.cost))},
 				unlocked(){return (layers.p.activeSubtab!="Upgrades"&&hasMilestone(this.layer,12))},
 				currencyDisplayName: "pointy boosters"
 			},
@@ -517,8 +518,8 @@ challenges:{
 	11:{
 		name: "Time dilation",
 		challengeDescription(){return "Point gain exponent is raised to the ^0.75"},
-		goal(){return new Decimal(100).times(new Decimal(10).pow(new Decimal(player[this.layer].challenges[this.id]).times(new Decimal(1).sub(new Decimal(layers[this.layer].challenges[12].effect()).div(100))).pow(2)))},
-		rewardDescription(){return "You have completed this challenge "+player[this.layer].challenges[this.id]+"/"+this.completionLimit()+" times. Multiply <b>Increase</b>'s effect by challenge completions+1. Currently: x"+format(new Decimal(player[this.layer].challenges[this.id]+1).pow(hasUpgrade(this.layer,121)?1.2:1))},
+		goal(){return new Decimal(100).times(new Decimal(10).pow(new Decimal(player[this.layer].challenges[this.id]).times(new Decimal(1).sub(new Decimal(layers[this.layer].challenges[12].effect).div(100))).pow(2)))},
+		rewardDescription(){return "You have completed this challenge "+player[this.layer].challenges[this.id]+"/"+this.completionLimit+" times. Multiply <b>Increase</b>'s effect by challenge completions+1. Currently: x"+format(new Decimal(player[this.layer].challenges[this.id]).add(1).pow(hasUpgrade(this.layer,121)?1.2:1))},
 		unlocked(){return hasUpgrade("p",51)||hasChallenge(this.layer,this.id)},
 		completionLimit(){
 			if (hasUpgrade("p",62))return 7
@@ -532,7 +533,7 @@ challenges:{
 				name: "Point",
 				challengeDescription: "Points are pointed",
 				goal(){return new Decimal(100)},
-				rewardDescription(){return "You have completed this challenge "+player[this.layer].challenges[this.id]+"/"+this.completionLimit()+" times, making previous challenge goal scale "+(layers[this.layer].challenges[this.id].effect())+"% slower."},
+				rewardDescription(){return "You have completed this challenge "+player[this.layer].challenges[this.id]+"/"+this.completionLimit+" times, making previous challenge goal scale "+(layers[this.layer].challenges[this.id].effect)+"% slower."},
 				unlocked(){return hasUpgrade("p",61)||hasChallenge(this.layer,this.id)},
 				effect(){
 					if (!hasChallenge(this.layer,this.id)) return 0
@@ -569,9 +570,9 @@ challenges:{
 						11: {
 							cost() { return new Decimal(0)},
 							display() { return "Reset all upgrades and challenges, but get a boost. You have reset "+getBuyableAmount(this.layer,this.id)+" times.<br>"+(getBuyableAmount(this.layer,this.id).eq(6)?"You can't buy more than 6 boosts!":"You need all upgrades to reset.") },
-							canAfford() { return (player[this.layer].points.gte(this.cost())&&hasUpgrade(this.layer,74)&&hasUpgrade(this.layer,64))&&getBuyableAmount(this.layer,this.id).lt(6) },
+							canAfford() { return (player[this.layer].points.gte(this.cost)&&hasUpgrade(this.layer,74)&&hasUpgrade(this.layer,64))&&getBuyableAmount(this.layer,this.id).lt(6) },
 							buy() {
-								player[this.layer].points = player[this.layer].points.sub(this.cost())
+								player[this.layer].points = player[this.layer].points.sub(this.cost)
 								setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
 								player[this.layer].points=new Decimal(0)
 								player[this.layer].upgrades=[]
@@ -579,7 +580,7 @@ challenges:{
 									if (hasMilestone(this.layer,3))player[this.layer].upgrades=[11,12,13,14,21,22,23,24,31,32,33,34,41,42,43,44,51,52,53,54,61,62,63,64]
 										if (!hasMilestone(this.layer,2)){
 											for (let c in layers[this.layer].challenges){
-												player[this.layer].challenges[c]=0
+												player[this.layer].challenges[c]=new Decimal(0)
 											}
 										}
 									},
@@ -587,10 +588,10 @@ challenges:{
 								},
 								12: {
 									cost() { return new Decimal(1).times(new Decimal(hasChallenge(this.layer,21)?4:10).sub(hasUpgrade(this.layer,122)?2:0).pow(player.p.buyables[this.id])).div(hasUpgrade(this.layer,224)?(hasUpgrade("p",132)?player.p.gp.plus(1).pow(new Decimal(1).div(2)):hasUpgrade("p",101)?player.p.gp.plus(1).pow(new Decimal(1).div(3)):hasUpgrade("p",93)?player.p.gp.plus(1).pow(0.2):player.p.gp.plus(1).log10()):1)},
-									display() { return "Buy a generator for "+format(this.cost())+" points" },
-									canAfford() { return (player.points.gte(this.cost())&&hasMilestone(this.layer,5)) },
+									display() { return "Buy a generator for "+format(this.cost)+" points" },
+									canAfford() { return (player.points.gte(this.cost)&&hasMilestone(this.layer,5)) },
 									buy() {
-										if (!hasMilestone("p",13))player.points = player.points.sub(this.cost())
+										if (!hasMilestone("p",13))player.points = player.points.sub(this.cost)
 											setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
 										player[this.layer].g=player[this.layer].g.plus(1)
 									},
@@ -598,10 +599,10 @@ challenges:{
 								},
 								13: {
 									cost() { return new Decimal(1).times(new Decimal(2).pow(player.p.buyables[this.id])).div(hasUpgrade(this.layer,224)?(hasUpgrade("p",132)?player.p.gp.plus(1).pow(new Decimal(1).div(2)):hasUpgrade("p",101)?player.p.gp.plus(1).pow(new Decimal(1).div(3)):hasUpgrade("p",93)?player.p.gp.plus(1).pow(0.2):player.p.gp.plus(1).log10()):1)},
-									display() { return "Buy a generator for "+format(this.cost())+" prestige points" },
-									canAfford() { return (player.p.points.gte(this.cost())&&hasUpgrade("p",82)) },
+									display() { return "Buy a generator for "+format(this.cost)+" prestige points" },
+									canAfford() { return (player.p.points.gte(this.cost)&&hasUpgrade("p",82)) },
 									buy() {
-										if (!hasMilestone("p",13))player.p.points = player.p.points.sub(this.cost())
+										if (!hasMilestone("p",13))player.p.points = player.p.points.sub(this.cost)
 											setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
 										player[this.layer].g=player[this.layer].g.plus(1)
 									},
@@ -609,10 +610,10 @@ challenges:{
 								},
 								14: {
 									cost() { return new Decimal(900).mul(new Decimal(1.01).pow(getBuyableAmount(this.layer,this.id))).round().div(hasUpgrade(this.layer,234)?getBuyableAmount(this.layer,23).pow(0.3).plus(1):1)},
-									display() { return "Buy a generator for "+format(this.cost())+" Infinity points" },
-									canAfford() { return (player.i.points.gte(this.cost())&&hasUpgrade("p",232)) },
+									display() { return "Buy a generator for "+format(this.cost)+" Infinity points" },
+									canAfford() { return (player.i.points.gte(this.cost)&&hasUpgrade("p",232)) },
 									buy() {
-										if (!hasMilestone("p",13))player.i.points = player.i.points.sub(this.cost()).round()
+										if (!hasMilestone("p",13))player.i.points = player.i.points.sub(this.cost).round()
 											setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
 										player[this.layer].g=player[this.layer].g.plus(1)
 									},
@@ -620,8 +621,8 @@ challenges:{
 								},
 								21: {
 									cost() { return new Decimal(20).plus(getBuyableAmount(this.layer, this.id).pow(new Decimal(2).sub(new Decimal(hasUpgrade(this.layer,221)?0.9:hasUpgrade(this.layer,214)?0.6:0.3).times(hasUpgrade(this.layer,212)?(new Decimal(1).sub(new Decimal(0.75).pow(getBuyableAmount(this.layer,22)))):0))))},
-									display() { return "Reset your generators for +1 pointy point! Cost: "+format(this.cost())+" Generators" },
-									canAfford() { return (player.p.g.gte(this.cost())&&hasUpgrade("p",104)) },
+									display() { return "Reset your generators for +1 pointy point! Cost: "+format(this.cost)+" Generators" },
+									canAfford() { return (player.p.g.gte(this.cost)&&hasUpgrade("p",104)) },
 									buy() {
 										if (!hasMilestone("i",1))player.p.g = new Decimal(0)
 											setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
@@ -633,20 +634,20 @@ challenges:{
 									},
 									22: {
 										cost() { return new Decimal(8).plus(getBuyableAmount(this.layer,this.id))},
-										display() { return "Gain a pointy prestige point. Cost: "+format(this.cost())+" Pointy Points" },
-										canAfford() { return (getBuyableAmount(this.layer,21).gte(this.cost())&&(hasMilestone("i",5))) },
+										display() { return "Gain a pointy prestige point. Cost: "+format(this.cost)+" Pointy Points" },
+										canAfford() { return (getBuyableAmount(this.layer,21).gte(this.cost)&&(hasMilestone("i",5))) },
 										buy() {
-											if (!hasUpgrade(this.layer,233))setBuyableAmount(this.layer,21, getBuyableAmount(this.layer,21).sub(this.cost()))
+											if (!hasUpgrade(this.layer,233))setBuyableAmount(this.layer,21, getBuyableAmount(this.layer,21).sub(this.cost))
 												setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
 										},
 										unlocked(){return (hasMilestone("i",5))}
 									},
 									23: {
 										cost() { return new Decimal(124).plus(getBuyableAmount(this.layer,this.id).times(2).pow(2))},
-										display() { return "Gain a booster. Cost: "+format(this.cost())+" Pointy Points" },
-										canAfford() { return (getBuyableAmount(this.layer,21).gte(this.cost())&&(hasMilestone("i",5))) },
+										display() { return "Gain a booster. Cost: "+format(this.cost)+" Pointy Points" },
+										canAfford() { return (getBuyableAmount(this.layer,21).gte(this.cost)&&(hasMilestone("i",5))) },
 										buy() {
-											if (!hasMilestone(this.layer,15))setBuyableAmount(this.layer,21, getBuyableAmount(this.layer,21).sub(this.cost()))
+											if (!hasMilestone(this.layer,15))setBuyableAmount(this.layer,21, getBuyableAmount(this.layer,21).sub(this.cost))
 												setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
 											if (!hasMilestone(this.layer,15)){
 												if (!hasMilestone(this.layer,12)){player.p.upgrades=player.p.upgrades.filter((x)=>{return (x<200||x>230)})
@@ -665,43 +666,43 @@ challenges:{
 											},
 											31: {
 												cost() { return new Decimal(1e93).times(new Decimal(1.5).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(1.1).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
-												effect(){return new Decimal(2).plus(layers.p.buyables[33].effect()).pow(getBuyableAmount(this.layer,this.id).plus(layers.p.buyables[51].effect()))},
-												display() { return "Double point gain. \nCurrently: x"+format(this.effect())+"\nCost: "+format(this.cost())+" Prestige points" },
-												canAfford() { return (player.p.points.gte(this.cost())&&(hasMilestone("p",13))) },
+												effect(){return new Decimal(2).plus(layers.p.buyables[33].effect).pow(getBuyableAmount(this.layer,this.id).plus(layers.p.buyables[51].effect))},
+												display() { return "Double point gain. \nCurrently: x"+format(this.effect)+"\nCost: "+format(this.cost)+" Prestige points" },
+												canAfford() { return (player.p.points.gte(this.cost)&&(hasMilestone("p",13))) },
 												buy() {
-													player.p.points=player.p.points.sub(this.cost())
+													player.p.points=player.p.points.sub(this.cost)
 													setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
 												},
 												unlocked(){return (hasMilestone("p",13))}
 											},
 											32: {
 												cost() { return new Decimal(1e95).times(new Decimal(2).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(1.01).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
-												display() { return "Double prestige point gain. \nCurrently: x"+format(new Decimal(2).plus(layers.p.buyables[33].effect()).pow(getBuyableAmount(this.layer,this.id)))+"\nCost: "+format(this.cost())+" Prestige points" },
-												canAfford() { return (player.p.points.gte(this.cost())&&(hasMilestone("p",13))) },
+												display() { return "Double prestige point gain. \nCurrently: x"+format(new Decimal(2).plus(layers.p.buyables[33].effect).pow(getBuyableAmount(this.layer,this.id)))+"\nCost: "+format(this.cost)+" Prestige points" },
+												canAfford() { return (player.p.points.gte(this.cost)&&(hasMilestone("p",13))) },
 												buy() {
-													player.p.points=player.p.points.sub(this.cost())
+													player.p.points=player.p.points.sub(this.cost)
 													setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
 												},
 												unlocked(){return (hasMilestone("p",13)&&getBuyableAmount(this.layer,31).gte(5))}
 											},
 											33: {
 												cost() { return new Decimal(1e100).times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(1.01).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
-												effect(){return new Decimal(0.01).mul(getBuyableAmount(this.layer,this.id)).times(layers.p.buyables[43].effect())},
-												display() { return "Add 0.01 to the previous 2 buyable bases. \nCurrently: +"+format(this.effect())+"\nCost: "+format(this.cost())+" Prestige points" },
-												canAfford() { return (player.p.points.gte(this.cost())&&(hasMilestone("p",13))) },
+												effect(){return new Decimal(0.01).mul(getBuyableAmount(this.layer,this.id)).times(layers.p.buyables[43].effect)},
+												display() { return "Add 0.01 to the previous 2 buyable bases. \nCurrently: +"+format(this.effect)+"\nCost: "+format(this.cost)+" Prestige points" },
+												canAfford() { return (player.p.points.gte(this.cost)&&(hasMilestone("p",13))) },
 												buy() {
-													player.p.points=player.p.points.sub(this.cost())
+													player.p.points=player.p.points.sub(this.cost)
 													setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
 												},
 												unlocked(){return (hasMilestone("p",13)&&(getBuyableAmount(this.layer,this.id).gt(0)||player.p.points.gte(1e100)))}
 											},
 											41: {
 												cost() { return new Decimal(1e110).times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
-												effect(){return new Decimal(0.01).mul(getBuyableAmount(this.layer,this.id).plus(layers.p.buyables[51].effect()))},
-												display() { return "Add 0.01 to the booster effect base. \nCurrently: +"+format(this.effect())+"\nCost: "+format(this.cost())+" Prestige points" },
-												canAfford() { return (player.p.points.gte(this.cost())&&(hasMilestone("p",13))) },
+												effect(){return new Decimal(0.01).mul(getBuyableAmount(this.layer,this.id).plus(layers.p.buyables[51].effect))},
+												display() { return "Add 0.01 to the booster effect base. \nCurrently: +"+format(this.effect)+"\nCost: "+format(this.cost)+" Prestige points" },
+												canAfford() { return (player.p.points.gte(this.cost)&&(hasMilestone("p",13))) },
 												buy() {
-													player.p.points=player.p.points.sub(this.cost())
+													player.p.points=player.p.points.sub(this.cost)
 													setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
 												},
 												unlocked(){return (hasMilestone("p",13)&&(getBuyableAmount(this.layer,this.id).gt(0)||player.p.points.gte(1e110)))}
@@ -718,10 +719,10 @@ challenges:{
 															if (f.gte(3))f=new Decimal(3)
 																return f
 														},
-														display() { return "Raise point gain to the 1.001 \nCurrently: ^"+format(this.effect())+(this.effect().eq(3)?"(hardcapped)":"")+"\nCost: "+format(this.cost())+" Prestige points" },
-														canAfford() { return (player.p.points.gte(this.cost())&&(hasMilestone("p",13)))&&this.effect().lt(3) },
+														display() { return "Raise point gain to the 1.001 \nCurrently: ^"+format(this.effect)+(this.effect.eq(3)?"(hardcapped)":"")+"\nCost: "+format(this.cost)+" Prestige points" },
+														canAfford() { return (player.p.points.gte(this.cost)&&(hasMilestone("p",13)))&&this.effect.lt(3) },
 														buy() {
-															player.p.points=player.p.points.sub(this.cost())
+															player.p.points=player.p.points.sub(this.cost)
 															setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
 														},
 														unlocked(){return (hasMilestone("p",13)&&(getBuyableAmount(this.layer,this.id).gt(0)||player.p.points.gte(1e270)))}
@@ -729,10 +730,10 @@ challenges:{
 													43: {
 														cost() { return new Decimal("1e375").times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
 														effect(){return new Decimal(0.01).mul(getBuyableAmount(this.layer,this.id)).plus(1)},
-														display() { return "Multiply the above buyable effect. \nCurrently: *"+format(this.effect())+"\nCost: "+format(this.cost())+" Prestige points" },
-														canAfford() { return (player.p.points.gte(this.cost())&&(hasMilestone("p",13))) },
+														display() { return "Multiply the above buyable effect. \nCurrently: *"+format(this.effect)+"\nCost: "+format(this.cost)+" Prestige points" },
+														canAfford() { return (player.p.points.gte(this.cost)&&(hasMilestone("p",13))) },
 														buy() {
-															player.p.points=player.p.points.sub(this.cost())
+															player.p.points=player.p.points.sub(this.cost)
 															setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
 														},
 														unlocked(){return (hasMilestone("p",13)&&(getBuyableAmount(this.layer,this.id).gt(0)||player.p.points.gte("1e375")))}
@@ -740,10 +741,10 @@ challenges:{
 													51: {
 														cost() { return new Decimal("1e1740").times(new Decimal(10).pow(getBuyableAmount(this.layer,this.id))).times(new Decimal(1e10).pow(getBuyableAmount(this.layer,this.id).pow(2)))},
 														effect(){return getBuyableAmount(this.layer,this.id).pow(0.55)},
-														display() { return "Add free levels to the above 2 buyables \nCurrently: "+format(this.effect())+"\nCost: "+format(this.cost())+" Prestige points" },
-														canAfford() { return (player.p.points.gte(this.cost())&&(hasMilestone("p",13))) },
+														display() { return "Add free levels to the above 2 buyables \nCurrently: "+format(this.effect)+"\nCost: "+format(this.cost)+" Prestige points" },
+														canAfford() { return (player.p.points.gte(this.cost)&&(hasMilestone("p",13))) },
 														buy() {
-															player.p.points=player.p.points.sub(this.cost())
+															player.p.points=player.p.points.sub(this.cost)
 															setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
 														},
 														unlocked(){return (hasMilestone("p",15)&&(getBuyableAmount(this.layer,this.id).gt(0)||player.p.points.gte("1e1700")))}
@@ -751,86 +752,86 @@ challenges:{
 												},
 												milestones: {
 													0: {
-														requirementDescription: "1 reset",
-														effectDescription: "Add 0.01 to base point gain and prestige requirement, and <b>1</b> doesn't reset upgrades",
+														requirementDisplay: "1 reset",
+														effectDisplay: "Add 0.01 to base point gain and prestige requirement, and <b>1</b> doesn't reset upgrades",
 														done() { return getBuyableAmount("p",11).gte(1) },
 														unlocked(){return layers.p.activeSubtab!="Pointy points"}
 													},
 													1: {
-														requirementDescription: "2 resets",
-														effectDescription: "<b>2</b> and <b>3</b> don't reset upgrades, and start with the first 8 upgrades on reset",
+														requirementDisplay: "2 resets",
+														effectDisplay: "<div><b>2</b> and <b>3</b> don't reset upgrades, and start with the first 8 upgrades on reset</div>",
 														done() { return getBuyableAmount("p",11).gte(2) },
 														unlocked(){return hasMilestone(this.layer,this.id-1)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													2: {
-														requirementDescription: "3 resets",
-														effectDescription: "<b>4</b> doesn't reset upgrades, and permanently fix the bug where you can't buy upgrades when you have 1 prestige point",
+														requirementDisplay: "3 resets",
+														effectDisplay: "<div><b>4</b> doesn't reset upgrades, and permanently fix the bug where you can't buy upgrades when you have 1 prestige point</div>",
 														done() { return getBuyableAmount("p",11).gte(3) },
 														unlocked(){return hasMilestone(this.layer,this.id-1)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													3: {
-														requirementDescription: "4 resets",
-														effectDescription: "Don't reset challenges, add 1 to <b>Point</b> maximum completions, and start with 24 upgrades",
+														requirementDisplay: "4 resets",
+														effectDisplay: "Don't reset challenges, add 1 to <b>Point</b> maximum completions, and start with 24 upgrades",
 														done() { return getBuyableAmount("p",11).gte(4) },
 														unlocked(){return hasMilestone(this.layer,this.id-1)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													4: {
-														requirementDescription: "5 resets",
-														effectDescription: "Each useless upgrade adds 0.1 to base point gain",
+														requirementDisplay: "5 resets",
+														effectDisplay: "Each useless upgrade adds 0.1 to base point gain",
 														done() { return getBuyableAmount("p",11).gte(5) },
 														unlocked(){return hasMilestone(this.layer,this.id-1)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													5: {
-														requirementDescription: "6 resets",
-														effectDescription: "Unlock something",
+														requirementDisplay: "6 resets",
+														effectDisplay: "Unlock something",
 														done() { return getBuyableAmount("p",11).gte(6) },
 														unlocked(){return hasMilestone(this.layer,this.id-1)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													6: {
-														requirementDescription: "1 pointy point",
-														effectDescription: "Unlock the upgrade tree",
+														requirementDisplay: "1 pointy point",
+														effectDisplay: "Unlock the upgrade tree",
 														done() { return getBuyableAmount("p",21).gte(1) },
 														unlocked(){return hasMilestone(this.layer,this.id-1)&&(hasUpgrade(this.layer,104)||player.i.unlocked)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													7: {
-														requirementDescription: "7 pointy points",
-														effectDescription: "You can now buy both first and second row upgrade tree upgrades",
+														requirementDisplay: "7 pointy points",
+														effectDisplay: "You can now buy both first and second row upgrade tree upgrades",
 														done() { return getBuyableAmount("p",21).gte(7) },
 														unlocked(){return hasMilestone(this.layer,this.id-1)&&(hasUpgrade(this.layer,111)||player.i.unlocked)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													8: {
-														requirementDescription: "8 pointy points",
-														effectDescription: "Unlock another layer",
+														requirementDisplay: "8 pointy points",
+														effectDisplay: "Unlock another layer",
 														done() { return getBuyableAmount("p",21).gte(8) },
 														unlocked(){return hasMilestone(this.layer,this.id-1)&&(hasUpgrade(this.layer,141)||hasUpgrade(this.layer,143)||hasUpgrade(this.layer,142)||player.i.unlocked)&&layers.p.activeSubtab!="Pointy points"}
 													},
 													11: {
-														requirementDescription: "3 boosters",
-														effectDescription: "Keep automation on booster reset",
+														requirementDisplay: "3 boosters",
+														effectDisplay: "Keep automation on booster reset",
 														done() { return getBuyableAmount("p",23).gte(3) },
 														unlocked(){return (getBuyableAmount("p",23).gt(0)||hasMilestone(this.layer,this.id))}
 													},
 													12: {
-														requirementDescription: "5 boosters",
-														effectDescription: "Keep all prestige upgrades on booster reset and buy max infinity points",
+														requirementDisplay: "5 boosters",
+														effectDisplay: "Keep all prestige upgrades on booster reset and buy max infinity points",
 														done() { return getBuyableAmount("p",23).gte(5) },
 														unlocked(){return (getBuyableAmount("p",23).gt(0)||hasMilestone(this.layer,this.id))}
 													},
 													13: {
-														requirementDescription: "10 boosters",
-														effectDescription: "Generators cost nothing",
+														requirementDisplay: "10 boosters",
+														effectDisplay: "Generators cost nothing",
 														done() { return getBuyableAmount("p",23).gte(10) },
 														unlocked(){return (getBuyableAmount("p",23).gt(0)||hasMilestone(this.layer,this.id))}
 													},
 													14: {
-														requirementDescription: "15 boosters",
-														effectDescription: "Auto buy the first 3 buyables and buy max pointy prestige points",
+														requirementDisplay: "15 boosters",
+														effectDisplay: "Auto buy the first 3 buyables and buy max pointy prestige points",
 														done() { return getBuyableAmount("p",23).gte(15) },
 														unlocked(){return (getBuyableAmount("p",41).gt(0)||hasMilestone(this.layer,this.id))}
 													},
 													15: {
-														requirementDescription: "20 boosters",
-														effectDescription: "Boosters reset nothing and auto booster",
+														requirementDisplay: "20 boosters",
+														effectDisplay: "Boosters reset nothing and auto booster",
 														done() { return getBuyableAmount("p",23).gte(16) },
 														unlocked(){return (getBuyableAmount("p",41).gt(0)||hasMilestone(this.layer,this.id))}
 													},
@@ -856,7 +857,7 @@ challenges:{
 																if (hasUpgrade("p",94)) geff=geff.times(player.p.cmult)
 																	if (hasUpgrade("p",104)) geff=geff.times(new Decimal(player.p.buyables[21]).plus(1))
 																		if (hasUpgrade("p",143)) geff=geff.times(new Decimal(player.timePlayed).div(3600).max(1))
-																			if (hasUpgrade("p",225)) geff=geff.pow(new Decimal(player.p.buyables[23]).div(10).mul(new Decimal(0.1).plus(layers.p.buyables[41].effect()).times(10)).plus(1))
+																			if (hasUpgrade("p",225)) geff=geff.pow(new Decimal(player.p.buyables[23]).div(10).mul(new Decimal(0.1).plus(layers.p.buyables[41].effect).times(10)).plus(1))
 																				player.p.geff=geff
 																			if (hasChallenge("p",22)&&(!hasUpgrade("p",141)||hasUpgrade("i",12)))player.p.cmult=player.p.cmult.plus(hasUpgrade("p",141)?1:0.01)
 																				if (!hasUpgrade("p",111)) player.p.cmult=player.p.cmult.min(100)
@@ -869,99 +870,78 @@ challenges:{
 																							if (layers.p.buyables[23].canAfford())layers.p.buyables[23].buy()
 																						}
 																				},
-																				tabFormat: {
-																					Upgrades: {
-																						content:[
-																						"main-display",
-																						"blank",
-																						["prestige-button", function(){}],
-																						"blank",
-																						"blank",
-																						"upgrades"
-																						]
+																				subtabs: {
+																					"Upgrades": {
+																						display: `<div v-frag>
+																							<main-display />
+																							<spacer />
+																							<prestige-button display="" />
+																							<spacer />
+																							<spacer />
+																							<upgrades />
+																						</div>`
 																					},
-																					Challenges: {
-																						unlocked(){return hasUpgrade("p",51)||hasMilestone("p",0)},
-																						content:[
-																						"blank",
-																						"blank",
-																						"challenges"
-																						],
+																					"Challenges": {
+																						unlocked() { return hasUpgrade("p", 51) || hasMilestone("p", 0); },
+																						display: `<div v-frag>
+																							<spacer />
+																							<spacer />
+																							<challenges />
+																						</div>`
 																					},
 																					"Buyables and Milestones": {
 																						unlocked(){return hasUpgrade("p",74)||hasMilestone("p",0)},
-																						content:[
-																						"blank",
-																						"blank",
-																						["buyable",11],
-																						"blank",
-																						["display-text", function(){
-																							if (!hasMilestone("p",0))return ""
-																								return "Your boosts are making the point challenge "+getBuyableAmount("p",11).plus(1)+"x less pointy"}],
-																							"blank",
-																							"milestones"
-																							],
-																						},
-																						"Generators":{
-																							unlocked(){return hasMilestone("p",5)||player.i.points.gte(1)},
-																							content:[
-																							"blank",
-																							["display-text", function(){return "You have "+format(player.p.gp)+" generator points, adding "+format(hasUpgrade("p",132)?player.p.gp.plus(1).pow(new Decimal(1).div(2)):hasUpgrade("p",101)?player.p.gp.plus(1).pow(new Decimal(1).div(3)):hasUpgrade("p",93)?player.p.gp.plus(1).pow(0.2):player.p.gp.plus(1).log10())+" to point gain."}],
-																							["display-text", function(){return "You have "+format(player.p.g)+" generators, generating "+format(player.p.g.times(player.p.geff))+" generator points per second"}],
-																							["display-text", function(){
-																								return "Generator efficiency is "+format(player.p.geff)
-																							}],
-																							"blank",
-																							"blank",
-																							["column", [["row", [["buyable",12],["buyable",13],["buyable",14]]]]],
-																							["clickable",11]
-																							]
-																						},
-																						"Pointy points":{
-																							unlocked(){return hasUpgrade("p",104)||player.i.points.gte(1)},
-																							content:[
-																							["display-text",
-																							function() { return 'I have ' + format(player.p.buyables[21]) + ' pointy points!' },
-																							{ "color": "red", "font-size": "32px", "font-family": "Comic Sans MS" }],
-																							["display-text",
-																							function() { return 'My pointy points are multiplying generator efficiency by '+format(new Decimal(player.p.buyables[21]).plus(1)) },
-																							{ "color": "red", "font-size": "32px", "font-family": "Comic Sans MS" }],
-																							"blank","blank",
-																							["buyable",21],
-																							["display-text",
-																							function() {
-																								if (!hasMilestone("i",5))return ""
-																									return 'I have ' + format(player.p.buyables[22]) + ' pointy prestige points!' },
-																								{ "color": "red", "font-size": "32px", "font-family": "Comic Sans MS" }],
-																								["buyable",22],
-																								"blank",
-																								["column", [["row", [["upgrade",211],["upgrade",212],["upgrade",213],["upgrade",214],["upgrade",215]]]]],
-																								["column", [["row", [["upgrade",221],["upgrade",222],["upgrade",223],["upgrade",224],["upgrade",225]]]]],
-																								["display-text",
-																								function() {
-																									if (!hasUpgrade("p",225)&&getBuyableAmount("p",23).eq(0))return ""
-																										return 'I have ' + format(player.p.buyables[23]) + ' pointy boosters!' },
-																									{ "color": "red", "font-size": "32px", "font-family": "Comic Sans MS" }],
-																									["buyable",23],
-																									["display-text",
-																									function() {if (!hasUpgrade("p",225)&&getBuyableAmount("p",23).eq(0))return ""
-																									return 'My pointy boosters are raising generator efficiency to the ^'+format(new Decimal(player.p.buyables[23]).div(10).mul(new Decimal(0.1).plus(layers.p.buyables[41].effect()).times(10)).plus(1)) },
-																									{ "color": "red", "font-size": "32px", "font-family": "Comic Sans MS" }],
-																									"blank","blank",
-																									["display-text",
-																									function() {if (!hasMilestone("p",11))return ""
-																									return 'Booster upgrades' },
-																									{"font-size": "24px"}],
-																									["column", [["row", [["upgrade",231],["upgrade",232],["upgrade",233],["upgrade",234],["upgrade",235]]]]],
-																									]
-																								},
-																								"Buyables":{
-																									unlocked(){return hasMilestone("p",13)},
-																									content:["main-display",
-																									["column", [["row", [["buyable",31],["buyable",32],["buyable",33]]]]],
-																									["column", [["row", [["buyable",41],["buyable",42],["buyable",43]]]]],
-		//["column", [["row", [["buyable",51],["buyable",52],["buyable",53]]]]],
-		]
-	}
-}
+																						display: `<div v-frag>
+																							<spacer />
+																							<spacer />
+																							<row><buyable id="11" /></row>
+																							<spacer />
+																							<div v-if="hasMilestone('p', 0)">Your boosts are making the point challenge {{ getBuyableAmount('p', 11).plus(1) }}x less pointy</div>
+																							<spacer />
+																							<milestones />
+																						</div>`
+																					},
+																					"Generators": {
+																						unlocked(){return hasMilestone("p",5)||player.i.points.gte(1)},
+																						display: `<div v-frag>
+																							<spacer />
+																							<div>You have {{ format(player.p.gp) }} generator points, adding {{ format(hasUpgrade("p",132)?player.p.gp.plus(1).pow(new Decimal(1).div(2)):hasUpgrade("p",101)?player.p.gp.plus(1).pow(new Decimal(1).div(3)):hasUpgrade("p",93)?player.p.gp.plus(1).pow(0.2):player.p.gp.plus(1).log10()) }} to point gain</div>
+																							<div>You have {{ format(player.p.g) }} generators, generating {{ format(player.p.g.times(player.p.geff)) }} generator points per second</div>
+																							<div>Generator efficiency is {{ format(player.p.geff) }}</div>
+																							<spacer />
+																							<spacer />
+																							<buyables :buyables="[12, 13, 14]" />
+																							<row><clickable id="11" /></row>
+																						</div>`
+																					},
+																					"Pointy Points": {
+																						unlocked(){return hasUpgrade("p",104)||player.i.points.gte(1)},
+																						display: `<div v-frag>
+																							<div style="color: red; font-size: 32px; font-family: Comic Sans MS">{{ format(player.p.buyables[21]) }} pointy points</div>
+																							<div style="color: red; font-size: 32px; font-family: Comic Sans MS">My pointy points are multiplying generator efficiency by {{ format(new Decimal(player.p.buyables[21]).plus(1)) }}</div>
+																							<spacer />
+																							<spacer />
+																							<row><buyable id="21" /></row>
+																							<div v-if="hasMilestone('i', 5)" style="color: red; font-size: 32px; font-family: Comic Sans MS">I have {{ format(player.p.buyables[22]) }} pointy prestige points</div>
+																							<row><buyable id="22" /></row>
+																							<spacer />
+																							<upgrades :upgrades="[211, 212, 213, 214, 215]" />
+																							<upgrades :upgrades="[221, 222, 223, 224, 225]" />
+																							<div v-if="hasMilestone('p', 225)" style="color: red; font-size: 32px; font-family: Comic Sans MS">I have {{ format(player.p.buyables[23]) }} pointy boosters!</div>
+																							<row><buyable id="23" /></row>
+																							<div v-if="hasMilestone('p', 225) || getBuyableAmount('p', 23).gt(0)" style="color: red; font-size: 32px; font-family: Comic Sans MS">My pointy boosters are raising generator efficiency to the ^{{ format(new Decimal(player.p.buyables[23]).div(10).mul(new Decimal(0.1).plus(layers.p.buyables[41].effect).times(10)).plus(1)) }}</div>
+																							<spacer />
+																							<spacer />
+																							<div v-if="hasMilestone('p', 11)" style="font-size: 24px">Booster upgrades</div>
+																							<upgrades :upgrades="[231, 232, 233, 234, 235]" />
+																						</div>`
+																					},
+																					"Buyables": {
+																						unlocked(){return hasMilestone("p",13)},
+																						display: `<div v-frag>
+																							<buyables :buyables="[31, 32, 33]" />
+																							<buyables :buyables="[41, 42, 43]" />
+																						</div>`
+																					}
+																				}
 }

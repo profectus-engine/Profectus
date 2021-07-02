@@ -15,9 +15,14 @@
 	display: flex;
 	flex-flow: row wrap;
 	justify-content: center;
-	align-items: center;
+	align-items: stretch;
 	max-width: 100%;
 	margin: 0 10px;
+}
+
+.row > * {
+    margin: 0;
+    display: flex;
 }
 
 .col {

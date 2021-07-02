@@ -5,9 +5,11 @@
 			<button class="layer-tab minimized" v-if="minimized" @click="toggleMinimized"><div>{{ name }}</div></button>
 			<div class="layer-tab" :style="style" :class="{ hasSubtabs: subtabs }" v-else>
 				<branches>
-					<sticky v-if="subtabs" class="subtabs" :class="{ floating, firstTab: firstTab || !allowGoBack }">
-						<tab-button v-for="(subtab, id) in subtabs" @selectTab="selectSubtab(id)" :key="id"
-							:activeTab="id === activeSubtab" :options="subtab" :text="id" />
+					<sticky v-if="subtabs" class="subtabs-container" :class="{ floating, firstTab: firstTab || !allowGoBack }">
+						<div class="subtabs">
+							<tab-button v-for="(subtab, id) in subtabs" @selectTab="selectSubtab(id)" :key="id"
+								:activeTab="id === activeSubtab" :options="subtab" :text="id" />
+						</div>
 					</sticky>
 					<component v-if="display" :is="display" />
 					<default-layer-tab v-else />
@@ -201,23 +203,28 @@ export default {
 
 .layer-tab .subtabs {
 	margin-bottom: 24px;
-	display: flex;
+    display: flex;
+    flex-flow: wrap;
+    padding-right: 60px;
     z-index: 4;
 }
 
-.subtabs:not(.floating) {
-	width: calc(100% + 14px);
+.subtabs-container:not(.floating) {
 	border-top: solid 4px var(--separator);
 	border-bottom: solid 4px var(--separator);
-	height: 50px;
+}
+
+.subtabs-container:not(.floating) .subtabs {
+	width: calc(100% + 14px);
 	margin-left: -7px;
 	margin-right: -7px;
 	box-sizing: border-box;
 	text-align: left;
 	padding-left: 14px;
+	margin-bottom: -4px;
 }
 
-.subtabs.floating {
+.subtabs-container.floating .subtabs {
 	justify-content: center;
 	margin-top: -25px;
 }
@@ -237,24 +244,27 @@ export default {
 	padding-left: 0;
 }
 
-.subtabs:not(.floating).firstTab {
+.subtabs-container:not(.floating).firstTab .subtabs {
     padding-left: 0;
     padding-right: 0;
 }
 
-.subtabs:not(.floating):first-child {
-	margin-top: -50px;
+.subtabs-container:not(.floating):first-child {
 	border-top: 0;
 }
 
-.subtabs:not(.floating):not(.firstTab) {
+.subtabs-container:not(.floating):first-child .subtabs {
+	margin-top: -50px;
+}
+
+.subtabs-container:not(.floating):not(.firstTab) .subtabs {
 	padding-left: 70px;
 }
 
 .minimize {
     position: absolute;
     top: 0;
-    right: 15px;
+    right: 0;
     background-color: transparent;
     border: 1px solid transparent;
     color: var(--color);
@@ -262,6 +272,8 @@ export default {
     cursor: pointer;
     line-height: 40px;
     z-index: 7;
+    width: 60px;
+    background: var(--background);
 }
 
 .minimized + .minimize {

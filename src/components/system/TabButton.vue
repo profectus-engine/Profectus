@@ -56,6 +56,7 @@ export default {
     margin: 5px;
     border-radius: 5px;
     border: 2px solid;
+    flex-shrink: 0;
 }
 
 .tabButton:hover {
