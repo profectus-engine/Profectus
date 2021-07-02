@@ -72,6 +72,7 @@ export function resetLayerData(layer, keep = []) {
 }
 
 export function resetRow(row, ignore) {
+	console.log(row, ignore);
 	Object.values(layers).filter(layer => layer.row === row && layer.layer !== ignore).forEach(layer => layer.hardReset());
 }
 
@@ -277,7 +278,7 @@ export const defaultLayerProperties = {
 
 		player.points = new Decimal(0);
 
-		for (let row = this.row; row >= 0; row--) {
+		for (let row = this.row - 1; row >= 0; row--) {
 			resetRow(row, this.layer);
 		}
 		resetRow('side', this.layer);

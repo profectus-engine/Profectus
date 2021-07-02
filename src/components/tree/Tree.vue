@@ -40,7 +40,7 @@ export default {
 			if (this.nodes != undefined) {
 				return this.nodes;
 			}
-			return Object.keys(layers).reduce((acc, curr) => {
+			const rows = Object.keys(layers).reduce((acc, curr) => {
 				if (!(layers[curr].displayRow in acc)) {
 					acc[layers[curr].displayRow] = [];
 				}
@@ -49,6 +49,10 @@ export default {
 				} else {
 					acc[layers[curr].displayRow].push(curr);
 				}
+				return acc;
+			}, []);
+			return Object.keys(rows).reduce((acc, curr) => {
+				acc[curr] = rows[curr].filter(layer => layer);
 				return acc;
 			}, []);
 		}

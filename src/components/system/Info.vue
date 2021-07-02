@@ -44,7 +44,7 @@
 				</div>
 				<br>
 				<div>Time Played: {{ timePlayed }}</div>
-				<div v-if="hotkeys.length > 0">
+				<div v-if="hotkeys">
 					<br>
 					<h4>Hotkeys</h4>
 					<div v-for="key in hotkeys" :key="key.key">
@@ -75,8 +75,12 @@ export default {
 			return formatTime(this.$store.state.timePlayed);
 		},
 		hotkeys() {
-			// TODO check layer is unlocked and hotkey is unlocked
-			return hotkeys.filter(hotkey => hotkey || true);
+			return Object.keys(hotkeys).reduce((acc, curr) => {
+				if (hotkeys[curr].unlocked !== false) {
+					acc[curr] = hotkeys[curr];
+				}
+				return acc;
+			}, {});
 		}
 	}
 };

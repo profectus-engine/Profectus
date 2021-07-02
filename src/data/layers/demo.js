@@ -6,7 +6,7 @@ import { resetLayer } from '../../util/layers';
 
 export default {
 	id: "p",
-	position: 0,
+	position: 2,
 	startData() { return {
 		unlocked: true,
 		points: new Decimal(0),
@@ -46,7 +46,6 @@ export default {
 		return new Decimal(1)
 	},
 	row: 0, // Row the layer is in on the tree (0 is the first row)
-	displayRow: 2,
 	hotkeys: [
 	{key: "p", description: "P: Reset for prestige points", press(){if (layers.p.canReset) resetLayer(this.layer)}},
 	],

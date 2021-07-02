@@ -56,8 +56,8 @@ export default {
         },
         masterButtonDisplay() {return (getClickableState(this.layer, 11) == "Borkened...") ? "Fix the clickable!" : "Does nothing"}, // Text on Respec button, optional
         11: {
-            titleDisplay: "Clicky clicky!", // Optional, displayed at the top in a larger font
-            descriptionDisplay() { // Everything else displayed in the buyable button after the title
+            title: "Clicky clicky!", // Optional, displayed at the top in a larger font
+            display() { // Everything else displayed in the buyable button after the title
                 let data = getClickableState(this.layer, this.id)
                 return "Current state:<br>" + data
             },

@@ -6,7 +6,7 @@ import { resetLayer } from '../../util/layers';
 
 export default {
     id: "i",
-    position: 0, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
+    position: 2, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
     startData() { return {
         unlocked: false,
 		points: new Decimal(0),
@@ -31,7 +31,6 @@ export default {
   canReset(){return player.p.buyables[21].gte(layers.i.requires)},
   prestigeButtonDisplay(){return "Reset everything for +"+format(layers.i.resetGain)+" Infinity.<br>You need "+format(layers.i.requires)+" pointy points to reset."},
     row: 1, // Row the layer is in on the tree (0 is the first row)
-    displayRow: 3,
     hotkeys: [
         {key: "i", description: "I: Infinity", press(){if (layers.i.canReset) resetLayer(this.layer)}},
     ],
