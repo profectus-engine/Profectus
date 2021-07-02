@@ -1,27 +1,31 @@
 <template>
-	<Modal :show="show">
-		<div slot="header" class="nan-modal-header">
-			<h2>NaN value detected!</h2>
-		</div>
-		<div slot="body">
-			<div>Attempted to assign NaN value to "{{ property }}" (previously {{ format(previous) }}). Auto-saving has been {{ autosave ? 'enabled' : 'disabled' }}. Check the console for more details, and consider sharing it with the developers on discord.</div>
-			<br>
-			<div>
-				<a :href="discordLink" class="nan-modal-discord-link">
-					<img src="images/discord.png" class="nan-modal-discord" />
-					{{ discordName }}
-				</a>
+	<div v-frag>
+		<Modal :show="show">
+			<div slot="header" class="nan-modal-header">
+				<h2>NaN value detected!</h2>
 			</div>
-			<br>
-			<Toggle title="Autosave" :value="autosave" @change="setAutosave" />
-		</div>
-		<div slot="footer" class="nan-footer">
-			<button @click="setZero" class="button">Set to 0</button>
-			<button @click="setOne" class="button">Set to 1</button>
-			<button @click="setPrev" class="button" v-if="previous && previous.neq(0) && previous.neq(1)">Set to previous</button>
-			<button @click="ignore" class="button danger">Ignore</button>
-		</div>
-	</Modal>
+			<div slot="body">
+				<div>Attempted to assign NaN value to "{{ property }}" (previously {{ format(previous) }}). Auto-saving has been {{ autosave ? 'enabled' : 'disabled' }}. Check the console for more details, and consider sharing it with the developers on discord.</div>
+				<br>
+				<div>
+					<a :href="discordLink" class="nan-modal-discord-link">
+						<img src="images/discord.png" class="nan-modal-discord" />
+						{{ discordName }}
+					</a>
+				</div>
+				<br>
+				<Toggle title="Autosave" :value="autosave" @change="setAutosave" />
+			</div>
+			<div slot="footer" class="nan-footer">
+				<button @click="toggleSavesManager" class="button">Open Saves Manager</button>
+				<button @click="setZero" class="button">Set to 0</button>
+				<button @click="setOne" class="button">Set to 1</button>
+				<button @click="setPrev" class="button" v-if="previous && previous.neq(0) && previous.neq(1)">Set to previous</button>
+				<button @click="ignore" class="button danger">Ignore</button>
+			</div>
+		</Modal>
+		<SavesManager :show="showSaves" @closeDialog="toggleSavesManager" />
+	</div>
 </template>
 
 <script>
@@ -33,7 +37,7 @@ export default {
 	name: 'NaNScreen',
 	data() {
 		const { discordName, discordLink } = modInfo;
-		return { discordName, discordLink, format };
+		return { discordName, discordLink, format, showSaves: false };
 	},
 	computed: {
 		show() {
@@ -67,6 +71,9 @@ export default {
 		},
 		setAutosave(autosave) {
 			player.autosave = autosave;
+		},
+		toggleSavesManager() {
+			this.showSaves = !this.showSaves;
 		}
 	}
 };
@@ -96,19 +103,5 @@ export default {
 	height: 2em;
 	margin: 0;
 	margin-right: 4px;
-}
-
-.danger {
-	border: solid 2px var(--danger);
-	padding-right: 0;
-}
-
-.danger::after {
-	content:  "!";
-	color: white;
-	background: var(--danger);
-	padding: 2px;
-	margin-left: 6px;
-	height: 100%;
 }
 </style>

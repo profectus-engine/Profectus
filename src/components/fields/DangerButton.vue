@@ -53,18 +53,19 @@ export default {
 .container > * {
 	margin: 0 4px;
 }
+</style>
 
+<style>
 .danger {
+    position: relative;
 	border: solid 2px var(--danger);
-	padding-right: 0;
+    border-right-width: 16px;
 }
 
 .danger::after {
+    position: absolute;
 	content:  "!";
 	color: white;
-	background: var(--danger);
-	padding: 2px;
-	margin-left: 6px;
-	height: 100%;
+    right: -13px;
 }
 </style>

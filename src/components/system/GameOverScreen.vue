@@ -98,18 +98,4 @@ export default {
 	margin: 0;
 	margin-right: 4px;
 }
-
-.danger {
-	border: solid 2px var(--danger);
-	padding-right: 0;
-}
-
-.danger::after {
-	content:  "!";
-	color: white;
-	background: var(--danger);
-	padding: 2px;
-	margin-left: 6px;
-	height: 100%;
-}
 </style>
