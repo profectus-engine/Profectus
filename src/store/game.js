@@ -119,10 +119,12 @@ function update() {
 		if (player.offTime.remain > modInfo.offlineLimit * 3600) {
 			player.offTime.remain = modInfo.offlineLimit * 3600;
 		}
-		if (player.offTime.remain > 0) {
+		if (player.offTime.remain > 0 && player.devSpeed !== 0) {
 			let offlineDiff = Math.max(player.offTime.remain / 10, diff);
 			player.offTime.remain -= offlineDiff;
 			diff = diff.add(offlineDiff);
+		} else if (player.devSpeed === 0) {
+			player.offTime.remain += diff.toNumber();
 		}
 		if (!player.offlineProd || player.offTime.remain <= 0) {
 			player.offTime = undefined;
