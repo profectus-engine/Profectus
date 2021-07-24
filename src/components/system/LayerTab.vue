@@ -5,7 +5,7 @@
 			<button class="layer-tab minimized" v-if="minimized" @click="toggleMinimized"><div>{{ name }}</div></button>
 			<div class="layer-tab" :style="style" :class="{ hasSubtabs: subtabs }" v-else>
 				<branches>
-					<sticky v-if="subtabs" class="subtabs-container" :class="{ floating, firstTab: firstTab || !allowGoBack }">
+					<sticky v-if="subtabs" class="subtabs-container" :class="{ floating, firstTab: firstTab || !allowGoBack, minimizable }">
 						<div class="subtabs">
 							<tab-button v-for="(subtab, id) in subtabs" @selectTab="selectSubtab(id)" :key="id"
 								:activeTab="id === activeSubtab" :options="subtab" :text="id" />
@@ -253,6 +253,10 @@ export default {
 	border-top: 0;
 }
 
+.subtabs-container.minimizable:not(.floating):first-child {
+    padding-right: 50px;
+}
+
 .subtabs-container:not(.floating):first-child .subtabs {
 	margin-top: -50px;
 }
@@ -263,22 +267,24 @@ export default {
 
 .minimize {
     position: absolute;
-    top: 0;
-    right: 0;
-    background-color: transparent;
-    border: 1px solid transparent;
+    top: 6px;
+    right: 16px;
+    z-index: 7;
+    line-height: 30px;
+    width: 30px;
+    border: none;
+    background: var(--background);
+    box-shadow: var(--background) 0 2px 3px 5px;
+    border-radius: 50%;
     color: var(--color);
     font-size: 40px;
     cursor: pointer;
-    line-height: 40px;
-    z-index: 7;
-    width: 60px;
-    background: var(--background);
+    padding: 0;
 }
 
 .minimized + .minimize {
 	transform: rotate(-90deg);
-    top: 3px;
+    top: 10px;
 }
 
 .goBack {
