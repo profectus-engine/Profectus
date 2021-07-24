@@ -6,7 +6,7 @@
 
 <script>
 import Decimal, { formatWhole } from '../../util/bignum';
-import { player } from '../../store/proxies';
+import player from '../../game/player';
 
 export default {
 	name: 'TPS',

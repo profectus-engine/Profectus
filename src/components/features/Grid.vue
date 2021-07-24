@@ -9,7 +9,7 @@
 </template>
 
 <script>
-import { layers } from '../../store/layers';
+import { layers } from '../../game/layers';
 
 export default {
 	name: 'grid',

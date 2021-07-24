@@ -1,12 +1,14 @@
 <template>
 	<Modal :show="show">
-		<div slot="header" class="game-over-modal-header">
-			<img class="game-over-modal-logo" v-if="logo" :src="logo" :alt="modInfo" />
-			<div class="game-over-modal-title">
-				<h2>Congratulations!</h2>
-				<h4>You've beaten {{ title }} v{{ versionNumber }}: {{ versionTitle }}</h4>
+		<template v-slot:header>
+			<div class="game-over-modal-header">
+				<img class="game-over-modal-logo" v-if="logo" :src="logo" :alt="modInfo" />
+				<div class="game-over-modal-title">
+					<h2>Congratulations!</h2>
+					<h4>You've beaten {{ title }} v{{ versionNumber }}: {{ versionTitle }}</h4>
+				</div>
 			</div>
-		</div>
+		</template>
 		<template v-slot:body="{ shown }">
 			<div v-if="shown">
 				<div>It took you {{ timePlayed }} to beat the game.</div>
@@ -21,17 +23,20 @@
 				</div>
 			</div>
 		</template>
-		<div slot="footer" class="game-over-footer">
-			<button @click="keepGoing" class="button">Keep Going</button>
-			<button @click="playAgain" class="button danger">Play Again</button>
-		</div>
+		<template v-slot:footer>
+			<div class="game-over-footer">
+				<button @click="keepGoing" class="button">Keep Going</button>
+				<button @click="playAgain" class="button danger">Play Again</button>
+			</div>
+		</template>
 	</Modal>
 </template>
 
 <script>
 import modInfo from '../../data/modInfo.json';
+import { hasWon } from '../../data/mod';
 import { formatTime } from '../../util/bignum';
-import { player } from '../../store/proxies';
+import player from '../../game/player';
 
 export default {
 	name: 'GameOverScreen',
@@ -44,7 +49,7 @@ export default {
 			return formatTime(player.timePlayed);
 		},
 		show() {
-			return this.$store.getters.hasWon && !player.keepGoing;
+			return hasWon.value && !player.keepGoing;
 		}
 	},
 	methods: {

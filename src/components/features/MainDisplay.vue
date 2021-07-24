@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<span v-if="showPrefix">You have</span>
+		<span v-if="showPrefix">You have </span>
 		<resource :amount="amount" :color="color" />
 		{{ resource }}<!-- remove whitespace -->
 		<span v-if="effectDisplay">, <component :is="effectDisplay" /></span>
@@ -9,8 +9,8 @@
 </template>
 
 <script>
-import { player } from '../../store/proxies';
-import { layers } from '../../store/layers';
+import player from '../../game/player';
+import { layers } from '../../game/layers';
 import { format, formatWhole } from '../../util/bignum';
 import { coerceComponent } from '../../util/vue';
 

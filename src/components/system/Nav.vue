@@ -1,66 +1,64 @@
 <template>
-	<div v-frag>
-		<div class="nav" v-if="useHeader">
-			<img v-if="banner" :src="banner" height="100%" :alt="title" />
-			<div v-else class="title">{{ title }}</div>
-			<div @click="openDialog('Changelog')" class="version-container">
-				<tooltip display="Changelog" bottom class="version"><span>v{{ version }}</span></tooltip>
-			</div>
-			<div style="flex-grow: 1; cursor: unset;"></div>
-			<div class="discord">
-				<img src="images/discord.png" @click="window.open(discordLink, 'mywindow')" />
-				<ul class="discord-links">
-					<li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
-						<a :href="discordLink" target="_blank">{{ discordName }}</a>
-					</li>
-					<li><a href="https://discord.gg/WzejVAx" target="_blank">The Paper Pilot Community</a></li>
-					<li><a href="https://discord.gg/F3xveHV" target="_blank">The Modding Tree</a></li>
-					<li><a href="http://discord.gg/wwQfgPa" target="_blank">Jacorb's Games</a></li>
-				</ul>
-			</div>
-			<div @click="openDialog('Info')">
-				<tooltip display="<span>Info</span>" bottom class="info"><span>i</span></tooltip>
-			</div>
-			<div @click="openDialog('Saves')">
-				<tooltip display="Saves" bottom class="saves" xoffset="-20px">
-					<span class="material-icons">library_books</span>
-				</tooltip>
-			</div>
-			<div @click="openDialog('Options')">
-				<tooltip display="<span>Options</span>" bottom class="options" xoffset="-70px">
-					<img src="images/options_wheel.png" />
-				</tooltip>
-			</div>
+	<div class="nav" v-if="useHeader" v-bind="$attrs">
+		<img v-if="banner" :src="banner" height="100%" :alt="title" />
+		<div v-else class="title">{{ title }}</div>
+		<div @click="openDialog('Changelog')" class="version-container">
+			<tooltip display="Changelog" bottom class="version"><span>v{{ version }}</span></tooltip>
 		</div>
-		<div v-else class="overlay-nav">
-			<div @click="openDialog('Changelog')" class="version-container">
-				<tooltip display="Changelog" right xoffset="25%" class="version"><span>v{{ version }}</span></tooltip>
-			</div>
-			<div @click="openDialog('Saves')">
-				<tooltip display="Saves" right class="saves"><span class="material-icons">library_books</span></tooltip>
-			</div>
-			<div @click="openDialog('Options')">
-				<tooltip display="<span>Options</span>" right class="options"><img src="images/options_wheel.png" /></tooltip>
-			</div>
-			<div @click="openDialog('Info')">
-				<tooltip display="<span>Info</span>" right class="info"><span>i</span></tooltip>
-			</div>
-			<div class="discord">
-				<img src="images/discord.png" @click="openDiscord" />
-				<ul class="discord-links">
-					<li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
-						<a :href="discordLink" target="_blank">{{ discordName }}</a>
-					</li>
-					<li><a href="https://discord.gg/WzejVAx" target="_blank">The Paper Pilot Community</a></li>
-					<li><a href="https://discord.gg/F3xveHV" target="_blank">The Modding Tree</a></li>
-					<li><a href="http://discord.gg/wwQfgPa" target="_blank">Jacorb's Games</a></li>
-				</ul>
-			</div>
+		<div style="flex-grow: 1; cursor: unset;"></div>
+		<div class="discord">
+			<img src="images/discord.png" @click="window.open(discordLink, 'mywindow')" />
+			<ul class="discord-links">
+				<li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
+					<a :href="discordLink" target="_blank">{{ discordName }}</a>
+				</li>
+				<li><a href="https://discord.gg/WzejVAx" target="_blank">The Paper Pilot Community</a></li>
+				<li><a href="https://discord.gg/F3xveHV" target="_blank">The Modding Tree</a></li>
+				<li><a href="http://discord.gg/wwQfgPa" target="_blank">Jacorb's Games</a></li>
+			</ul>
 		</div>
-		<Info :show="showInfo" @openDialog="openDialog" @closeDialog="closeDialog" />
-		<SavesManager :show="showSaves" @closeDialog="closeDialog" />
-		<Options :show="showOptions" @closeDialog="closeDialog" />
+		<div @click="openDialog('Info')">
+			<tooltip display="<span>Info</span>" bottom class="info"><span>i</span></tooltip>
+		</div>
+		<div @click="openDialog('Saves')">
+			<tooltip display="Saves" bottom class="saves" xoffset="-20px">
+				<span class="material-icons">library_books</span>
+			</tooltip>
+		</div>
+		<div @click="openDialog('Options')">
+			<tooltip display="<span>Options</span>" bottom class="options" xoffset="-70px">
+				<img src="images/options_wheel.png" />
+			</tooltip>
+		</div>
 	</div>
+	<div v-else class="overlay-nav" v-bind="$attrs">
+		<div @click="openDialog('Changelog')" class="version-container">
+			<tooltip display="Changelog" right xoffset="25%" class="version"><span>v{{ version }}</span></tooltip>
+		</div>
+		<div @click="openDialog('Saves')">
+			<tooltip display="Saves" right class="saves"><span class="material-icons">library_books</span></tooltip>
+		</div>
+		<div @click="openDialog('Options')">
+			<tooltip display="<span>Options</span>" right class="options"><img src="images/options_wheel.png" /></tooltip>
+		</div>
+		<div @click="openDialog('Info')">
+			<tooltip display="<span>Info</span>" right class="info"><span>i</span></tooltip>
+		</div>
+		<div class="discord">
+			<img src="images/discord.png" @click="openDiscord" />
+			<ul class="discord-links">
+				<li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
+					<a :href="discordLink" target="_blank">{{ discordName }}</a>
+				</li>
+				<li><a href="https://discord.gg/WzejVAx" target="_blank">The Paper Pilot Community</a></li>
+				<li><a href="https://discord.gg/F3xveHV" target="_blank">The Modding Tree</a></li>
+				<li><a href="http://discord.gg/wwQfgPa" target="_blank">Jacorb's Games</a></li>
+			</ul>
+		</div>
+	</div>
+	<Info :show="showInfo" @openDialog="openDialog" @closeDialog="closeDialog" />
+	<SavesManager :show="showSaves" @closeDialog="closeDialog" />
+	<Options :show="showOptions" @closeDialog="closeDialog" />
 </template>
 
 <script>
@@ -173,7 +171,7 @@ export default {
 	width: 200px;
 	transition: right .25s ease;
 	background: var(--secondary-background);
-	z-index: 1;
+	z-index: 10;
 }
 
 .overlay-nav .discord-links {

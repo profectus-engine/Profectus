@@ -1,5 +1,6 @@
 import Decimal, { formatWhole } from '../../../util/bignum';
-import { player, tmp } from '../../../store/proxies';
+import player from '../../../game/player';
+import { layers as tmp } from '../../../game/layers';
 import { getClickableState } from '../../../util/features';
 
 export default {

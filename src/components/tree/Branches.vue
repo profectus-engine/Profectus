@@ -1,17 +1,13 @@
 <template>
-	<div v-frag>
-		<slot />
-		<div ref="resizeListener" class="resize-listener" />
-		<svg>
-			<branch-line v-for="(branch, index) in branches" :key="index"
-				:startNode="nodes[branch.start]" :endNode="nodes[branch.end]" :options="branch.options" />
-		</svg>
-	</div>
+	<slot />
+	<div ref="resizeListener" class="resize-listener" />
+	<svg v-bind="$attrs">
+		<branch-line v-for="(branch, index) in branches" :key="index"
+			:startNode="nodes[branch.start]" :endNode="nodes[branch.end]" :options="branch.options" />
+	</svg>
 </template>
 
 <script>
-import Vue from 'vue';
-
 const observerOptions = {
 	attributes: true,
 	childList: true,
@@ -57,12 +53,12 @@ export default {
 		},
 		updateNode(id, containerRect) {
 			const linkStartRect = this.nodes[id].element.getBoundingClientRect();
-			Vue.set(this.nodes[id], 'x', linkStartRect.x + linkStartRect.width / 2 - containerRect.x);
-			Vue.set(this.nodes[id], 'y', linkStartRect.y + linkStartRect.height / 2 - containerRect.y);
+			this.nodes[id].x = linkStartRect.x + linkStartRect.width / 2 - containerRect.x;
+			this.nodes[id].y = linkStartRect.y + linkStartRect.height / 2 - containerRect.y;
 		},
 		registerNode(id, component) {
 			const element = component.$el.parentElement;
-			Vue.set(this.nodes, id, { component, element });
+			this.nodes[id] = { component, element };
 			this.observer.observe(element, observerOptions);
 			this.$nextTick(() => {
 				if (this.$refs.resizeListener != undefined) {
@@ -71,17 +67,15 @@ export default {
 			});
 		},
 		unregisterNode(id) {
-			Vue.delete(this.nodes, id);
+			delete this.nodes[id];
 		},
 		registerBranch(start, options) {
 			const end = typeof options === 'string' ? options : options.target;
 			this.links.push({ start, end, options });
-			Vue.set(this, 'links', this.links);
 		},
 		unregisterBranch(start, options) {
 			const index = this.links.findIndex(l => l.start === start && l.options === options);
 			this.links.splice(index, 1);
-			Vue.set(this, 'links', this.links);
 		}
 	}
 };

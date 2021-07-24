@@ -12,8 +12,8 @@
 </template>
 
 <script>
-import { layers } from '../../store/layers';
-import { player } from '../../store/proxies';
+import { layers } from '../../game/layers';
+import player from '../../game/player';
 import { coerceComponent } from '../../util/vue';
 import themes from '../../data/themes';
 

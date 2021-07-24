@@ -5,8 +5,8 @@
 </template>
 
 <script>
-import { layers } from '../../store/layers';
-import { player } from '../../store/proxies';
+import { layers } from '../../game/layers';
+import player from '../../game/player';
 import { coerceComponent } from '../../util/vue';
 
 export default {
@@ -16,6 +16,7 @@ export default {
 		layer: String,
 		display: [ String, Object ]
 	},
+	emits: [ 'press' ],
 	computed: {
 		style() {
 			return [

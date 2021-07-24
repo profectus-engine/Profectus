@@ -1,11 +1,11 @@
-import Vue from 'vue';
 import clone from 'lodash.clonedeep';
 import { isFunction, isPlainObject } from '../util/common';
-import { createProxy, createGridProxy, player as playerProxy } from './proxies';
+import { createProxy, createGridProxy } from '../util/proxies';
+import playerProxy from './player';
 import Decimal from '../util/bignum';
-import store from './index';
 import { noCache, getStartingBuyables, getStartingClickables, getStartingChallenges, defaultLayerProperties } from '../util/layers';
 import { applyPlayerData } from '../util/save';
+import { isRef } from 'vue';
 
 export const layers = {};
 export const hotkeys = [];
@@ -49,11 +49,9 @@ export function addLayer(layer, player = null) {
 		layer.base = 2;
 	}
 
-	const getters = {};
-
 	// Process each feature
 	for (let property of uncachedProperties) {
-		if (layer[property]) {
+		if (layer[property] && !isRef(layer.property)) {
 			layer[property].forceCached = false;
 		}
 	}
@@ -312,21 +310,20 @@ export function addLayer(layer, player = null) {
 				setDefault(layer.grids[id], 'hold', null, false);
 				setDefault(layer.grids[id], 'getTitle', null, false);
 				setDefault(layer.grids[id], 'getDisplay', null, false);
-				layer.grids[id] = createGridProxy(layer.grids[id], getters, `${layer.id}/grids-${id}-`);
+				layer.grids[id] = createGridProxy(layer.grids[id]);
 			}
 		}
 	}
 	if (layer.subtabs) {
 		layer.activeSubtab = function() {
-			if (this.subtabs != undefined) {
-				if (this.subtabs[player.subtabs[layer.id].mainTabs] &&
-					this.subtabs[player.subtabs[layer.id].mainTabs].unlocked !== false) {
-					return this.subtabs[player.subtabs[layer.id].mainTabs];
-				}
-				// Default to first unlocked tab
-				return Object.values(this.subtabs).find(subtab => subtab.unlocked !== false);
+			if (layer.subtabs[playerProxy.subtabs[layer.id].mainTabs] &&
+				layer.subtabs[playerProxy.subtabs[layer.id].mainTabs].unlocked !== false) {
+				return layer.subtabs[playerProxy.subtabs[layer.id].mainTabs];
 			}
+			// Default to first unlocked tab
+			return Object.values(layer.subtabs).find(subtab => subtab.unlocked !== false);
 		}
+		setDefault(player, 'subtabs', {});
 		setDefault(player.subtabs, layer.id, {});
 		setDefault(player.subtabs[layer.id], 'mainTabs', Object.keys(layer.subtabs)[0]);
 		for (let id in layer.subtabs) {
@@ -338,16 +335,17 @@ export function addLayer(layer, player = null) {
 		}
 	}
 	if (layer.microtabs) {
+		setDefault(player, 'subtabs', {});
 		setDefault(player.subtabs, layer.id, {});
 		for (let family in layer.microtabs) {
 			layer.microtabs[family].activeMicrotab = function() {
-				if (this[player.subtabs[this.layer]?.[family]] && this[player.subtabs[this.layer][family]].unlocked !== false) {
-					return this[player.subtabs[this.layer][family]];
+				if (this[playerProxy.subtabs[this.layer][family]] && this[playerProxy.subtabs[this.layer][family]].unlocked !== false) {
+					return this[playerProxy.subtabs[this.layer][family]];
 				}
 				// Default to first unlocked tab
 				return this[Object.keys(this).find(microtab => microtab !== 'activeMicrotab' && this[microtab].unlocked !== false)];
 			}
-			setDefault(player.subtabs[layer.id], family, Object.keys(layer.microtabs[family])[0]);
+			setDefault(player.subtabs[layer.id], family, Object.keys(layer.microtabs[family]).find(tab => tab !== 'activeMicrotab'));
 			layer.microtabs[family].layer = layer.id;
 			layer.microtabs[family].family = family;
 			for (let id in layer.microtabs[family]) {
@@ -356,7 +354,7 @@ export function addLayer(layer, player = null) {
 					layer.microtabs[family][id].family = family;
 					layer.microtabs[family][id].id = id;
 					layer.microtabs[family][id].active = function() {
-						return player.subtabs[this.layer]?.[this.family] === this.id;
+						return playerProxy.subtabs[this.layer][this.family] === this.id;
 					}
 				}
 			}
@@ -374,11 +372,10 @@ export function addLayer(layer, player = null) {
 	}
 
 	// Create layer proxy
-	layer = createProxy(layer, getters, `${layer.id}/`);
+	layer = createProxy(layer);
 
 	// Register layer
 	layers[layer.id] = layer;
-	store.registerModule(`layer-${layer.id}`, { getters });
 
 	// Register hotkeys
 	if (layer.hotkeys) {
@@ -392,12 +389,11 @@ export function removeLayer(layer) {
 	// Un-set hotkeys
 	if (layers[layer].hotkeys) {
 		for (let id in layers[layer].hotkeys) {
-			Vue.delete(hotkeys, id);
+			delete hotkeys[id];
 		}
 	}
 
-	// Un-register layer
-	store.unregisterModule(`layer-${layer}`);
+	delete layers[layer];
 }
 
 export function reloadLayer(layer) {

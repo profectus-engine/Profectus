@@ -1,5 +1,5 @@
 import Decimal from '../../../util/bignum';
-import { player } from '../../../store/proxies';
+import player from '../../../game/player';
 
 export default {
     id: "a",

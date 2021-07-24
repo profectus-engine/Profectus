@@ -1,20 +1,18 @@
 <template>
-	<div v-frag>
-		<slot />
-	</div>
+	<slot />
 </template>
 
 <script>
-import { ReactiveProvideMixin } from 'vue-reactive-provide';
-
 export default {
 	name: 'LayerProvider',
-	mixins: [
-		ReactiveProvideMixin({
-			name: 'tab',
-			props: true
-		})
-	],
+	provide() {
+		return {
+			'tab': {
+				layer: this.layer,
+				index: this.index
+			}
+		};
+	},
 	props: {
 		layer: String,
 		index: Number

@@ -1,21 +1,19 @@
 <template>
-	<div v-frag>
-		<infobox v-if="infobox != undefined" :id="infobox" />
-		<main-display />
-		<sticky v-if="showPrestigeButton"><prestige-button /></sticky>
-		<resource-display />
-		<milestones />
-		<component v-if="midsection" :is="midsection" />
-		<clickables />
-		<buyables />
-		<upgrades />
-		<challenges />
-		<achievements />
-	</div>
+	<infobox v-if="infobox != undefined" :id="infobox" />
+	<main-display />
+	<sticky v-if="showPrestigeButton"><prestige-button /></sticky>
+	<resource-display />
+	<milestones />
+	<component v-if="midsection" :is="midsection" />
+	<clickables />
+	<buyables />
+	<upgrades />
+	<challenges />
+	<achievements />
 </template>
 
 <script>
-import { layers } from '../../store/layers';
+import { layers } from '../../game/layers';
 import { coerceComponent } from '../../util/vue';
 
 export default {

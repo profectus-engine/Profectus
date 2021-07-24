@@ -1,3 +1,7 @@
+:root {
+    color-scheme: dark;
+}
+
 * {
 	transition-duration: 0.5s;
 	font-family: "Roboto Mono", monospace;

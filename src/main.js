@@ -1,24 +1,22 @@
-import Vue from 'vue';
+import { createApp } from 'vue';
 import App from './App';
-import store from './store';
 import { load } from './util/save';
 import { setVue } from './util/vue';
-import { startGameLoop } from './store/game';
-import './components/index';
-
-// Setup
-Vue.config.productionTip = false;
+import gameLoop from './game/gameLoop';
+import { registerComponents } from './components/index';
+import modInfo from './data/modInfo.json';
 
 requestAnimationFrame(async () => {
 	await load();
 
 	// Create Vue
-	const vue = window.vue = new Vue({
-		store,
-		render: h => h(App)
+	const vue = window.vue = createApp({
+		...App
 	});
 	setVue(vue);
-	vue.$mount('#app');
+	registerComponents(vue);
+	vue.mount('#app');
+	document.title = modInfo.title;
 
-	startGameLoop();
+	gameLoop();
 });

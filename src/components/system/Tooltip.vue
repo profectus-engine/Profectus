@@ -1,10 +1,9 @@
 <template>
 	<div class="tooltip-container" :class="{ shown }" @mouseenter="setHover(true)" @mouseleave="setHover(false)">
 		<slot />
-		<!-- Make sure slot is *before* the transition in case the slot uses v-frag, which messes up the tooltip -->
 		<transition name="fade">
 			<div v-if="shown" class="tooltip" :class="{ top, left, right, bottom }"
-				:style="{ '--xoffset': xoffset, '--yoffset': yoffset }">
+				:style="{ '--xoffset': xoffset || '0px', '--yoffset': yoffset || '0px' }">
 				<component :is="tooltipDisplay" />
 			</div>
 		</transition>
@@ -81,7 +80,7 @@ export default {
 }
 
 .shown {
-	z-index: 1;
+	z-index: 10;
 }
 
 .fade-enter, .fade-leave-to {

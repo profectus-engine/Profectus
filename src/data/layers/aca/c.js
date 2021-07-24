@@ -1,9 +1,11 @@
 import Decimal, { format, formatWhole } from '../../../util/bignum';
-import { player, tmp } from '../../../store/proxies';
-import { layers } from '../../../store/layers';
+import player from '../../../game/player';
+import { layers } from '../../../game/layers';
 import { hasUpgrade, hasMilestone, getBuyableAmount, setBuyableAmount, upgradeEffect, buyableEffect, challengeCompletions } from '../../../util/features';
 import { resetLayer, resetLayerData } from '../../../util/layers';
 import { UP, RIGHT } from '../../../util/vue';
+
+const tmp = layers;
 
 export default {
 	id: "c", // This is assigned automatically, both to the layer and all upgrades, etc. Shown here so you know about it
@@ -230,10 +232,9 @@ export default {
 	microtabs: {
 		stuff: {
 			first: {
-				display: `<div v-frag>
+				display: `
 					<upgrades />
-					<div>confirmed</div>
-				</div>`
+					<div>confirmed</div>`
 			},
 			second: {
 				embedLayer: "f"
@@ -304,22 +305,19 @@ export default {
 			buttonStyle() {return  {'color': 'orange'}},
 			notify: true,
 			display: `
-				<div v-frag>
-					<main-display />
-					<sticky><prestige-button /></sticky>
-					<resource-display />
-					<spacer height="5px" />
-					<button onclick='console.log("yeet")'>'HI'</button>
-					<div>Name your points!</div>
-					<TextField :value="player.c.thingy" @input="value => player.c.thingy = value" :field="false" />
-					<sticky style="color: red; font-size: 32px; font-family: Comic Sans MS;">I have {{ format(player.points) }} {{ player.c.thingy }} points!</sticky>
-					<hr />
-					<milestones />
-					<spacer />
-					<upgrades />
-					<challenges />
-				</div>
-			`,
+				<main-display />
+				<sticky><prestige-button /></sticky>
+				<resource-display />
+				<spacer height="5px" />
+				<button onclick='console.log("yeet")'>'HI'</button>
+				<div>Name your points!</div>
+				<TextField :value="player.c.thingy" @input="value => player.c.thingy = value" :field="false" />
+				<sticky style="color: red; font-size: 32px; font-family: Comic Sans MS;">I have {{ format(player.points) }} {{ player.c.thingy }} points!</sticky>
+				<hr />
+				<milestones />
+				<spacer />
+				<upgrades />
+				<challenges />`,
 			glowColor: "blue",
 
 		},
@@ -328,59 +326,50 @@ export default {
 			style() {return  {'background-color': '#222222', '--background': '#222222'}},
 			buttonStyle() {return {'border-color': 'orange'}},
 			display: `
-				<div v-frag>
-					<buyables />
+				<buyables />
+				<spacer />
+				<row style="width: 600px; height: 350px; background-color: green; border-style: solid;">
+					<Toggle :value="player.c.beep" @change="value => player.c.beep = value" />
+					<spacer width="30px" height="10px" />
+					<div>Beep</div>
 					<spacer />
-					<row style="width: 600px; height: 350px; background-color: green; border-style: solid;">
-						<Toggle :value="player.c.beep" @change="value => player.c.beep = value" />
-						<spacer width="30px" height="10px" />
-						<div>Beep</div>
-						<spacer />
-						<vr height="200px"/>
-						<column>
-							<prestige-button style="width: 150px; height: 80px" />
-							<prestige-button style="width: 100px; height: 150px" />
-						</column>
-					</row>
-					<spacer />
-					<img src="https://unsoftcapped2.github.io/The-Modding-Tree-2/discord.png" />
-				</div>
-			`
+					<vr height="200px"/>
+					<column>
+						<prestige-button style="width: 150px; height: 80px" />
+						<prestige-button style="width: 100px; height: 150px" />
+					</column>
+				</row>
+				<spacer />
+				<img src="https://unsoftcapped2.github.io/The-Modding-Tree-2/discord.png" />`
 		},
 		jail: {
 			display: `
-				<div v-frag>
-					<infobox id="coolInfo" />
-					<bar id="longBoi" />
+				<infobox id="coolInfo" />
+				<bar id="longBoi" />
+				<spacer />
+				<row>
+					<column style="background-color: #555555; padding: 15px">
+						<div style="color: teal">Sugar level:</div><spacer /><bar id="tallBoi" />
+					</column>
 					<spacer />
-					<row>
-						<column style="background-color: #555555; padding: 15px">
-							<div style="color: teal">Sugar level:</div><spacer /><bar id="tallBoi" />
-						</column>
-						<spacer />
-						<column>
-							<div>idk</div>
-							<spacer width="0" height="50px" />
-							<bar id="flatBoi" />
-						</column>
-					</row>
-					<spacer />
-					<div>It's jail because "bars"! So funny! Ha ha!</div>
-					<tree :nodes="[['f', 'c'], ['g', 'spook', 'h']]" />
-				</div>
-			`
+					<column>
+						<div>idk</div>
+						<spacer width="0" height="50px" />
+						<bar id="flatBoi" />
+					</column>
+				</row>
+				<spacer />
+				<div>It's jail because "bars"! So funny! Ha ha!</div>
+				<tree :nodes="[['f', 'c'], ['g', 'spook', 'h']]" />`
 		},
 		illuminati: {
 			unlocked() {return (hasUpgrade("c", 13))},
 			display: `
-				<div v-frag>
-					<h1> C O N F I R M E D </h1>
-					<spacer />
-					<microtab family="stuff" style="width: 660px; height: 370px; background-color: brown; --background: brown; border: solid white; margin: auto" />
-					<div>Adjust how many points H gives you!</div>
-					<Slider :value="player.c.otherThingy" @change="value => player.c.otherThingy = value" :min="1" :max="30" />
-				</div>
-			`
+				<h1> C O N F I R M E D </h1>
+				<spacer />
+				<microtab family="stuff" style="width: 660px; height: 370px; background-color: brown; --background: brown; border: solid white; margin: auto" />
+				<div>Adjust how many points H gives you!</div>
+				<Slider :value="player.c.otherThingy" @change="value => player.c.otherThingy = value" :min="1" :max="30" />`
 		}
 
 	},

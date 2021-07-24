@@ -1,6 +1,6 @@
 import modInfo from '../data/modInfo';
 import { getStartingData, getInitialLayers, fixOldSave } from '../data/mod';
-import { player } from '../store/proxies';
+import player from '../game/player';
 import Decimal from './bignum';
 
 export const NOT_IMPORTING = false;
@@ -32,9 +32,8 @@ export function getInitialStore(playerData = {}) {
 
 		// Values that don't get loaded/saved
 		hasNaN: false,
-		NaNProperty: "",
+		NaNPath: [],
 		NaNReceiver: null,
-		NaNPrevious: null,
 		importing: NOT_IMPORTING,
 		saveToImport: "",
 		saveToExport: ""
@@ -43,7 +42,7 @@ export function getInitialStore(playerData = {}) {
 
 export function save() {
 	/* eslint-disable-next-line no-unused-vars */
-	let { hasNaN, NaNProperty, NaNReceiver, NaNPrevious, importing, saveToImport, saveToExport, ...playerData } = player;
+	let { hasNaN, NaNPath, NaNReceiver, importing, saveToImport, saveToExport, ...playerData } = player.__state;
 	player.saveToExport = btoa(unescape(encodeURIComponent(JSON.stringify(playerData))));
 
 	localStorage.setItem(player.id, player.saveToExport);
@@ -67,6 +66,7 @@ export async function load() {
 			await loadSave(newSave());
 			return;
 		}
+		playerData.id = modData.active;
 		await loadSave(playerData);
 	} catch (e) {
 		await loadSave(newSave());
@@ -99,7 +99,7 @@ export function getUniqueID() {
 }
 
 export async function loadSave(playerData) {
-	const { layers, removeLayer, addLayer } = await import('../store/layers');
+	const { layers, removeLayer, addLayer } = await import('../game/layers');
 
 	for (let layer in layers) {
 		removeLayer(layer);
@@ -119,7 +119,7 @@ export async function loadSave(playerData) {
 
 	Object.assign(player, playerData);
 	for (let prop in player) {
-		if (!(prop in playerData) && !(prop in layers)) {
+		if (!(prop in playerData) && !(prop in layers) && prop !== '__state' && prop !== '__path') {
 			delete player[prop];
 		}
 	}
@@ -157,3 +157,4 @@ window.onbeforeunload = () => {
 		save();
 	}
 };
+window.save = save;

@@ -1,4 +1,4 @@
-import { layers } from '../store/layers';
+import { layers } from '../game/layers';
 
 export function hasUpgrade(layer, id) {
 	return layers[layer]?.upgrades?.[id]?.bought;

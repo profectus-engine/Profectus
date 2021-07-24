@@ -1,14 +1,12 @@
 <template>
-	<div v-frag>
-		<component :is="challengeDescription" />
-		<div>Goal: <component :is="goalDescription" /></div>
-		<div>Reward: <component :is="rewardDescription" /></div>
-		<component v-if="rewardDisplay" :is="rewardDisplay" />
-	</div>
+	<component :is="challengeDescription" v-bind="$attrs" />
+	<div>Goal: <component :is="goalDescription" /></div>
+	<div>Reward: <component :is="rewardDescription" /></div>
+	<component v-if="rewardDisplay" :is="rewardDisplay" />
 </template>
 
 <script>
-import { layers } from '../../store/layers';
+import { layers } from '../../game/layers';
 import { coerceComponent } from '../../util/vue';
 
 export default {
@@ -29,7 +27,7 @@ export default {
 			if (this.challenge.goalDescription) {
 				return coerceComponent(this.challenge.goalDescription);
 			}
-			return coerceComponent(`{{ format(${this.challenge.goal}) }} ${this.currencyDisplayName || 'points'}`);
+			return coerceComponent(`{{ format(${this.challenge.goal}) }} ${this.challenge.currencyDisplayName || 'points'}`);
 		},
 		rewardDescription() {
 			return coerceComponent(this.challenge.rewardDescription);

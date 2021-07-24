@@ -11,7 +11,7 @@
 </template>
 
 <script>
-import { layers } from '../../store/layers';
+import { layers } from '../../game/layers';
 import { UP, DOWN, LEFT, RIGHT, DEFAULT, coerceComponent } from '../../util/vue';
 import Decimal from '../../util/bignum';
 

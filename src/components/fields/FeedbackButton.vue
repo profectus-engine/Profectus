@@ -14,6 +14,7 @@ export default {
 	props: {
 		left: Boolean
 	},
+	emits: [ 'click' ],
 	methods: {
 		click() {
 			this.$emit('click');

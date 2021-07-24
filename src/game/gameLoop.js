@@ -1,9 +1,8 @@
-import { update as modUpdate } from '../data/mod';
+import { update as modUpdate, hasWon, pointGain } from '../data/mod';
 import Decimal from '../util/bignum';
 import modInfo from '../data/modInfo.json';
-import store from './index';
 import { layers } from './layers';
-import { player } from './proxies';
+import player from './player';
 
 function updatePopups(/* diff */) {
 	// TODO
@@ -104,7 +103,7 @@ function update() {
 	}
 
 	// Stop here if the game is paused on the win screen
-	if (store.getters.hasWon && !player.keepGoing) {
+	if (hasWon.value && !player.keepGoing) {
 		return;
 	}
 	// Stop here if the player had a NaN value
@@ -145,13 +144,13 @@ function update() {
 	}
 	player.timePlayed = player.timePlayed.add(diff);
 	if (player.points != undefined) {
-		player.points = player.points.add(Decimal.times(store.getters.pointGain, diff));
+		player.points = player.points.add(Decimal.times(pointGain.value, diff));
 	}
 	modUpdate(diff);
 	updateOOMPS(trueDiff);
 	updateLayers(diff);
 }
 
-export function startGameLoop() {
+export default function startGameLoop() {
 	setInterval(update, 50);
 }

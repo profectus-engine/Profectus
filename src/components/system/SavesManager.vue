@@ -1,37 +1,38 @@
 <template>
 	<Modal :show="show" @close="$emit('closeDialog', 'Saves')">
-		<div slot="header">
+		<template v-slot:header>
 			<h2>Saves Manager</h2>
-		</div>
-		<div slot="body" v-sortable="{ update, handle: '.handle' }">
+		</template>
+		<template v-slot:body v-sortable="{ update, handle: '.handle' }">
 			<save v-for="(save, index) in saves" :key="index" :save="save" @open="openSave(save.id)" @export="exportSave(save.id)"
 				@editSave="name => editSave(save.id, name)" @duplicate="duplicateSave(save.id)" @delete="deleteSave(save.id)" />
-		</div>
-		<div slot="footer" class="modal-footer">
-			<TextField :value="saveToImport" @submit="importSave" @input="importSave"
-				title="Import Save" placeholder="Paste your save here!" :class="{ importingFailed }" />
-			<div class="field">
-				<span class="field-title">Create Save</span>
-				<div class="field-buttons">
-					<button class="button" @click="newSave">New Game</button>
-					<Select v-if="Object.keys(bank).length > 0" :value="{ label: 'Select preset' }" :options="bank"
-						@change="newFromPreset" />
+		</template>
+		<template v-slot:footer>
+			<div class="modal-footer">
+				<TextField :value="saveToImport" @submit="importSave" @input="importSave"
+					title="Import Save" placeholder="Paste your save here!" :class="{ importingFailed }" />
+				<div class="field">
+					<span class="field-title">Create Save</span>
+					<div class="field-buttons">
+						<button class="button" @click="newSave">New Game</button>
+						<Select v-if="Object.keys(bank).length > 0" :options="bank" closeOnSelect
+							@change="newFromPreset" placeholder="Select preset" class="presets" :value="[]" />
+					</div>
+				</div>
+				<div class="footer">
+					<div style="flex-grow: 1"></div>
+					<button class="button modal-default-button" @click="$emit('closeDialog', 'Saves')">
+						Close
+					</button>
 				</div>
 			</div>
-			<div class="footer">
-				<div style="flex-grow: 1"></div>
-				<button class="button modal-default-button" @click="$emit('closeDialog', 'Saves')">
-					Close
-				</button>
-			</div>
-		</div>
+		</template>
 	</Modal>
 </template>
 
 <script>
-import Vue from 'vue';
 import { newSave, getUniqueID, loadSave, save } from '../../util/save';
-import { player } from '../../store/proxies';
+import player from '../../game/player';
 import modInfo from '../../data/modInfo.json';
 
 export default {
@@ -39,6 +40,7 @@ export default {
 	props: {
 		show: Boolean
 	},
+	emits: [ 'closeDialog' ],
 	data() {
 		let bankContext = require.context('raw-loader!../../../saves', true, /\.txt$/);
 		let bank = bankContext.keys().reduce((acc, curr) => {
@@ -109,14 +111,14 @@ export default {
 			const modData = JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)))));
 			modData.saves.push(playerData.id);
 			localStorage.setItem(modInfo.id, btoa(unescape(encodeURIComponent(JSON.stringify(modData)))));
-			Vue.set(this.saves, playerData.id, playerData);
+			this.saves[playerData.id] = playerData;
 		},
 		deleteSave(id) {
 			const modData = JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)))));
 			modData.saves = modData.saves.filter(save => save !== id);
 			localStorage.removeItem(id);
 			localStorage.setItem(modInfo.id, btoa(unescape(encodeURIComponent(JSON.stringify(modData)))));
-			Vue.delete(this.saves, id);
+			delete this.saves[id];
 		},
 		openSave(id) {
 			this.saves[player.id].time = player.time;
@@ -127,7 +129,7 @@ export default {
 		},
 		async newSave() {
 			const playerData = await newSave();
-			Vue.set(this.saves, playerData.id, playerData);
+			this.saves[playerData.id] = playerData;
 		},
 		newFromPreset(preset) {
 			const playerData = JSON.parse(decodeURIComponent(escape(atob(preset))));
@@ -137,7 +139,7 @@ export default {
 			const modData = JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)))));
 			modData.saves.push(playerData.id);
 			localStorage.setItem(modInfo.id, btoa(unescape(encodeURIComponent(JSON.stringify(modData)))));
-			Vue.set(this.saves, playerData.id, playerData);
+			this.saves[playerData.id] = playerData;
 		},
 		editSave(id, newName) {
 			this.saves[id].name = newName;
@@ -157,7 +159,7 @@ export default {
 						const id = getUniqueID();
 						playerData.id = id;
 						localStorage.setItem(id, btoa(unescape(encodeURIComponent(JSON.stringify(playerData)))));
-						Vue.set(this.saves, id, playerData);
+						this.saves[id] = playerData;
 						this.saveToImport = "";
 						this.importingFailed = false;
 
@@ -216,5 +218,13 @@ export default {
 
 .field-buttons .v-select {
 	width: 220px;
+}
+
+.presets .vue-dropdown {
+
+}
+
+.presets .vue-select[aria-expanded='true'] vue-dropdown {
+	visibility: hidden;
 }
 </style>

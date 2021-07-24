@@ -1,7 +1,7 @@
 import Decimal from './bignum';
 import { isPlainObject } from './common';
-import { layers, hotkeys } from '../store/layers';
-import { player } from '../store/proxies';
+import { layers, hotkeys } from '../game/layers';
+import player from '../game/player';
 
 export function resetLayer(layer, force = false) {
 	layers[layer].reset(force);
@@ -72,7 +72,6 @@ export function resetLayerData(layer, keep = []) {
 }
 
 export function resetRow(row, ignore) {
-	console.log(row, ignore);
 	Object.values(layers).filter(layer => layer.row === row && layer.layer !== ignore).forEach(layer => layer.hardReset());
 }
 

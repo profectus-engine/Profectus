@@ -13,6 +13,7 @@ export default {
 		title: String,
 		value: Boolean
 	},
+	emits: [ 'change' ],
 	methods: {
 		handleInput(e) {
 			this.$emit('change', e.target.checked);

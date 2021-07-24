@@ -20,7 +20,7 @@ export default {
 			this.branches?.map(this.handleBranch).forEach(branch => this.registerBranch(id, branch));
 		}
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		const id = `${this.featureType}@${this.id}`;
 		if (this.unregisterNode) {
 			this.unregisterNode(id);

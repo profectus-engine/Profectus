@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import { layers } from '../../store/layers';
+import { layers } from '../../game/layers';
 import { getFiltered } from '../../util/vue';
 
 export default {

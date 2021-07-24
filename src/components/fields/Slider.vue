@@ -15,7 +15,8 @@ export default {
 		value: Number,
 		min: Number,
 		max: Number
-	}
+	},
+	emits: [ 'change' ]
 };
 </script>
 

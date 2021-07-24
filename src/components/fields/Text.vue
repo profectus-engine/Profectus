@@ -4,7 +4,7 @@
 			<span class="field-title" v-if="title">{{ title }}</span>
 			<textarea-autosize v-if="textarea" :placeholder="placeholder" :value="value" :maxHeight="maxHeight"
 				@input="value => $emit('change', value)" ref="field" />
-			<input v-else type="text" :value="value" @input="e => $emit('input', e.target.value)" :placeholder="placeholder" ref="field"
+			<input v-else type="text" :value="value" @input="e => $emit('change', e.target.value)" :placeholder="placeholder" ref="field"
 				:class="{ fullWidth: !title }" />
 		</div>
 	</form>
@@ -20,6 +20,7 @@ export default {
 		placeholder: String,
 		maxHeight: Number
 	},
+	emits: [ 'change', 'submit', 'input' ],
 	mounted() {
 		this.$refs.field.focus();
 	}

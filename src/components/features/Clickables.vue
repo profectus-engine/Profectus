@@ -1,23 +1,23 @@
 <template>
 	<div v-if="filteredClickables" class="table">
 		<master-button v-if="showMasterButton" style="margin-bottom: 12px;" @press="press" />
-		<div v-frag v-if="filteredClickables.rows && filteredClickables.cols">
+		<template v-if="filteredClickables.rows && filteredClickables.cols">
 			<div v-for="row in filteredClickables.rows" class="row" :key="row">
 				<div v-for="col in filteredClickables.cols" :key="col">
 					<clickable v-if="filteredClickables[row * 10 + col] !== undefined" class="align clickable-container"
 						:style="{ height }" :id="row * 10 + col" :size="height === 'inherit' ? null : height" />
 				</div>
 			</div>
-		</div>
-		<div v-frag v-else>
+		</template>
+		<row v-else>
 			<clickable v-for="(clickable, id) in filteredClickables" :key="id" class="align clickable-container" :style="{ height }"
 						:id="id" :size="height === 'inherit' ? null : height" />
-		</div>
+		</row>
 	</div>
 </template>
 
 <script>
-import { layers } from '../../store/layers';
+import { layers } from '../../game/layers';
 import { getFiltered } from '../../util/vue';
 
 export default {

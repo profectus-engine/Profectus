@@ -1,64 +1,62 @@
 <template>
 	<div class="field">
 		<span class="field-title" v-if="title">{{ title }}</span>
-		<v-select :options="options" :value="value" @input="setSelected" />
+		<vue-select :options="options" :model-value="value" @update:modelValue="setSelected" label-by="label" :value-by="getValue" :placeholder="placeholder" :close-on-select="closeOnSelect" />
 	</div>
 </template>
 
 <script>
-import vSelect from 'vue-select';
-import 'vue-select/dist/vue-select.css';
-
 export default {
 	name: 'Select',
 	props: {
 		title: String,
 		options: Array, // https://vue-select.org/guide/options.html#options-prop
 		value: [ String, Object ],
-		default: [ String, Object ]
+		default: [ String, Object ],
+		placeholder: String,
+		closeOnSelect: Boolean
 	},
-	components: {
-		vSelect
-	},
+	emits: [ 'change' ],
 	methods: {
-		setSelected(option) {
-			const value = option?.value || this.default;
+		setSelected(value) {
+			value = value || this.default;
 			this.$emit('change', value);
+		},
+		getValue(item) {
+			return item?.value;
 		}
 	}
 };
 </script>
 
 <style>
-.v-select {
+.vue-select {
     width: 50%;
 }
 
-.v-select .vs__dropdown-toggle {
+.field-buttons .vue-select {
+	width: unset;
+}
+
+.vue-select,
+.vue-dropdown {
 	border-color: rgba(var(--color), .26);
-    margin: -1px 0;
 }
 
-.v-select .vs__selected {
+.vue-dropdown {
+	background: var(--secondary-background);
+}
+
+.vue-dropdown-item {
 	color: var(--color);
 }
 
-.v-select .vs__clear,
-.v-select .vs__open-indicator {
-    fill: var(--color);
-    opacity: .5;
+.vue-dropdown-item.highlighted {
+	background-color: var(--background-tooltip);
 }
 
-.v-select .vs__dropdown-menu {
-    background: var(--background);
-    border-color: rgba(var(--color), .26);
-}
-
-.v-select .vs__dropdown-option {
-	color: var(--color);
-}
-
-.v-select .vs__open-indicator {
-	cursor: pointer;
+.vue-dropdown-item.selected,
+.vue-dropdown-item.highlighted.selected {
+	background-color: var(--bought);
 }
 </style>

@@ -2,15 +2,15 @@
 	<div v-if="filteredBuyables" class="table">
 		<respec-button v-if="showRespec" style="margin-bottom: 12px;" :confirmRespec="confirmRespec"
 			@set-confirm-respec="setConfirmRespec" @respec="respec" />
-		<div v-frag v-if="filteredBuyables.rows && filteredBuyables.cols">
+		<template v-if="filteredBuyables.rows && filteredBuyables.cols">
 			<div v-for="row in filteredBuyables.rows" class="row" :key="row">
 				<div v-for="col in filteredBuyables.cols" :key="col">
 					<buyable v-if="filteredBuyables[row * 10 + col] !== undefined" class="align buyable-container" :style="{ height }"
 						:id="row * 10 + col" :size="height === 'inherit' ? null : height" />
 				</div>
 			</div>
-		</div>
-		<row v-frag v-else>
+		</template>
+		<row v-else>
 			<buyable v-for="(buyable, id) in filteredBuyables" :key="id" class="align buyable-container"
 				:style="{ height }" :id="id" :size="height === 'inherit' ? null : height" />
 		</row>
@@ -18,8 +18,8 @@
 </template>
 
 <script>
-import { layers } from '../../store/layers';
-import { player } from '../../store/proxies';
+import { layers } from '../../game/layers';
+import player from '../../game/player';
 import { getFiltered } from '../../util/vue';
 
 export default {
@@ -33,6 +33,7 @@ export default {
 			default: "inherit"
 		}
 	},
+	emits: [ 'set-confirm-respec' ],
 	computed: {
 		filteredBuyables() {
 			return getFiltered(layers[this.layer || this.tab.layer].buyables, this.buyables);

@@ -4,18 +4,18 @@
 			<span class="toggle">▼</span>
 			<component :is="title" />
 		</button>
-		<transition-expand>
-			<div v-if="!collapsed" class="body" :style="{ backgroundColor: this.borderColor }">
+		<collapse-transition>
+			<div v-if="!collapsed" class="body" :style="{ backgroundColor: borderColor }">
 				<component :is="body" :style="bodyStyle" />
 			</div>
-		</transition-expand>
+		</collapse-transition>
 		<branch-node :branches="infobox.branches" :id="id" featureType="infobox" />
 	</div>
 </template>
 
 <script>
-import { layers } from '../../store/layers';
-import { player } from '../../store/proxies';
+import { layers } from '../../game/layers';
+import player from '../../game/player';
 import { coerceComponent } from '../../util/vue';
 import themes from '../../data/themes';
 

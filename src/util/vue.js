@@ -1,5 +1,6 @@
-import { player } from '../store/proxies';
-import { layers } from '../store/layers';
+import player from '../game/player';
+import { layers } from '../game/layers';
+import { hasWon, pointGain } from '../data/mod';
 import { hasUpgrade, hasMilestone, hasAchievement, hasChallenge, maxedChallenge, challengeCompletions, inChallenge, getBuyableAmount, setBuyableAmount, getClickableState, setClickableState, getGridData, setGridData, upgradeEffect, challengeEffect, buyableEffect, clickableEffect, achievementEffect, gridEffect } from './features';
 import Decimal, * as numberUtils from './bignum';
 
@@ -9,12 +10,8 @@ export function setVue(vm) {
 }
 
 // Pass in various data that the template could potentially use
-const computed = {
-	player() { return player; },
-	layers() { return layers; }
-};
 const data = function() {
-	return { Decimal, ...numberUtils };
+	return { Decimal, player, layers, hasWon, pointGain, ...numberUtils };
 }
 export function coerceComponent(component, defaultWrapper = 'span') {
 	if (typeof component === 'number') {
@@ -22,12 +19,12 @@ export function coerceComponent(component, defaultWrapper = 'span') {
 	}
 	if (typeof component === 'string') {
 		component = component.trim();
-		if (!(component in vue.$options.components)) {
+		if (!(component in vue._context.components)) {
 			if (component.charAt(0) !== '<') {
 				component = `<${defaultWrapper}>${component}</${defaultWrapper}>`;
 			}
 
-			return { template: component, computed, data, inject: [ 'tab' ], methods: { hasUpgrade, hasMilestone, hasAchievement, hasChallenge, maxedChallenge, challengeCompletions, inChallenge, getBuyableAmount, setBuyableAmount, getClickableState, setClickableState, getGridData, setGridData, upgradeEffect, challengeEffect, buyableEffect, clickableEffect, achievementEffect, gridEffect } };
+			return { template: component, data, inject: [ 'tab' ], methods: { hasUpgrade, hasMilestone, hasAchievement, hasChallenge, maxedChallenge, challengeCompletions, inChallenge, getBuyableAmount, setBuyableAmount, getClickableState, setClickableState, getGridData, setGridData, upgradeEffect, challengeEffect, buyableEffect, clickableEffect, achievementEffect, gridEffect } };
 		}
 	}
 	return component;
@@ -44,6 +41,13 @@ export function getFiltered(objects, filter = null) {
 			}, {});
 	}
 	return objects;
+}
+
+export function mapState(properties = []) {
+	return properties.reduce((acc, curr) => {
+		acc[curr] = () => player[curr];
+		return acc;
+	}, {});
 }
 
 export const UP = 'UP';

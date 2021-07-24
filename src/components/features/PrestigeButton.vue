@@ -7,7 +7,7 @@
 </template>
 
 <script>
-import { layers } from '../../store/layers';
+import { layers } from '../../game/layers';
 import { resetLayer } from '../../util/layers';
 import { coerceComponent } from '../../util/vue';
 

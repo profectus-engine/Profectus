@@ -1,20 +1,20 @@
 <template>
 	<div v-if="filteredAchievements" class="table">
-		<div v-frag v-if="filteredAchievements.rows && filteredAchievements.cols">
+		<template v-if="filteredAchievements.rows && filteredAchievements.cols">
 			<div v-for="row in filteredAchievements.rows" class="row" :key="row">
 				<div v-for="col in filteredAchievements.cols" :key="col">
 					<achievement v-if="filteredAchievements[row * 10 + col] !== undefined" class="align" :id="row * 10 + col" />
 				</div>
 			</div>
-		</div>
-		<div v-frag v-else>
+		</template>
+		<template v-frag v-else>
 			<achievement v-for="(achievement, id) in filteredAchievements" :key="id" :id="id" />
-		</div>
+		</template>
 	</div>
 </template>
 
 <script>
-import { layers } from '../../store/layers';
+import { layers } from '../../game/layers';
 import { getFiltered } from '../../util/vue';
 
 export default {

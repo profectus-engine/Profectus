@@ -1,5 +1,5 @@
 <template>
-	<span class="container">
+	<span class="container" :class="{ confirming }">
 		<span v-if="confirming">Are you sure?</span>
 		<button @click.stop="click" class="button danger" :disabled="disabled">
 			<span v-if="confirming">Yes</span>
@@ -21,6 +21,7 @@ export default {
 		disabled: Boolean,
 		skipConfirm: Boolean
 	},
+	emits: [ 'click', 'confirmingChanged' ],
 	watch: {
 		confirming(newValue) {
 			this.$emit('confirmingChanged', newValue);
@@ -48,6 +49,10 @@ export default {
 .container {
 	display: flex;
     align-items: center;
+}
+
+.container.confirming button {
+	font-size: 1em;
 }
 
 .container > * {

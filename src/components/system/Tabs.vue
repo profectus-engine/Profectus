@@ -1,26 +1,24 @@
 <template>
-	<simplebar class="tabs-container">
+	<div class="tabs-container">
 		<div v-for="(tab, index) in tabs" :key="index" class="tab" :ref="`tab-${index}`">
 			<Nav v-if="index === 0 && !useHeader" />
-			<simplebar>
-				<div class="inner-tab">
-					<LayerProvider :layer="tab" :index="index" v-if="tab in components && components[tab]">
-						<component :is="components[tab]" />
-					</LayerProvider>
-					<layer-tab :layer="tab" :index="index" v-else-if="tab in components" :minimizable="true"
-						:tab="() => $refs[`tab-${index}`] && $refs[`tab-${index}`][0]" />
-					<component :is="tab" :index="index" v-else />
-				</div>
-			</simplebar>
+			<div class="inner-tab">
+				<LayerProvider :layer="tab" :index="index" v-if="tab in components && components[tab]">
+					<component :is="components[tab]" />
+				</LayerProvider>
+				<layer-tab :layer="tab" :index="index" v-else-if="tab in components" :minimizable="true"
+					:tab="() => $refs[`tab-${index}`]" />
+				<component :is="tab" :index="index" v-else />
+			</div>
 			<div class="separator" v-if="index !== tabs.length - 1"></div>
 		</div>
-	</simplebar>
+	</div>
 </template>
 
 <script>
 import modInfo from '../../data/modInfo.json';
-import { mapState } from 'vuex';
-import { layers } from '../../store/layers';
+import { layers } from '../../game/layers';
+import { mapState } from '../../util/vue';
 
 export default {
 	name: 'Tabs',
@@ -45,6 +43,7 @@ export default {
     flex-grow: 1;
     overflow-x: auto;
     overflow-y: hidden;
+    display: flex;
 }
 
 .tabs {
@@ -77,11 +76,6 @@ export default {
 	background: var(--separator);
     z-index: 1;
 }
-
-.tab > [data-simplebar] {
-    height: 100%;
-    overflow-x: hidden;
-}
 </style>
 
 <style>
@@ -94,24 +88,5 @@ export default {
 
 .tab .modal-body hr {
 	margin: 7px 0;
-}
-
-.tabs-container > .simplebar-wrapper > .simplebar-mask > .simplebar-offset > .simplebar-content-wrapper > .simplebar-content {
-	display: flex;
-	height: 100vh;
-}
-
-.useHeader .tabs-container > .simplebar-wrapper > .simplebar-mask > .simplebar-offset > .simplebar-content-wrapper > .simplebar-content {
-	height: calc(100vh - 50px);
-}
-
-.tab > [data-simplebar] > .simplebar-wrapper > .simplebar-mask > .simplebar-offset > .simplebar-content-wrapper {
-	position: static;
-}
-
-.tab > [data-simplebar] > .simplebar-wrapper > .simplebar-mask > .simplebar-offset > .simplebar-content-wrapper > .simplebar-content {
-    flex-direction: column;
-    min-height: 100%;
-    display: flex;
 }
 </style>

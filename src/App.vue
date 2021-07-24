@@ -1,29 +1,23 @@
 <template>
-	<div id="app" @mousemove="updateMouse" :style="theme" :class="{ useHeader }">
+	<div id="modal-root" :style="theme" />
+	<div class="app" @mousemove="updateMouse" :style="theme" :class="{ useHeader }">
 		<Nav v-if="useHeader" />
 		<Tabs />
 		<TPS v-if="showTPS" />
 		<GameOverScreen />
 		<NaNScreen />
-		<portal-target name="modal-root" multiple />
 	</div>
 </template>
 
 <script>
-import Nav from './components/system/Nav';
-import Tabs from './components/system/Tabs';
-import TPS from './components/system/TPS';
 import themes from './data/themes';
-import { mapState } from 'vuex';
-import { player } from './store/proxies';
+import player from './game/player';
 import modInfo from './data/modInfo.json';
+import { mapState } from './util/vue';
 import './main.css';
 
 export default {
 	name: 'App',
-	components: {
-		Nav, Tabs, TPS
-	},
 	data() {
 		return { useHeader: modInfo.useHeader };
 	},
@@ -42,10 +36,18 @@ export default {
 </script>
 
 <style scoped>
-#app {
+.app {
 	background-color: var(--background);
 	color: var(--color);
 	display: flex;
 	flex-flow: column;
+	min-height: 100%;
+	height: 100%;
+}
+
+#modal-root {
+    position: absolute;
+	min-height: 100%;
+	height: 100%;
 }
 </style>

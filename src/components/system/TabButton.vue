@@ -6,8 +6,8 @@
 </template>
 
 <script>
-import { layers } from '../../store/layers';
-import { player } from '../../store/proxies';
+import { layers } from '../../game/layers';
+import player from '../../game/player';
 import themes from '../../data/themes';
 
 export default {
@@ -18,6 +18,7 @@ export default {
 		options: Object,
 		activeTab: Boolean
 	},
+	emits: [ 'selectTab' ],
 	inject: [ 'tab' ],
 	computed: {
 		floating() {

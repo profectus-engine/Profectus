@@ -1,7 +1,7 @@
 <template>
-	<portal to="modal-root">
+	<teleport to="#modal-root">
 		<transition name="modal" @before-enter="setAnimating(true)" @after-leave="setAnimating(false)">
-			<div class="modal-mask" v-show="show" v-on:pointerdown.self="$emit('close')">
+			<div class="modal-mask" v-show="show" v-on:pointerdown.self="$emit('close')" v-bind="$attrs">
 				<div class="modal-wrapper">
 					<div class="modal-container">
 						<div class="modal-header">
@@ -9,13 +9,13 @@
 								default header
 							</slot>
 						</div>
-						<simplebar class="modal-body">
+						<div class="modal-body">
 							<branches>
 								<slot name="body" :shown="isVisible">
 									default body
 								</slot>
 							</branches>
-						</simplebar>
+						</div>
 						<div class="modal-footer">
 							<slot name="footer" :shown="isVisible">
 								<div class="modal-default-footer">
@@ -30,7 +30,7 @@
 				</div>
 			</div>
 		</transition>
-	</portal>
+	</teleport>
 </template>
 
 <script>
@@ -44,6 +44,7 @@ export default {
 	props: {
 		show: Boolean
 	},
+	emits: [ 'close' ],
 	computed: {
 		isVisible() {
 			return this.show || this.isAnimating;
@@ -96,7 +97,6 @@ export default {
 }
 
 .modal-body {
-	display: flex;
 	margin: 20px 0;
     width: 100%;
     overflow-y: auto;
@@ -115,7 +115,7 @@ export default {
 	flex-grow: 1;
 }
 
-.modal-enter {
+.modal-enter-from {
 	opacity: 0;
 }
 
@@ -123,7 +123,7 @@ export default {
 	opacity: 0;
 }
 
-.modal-enter .modal-container,
+.modal-enter-from .modal-container,
 .modal-leave-active .modal-container {
 	-webkit-transform: scale(1.1);
 	transform: scale(1.1);

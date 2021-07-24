@@ -40,13 +40,14 @@
 </template>
 
 <script>
-import { player } from '../../store/proxies';
+import player from '../../game/player';
 
 export default {
 	name: 'save',
 	props: {
 		save: Object
 	},
+	emits: [ 'export', 'open', 'duplicate', 'delete', 'editSave' ],
 	data() {
 		return {
 			dateFormat: new Intl.DateTimeFormat('en-US', {
@@ -161,8 +162,7 @@ export default {
 .save .button.danger {
 	display: flex;
 	align-items: center;
-	padding: 0;
-	padding-left: 6px;
+	padding: 4px;
 }
 
 .save .field {

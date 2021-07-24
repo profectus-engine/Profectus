@@ -8,26 +8,28 @@
 			<component :is="respecButtonDisplay" />
 		</button>
 		<Modal :show="confirming" @close="cancel">
-			<div slot="header">
+			<template v-slot:header>
 				<h2>Confirm Respec</h2>
-			</div>
-			<slot name="respec-warning" slot="body">
-				<div>Are you sure you want to respec? This will force you to do a {{ name }} respec as well!</div>
-			</slot>
-			<div slot="footer">
+			</template>
+			<template v-slot:body>
+				<slot name="respec-warning">
+					<div>Are you sure you want to respec? This will force you to do a {{ name }} respec as well!</div>
+				</slot>
+			</template>
+			<template v-slot:footer>
 				<div class="modal-footer">
 					<div class="modal-flex-grow"></div>
 					<danger-button class="button modal-button" @click="confirm" skipConfirm>Yes</danger-button>
 					<button class="button modal-button" @click="cancel">Cancel</button>
 				</div>
-			</div>
+			</template>
 		</Modal>
 	</div>
 </template>
 
 <script>
-import { layers } from '../../store/layers';
-import { player } from '../../store/proxies';
+import { layers } from '../../game/layers';
+import player from '../../game/player';
 import { coerceComponent } from '../../util/vue';
 
 export default {
@@ -43,6 +45,7 @@ export default {
 		confirmRespec: Boolean,
 		display: [ String, Object ]
 	},
+	emits: [ 'set-confirm-respec', 'respec' ],
 	computed: {
 		style() {
 			return [

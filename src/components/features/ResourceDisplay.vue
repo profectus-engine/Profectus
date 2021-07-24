@@ -9,8 +9,8 @@
 </template>
 
 <script>
-import { layers } from '../../store/layers';
-import { player } from '../../store/proxies';
+import { layers } from '../../game/layers';
+import player from '../../game/player';
 import Decimal, { formatWhole } from '../../util/bignum';
 
 export default {

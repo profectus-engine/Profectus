@@ -1,6 +1,6 @@
 import Decimal, { format } from '../../util/bignum';
-import { player } from '../../store/proxies';
-import { layers } from '../../store/layers';
+import player from '../../game/player';
+import { layers } from '../../game/layers';
 import { hasUpgrade, hasMilestone, getBuyableAmount, setBuyableAmount, hasChallenge } from '../../util/features';
 import { resetLayer } from '../../util/layers';
 
@@ -871,38 +871,35 @@ challenges:{
 																				},
 																				subtabs: {
 																					"Upgrades": {
-																						display: `<div v-frag>
+																						display: `
 																							<main-display />
 																							<spacer />
 																							<prestige-button display="" />
 																							<spacer />
 																							<spacer />
-																							<upgrades />
-																						</div>`
+																							<upgrades />`
 																					},
 																					"Challenges": {
 																						unlocked() { return hasUpgrade("p", 51) || hasMilestone("p", 0); },
-																						display: `<div v-frag>
+																						display: `
 																							<spacer />
 																							<spacer />
-																							<challenges />
-																						</div>`
+																							<challenges />`
 																					},
 																					"Buyables and Milestones": {
 																						unlocked(){return hasUpgrade("p",74)||hasMilestone("p",0)},
-																						display: `<div v-frag>
+																						display: `
 																							<spacer />
 																							<spacer />
 																							<row><buyable id="11" /></row>
 																							<spacer />
 																							<div v-if="hasMilestone('p', 0)">Your boosts are making the point challenge {{ getBuyableAmount('p', 11).plus(1) }}x less pointy</div>
 																							<spacer />
-																							<milestones />
-																						</div>`
+																							<milestones />`
 																					},
 																					"Generators": {
 																						unlocked(){return hasMilestone("p",5)||player.i.points.gte(1)},
-																						display: `<div v-frag>
+																						display: `
 																							<spacer />
 																							<div>You have {{ format(player.p.gp) }} generator points, adding {{ format(hasUpgrade("p",132)?player.p.gp.plus(1).pow(new Decimal(1).div(2)):hasUpgrade("p",101)?player.p.gp.plus(1).pow(new Decimal(1).div(3)):hasUpgrade("p",93)?player.p.gp.plus(1).pow(0.2):player.p.gp.plus(1).log10()) }} to point gain</div>
 																							<div>You have {{ format(player.p.g) }} generators, generating {{ format(player.p.g.times(player.p.geff)) }} generator points per second</div>
@@ -910,12 +907,11 @@ challenges:{
 																							<spacer />
 																							<spacer />
 																							<buyables :buyables="[12, 13, 14]" />
-																							<row><clickable id="11" /></row>
-																						</div>`
+																							<row><clickable id="11" /></row>`
 																					},
 																					"Pointy Points": {
 																						unlocked(){return hasUpgrade("p",104)||player.i.points.gte(1)},
-																						display: `<div v-frag>
+																						display: `
 																							<div style="color: red; font-size: 32px; font-family: Comic Sans MS">{{ format(player.p.buyables[21]) }} pointy points</div>
 																							<div style="color: red; font-size: 32px; font-family: Comic Sans MS">My pointy points are multiplying generator efficiency by {{ format(new Decimal(player.p.buyables[21]).plus(1)) }}</div>
 																							<spacer />
@@ -932,15 +928,13 @@ challenges:{
 																							<spacer />
 																							<spacer />
 																							<div v-if="hasMilestone('p', 11)" style="font-size: 24px">Booster upgrades</div>
-																							<upgrades :upgrades="[231, 232, 233, 234, 235]" />
-																						</div>`
+																							<upgrades :upgrades="[231, 232, 233, 234, 235]" />`
 																					},
 																					"Buyables": {
 																						unlocked(){return hasMilestone("p",13)},
-																						display: `<div v-frag>
+																						display: `
 																							<buyables :buyables="[31, 32, 33]" />
-																							<buyables :buyables="[41, 42, 43]" />
-																						</div>`
+																							<buyables :buyables="[41, 42, 43]" />`
 																					}
 																				}
 }

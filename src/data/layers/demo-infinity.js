@@ -1,6 +1,6 @@
 import Decimal, { format } from '../../util/bignum';
-import { player } from '../../store/proxies';
-import { layers } from '../../store/layers';
+import player from '../../game/player';
+import { layers } from '../../game/layers';
 import { hasUpgrade, hasMilestone, getBuyableAmount, setBuyableAmount, hasChallenge } from '../../util/features';
 import { resetLayer } from '../../util/layers';
 

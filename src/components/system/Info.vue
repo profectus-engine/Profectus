@@ -1,12 +1,14 @@
 <template>
 	<Modal :show="show" @close="$emit('closeDialog', 'Info')">
-		<div slot="header" class="info-modal-header">
-			<img class="info-modal-logo" v-if="logo" :src="logo" :alt="title" />
-			<div class="info-modal-title">
-				<h2>{{ title }}</h2>
-				<h4>v{{ versionNumber}}: {{ versionTitle }}</h4>
+		<template v-slot:header>
+			<div class="info-modal-header">
+				<img class="info-modal-logo" v-if="logo" :src="logo" :alt="title" />
+				<div class="info-modal-title">
+					<h2>{{ title }}</h2>
+					<h4>v{{ versionNumber}}: {{ versionTitle }}</h4>
+				</div>
 			</div>
-		</div>
+		</template>
 		<template v-slot:body="{ shown }">
 			<div v-if="shown">
 				<div v-if="author">
@@ -59,7 +61,8 @@
 <script>
 import modInfo from '../../data/modInfo.json';
 import { formatTime } from '../../util/bignum';
-import { hotkeys } from '../../store/layers';
+import { hotkeys } from '../../game/layers';
+import player from '../../game/player';
 
 export default {
 	name: 'Info',
@@ -70,9 +73,10 @@ export default {
 	props: {
 		show: Boolean
 	},
+	emits: [ 'closeDialog', 'openDialog' ],
 	computed: {
 		timePlayed() {
-			return formatTime(this.$store.state.timePlayed);
+			return formatTime(player.timePlayed);
 		},
 		hotkeys() {
 			return Object.keys(hotkeys).reduce((acc, curr) => {

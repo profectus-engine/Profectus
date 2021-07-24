@@ -21,8 +21,8 @@
 </template>
 
 <script>
-import { layers } from '../../store/layers';
-import { player } from '../../store/proxies';
+import { layers } from '../../game/layers';
+import player from '../../game/player';
 import { coerceComponent } from '../../util/vue';
 import { isPlainObject } from '../../util/common';
 import modInfo from '../../data/modInfo.json';
@@ -81,7 +81,7 @@ export default {
 			return null;
 		},
 		activeSubtab() {
-			return layers[this.layer].activeSubtab.id;
+			return layers[this.layer].activeSubtab?.id;
 		},
 		firstTab() {
 			if (this.forceFirstTab != undefined) {
@@ -101,13 +101,13 @@ export default {
 					tab.style.flexGrow = 0;
 					tab.style.flexShrink = 0;
 					tab.style.width = "60px";
-					tab.style.minWidth = null;
+					tab.style.minWidth = tab.style.flexBasis = null;
 					tab.style.margin = 0;
 				} else {
 					tab.style.flexGrow = null;
 					tab.style.flexShrink = null;
 					tab.style.width = null;
-					tab.style.minWidth = `${layers[this.layer].minWidth}px`;
+					tab.style.minWidth = tab.style.flexBasis = `${layers[this.layer].minWidth}px`;
 					tab.style.margin = null;
 				}
 			}
@@ -123,13 +123,13 @@ export default {
 				tab.style.flexGrow = 0;
 				tab.style.flexShrink = 0;
 				tab.style.width = "60px";
-				tab.style.minWidth = null;
+				tab.style.minWidth = tab.style.flexBasis = null;
 				tab.style.margin = 0;
 			} else {
 				tab.style.flexGrow = null;
 				tab.style.flexShrink = null;
 				tab.style.width = null;
-				tab.style.minWidth = `${layers[this.layer].minWidth}px`;
+				tab.style.minWidth = tab.style.flexBasis = `${layers[this.layer].minWidth}px`;
 				tab.style.margin = null;
 			}
 		} else {
@@ -180,7 +180,7 @@ export default {
     bottom: 0;
     display: flex;
     padding: 0;
-    padding-top: 50px;
+    padding-top: 55px;
     margin: 0;
     cursor: pointer;
     font-size: 40px;
@@ -297,5 +297,11 @@ export default {
 .goBack:hover {
     transform: scale(1.1, 1.1);
     text-shadow: 0 0 7px var(--color);
+}
+</style>
+
+<style>
+.subtabs-container + * {
+    margin-top: 20px;
 }
 </style>

@@ -1,38 +1,41 @@
 <template>
-	<div v-frag>
-		<Modal :show="show">
-			<div slot="header" class="nan-modal-header">
+	<Modal :show="hasNaN" v-bind="$attrs">
+		<template v-slot:header>
+			<div class="nan-modal-header">
 				<h2>NaN value detected!</h2>
 			</div>
-			<div slot="body">
-				<div>Attempted to assign NaN value to "{{ property }}" (previously {{ format(previous) }}). Auto-saving has been {{ autosave ? 'enabled' : 'disabled' }}. Check the console for more details, and consider sharing it with the developers on discord.</div>
-				<br>
-				<div>
-					<a :href="discordLink" class="nan-modal-discord-link">
-						<img src="images/discord.png" class="nan-modal-discord" />
-						{{ discordName }}
-					</a>
-				</div>
-				<br>
-				<Toggle title="Autosave" :value="autosave" @change="setAutosave" />
-				<Toggle title="Pause game" :value="paused" @change="togglePaused" />
+		</template>
+		<template v-slot:body>
+			<div>Attempted to assign "{{ path }}" to NaN (previously {{ format(previous) }}). Auto-saving has been {{ autosave ? 'enabled' : 'disabled' }}. Check the console for more details, and consider sharing it with the developers on discord.</div>
+			<br>
+			<div>
+				<a :href="discordLink" class="nan-modal-discord-link">
+					<img src="images/discord.png" class="nan-modal-discord" />
+					{{ discordName }}
+				</a>
 			</div>
-			<div slot="footer" class="nan-footer">
+			<br>
+			<Toggle title="Autosave" :value="autosave" @change="setAutosave" />
+			<Toggle title="Pause game" :value="paused" @change="togglePaused" />
+		</template>
+		<template v-slot:footer>
+			<div class="nan-footer">
 				<button @click="toggleSavesManager" class="button">Open Saves Manager</button>
 				<button @click="setZero" class="button">Set to 0</button>
 				<button @click="setOne" class="button">Set to 1</button>
 				<button @click="setPrev" class="button" v-if="previous && previous.neq(0) && previous.neq(1)">Set to previous</button>
 				<button @click="ignore" class="button danger">Ignore</button>
 			</div>
-		</Modal>
-		<SavesManager :show="showSaves" @closeDialog="toggleSavesManager" />
-	</div>
+		</template>
+	</Modal>
+	<SavesManager :show="showSaves" @closeDialog="toggleSavesManager" />
 </template>
 
 <script>
 import modInfo from '../../data/modInfo.json';
 import Decimal, { format } from '../../util/bignum';
-import { player } from '../../store/proxies';
+import { mapState } from '../../util/vue';
+import player from '../../game/player';
 
 export default {
 	name: 'NaNScreen',
@@ -41,36 +44,34 @@ export default {
 		return { discordName, discordLink, format, showSaves: false };
 	},
 	computed: {
-		show() {
-			return player.hasNaN;
-		},
-		property() {
-			return player.NaNProperty;
-		},
-		autosave() {
-			return player.autosave;
+		...mapState([ 'hasNaN', 'autosave' ]),
+		path() {
+			return player.NaNPath.join('.');
 		},
 		previous() {
-			return player.NaNPrevious;
+			return player.NaNReceiver?.[this.property];
 		},
 		paused() {
 			return player.devSpeed === 0;
+		},
+		property() {
+			return player.NaNPath.slice(-1)[0];
 		}
 	},
 	methods: {
 		setZero() {
-			player.NaNReceiver[player.NaNProperty] = new Decimal(0);
+			player.NaNReceiver[this.property] = new Decimal(0);
 			player.hasNaN = false;
 		},
 		setOne() {
-			player.NaNReceiver[player.NaNProperty] = new Decimal(1);
+			player.NaNReceiver[this.property] = new Decimal(1);
 			player.hasNaN = false;
 		},
 		setPrev() {
-			player.NaNReceiver[player.NaNProperty] = player.NaNPrevious;
 			player.hasNaN = false;
 		},
 		ignore() {
+			player.NaNReceiver[this.property] = new Decimal(NaN);
 			player.hasNaN = false;
 		},
 		setAutosave(autosave) {
