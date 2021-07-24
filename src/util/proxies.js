@@ -23,7 +23,7 @@ export function createGridProxy(object) {
 
 function travel(callback, object, objectProxy) {
 	for (let key in object) {
-		if (object[key].isProxy) {
+		if (object[key] == undefined || object[key].isProxy) {
 			continue;
 		}
 		if (isFunction(object[key])) {
