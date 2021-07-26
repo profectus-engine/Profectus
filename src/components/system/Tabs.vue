@@ -56,6 +56,8 @@ export default {
     height: 100%;
     flex-grow: 1;
     transition-duration: 0s;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .inner-tab {
