@@ -96,7 +96,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
             RawGridFeatures<GridFeatures<Upgrade>, Upgrade>,
             GridFeatures<Upgrade>,
             Upgrade
-        >(layer.id, layer.upgrades!);
+        >(layer.id, layer.upgrades);
         setRowCol(layer.upgrades);
         for (const id in layer.upgrades.data) {
             layer.upgrades.data[id].bought = function() {
@@ -193,7 +193,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
             RawGridFeatures<GridFeatures<Achievement>, Achievement>,
             GridFeatures<Achievement>,
             Achievement
-        >(layer.id, layer.achievements!);
+        >(layer.id, layer.achievements);
         setRowCol(layer.achievements);
         for (const id in layer.achievements.data) {
             layer.achievements.data[id].earned = function() {
@@ -461,8 +461,8 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
             );
         };
         setDefault(player, "subtabs", {});
-        setDefault(player.subtabs!, layer.id, {});
-        setDefault(player.subtabs![layer.id], "mainTabs", Object.keys(layer.subtabs)[0]);
+        setDefault(player.subtabs, layer.id, {});
+        setDefault(player.subtabs[layer.id], "mainTabs", Object.keys(layer.subtabs)[0]);
         for (const id in layer.subtabs) {
             layer.subtabs[id].active = function() {
                 return playerProxy.subtabs[this.layer].mainTabs === this.id;
@@ -471,7 +471,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
     }
     if (layer.microtabs) {
         setDefault(player, "subtabs", {});
-        setDefault(player.subtabs!, layer.id, {});
+        setDefault(player.subtabs, layer.id, {});
         for (const family in layer.microtabs) {
             if (Object.keys(layer.microtabs[family]).length === 0) {
                 console.warn(
@@ -497,7 +497,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
                 return firstUnlocked != undefined ? this[firstUnlocked] : undefined;
             };
             setDefault(
-                player.subtabs![layer.id],
+                player.subtabs[layer.id],
                 family,
                 Object.keys(layer.microtabs[family]).find(tab => tab !== "activeMicrotab")!
             );
@@ -594,7 +594,12 @@ function setupFeatures<T extends RawFeatures<R, S>, R extends Features<S>, S ext
     }
 }
 
-function setDefault<T, K extends keyof T>(object: T, key: K, value: T[K], forceCached?: boolean) {
+function setDefault<T, K extends keyof T>(
+    object: T,
+    key: K,
+    value: T[K],
+    forceCached?: boolean
+): asserts object is Exclude<T, K> & Required<Pick<T, K>> {
     if (object[key] == undefined && value != undefined) {
         object[key] = value;
     }
