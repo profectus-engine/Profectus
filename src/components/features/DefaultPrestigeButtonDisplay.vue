@@ -1,77 +1,79 @@
 <template>
-	<span>
-		{{ resetDescription }}<b>{{ resetGain }}</b>
-		{{ resource }}
-		<br v-if="nextAt"/><br v-if="nextAt"/>
-		{{ nextAt }}
-	</span>
+    <span>
+        {{ resetDescription }}<b>{{ resetGain }}</b>
+        {{ resource }}
+        <br v-if="nextAt" /><br v-if="nextAt" />
+        {{ nextAt }}
+    </span>
 </template>
 
-<script>
-import { layers } from '../../game/layers';
-import player from '../../game/player';
-import { format, formatWhole } from '../../util/bignum';
+<script lang="ts">
+import { layers } from "@/game/layers";
+import player from "@/game/player";
+import Decimal, { format, formatWhole } from "@/util/bignum";
+import { InjectLayerMixin } from "@/util/vue";
+import { defineComponent } from "vue";
 
-export default {
-	name: 'default-prestige-button-display',
-	inject: [ 'tab' ],
-	props: {
-		layer: String
-	},
-	computed: {
-		resetDescription() {
-			if (player[this.layer || this.tab.layer].points.lt(1e3) || layers[this.layer || this.tab.layer].type === "static") {
-				return layers[this.layer || this.tab.layer].resetDescription || "Reset for ";
-			}
-			return "";
-		},
-		resetGain() {
-			return formatWhole(layers[this.layer || this.tab.layer].resetGain);
-		},
-		resource() {
-			return layers[this.layer || this.tab.layer].resource;
-		},
-		showNextAt() {
-			if (layers[this.layer || this.tab.layer].showNextAt != undefined) {
-				return layers[this.layer || this.tab.layer].showNextAt;
-			} else {
-				return layers[this.layer || this.tab.layer].type === "static" ?
-					player[this.layer || this.tab.layer].points.lt(30) : 											// static
-					player[this.layer || this.tab.layer].points.lt(1e3) && layers[this.layer ||
-						this.tab.layer].resetGain.lt(100);	// normal
-			}
-		},
-		nextAt() {
-			if (this.showNextAt) {
-				let prefix;
-				if (layers[this.layer || this.tab.layer].type === "static") {
-					if (layers[this.layer || this.tab.layer].baseAmount.gte(layers[this.layer || this.tab.layer].nextAt) &&
-						layers[this.layer || this.tab.layer].canBuyMax !== false) {
-						prefix = "Next:";
-					} else {
-						prefix = "Req:";
-					}
+export default defineComponent({
+    name: "default-prestige-button-display",
+    mixins: [InjectLayerMixin],
+    computed: {
+        resetDescription(): string {
+            if (player.layers[this.layer].points.lt(1e3) || layers[this.layer].type === "static") {
+                return layers[this.layer].resetDescription || "Reset for ";
+            }
+            return "";
+        },
+        resetGain(): string {
+            return formatWhole(layers[this.layer].resetGain);
+        },
+        resource(): string {
+            return layers[this.layer].resource;
+        },
+        showNextAt(): boolean {
+            if (layers[this.layer].showNextAt != undefined) {
+                return layers[this.layer].showNextAt!;
+            } else {
+                return layers[this.layer].type === "static"
+                    ? player.layers[this.layer].points.lt(30) // static
+                    : player.layers[this.layer].points.lt(1e3) &&
+                          layers[this.layer].resetGain.lt(100); // normal
+            }
+        },
+        nextAt(): string {
+            if (this.showNextAt) {
+                let prefix;
+                if (layers[this.layer].type === "static") {
+                    if (
+                        Decimal.gte(layers[this.layer].baseAmount!, layers[this.layer].nextAt) &&
+                        layers[this.layer].canBuyMax !== false
+                    ) {
+                        prefix = "Next:";
+                    } else {
+                        prefix = "Req:";
+                    }
 
-					const baseAmount = formatWhole(layers[this.layer || this.tab.layer].baseAmount);
-					const nextAt = (layers[this.layer || this.tab.layer].roundUpCost ? formatWhole : format)(layers[this.layer || this.tab.layer].nextAtMax);
-					const baseResource = layers[this.layer || this.tab.layer].baseResource;
+                    const baseAmount = formatWhole(layers[this.layer].baseAmount!);
+                    const nextAt = (layers[this.layer].roundUpCost ? formatWhole : format)(
+                        layers[this.layer].nextAtMax
+                    );
+                    const baseResource = layers[this.layer].baseResource;
 
-					return `${prefix} ${baseAmount} / ${nextAt} ${baseResource}`;
-				} else {
-					let amount;
-					if (layers[this.layer || this.tab.layer].roundUpCost) {
-						amount = formatWhole(layers[this.layer || this.tab.layer].nextAt);
-					} else {
-						amount = format(layers[this.layer || this.tab.layer].nextAt);
-					}
-					return `Next at ${amount} ${layers[this.layer || this.tab.layer].baseResource}`;
-				}
-			}
-			return "";
-		}
-	}
-};
+                    return `${prefix} ${baseAmount} / ${nextAt} ${baseResource}`;
+                } else {
+                    let amount;
+                    if (layers[this.layer].roundUpCost) {
+                        amount = formatWhole(layers[this.layer].nextAt);
+                    } else {
+                        amount = format(layers[this.layer].nextAt);
+                    }
+                    return `Next at ${amount} ${layers[this.layer].baseResource}`;
+                }
+            }
+            return "";
+        }
+    }
+});
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

@@ -1,48 +1,49 @@
 <template>
-	<button :style="style" @click="resetLayer"
-		:class="{ [layer || tab.layer]: true, reset: true, locked: !canReset, can: canReset }" >
-		<component v-if="prestigeButtonDisplay" :is="prestigeButtonDisplay" />
-		<default-prestige-button-display v-else />
-	</button>
+    <button
+        :style="style"
+        @click="resetLayer"
+        :class="{ [layer]: true, reset: true, locked: !canReset, can: canReset }"
+    >
+        <component v-if="prestigeButtonDisplay" :is="prestigeButtonDisplay" />
+        <default-prestige-button-display v-else />
+    </button>
 </template>
 
-<script>
-import { layers } from '../../game/layers';
-import { resetLayer } from '../../util/layers';
-import { coerceComponent } from '../../util/vue';
+<script lang="ts">
+import { layers } from "@/game/layers";
+import { resetLayer } from "@/util/layers";
+import { coerceComponent, InjectLayerMixin } from "@/util/vue";
+import { Component, defineComponent } from "vue";
 
-export default {
-	name: 'prestige-button',
-	inject: [ 'tab' ],
-	props: {
-		layer: String
-	},
-	computed: {
-		canReset() {
-			return layers[this.layer || this.tab.layer].canReset;
-		},
-		color() {
-			return layers[this.layer || this.tab.layer].color;
-		},
-		prestigeButtonDisplay() {
-			if (layers[this.layer || this.tab.layer].prestigeButtonDisplay) {
-				return coerceComponent(layers[this.layer || this.tab.layer].prestigeButtonDisplay);
-			}
-			return null;
-		},
-		style() {
-			return [
-				this.canReset ? { 'background-color': this.color } : {},
-				layers[this.layer || this.tab.layer].componentStyles?.['prestige-button']
-			];
-		}
-	},
-	methods: {
-		resetLayer() {
-			resetLayer(this.layer || this.tab.layer);
-		}
-	}
-};
+export default defineComponent({
+    name: "prestige-button",
+    mixins: [InjectLayerMixin],
+    computed: {
+        canReset(): boolean {
+            return layers[this.layer].canReset;
+        },
+        color(): string {
+            return layers[this.layer].color;
+        },
+        prestigeButtonDisplay(): Component | string | null {
+            if (layers[this.layer].prestigeButtonDisplay) {
+                return coerceComponent(layers[this.layer].prestigeButtonDisplay!);
+            }
+            return null;
+        },
+        style(): Array<Partial<CSSStyleDeclaration> | undefined> {
+            return [
+                this.canReset ? { backgroundColor: this.color } : undefined,
+                layers[this.layer].componentStyles?.["prestige-button"]
+            ];
+        }
+    },
+    methods: {
+        resetLayer() {
+            resetLayer(this.layer);
+        }
+    }
+});
 </script>
 
 <style scoped>

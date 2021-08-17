@@ -1,50 +1,70 @@
 <template>
-	<button @click="$emit('selectTab')" class="tabButton" :style="style"
-		:class="{ notify: options.notify, resetNotify: options.resetNotify, floating, activeTab }">
-		{{ text }}
-	</button>
+    <button
+        @click="$emit('selectTab')"
+        class="tabButton"
+        :style="style"
+        :class="{
+            notify: options.notify,
+            resetNotify: options.resetNotify,
+            floating,
+            activeTab
+        }"
+    >
+        {{ text }}
+    </button>
 </template>
 
-<script>
-import { layers } from '../../game/layers';
-import player from '../../game/player';
-import themes from '../../data/themes';
+<script lang="ts">
+import themes from "@/data/themes";
+import { layers } from "@/game/layers";
+import player from "@/game/player";
+import { Subtab } from "@/typings/features/subtab";
+import { InjectLayerMixin } from "@/util/vue";
+import { defineComponent, PropType } from "vue";
 
-export default {
-	name: 'tab-button',
-	props: {
-		layer: String,
-		text: String,
-		options: Object,
-		activeTab: Boolean
-	},
-	emits: [ 'selectTab' ],
-	inject: [ 'tab' ],
-	computed: {
-		floating() {
-			return themes[player.theme].floatingTabs;
-		},
-		style() {
-			return [
-				(this.floating || this.activeTab) && { 'border-color': layers[this.layer || this.tab.layer].color },
-				layers[this.layer || this.tab.layer].componentStyles?.['tab-button'],
-				this.options.resetNotify && this.options.glowColor &&
-					{
-						boxShadow: this.floating ?
-							`-2px -4px 4px rgba(0, 0, 0, 0) inset, 0 0 8px ${this.options.glowColor}` :
-							`0px 10px 7px -10px ${this.options.glowColor}`
-					},
-				this.options.notify && this.options.glowColor &&
-					{
-						boxShadow: this.floating ?
-							`-2px -4px 4px rgba(0, 0, 0, 0) inset, 0 0 20px ${this.options.glowColor}` :
-							`0px 15px 7px -10px ${this.options.glowColor}`
-					},
-				this.options.buttonStyle
-			];
-		}
-	}
-};
+export default defineComponent({
+    name: "tab-button",
+    mixins: [InjectLayerMixin],
+    props: {
+        text: String,
+        options: {
+            type: Object as PropType<Subtab>,
+            required: true
+        },
+        activeTab: Boolean
+    },
+    emits: ["selectTab"],
+    computed: {
+        floating(): boolean {
+            return themes[player.theme].floatingTabs;
+        },
+        style(): Array<Partial<CSSStyleDeclaration> | undefined> {
+            return [
+                this.floating || this.activeTab
+                    ? {
+                          borderColor: layers[this.layer].color
+                      }
+                    : undefined,
+                layers[this.layer].componentStyles?.["tab-button"],
+                this.options.resetNotify && this.options.glowColor
+                    ? {
+                          boxShadow: this.floating
+                              ? `-2px -4px 4px rgba(0, 0, 0, 0) inset, 0 0 8px ${this.options.glowColor}`
+                              : `0px 10px 7px -10px ${this.options.glowColor}`
+                      }
+                    : undefined,
+                this.options.notify && this.options.glowColor
+                    ? {
+                          boxShadow: this.floating
+                              ? `-2px -4px 4px rgba(0, 0, 0, 0) inset, 0 0 20px ${this.options.glowColor}`
+                              : `0px 15px 7px -10px ${this.options.glowColor}`
+                      }
+                    : undefined,
+                this.options.buttonStyle
+            ];
+        }
+    }
+});
 </script>
 
 <style scoped>
@@ -66,17 +86,17 @@ export default {
 }
 
 .tabButton:not(.floating) {
-	height: 50px;
-	margin: 0;
-	border-left: none;
-	border-right: none;
-	border-top: none;
-	border-bottom-width: 4px;
-	border-radius: 0;
-	transform: unset;
+    height: 50px;
+    margin: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    border-bottom-width: 4px;
+    border-radius: 0;
+    transform: unset;
 }
 
 .tabButton:not(.floating):not(.activeTab) {
-	border-bottom-color: transparent;
+    border-bottom-color: transparent;
 }
 </style>

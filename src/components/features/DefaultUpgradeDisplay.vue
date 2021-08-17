@@ -1,53 +1,56 @@
 <template>
-	<span>
-		<div v-if="title"><component :is="title" /></div>
-		<component :is="description" />
-		<div v-if="effectDisplay"><br>Currently: <component :is="effectDisplay" /></div>
-		<br>
-		Cost: {{ cost }} {{ costResource }}
-	</span>
+    <span>
+        <div v-if="title"><component :is="title" /></div>
+        <component :is="description" />
+        <div v-if="effectDisplay"><br />Currently: <component :is="effectDisplay" /></div>
+        <br />
+        Cost: {{ cost }} {{ costResource }}
+    </span>
 </template>
 
-<script>
-import { layers } from '../../game/layers';
-import { coerceComponent } from '../../util/vue';
-import { formatWhole } from '../../util/bignum';
+<script lang="ts">
+import { layers } from "@/game/layers";
+import { Upgrade } from "@/typings/features/upgrade";
+import { formatWhole } from "@/util/bignum";
+import { coerceComponent, InjectLayerMixin } from "@/util/vue";
+import { Component, defineComponent } from "vue";
 
-export default {
-	name: 'default-upgrade-display',
-	inject: [ 'tab' ],
-	props: {
-		layer: String,
-		id: [ Number, String ]
-	},
-	computed: {
-		upgrade() {
-			return layers[this.layer || this.tab.layer].upgrades[this.id];
-		},
-		title() {
-			if (this.upgrade.title) {
-				return coerceComponent(this.upgrade.title, 'h3');
-			}
-			return null;
-		},
-		description() {
-			return coerceComponent(this.upgrade.description, 'div');
-		},
-		effectDisplay() {
-			if (this.upgrade.effectDisplay) {
-				return coerceComponent(this.upgrade.effectDisplay);
-			}
-			return null;
-		},
-		cost() {
-			return formatWhole(this.upgrade.cost);
-		},
-		costResource() {
-			return this.upgrade.currencyDisplayName || layers[this.layer || this.tab.layer].resource;
-		}
-	}
-};
+export default defineComponent({
+    name: "default-upgrade-display",
+    mixins: [InjectLayerMixin],
+    props: {
+        id: {
+            type: [Number, String],
+            required: true
+        }
+    },
+    computed: {
+        upgrade(): Upgrade {
+            return layers[this.layer].upgrades!.data[this.id];
+        },
+        title(): Component | string | null {
+            if (this.upgrade.title) {
+                return coerceComponent(this.upgrade.title, "h3");
+            }
+            return null;
+        },
+        description(): Component | string {
+            return coerceComponent(this.upgrade.description, "div");
+        },
+        effectDisplay(): Component | string | null {
+            if (this.upgrade.effectDisplay) {
+                return coerceComponent(this.upgrade.effectDisplay);
+            }
+            return null;
+        },
+        cost(): string {
+            return formatWhole(this.upgrade.cost);
+        },
+        costResource(): string {
+            return this.upgrade.currencyDisplayName || layers[this.layer].resource;
+        }
+    }
+});
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

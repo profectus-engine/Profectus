@@ -1,48 +1,50 @@
 <template>
-	<button @click="press" :class="{ feature: true, can: unlocked, locked: !unlocked }" :style="style">
-		<component :is="masterButtonDisplay" />
-	</button>
+    <button
+        @click="press"
+        :class="{ feature: true, can: unlocked, locked: !unlocked }"
+        :style="style"
+    >
+        <component :is="masterButtonDisplay" />
+    </button>
 </template>
 
-<script>
-import { layers } from '../../game/layers';
-import player from '../../game/player';
-import { coerceComponent } from '../../util/vue';
+<script lang="ts">
+import { layers } from "@/game/layers";
+import player from "@/game/player";
+import { CoercableComponent } from "@/typings/component";
+import { coerceComponent, InjectLayerMixin } from "@/util/vue";
+import { Component, defineComponent, PropType } from "vue";
 
-export default {
-	name: 'master-button',
-	inject: [ 'tab' ],
-	props: {
-		layer: String,
-		display: [ String, Object ]
-	},
-	emits: [ 'press' ],
-	computed: {
-		style() {
-			return [
-				layers[this.layer || this.tab.layer].componentStyles?.['master-button']
-			];
-		},
-		unlocked() {
-			return player[this.layer || this.tab.layer].unlocked;
-		},
-		masterButtonDisplay() {
-			if (this.display) {
-				return coerceComponent(this.display);
-			}
-			if (layers[this.layer || this.tab.layer].clickables?.masterButtonDisplay) {
-				return coerceComponent(layers[this.layer || this.tab.layer].clickables?.masterButtonDisplay);
-			}
-			return coerceComponent("Click Me!");
-		}
-	},
-	methods: {
-		press() {
-			this.$emit("press");
-		}
-	}
-};
+export default defineComponent({
+    name: "master-button",
+    mixins: [InjectLayerMixin],
+    props: {
+        display: [String, Object] as PropType<CoercableComponent>
+    },
+    emits: ["press"],
+    computed: {
+        style(): Partial<CSSStyleDeclaration> | undefined {
+            return layers[this.layer].componentStyles?.["master-button"];
+        },
+        unlocked(): boolean {
+            return player.layers[this.layer].unlocked;
+        },
+        masterButtonDisplay(): Component | string {
+            if (this.display) {
+                return coerceComponent(this.display);
+            }
+            if (layers[this.layer].clickables?.masterButtonDisplay) {
+                return coerceComponent(layers[this.layer].clickables!.masterButtonDisplay!);
+            }
+            return coerceComponent("Click Me!");
+        }
+    },
+    methods: {
+        press() {
+            this.$emit("press");
+        }
+    }
+});
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

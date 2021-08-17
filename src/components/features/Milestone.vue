@@ -1,53 +1,58 @@
 <template>
-	<div v-if="milestone.shown" :style="style" :class="{ feature: true,  milestone: true, done: milestone.earned }">
-		<div v-if="requirementDisplay"><component :is="requirementDisplay" /></div>
-		<div v-if="effectDisplay"><component :is="effectDisplay" /></div>
-		<component v-if="optionsDisplay" :is="optionsDisplay" />
-		<branch-node :branches="milestone.branches" :id="id" featureType="milestone" />
-	</div>
+    <div
+        v-if="milestone.shown"
+        :style="style"
+        :class="{ feature: true, milestone: true, done: milestone.earned }"
+    >
+        <div v-if="requirementDisplay"><component :is="requirementDisplay" /></div>
+        <div v-if="effectDisplay"><component :is="effectDisplay" /></div>
+        <component v-if="optionsDisplay" :is="optionsDisplay" />
+        <branch-node :branches="milestone.branches" :id="id" featureType="milestone" />
+    </div>
 </template>
 
-<script>
-import { layers } from '../../game/layers';
-import { coerceComponent } from '../../util/vue';
+<script lang="ts">
+import { layers } from "@/game/layers";
+import { Milestone } from "@/typings/features/milestone";
+import { coerceComponent, InjectLayerMixin } from "@/util/vue";
+import { Component, defineComponent } from "vue";
 
-export default {
-	name: 'milestone',
-	inject: [ 'tab' ],
-	props: {
-		layer: String,
-		id: [ Number, String ]
-	},
-	computed: {
-		milestone() {
-			return layers[this.layer || this.tab.layer].milestones[this.id];
-		},
-		style() {
-			return [
-				layers[this.layer || this.tab.layer].componentStyles?.milestone,
-				this.milestone.style
-			];
-		},
-		requirementDisplay() {
-			if (this.milestone.requirementDisplay) {
-				return coerceComponent(this.milestone.requirementDisplay, 'h3');
-			}
-			return null;
-		},
-		effectDisplay() {
-			if (this.milestone.effectDisplay) {
-				return coerceComponent(this.milestone.effectDisplay, 'b');
-			}
-			return null;
-		},
-		optionsDisplay() {
-			if (this.milestone.optionsDisplay && this.milestone.earned) {
-				return coerceComponent(this.milestone.optionsDisplay, 'div');
-			}
-			return null;
-		}
-	}
-};
+export default defineComponent({
+    name: "milestone",
+    mixins: [InjectLayerMixin],
+    props: {
+        id: {
+            type: [Number, String],
+            required: true
+        }
+    },
+    computed: {
+        milestone(): Milestone {
+            return layers[this.layer].milestones!.data[this.id];
+        },
+        style(): Array<Partial<CSSStyleDeclaration> | undefined> {
+            return [layers[this.layer].componentStyles?.milestone, this.milestone.style];
+        },
+        requirementDisplay(): Component | string | null {
+            if (this.milestone.requirementDisplay) {
+                return coerceComponent(this.milestone.requirementDisplay, "h3");
+            }
+            return null;
+        },
+        effectDisplay(): Component | string | null {
+            if (this.milestone.effectDisplay) {
+                return coerceComponent(this.milestone.effectDisplay, "b");
+            }
+            return null;
+        },
+        optionsDisplay(): Component | string | null {
+            if (this.milestone.optionsDisplay && this.milestone.earned) {
+                return coerceComponent(this.milestone.optionsDisplay, "div");
+            }
+            return null;
+        }
+    }
+});
 </script>
 
 <style scoped>

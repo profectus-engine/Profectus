@@ -1,54 +1,65 @@
 <template>
-	<button v-if="upgrade.unlocked" :style="style" @click="buy"
-		:class="{
-			feature: true,
-			[tab.layer]: true,
-			upgrade: true,
-			can: upgrade.canAfford && !upgrade.bought,
-			locked: !upgrade.canAfford && !upgrade.bought,
-			bought: upgrade.bought
-		}" :disabled="!upgrade.canAfford && !upgrade.bought">
-		<component v-if="fullDisplay" :is="fullDisplay" />
-		<default-upgrade-display v-else :id="id" />
-		<branch-node :branches="upgrade.branches" :id="id" featureType="upgrade" />
-	</button>
+    <button
+        v-if="upgrade.unlocked"
+        :style="style"
+        @click="buy"
+        :class="{
+            feature: true,
+            [layer]: true,
+            upgrade: true,
+            can: upgrade.canAfford && !upgrade.bought,
+            locked: !upgrade.canAfford && !upgrade.bought,
+            bought: upgrade.bought
+        }"
+        :disabled="!upgrade.canAfford && !upgrade.bought"
+    >
+        <component v-if="fullDisplay" :is="fullDisplay" />
+        <default-upgrade-display v-else :id="id" />
+        <branch-node :branches="upgrade.branches" :id="id" featureType="upgrade" />
+    </button>
 </template>
 
-<script>
-import { layers } from '../../game/layers';
-import { coerceComponent } from '../../util/vue';
+<script lang="ts">
+import { layers } from "@/game/layers";
+import { Upgrade } from "@/typings/features/upgrade";
+import { coerceComponent, InjectLayerMixin } from "@/util/vue";
+import { Component, defineComponent } from "vue";
 
-export default {
-	name: 'upgrade',
-	inject: [ 'tab' ],
-	props: {
-		layer: String,
-		id: [ Number, String ]
-	},
-	computed: {
-		upgrade() {
-			return layers[this.layer || this.tab.layer].upgrades[this.id];
-		},
-		style() {
-			return [
-				this.upgrade.canAfford && !this.upgrade.bought ? { 'background-color': layers[this.layer || this.tab.layer].color } : {},
-				layers[this.layer || this.tab.layer].componentStyles?.upgrade,
-				this.upgrade.style
-			];
-		},
-		fullDisplay() {
-			if (this.upgrade.fullDisplay) {
-				return coerceComponent(this.upgrade.fullDisplay, 'div');
-			}
-			return null;
-		}
-	},
-	methods: {
-		buy() {
-			this.upgrade.buy();
-		}
-	}
-};
+export default defineComponent({
+    name: "upgrade",
+    mixins: [InjectLayerMixin],
+    props: {
+        id: {
+            type: [Number, String],
+            required: true
+        }
+    },
+    computed: {
+        upgrade(): Upgrade {
+            return layers[this.layer].upgrades!.data[this.id];
+        },
+        style(): Array<Partial<CSSStyleDeclaration> | undefined> {
+            return [
+                this.upgrade.canAfford && !this.upgrade.bought
+                    ? { backgroundColor: layers[this.layer].color }
+                    : undefined,
+                layers[this.layer].componentStyles?.upgrade,
+                this.upgrade.style
+            ];
+        },
+        fullDisplay(): Component | string | null {
+            if (this.upgrade.fullDisplay) {
+                return coerceComponent(this.upgrade.fullDisplay, "div");
+            }
+            return null;
+        }
+    },
+    methods: {
+        buy() {
+            this.upgrade.buy();
+        }
+    }
+});
 </script>
 
 <style scoped>
