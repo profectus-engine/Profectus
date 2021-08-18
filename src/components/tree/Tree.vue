@@ -44,7 +44,7 @@ export default defineComponent({
         };
     },
     props: {
-        nodes: Object as PropType<Record<string, Array<string | number>>>,
+        nodes: Object as PropType<Record<string, Array<string>>>,
         append: Boolean
     },
     inject: ["tab"],
@@ -55,31 +55,25 @@ export default defineComponent({
             }
             return layers[this.modal].name || this.modal;
         },
-        rows(): Record<string | number, Array<string | number>> {
+        rows(): Record<string, Array<string>> {
             if (this.nodes != undefined) {
                 return this.nodes;
             }
-            const rows = Object.keys(layers).reduce(
-                (acc: Record<string | number, Array<string | number>>, curr) => {
-                    if (!(layers[curr].displayRow in acc)) {
-                        acc[layers[curr].displayRow] = [];
-                    }
-                    if (layers[curr].position != undefined) {
-                        acc[layers[curr].displayRow][layers[curr].position!] = curr;
-                    } else {
-                        acc[layers[curr].displayRow].push(curr);
-                    }
-                    return acc;
-                },
-                {}
-            );
-            return Object.keys(rows).reduce(
-                (acc: Record<string | number, Array<string | number>>, curr) => {
-                    acc[curr] = rows[curr].filter(layer => layer);
-                    return acc;
-                },
-                {}
-            );
+            const rows = Object.keys(layers).reduce((acc: Record<string, Array<string>>, curr) => {
+                if (!(layers[curr].displayRow in acc)) {
+                    acc[layers[curr].displayRow] = [];
+                }
+                if (layers[curr].position != undefined) {
+                    acc[layers[curr].displayRow][layers[curr].position!] = curr;
+                } else {
+                    acc[layers[curr].displayRow].push(curr);
+                }
+                return acc;
+            }, {});
+            return Object.keys(rows).reduce((acc: Record<string, Array<string>>, curr) => {
+                acc[curr] = rows[curr].filter(layer => layer);
+                return acc;
+            }, {});
         }
     },
     methods: {
