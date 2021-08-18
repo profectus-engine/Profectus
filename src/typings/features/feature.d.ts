@@ -9,16 +9,16 @@ export interface Feature {
     [key: string]: unknown;
 }
 
-export interface RawFeatures<T extends Features<S>, S extends Feature>
+export interface RawFeatures<T extends Features<S>, S extends Feature, R = RawFeature<S>>
     extends Partial<Omit<Computable<T>, "data">>,
         ThisType<T> {
     layer?: string;
-    data: Record<string | number, RawFeature<S>>;
+    data: Record<string, R>;
 }
 
 export interface Features<T extends Feature> {
     layer: string;
-    data: Record<string | number, T>;
+    data: Record<string, T>;
     [key: string]: unknown;
 }
 

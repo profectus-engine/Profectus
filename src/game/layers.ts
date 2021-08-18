@@ -58,7 +58,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
     layer = clone(layer);
 
     setDefault(player, "layers", {});
-    player.layers![layer.id] = applyPlayerData(
+    player.layers[layer.id] = applyPlayerData(
         {
             points: new Decimal(0),
             unlocked: false,
@@ -74,7 +74,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
             confirmRespecBuyables: false,
             ...(layer.startData?.() || {})
         },
-        player.layers![layer.id]
+        player.layers[layer.id]
     );
 
     // Set default property values
@@ -92,10 +92,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         }
     }
     if (layer.upgrades) {
-        setupFeatures<NonNullable<RawLayer["upgrades"]>, NonNullable<Layer["upgrades"]>, Upgrade>(
-            layer.id,
-            layer.upgrades
-        );
+        setupFeatures<NonNullable<RawLayer["upgrades"]>, Upgrade>(layer.id, layer.upgrades);
         setRowCol(layer.upgrades);
         for (const id in layer.upgrades.data) {
             layer.upgrades.data[id].bought = function() {
@@ -188,11 +185,10 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         }
     }
     if (layer.achievements) {
-        setupFeatures<
-            NonNullable<RawLayer["achievements"]>,
-            NonNullable<Layer["achievements"]>,
-            Achievement
-        >(layer.id, layer.achievements);
+        setupFeatures<NonNullable<RawLayer["achievements"]>, Achievement>(
+            layer.id,
+            layer.achievements
+        );
         setRowCol(layer.achievements);
         for (const id in layer.achievements.data) {
             layer.achievements.data[id].earned = function() {
@@ -207,11 +203,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         }
     }
     if (layer.challenges) {
-        setupFeatures<
-            NonNullable<RawLayer["challenges"]>,
-            NonNullable<Layer["challenges"]>,
-            Challenge
-        >(layer.id, layer.challenges);
+        setupFeatures<NonNullable<RawLayer["challenges"]>, Challenge>(layer.id, layer.challenges);
         setRowCol(layer.challenges);
         layer.activeChallenge = function() {
             return Object.values(this.challenges!.data).find(
@@ -300,10 +292,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         }
     }
     if (layer.buyables) {
-        setupFeatures<NonNullable<RawLayer["buyables"]>, NonNullable<Layer["buyables"]>, Buyable>(
-            layer.id,
-            layer.buyables
-        );
+        setupFeatures<NonNullable<RawLayer["buyables"]>, Buyable>(layer.id, layer.buyables);
         setRowCol(layer.buyables);
         setDefault(layer.buyables, "respec", undefined, false);
         setDefault(
@@ -350,11 +339,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         }
     }
     if (layer.clickables) {
-        setupFeatures<
-            NonNullable<RawLayer["clickables"]>,
-            NonNullable<Layer["clickables"]>,
-            Clickable
-        >(layer.id, layer.clickables);
+        setupFeatures<NonNullable<RawLayer["clickables"]>, Clickable>(layer.id, layer.clickables);
         setRowCol(layer.clickables);
         setDefault(layer.clickables, "masterButtonClick", undefined, false);
         if (layer.clickables.masterButtonDisplay != undefined) {
@@ -373,11 +358,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         }
     }
     if (layer.milestones) {
-        setupFeatures<
-            NonNullable<RawLayer["milestones"]>,
-            NonNullable<Layer["milestones"]>,
-            Milestone
-        >(layer.id, layer.milestones);
+        setupFeatures<NonNullable<RawLayer["milestones"]>, Milestone>(layer.id, layer.milestones);
         for (const id in layer.milestones.data) {
             layer.milestones.data[id].earned = function() {
                 return (
@@ -415,12 +396,9 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         }
     }
     if (layer.grids) {
-        setupFeatures<NonNullable<RawLayer["grids"]>, NonNullable<Layer["grids"]>, Grid>(
-            layer.id,
-            layer.grids
-        );
+        setupFeatures<NonNullable<RawLayer["grids"]>, Grid>(layer.id, layer.grids);
         for (const id in layer.grids.data) {
-            setDefault(player.layers![layer.id].grids, id, {});
+            setDefault(player.layers[layer.id].grids, id, {});
             layer.grids.data[id].getData = function(cell): State {
                 if (playerProxy.layers[this.layer].grids[id][cell] != undefined) {
                     return playerProxy.layers[this.layer].grids[id][cell];
@@ -578,17 +556,18 @@ function setRowCol<T extends GridFeatures<S>, S extends Feature>(features: RawGr
     features.cols = maxCol;
 }
 
-function setupFeatures<T extends RawFeatures<R, S>, R extends Features<S>, S extends Feature>(
-    layer: string,
-    features: T
-) {
+function setupFeatures<
+    T extends RawFeatures<R, S, unknown>,
+    S extends Feature,
+    R extends Features<S> = Features<S>
+>(layer: string, features: T) {
     features.layer = layer;
     for (const id in features.data) {
         const feature = features.data[id];
-        (feature as Feature).id = id;
-        (feature as Feature).layer = layer;
-        if (feature.unlocked == undefined) {
-            (feature as Feature).unlocked = true;
+        (feature as S).id = id;
+        (feature as S).layer = layer;
+        if ((feature as S).unlocked == undefined) {
+            (feature as S).unlocked = true;
         }
     }
 }
@@ -599,7 +578,7 @@ function setDefault<T, K extends keyof T>(
     value: T[K],
     forceCached?: boolean
 ): asserts object is Exclude<T, K> & Required<Pick<T, K>> {
-    if (object[key] == undefined && value != undefined) {
+    if (object[key] === undefined && value != undefined) {
         object[key] = value;
     }
     if (object[key] != undefined && isFunction(object[key]) && forceCached != undefined) {
