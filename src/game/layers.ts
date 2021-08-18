@@ -92,11 +92,10 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         }
     }
     if (layer.upgrades) {
-        setupFeatures<
-            RawGridFeatures<GridFeatures<Upgrade>, Upgrade>,
-            GridFeatures<Upgrade>,
-            Upgrade
-        >(layer.id, layer.upgrades);
+        setupFeatures<NonNullable<RawLayer["upgrades"]>, NonNullable<Layer["upgrades"]>, Upgrade>(
+            layer.id,
+            layer.upgrades
+        );
         setRowCol(layer.upgrades);
         for (const id in layer.upgrades.data) {
             layer.upgrades.data[id].bought = function() {
@@ -190,8 +189,8 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
     }
     if (layer.achievements) {
         setupFeatures<
-            RawGridFeatures<GridFeatures<Achievement>, Achievement>,
-            GridFeatures<Achievement>,
+            NonNullable<RawLayer["achievements"]>,
+            NonNullable<Layer["achievements"]>,
             Achievement
         >(layer.id, layer.achievements);
         setRowCol(layer.achievements);
@@ -209,8 +208,8 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
     }
     if (layer.challenges) {
         setupFeatures<
-            RawGridFeatures<GridFeatures<Challenge>, Challenge>,
-            GridFeatures<Challenge>,
+            NonNullable<RawLayer["challenges"]>,
+            NonNullable<Layer["challenges"]>,
             Challenge
         >(layer.id, layer.challenges);
         setRowCol(layer.challenges);
@@ -301,11 +300,10 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         }
     }
     if (layer.buyables) {
-        setupFeatures<
-            RawGridFeatures<GridFeatures<Buyable>, Buyable>,
-            GridFeatures<Buyable>,
-            Buyable
-        >(layer.id, layer.buyables);
+        setupFeatures<NonNullable<RawLayer["buyables"]>, NonNullable<Layer["buyables"]>, Buyable>(
+            layer.id,
+            layer.buyables
+        );
         setRowCol(layer.buyables);
         setDefault(layer.buyables, "respec", undefined, false);
         setDefault(
@@ -353,8 +351,8 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
     }
     if (layer.clickables) {
         setupFeatures<
-            RawGridFeatures<GridFeatures<Clickable>, Clickable>,
-            GridFeatures<Clickable>,
+            NonNullable<RawLayer["clickables"]>,
+            NonNullable<Layer["clickables"]>,
             Clickable
         >(layer.id, layer.clickables);
         setRowCol(layer.clickables);
@@ -375,10 +373,11 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         }
     }
     if (layer.milestones) {
-        setupFeatures<RawFeatures<Features<Milestone>, Milestone>, Features<Milestone>, Milestone>(
-            layer.id,
-            layer.milestones
-        );
+        setupFeatures<
+            NonNullable<RawLayer["milestones"]>,
+            NonNullable<Layer["milestones"]>,
+            Milestone
+        >(layer.id, layer.milestones);
         for (const id in layer.milestones.data) {
             layer.milestones.data[id].earned = function() {
                 return (
@@ -416,7 +415,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         }
     }
     if (layer.grids) {
-        setupFeatures<RawFeatures<Features<Grid>, Grid>, Features<Grid>, Grid>(
+        setupFeatures<NonNullable<RawLayer["grids"]>, NonNullable<Layer["grids"]>, Grid>(
             layer.id,
             layer.grids
         );
