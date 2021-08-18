@@ -37,7 +37,7 @@ export interface RawLayer extends RawFeature<Layer> {
     subtabs?: Record<string, RawFeature<Subtab>>;
     microtabs?: Record<string, RawMicrotabFamily>;
     upgrades?: RawGridFeatures<NonNullable<Layer["upgrades"]>, Upgrade>;
-    startData?: () => Record<string, any>;
+    startData?: () => Record<string, State>;
 }
 
 export interface Layer extends Feature {
@@ -115,7 +115,7 @@ export interface Layer extends Feature {
     activeSubtab?: Subtab | undefined;
     microtabs?: Record<string, MicrotabFamily>;
     upgrades?: GridFeatures<Upgrade>;
-    startData?: () => Record<string, any>;
+    startData?: () => Record<string, State>;
     click?: () => void;
     automate?: () => void;
     reset: (force?: boolean) => void;
