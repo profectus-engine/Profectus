@@ -6,6 +6,7 @@ import VueTextareaAutosize from "vue-textarea-autosize";
 import Sortable from "vue-sortable";
 import VueNextSelect from "vue-next-select";
 import "vue-next-select/dist/index.css";
+import panZoom from "vue-panzoom";
 import { App } from "vue";
 
 export function registerComponents(vue: App): void {
@@ -23,4 +24,5 @@ export function registerComponents(vue: App): void {
     vue.use(VueTextareaAutosize);
     vue.use(Sortable);
     vue.component("vue-select", VueNextSelect);
+    vue.use(panZoom);
 }

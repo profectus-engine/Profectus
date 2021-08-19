@@ -13,7 +13,6 @@ export function createLayerProxy(object: Record<string, any>): Record<string, an
     return objectProxy;
 }
 
-// TODO cache grid values? Currently they'll be calculated every render they're visible
 export function createGridProxy(object: Record<string, any>): Record<string, any> {
     if (object.isProxy) {
         console.warn(

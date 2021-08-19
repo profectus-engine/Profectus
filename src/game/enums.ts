@@ -28,3 +28,8 @@ export enum ImportingStatus {
     WrongID = "WRONG_ID",
     Force = "FORCE"
 }
+
+export enum ProgressDisplay {
+    Outline = "Outline",
+    Fill = "Fill"
+}

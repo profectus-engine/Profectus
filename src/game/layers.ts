@@ -1,5 +1,6 @@
 import { CacheableFunction } from "@/typings/cacheableFunction";
 import { Achievement } from "@/typings/features/achievement";
+import { Board } from "@/typings/features/board";
 import { Buyable } from "@/typings/features/buyable";
 import { Challenge } from "@/typings/features/challenge";
 import { Clickable } from "@/typings/features/clickable";
@@ -23,6 +24,7 @@ import Decimal, { DecimalSource } from "@/util/bignum";
 import { isFunction } from "@/util/common";
 import {
     defaultLayerProperties,
+    getStartingBoards,
     getStartingBuyables,
     getStartingChallenges,
     getStartingClickables,
@@ -32,6 +34,7 @@ import { createGridProxy, createLayerProxy } from "@/util/proxies";
 import { applyPlayerData } from "@/util/save";
 import clone from "lodash.clonedeep";
 import { isRef } from "vue";
+import { ProgressDisplay } from "./enums";
 import { default as playerProxy } from "./player";
 
 export const layers: Record<string, Readonly<Layer>> = {};
@@ -70,6 +73,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
             buyables: getStartingBuyables(layer.buyables?.data),
             clickables: getStartingClickables(layer.clickables?.data),
             challenges: getStartingChallenges(layer.challenges?.data),
+            boards: getStartingBoards(layer.boards?.data),
             grids: {},
             confirmRespecBuyables: false,
             ...(layer.startData?.() || {})
@@ -421,6 +425,31 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
             setDefault(layer.grids.data[id], "hold", undefined, false);
             setDefault(layer.grids.data[id], "getTitle", undefined, false);
             layer.grids.data[id] = createGridProxy(layer.grids.data[id]) as Grid;
+        }
+    }
+    if (layer.boards) {
+        setupFeatures<NonNullable<RawLayer["boards"]>, Board>(layer.id, layer.boards);
+        for (const id in layer.boards.data) {
+            setDefault(layer.boards.data[id], "width", "100%");
+            setDefault(layer.boards.data[id], "height", "400px");
+            for (const nodeType in layer.boards.data[id].types) {
+                layer.boards.data[id].types[nodeType].layer = layer.id;
+                layer.boards.data[id].types[nodeType].id = id;
+                layer.boards.data[id].types[nodeType].type = nodeType;
+                setDefault(layer.boards.data[id].types[nodeType], "size", 50);
+                setDefault(layer.boards.data[id].types[nodeType], "draggable", false);
+                setDefault(layer.boards.data[id].types[nodeType], "canAccept", false);
+                setDefault(
+                    layer.boards.data[id].types[nodeType],
+                    "progressDisplay",
+                    ProgressDisplay.Fill
+                );
+                setDefault(layer.boards.data[id].types[nodeType], "nodes", function() {
+                    return playerProxy.layers[this.layer].boards[this.id].filter(
+                        node => node.type === this.type
+                    );
+                });
+            }
         }
     }
     if (layer.subtabs) {
