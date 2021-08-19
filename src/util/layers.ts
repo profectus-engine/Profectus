@@ -1,6 +1,7 @@
 import { hotkeys, layers } from "@/game/layers";
 import player from "@/game/player";
 import { CacheableFunction } from "@/typings/cacheableFunction";
+import { Board, BoardNode, RawBoard } from "@/typings/features/board";
 import { Buyable } from "@/typings/features/buyable";
 import { Challenge } from "@/typings/features/challenge";
 import { Clickable } from "@/typings/features/clickable";
@@ -65,6 +66,20 @@ export function getStartingChallenges(
               Decimal
           > => {
               acc[curr] = new Decimal(0);
+              return acc;
+          }, {})
+        : {};
+}
+
+export function getStartingBoards(
+    boards?: Record<string, Board> | Record<string, RawBoard> | undefined
+): Record<string, Array<BoardNode>> {
+    return boards
+        ? Object.keys(boards).reduce((acc: Record<string, Array<BoardNode>>, curr: string): Record<
+              string,
+              Array<BoardNode>
+          > => {
+              acc[curr] = boards[curr].startNodes?.() || [];
               return acc;
           }, {})
         : {};

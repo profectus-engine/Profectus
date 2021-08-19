@@ -3,6 +3,7 @@ import Decimal, { DecimalSource } from "@/util/bignum";
 import { CoercableComponent } from "./component";
 import { Achievement } from "./features/achievement";
 import { Bar } from "./features/bar";
+import { Board, RawBoard } from "./features/board";
 import { Buyable } from "./features/buyable";
 import { Challenge } from "./features/challenge";
 import { Clickable } from "./features/clickable";
@@ -31,6 +32,7 @@ export interface RawLayer extends RawFeature<Layer> {
     challenges?: RawGridFeatures<NonNullable<Layer["challenges"]>, Challenge>;
     clickables?: RawGridFeatures<NonNullable<Layer["clickables"]>, Clickable>;
     grids?: RawFeatures<NonNullable<Layer["grids"]>, Grid>;
+    boards?: RawFeatures<NonNullable<Layer["boards"]>, Board, RawBoard>;
     hotkeys?: RawFeature<Hotkey>[];
     infoboxes?: RawFeatures<NonNullable<Layer["infoboxes"]>, Infoboxe>;
     milestones?: RawFeatures<NonNullable<Layer["milestones"]>, Milestone>;
@@ -108,6 +110,7 @@ export interface Layer extends Feature {
         showMasterButton?: boolean;
     };
     grids?: Features<Grid>;
+    boards?: Features<Board>;
     hotkeys?: Hotkey[];
     infoboxes?: Features<Infobox>;
     milestones?: Features<Milestone>;
@@ -142,5 +145,6 @@ export interface ComponentStyles {
     "prestige-button"?: Partial<CSSStyleDeclaration>;
     "respec-button"?: Partial<CSSStyleDeclaration>;
     upgrade?: Partial<CSSStyleDeclaration>;
+    board?: Partial<CSSStyleDeclaration>;
     "tab-button"?: Partial<CSSStyleDeclaration>;
 }

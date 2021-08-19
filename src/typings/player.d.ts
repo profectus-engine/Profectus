@@ -1,6 +1,7 @@
 import { Themes } from "@/data/themes";
 import { DecimalSource } from "@/lib/break_eternity";
 import Decimal from "@/util/bignum";
+import { BoardNode } from "./features/board";
 import { MilestoneDisplay } from "./features/milestone";
 import { State } from "./state";
 
@@ -53,14 +54,15 @@ export interface LayerSaveData {
     unlockOrder?: number;
     forceTooltip?: boolean;
     resetTime: Decimal;
-    upgrades: Array<string | number>;
-    achievements: Array<string | number>;
-    milestones: Array<string | number>;
-    infoboxes: Record<string | number, boolean>;
-    buyables: Record<string | number, Decimal>;
-    clickables: Record<string | number, State>;
-    challenges: Record<string | number, Decimal>;
-    grids: Record<string | number, Record<string, number, State>>;
+    upgrades: Array<string>;
+    achievements: Array<string>;
+    milestones: Array<string>;
+    infoboxes: Record<string, boolean>;
+    buyables: Record<string, Decimal>;
+    clickables: Record<string, State>;
+    challenges: Record<string, Decimal>;
+    grids: Record<string, Record<string, State>>;
+    boards: Record<string, Array<BoardNode>>;
     confirmRespecBuyables: boolean;
     [index: string]: unknown;
 }
