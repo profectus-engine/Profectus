@@ -9,6 +9,11 @@ type ResourceNodeData = {
     maxAmount: DecimalSource;
 };
 
+type ItemNodeData = {
+    itemType: string;
+    amount: DecimalSource;
+};
+
 export default {
     id: "main",
     display: `
@@ -39,6 +44,14 @@ export default {
                                 amount: new Decimal(24 * 60 * 60),
                                 maxAmount: new Decimal(24 * 60 * 60)
                             }
+                        },
+                        {
+                            position: { x: 0, y: 150 },
+                            type: "item",
+                            data: {
+                                itemType: "speed",
+                                amount: new Decimal(5 * 60 * 60)
+                            }
                         }
                     ];
                 },
@@ -63,7 +76,22 @@ export default {
                                 default:
                                     return "none";
                             }
+                        },
+                        canAccept(node, otherNode) {
+                            return otherNode.type === "item";
+                        },
+                        onDrop(node, otherNode) {
+                            const index = player.layers[this.layer].boards[this.id].indexOf(
+                                otherNode
+                            );
+                            player.layers[this.layer].boards[this.id].splice(index, 1);
                         }
+                    },
+                    item: {
+                        title(node) {
+                            return (node.data as ItemNodeData).itemType;
+                        },
+                        draggable: true
                     }
                 }
             }

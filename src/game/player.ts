@@ -104,6 +104,12 @@ const playerHandler: ProxyHandler<Record<string, any>> = {
             }
         }
         return true;
+    },
+    ownKeys(target: Record<string, any>) {
+        return Reflect.ownKeys(target.__state);
+    },
+    has(target: Record<string, any>, key: string) {
+        return Reflect.has(target.__state, key);
     }
 };
 export default window.player = new Proxy(

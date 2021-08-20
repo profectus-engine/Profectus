@@ -73,13 +73,17 @@ export function getStartingChallenges(
 
 export function getStartingBoards(
     boards?: Record<string, Board> | Record<string, RawBoard> | undefined
-): Record<string, Array<BoardNode>> {
+): Record<string, BoardNode[]> {
     return boards
-        ? Object.keys(boards).reduce((acc: Record<string, Array<BoardNode>>, curr: string): Record<
+        ? Object.keys(boards).reduce((acc: Record<string, BoardNode[]>, curr: string): Record<
               string,
-              Array<BoardNode>
+              BoardNode[]
           > => {
-              acc[curr] = boards[curr].startNodes?.() || [];
+              const nodes = boards[curr].startNodes?.() || [];
+              acc[curr] = nodes.map((node, index) => ({
+                  id: index.toString(),
+                  ...node
+              })) as BoardNode[];
               return acc;
           }, {})
         : {};

@@ -62,7 +62,7 @@ export interface LayerSaveData {
     clickables: Record<string, State>;
     challenges: Record<string, Decimal>;
     grids: Record<string, Record<string, State>>;
-    boards: Record<string, Array<BoardNode>>;
+    boards: Record<string, BoardNode[]>;
     confirmRespecBuyables: boolean;
     [index: string]: unknown;
 }

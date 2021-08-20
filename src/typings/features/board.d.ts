@@ -2,6 +2,7 @@ import { State } from "../state";
 import { Feature, RawFeature } from "./feature";
 
 export interface BoardNode {
+    id: string;
     position: {
         x: number;
         y: number;
@@ -16,15 +17,15 @@ export interface CardOption {
 }
 
 export interface Board extends Feature {
-    startNodes: () => BoardNode[];
+    startNodes: () => Omit<BoardNode, "id">[];
     style?: Partial<CSSStyleDeclaration>;
     height: string;
     width: string;
     types: Record<string, NodeType>;
 }
 
-export type RawBoard = Omit<RawFeature<Board>, "types"> & {
-    startNodes: () => BoardNode[];
+export type RawBoard = Omit<RawFeature<Board>, "types" | "startNodes"> & {
+    startNodes: () => Omit<BoardNode, "id">[];
     types: Record<string, RawFeature<NodeType>>;
 };
 
@@ -41,5 +42,6 @@ export interface NodeType extends Feature {
     outlineColor?: string | ((node: BoardNode) => string);
     titleColor?: string | ((node: BoardNode) => string);
     onClick: (node: BoardNode) => void;
+    onDrop: (node: BoardNode, otherNode: BoardNode) => void;
     nodes: BoardNode[];
 }
