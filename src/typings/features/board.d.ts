@@ -32,7 +32,6 @@ export type RawBoard = Omit<RawFeature<Board>, "types" | "startNodes"> & {
 };
 
 export interface NodeType extends Feature {
-    tooltip?: string | ((node: BoardNode) => string);
     title: string | ((node: BoardNode) => string);
     size: number | ((node: BoardNode) => number);
     draggable: boolean | ((node: BoardNode) => boolean);
