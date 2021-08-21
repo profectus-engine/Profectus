@@ -118,15 +118,10 @@ export default {
                         title(node) {
                             return camelToTitle((node.data as ActionNodeData).actionType);
                         },
-                        tooltip(node) {
-                            switch ((node.data as ActionNodeData).actionType) {
-                                default:
-                                    return camelToTitle((node.data as ActionNodeData).actionType);
-                                case "browse":
-                                    return "Browse the internet";
-                            }
+                        fillColor() {
+                            return themes[player.theme].variables["--background-tooltip"];
                         },
-                        draggable: false,
+                        draggable: true,
                         shape: Shape.Diamond,
                         size: 100,
                         progressColor: "#0FF3",
