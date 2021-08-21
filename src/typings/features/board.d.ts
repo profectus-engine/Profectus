@@ -1,3 +1,4 @@
+import { Shape } from "@/game/enums";
 import { DecimalSource } from "@/lib/break_eternity";
 import { State } from "../state";
 import { Feature, RawFeature } from "./feature";
@@ -35,6 +36,7 @@ export interface NodeType extends Feature {
     title: string | ((node: BoardNode) => string);
     size: number | ((node: BoardNode) => number);
     draggable: boolean | ((node: BoardNode) => boolean);
+    shape: Shape | ((node: BoardNode) => Shape);
     canAccept: boolean | ((node: BoardNode, otherNode: BoardNode) => boolean);
     progress?: number | ((node: BoardNode) => number);
     progressDisplay: ProgressDisplay | ((node: BoardNode) => ProgressDisplay);

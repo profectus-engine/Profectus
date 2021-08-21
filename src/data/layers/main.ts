@@ -1,6 +1,8 @@
+import { ProgressDisplay, Shape } from "@/game/enums";
 import player from "@/game/player";
 import Decimal, { DecimalSource } from "@/lib/break_eternity";
 import { RawLayer } from "@/typings/layer";
+import { camelToTitle } from "@/util/common";
 import themes from "../themes";
 
 type ResourceNodeData = {
@@ -14,6 +16,10 @@ type ItemNodeData = {
     amount: DecimalSource;
 };
 
+type ActionNodeData = {
+    actionType: string;
+};
+
 export default {
     id: "main",
     display: `
@@ -21,7 +27,15 @@ export default {
         <div v-else-if="player.devSpeed && player.devSpeed !== 1">Dev Speed: {{ format(player.devSpeed) }}x</div>
         <div>TODO: Board</div>
         <Board id="main" />
+
     `,
+    startData() {
+        return {
+            openNode: null
+        } as {
+            openNode: string | null;
+        };
+    },
     minimizable: false,
     componentStyles: {
         board: {
@@ -51,6 +65,13 @@ export default {
                             data: {
                                 itemType: "speed",
                                 amount: new Decimal(5 * 60 * 60)
+                            }
+                        },
+                        {
+                            position: { x: -150, y: 150 },
+                            type: "action",
+                            data: {
+                                actionType: "browse"
                             }
                         }
                     ];
@@ -92,6 +113,24 @@ export default {
                             return (node.data as ItemNodeData).itemType;
                         },
                         draggable: true
+                    },
+                    action: {
+                        title(node) {
+                            return camelToTitle((node.data as ActionNodeData).actionType);
+                        },
+                        tooltip(node) {
+                            switch ((node.data as ActionNodeData).actionType) {
+                                default:
+                                    return camelToTitle((node.data as ActionNodeData).actionType);
+                                case "browse":
+                                    return "Browse the internet";
+                            }
+                        },
+                        draggable: false,
+                        shape: Shape.Diamond,
+                        size: 100,
+                        progressColor: "#0FF3",
+                        progressDisplay: ProgressDisplay.Outline
                     }
                 }
             }

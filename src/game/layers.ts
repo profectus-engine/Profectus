@@ -34,7 +34,7 @@ import { createGridProxy, createLayerProxy } from "@/util/proxies";
 import { applyPlayerData } from "@/util/save";
 import clone from "lodash.clonedeep";
 import { isRef } from "vue";
-import { ProgressDisplay } from "./enums";
+import { ProgressDisplay, Shape } from "./enums";
 import { default as playerProxy } from "./player";
 
 export const layers: Record<string, Readonly<Layer>> = {};
@@ -438,6 +438,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
                 layer.boards.data[id].types[nodeType].type = nodeType;
                 setDefault(layer.boards.data[id].types[nodeType], "size", 50);
                 setDefault(layer.boards.data[id].types[nodeType], "draggable", false);
+                setDefault(layer.boards.data[id].types[nodeType], "shape", Shape.Circle);
                 setDefault(layer.boards.data[id].types[nodeType], "canAccept", false);
                 setDefault(
                     layer.boards.data[id].types[nodeType],

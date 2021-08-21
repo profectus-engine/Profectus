@@ -7,31 +7,79 @@
         @mouseleave="mouseLeave"
         @mousedown="e => $emit('startDragging', e, node.id)"
     >
-        <circle
-            v-if="canAccept"
-            :r="size + 8"
-            :fill="backgroundColor"
-            :stroke="receivingNode ? '#0F0' : '#0F03'"
-            :stroke-width="2"
-        />
+        <g v-if="shape === Shape.Circle">
+            <circle
+                v-if="canAccept"
+                :r="size + 8"
+                :fill="backgroundColor"
+                :stroke="receivingNode ? '#0F0' : '#0F03'"
+                :stroke-width="2"
+            />
 
-        <circle :r="size" :fill="fillColor" :stroke="outlineColor" :stroke-width="4" />
+            <circle :r="size" :fill="fillColor" :stroke="outlineColor" :stroke-width="4" />
 
-        <circle
-            v-if="progressDisplay === ProgressDisplay.Fill"
-            :r="size * progress"
-            :fill="progressColor"
-        />
-        <circle
-            v-else
-            :r="size + 4.5"
-            class="progressRing"
-            fill="transparent"
-            :stroke-dasharray="(size + 4.5) * 2 * Math.PI"
-            :stroke-width="5"
-            :stroke-dashoffset="(size + 4.5) * 2 * Math.PI - progress * (size + 4.5) * 2 * Math.PI"
-            :stroke="progressColor"
-        />
+            <circle
+                v-if="progressDisplay === ProgressDisplay.Fill"
+                :r="Math.max(size * progress - 2, 0)"
+                :fill="progressColor"
+            />
+            <circle
+                v-else
+                :r="size + 4.5"
+                class="progressRing"
+                fill="transparent"
+                :stroke-dasharray="(size + 4.5) * 2 * Math.PI"
+                :stroke-width="5"
+                :stroke-dashoffset="
+                    (size + 4.5) * 2 * Math.PI - progress * (size + 4.5) * 2 * Math.PI
+                "
+                :stroke="progressColor"
+            />
+        </g>
+        <g v-else-if="shape === Shape.Diamond" transform="rotate(45, 0, 0)">
+            <rect
+                v-if="canAccept"
+                :width="size + 16"
+                :height="size + 16"
+                :transform="`translate(${-(size + 16) / 2}, ${-(size + 16) / 2})`"
+                :fill="backgroundColor"
+                :stroke="receivingNode ? '#0F0' : '#0F03'"
+                :stroke-width="2"
+            />
+
+            <rect
+                :width="size"
+                :height="size"
+                :transform="`translate(${-size / 2}, ${-size / 2})`"
+                :fill="fillColor"
+                :stroke="outlineColor"
+                :stroke-width="4"
+            />
+
+            <rect
+                v-if="progressDisplay === ProgressDisplay.Fill"
+                :width="Math.max(size * progress - 2, 0)"
+                :height="Math.max(size * progress - 2, 0)"
+                :transform="
+                    `translate(${-Math.max(size * progress - 2, 0) / 2}, ${-Math.max(
+                        size * progress - 2,
+                        0
+                    ) / 2})`
+                "
+                :fill="progressColor"
+            />
+            <rect
+                v-else
+                :width="size + 9"
+                :height="size + 9"
+                :transform="`translate(${-(size + 9) / 2}, ${-(size + 9) / 2})`"
+                fill="transparent"
+                :stroke-dasharray="(size + 9) * 4"
+                :stroke-width="5"
+                :stroke-dashoffset="(size + 9) * 4 - progress * (size + 9) * 4"
+                :stroke="progressColor"
+            />
+        </g>
 
         <text :fill="titleColor" class="node-title">{{ title }}</text>
     </g>
@@ -39,7 +87,7 @@
 
 <script lang="ts">
 import themes from "@/data/themes";
-import { ProgressDisplay } from "@/game/enums";
+import { ProgressDisplay, Shape } from "@/game/enums";
 import player from "@/game/player";
 import { BoardNode, NodeType } from "@/typings/features/board";
 import { getNodeTypeProperty } from "@/util/features";
@@ -52,6 +100,7 @@ export default defineComponent({
     data() {
         return {
             ProgressDisplay,
+            Shape,
             lastMousePosition: { x: 0, y: 0 },
             hovering: false
         };
@@ -89,6 +138,9 @@ export default defineComponent({
                       y: this.node.position.y + Math.round(this.dragged.y / 25) * 25
                   }
                 : this.node.position;
+        },
+        shape(): Shape {
+            return getNodeTypeProperty(this.nodeType, this.node, "shape");
         },
         size(): number {
             let size: number = getNodeTypeProperty(this.nodeType, this.node, "size");

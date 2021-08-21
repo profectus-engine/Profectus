@@ -33,3 +33,8 @@ export enum ProgressDisplay {
     Outline = "Outline",
     Fill = "Fill"
 }
+
+export enum Shape {
+    Circle = "Circle",
+    Diamond = "Triangle"
+}
