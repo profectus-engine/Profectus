@@ -73,7 +73,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
             buyables: getStartingBuyables(layer.buyables?.data),
             clickables: getStartingClickables(layer.clickables?.data),
             challenges: getStartingChallenges(layer.challenges?.data),
-            boards: getStartingBoards(layer.boards?.data),
+            boards: player.layers[layer.id]?.boards || getStartingBoards(layer.boards?.data),
             grids: {},
             confirmRespecBuyables: false,
             ...(layer.startData?.() || {})
