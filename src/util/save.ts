@@ -18,6 +18,7 @@ export function getInitialStore(playerData: Partial<PlayerData> = {}): PlayerDat
             time: Date.now(),
             autosave: true,
             offlineProd: true,
+            offlineTime: new Decimal(0),
             timePlayed: new Decimal(0),
             keepGoing: false,
             lastTenTicks: [],
