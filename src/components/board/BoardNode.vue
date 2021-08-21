@@ -5,7 +5,7 @@
         :transform="`translate(${position.x},${position.y})`"
         @mouseenter="mouseEnter"
         @mouseleave="mouseLeave"
-        @mousedown="e => $emit('startDragging', e, node.id)"
+        @mousedown="mouseDown"
     >
         <g v-if="shape === Shape.Circle">
             <circle
@@ -197,6 +197,11 @@ export default defineComponent({
         }
     },
     methods: {
+        mouseDown(e: MouseEvent) {
+            if (this.draggable) {
+                this.$emit('startDragging', e, this.node.id);
+            }
+        },
         mouseEnter() {
             this.hovering = true;
         },

@@ -149,8 +149,10 @@ export default defineComponent({
                 e.stopPropagation();
 
                 const zoom = (this.getZoomLevel as () => number)();
-                this.dragged.x += (e.clientX - this.lastMousePosition.x) / zoom;
-                this.dragged.y += (e.clientY - this.lastMousePosition.y) / zoom;
+                this.dragged = {
+                    x: this.dragged.x + (e.clientX - this.lastMousePosition.x) / zoom,
+                    y: this.dragged.y + (e.clientY - this.lastMousePosition.y) / zoom
+                }
                 this.lastMousePosition = {
                     x: e.clientX,
                     y: e.clientY
