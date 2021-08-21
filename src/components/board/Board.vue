@@ -126,7 +126,7 @@ export default defineComponent({
         getZoomLevel(): number {
             return (this.$refs.stage as any).$panZoomInstance.getTransform().scale;
         },
-        onInit: function(panzoomInstance) {
+        onInit: function(panzoomInstance: any) {
             panzoomInstance.setTransformOrigin(null);
         },
         startDragging(e: MouseEvent, nodeID: string) {
@@ -168,7 +168,7 @@ export default defineComponent({
                 nodes.push(draggingNode);
 
                 if (receivingNode) {
-                    this.board.types[receivingNode.type].onDrop(receivingNode, draggingNode);
+                    this.board.types[receivingNode.type].onDrop?.(receivingNode, draggingNode);
                 }
 
                 this.dragging = null;
