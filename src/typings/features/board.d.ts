@@ -1,3 +1,4 @@
+import { DecimalSource } from "@/lib/break_eternity";
 import { State } from "../state";
 import { Feature, RawFeature } from "./feature";
 
@@ -41,7 +42,8 @@ export interface NodeType extends Feature {
     fillColor?: string | ((node: BoardNode) => string);
     outlineColor?: string | ((node: BoardNode) => string);
     titleColor?: string | ((node: BoardNode) => string);
-    onClick: (node: BoardNode) => void;
-    onDrop: (node: BoardNode, otherNode: BoardNode) => void;
+    onClick?: (node: BoardNode) => void;
+    onDrop?: (node: BoardNode, otherNode: BoardNode) => void;
+    update?: (node: BoardNode, diff: DecimalSource) => void;
     nodes: BoardNode[];
 }
