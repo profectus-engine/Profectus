@@ -6,6 +6,7 @@
         ref="stage"
         @init="onInit"
         @mousemove="drag"
+        @mousedown="deselect"
         @mouseup="() => endDragging(dragging)"
         @mouseleave="() => endDragging(dragging)"
     >
@@ -18,18 +19,9 @@
                     :nodeType="board.types[node.type]"
                     :dragging="draggingNode"
                     :dragged="dragged"
+                    :hasDragged="hasDragged"
                     :receivingNode="receivingNode?.id === node.id"
-                    @startDragging="startDragging"
-                    @endDragging="endDragging"
-                />
-                <BoardNode
-                    v-if="draggingNode"
-                    :node="draggingNode"
-                    :nodeType="board.types[draggingNode.type]"
-                    :dragging="draggingNode"
-                    :dragged="dragged"
-                    :receivingNode="receivingNode?.id === draggingNode.id"
-                    @startDragging="startDragging"
+                    @mouseDown="mouseDown"
                     @endDragging="endDragging"
                 />
             </g>
@@ -51,11 +43,13 @@ export default defineComponent({
         return {
             lastMousePosition: { x: 0, y: 0 },
             dragged: { x: 0, y: 0 },
-            dragging: null
+            dragging: null,
+            hasDragged: false
         } as {
             lastMousePosition: { x: number; y: number };
             dragged: { x: number; y: number };
             dragging: string | null;
+            hasDragged: boolean;
         };
     },
     props: {
@@ -79,14 +73,15 @@ export default defineComponent({
             ];
         },
         draggingNode() {
-            return this.dragging
-                ? player.layers[this.layer].boards[this.id].find(node => node.id === this.dragging)
-                : null;
+            return this.dragging ? this.board.nodes.find(node => node.id === this.dragging) : null;
         },
         nodes() {
-            return player.layers[this.layer].boards[this.id].filter(
-                node => node !== this.draggingNode
-            );
+            const nodes = this.board.nodes.slice();
+            if (this.draggingNode) {
+                const draggingNode = nodes.splice(nodes.indexOf(this.draggingNode), 1)[0];
+                nodes.push(draggingNode);
+            }
+            return nodes;
         },
         receivingNode(): BoardNode | null {
             if (this.draggingNode == null) {
@@ -99,6 +94,9 @@ export default defineComponent({
             };
             let smallestDistance = Number.MAX_VALUE;
             return this.nodes.reduce((smallest: BoardNode | null, curr: BoardNode) => {
+                if (curr.id === this.draggingNode!.id) {
+                    return smallest;
+                }
                 const nodeType = this.board.types[curr.type];
                 const canAccept =
                     typeof nodeType.canAccept === "boolean"
@@ -126,10 +124,14 @@ export default defineComponent({
         getZoomLevel(): number {
             return (this.$refs.stage as any).$panZoomInstance.getTransform().scale;
         },
-        onInit: function(panzoomInstance: any) {
+        onInit(panzoomInstance: any) {
             panzoomInstance.setTransformOrigin(null);
         },
-        startDragging(e: MouseEvent, nodeID: string) {
+        deselect() {
+            player.layers[this.layer].boards[this.id].selectedNode = null;
+            player.layers[this.layer].boards[this.id].selectedAction = null;
+        },
+        mouseDown(e: MouseEvent, nodeID: string, draggable: boolean) {
             if (this.dragging == null) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -139,33 +141,43 @@ export default defineComponent({
                     y: e.clientY
                 };
                 this.dragged = { x: 0, y: 0 };
+                this.hasDragged = false;
 
-                this.dragging = nodeID;
+                if (draggable) {
+                    this.dragging = nodeID;
+                }
             }
+            player.layers[this.layer].boards[this.id].selectedNode = null;
+            player.layers[this.layer].boards[this.id].selectedAction = null;
         },
         drag(e: MouseEvent) {
+            const zoom = (this.getZoomLevel as () => number)();
+            this.dragged = {
+                x: this.dragged.x + (e.clientX - this.lastMousePosition.x) / zoom,
+                y: this.dragged.y + (e.clientY - this.lastMousePosition.y) / zoom
+            };
+            this.lastMousePosition = {
+                x: e.clientX,
+                y: e.clientY
+            };
+
+            if (Math.abs(this.dragged.x) > 10 || Math.abs(this.dragged.y) > 10) {
+                this.hasDragged = true;
+            }
+
             if (this.dragging) {
                 e.preventDefault();
                 e.stopPropagation();
-
-                const zoom = (this.getZoomLevel as () => number)();
-                this.dragged = {
-                    x: this.dragged.x + (e.clientX - this.lastMousePosition.x) / zoom,
-                    y: this.dragged.y + (e.clientY - this.lastMousePosition.y) / zoom
-                }
-                this.lastMousePosition = {
-                    x: e.clientX,
-                    y: e.clientY
-                };
             }
         },
         endDragging(nodeID: string | null) {
             if (this.dragging != null && this.dragging === nodeID) {
-                const nodes = player.layers[this.layer].boards[this.id];
                 const draggingNode = this.draggingNode!;
                 const receivingNode = this.receivingNode;
                 draggingNode.position.x += Math.round(this.dragged.x / 25) * 25;
                 draggingNode.position.y += Math.round(this.dragged.y / 25) * 25;
+
+                const nodes = this.board.nodes;
                 nodes.splice(nodes.indexOf(draggingNode), 1);
                 nodes.push(draggingNode);
 

@@ -1,7 +1,7 @@
 import { Themes } from "@/data/themes";
 import { DecimalSource } from "@/lib/break_eternity";
 import Decimal from "@/util/bignum";
-import { BoardNode } from "./features/board";
+import { BoardData, BoardNode } from "./features/board";
 import { MilestoneDisplay } from "./features/milestone";
 import { State } from "./state";
 
@@ -62,7 +62,7 @@ export interface LayerSaveData {
     clickables: Record<string, State>;
     challenges: Record<string, Decimal>;
     grids: Record<string, Record<string, State>>;
-    boards: Record<string, BoardNode[]>;
+    boards: Record<string, BoardData>;
     confirmRespecBuyables: boolean;
     [index: string]: unknown;
 }

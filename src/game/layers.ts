@@ -432,6 +432,29 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         for (const id in layer.boards.data) {
             setDefault(layer.boards.data[id], "width", "100%");
             setDefault(layer.boards.data[id], "height", "400px");
+            setDefault(layer.boards.data[id], "nodes", function() {
+                return playerProxy.layers[this.layer].boards[this.id].nodes;
+            });
+            setDefault(layer.boards.data[id], "selectedNode", function() {
+                return playerProxy.layers[this.layer].boards[this.id].nodes.find(
+                    node => node.id === playerProxy.layers[this.layer].boards[this.id].selectedNode
+                );
+            });
+            setDefault(layer.boards.data[id], "selectedAction", function() {
+                if (this.selectedNode == null) {
+                    return null;
+                }
+                const nodeType = layers[this.layer].boards!.data[this.id].types[
+                    this.selectedNode.type
+                ];
+                if (nodeType.actions === null) {
+                    return null;
+                }
+                if (typeof nodeType.actions === "function") {
+                    return nodeType.actions(this.selectedNode);
+                }
+                return nodeType.actions;
+            });
             for (const nodeType in layer.boards.data[id].types) {
                 layer.boards.data[id].types[nodeType].layer = layer.id;
                 layer.boards.data[id].types[nodeType].id = id;
@@ -440,15 +463,19 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
                 setDefault(layer.boards.data[id].types[nodeType], "draggable", false);
                 setDefault(layer.boards.data[id].types[nodeType], "shape", Shape.Circle);
                 setDefault(layer.boards.data[id].types[nodeType], "canAccept", false);
+                setDefault(layer.boards.data[id].types[nodeType], "actionDistance", Math.PI / 6);
                 setDefault(
                     layer.boards.data[id].types[nodeType],
                     "progressDisplay",
                     ProgressDisplay.Fill
                 );
                 setDefault(layer.boards.data[id].types[nodeType], "nodes", function() {
-                    return playerProxy.layers[this.layer].boards[this.id].filter(
+                    return playerProxy.layers[this.layer].boards[this.id].nodes.filter(
                         node => node.type === this.type
                     );
+                });
+                setDefault(layer.boards.data[id].types[nodeType], "onClick", function(node) {
+                    playerProxy.layers[this.layer].boards[this.id].selectedNode = node.id;
                 });
             }
         }

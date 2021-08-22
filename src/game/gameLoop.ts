@@ -68,10 +68,10 @@ function updateLayers(diff: DecimalSource) {
             );
         }
         layers[layer].update?.(diff);
-        if (layers[layer].boards) {
-            Reflect.ownKeys(player.layers[layer].boards).forEach(board => {
-                player.layers[layer].boards[board.toString()].forEach(node => {
-                    const nodeType = layers[layer].boards!.data[board.toString()].types[node.type];
+        if (layers[layer].boards && layers[layer].boards?.data) {
+            Object.values(layers[layer].boards!.data!).forEach(board => {
+                board.nodes.forEach(node => {
+                    const nodeType = board.types[node.type];
                     nodeType.update?.(node, diff);
                 });
             });

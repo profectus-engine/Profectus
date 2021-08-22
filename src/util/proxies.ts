@@ -43,7 +43,8 @@ function travel(
             object[key] = computed(object[key].bind(objectProxy));
         } else if (
             (isPlainObject(object[key]) || Array.isArray(object[key])) &&
-            !(object[key] instanceof Decimal)
+            !(object[key] instanceof Decimal) &&
+            typeof object[key].render !== "function"
         ) {
             object[key] = callback(object[key]);
         }
@@ -62,7 +63,11 @@ const layerHandler: ProxyHandler<Record<string, any>> = {
 
         if (isRef(target[key])) {
             return target[key].value;
-        } else if (target[key].isProxy || target[key] instanceof Decimal) {
+        } else if (
+            target[key].isProxy ||
+            target[key] instanceof Decimal ||
+            typeof target[key].render === "function"
+        ) {
             return target[key];
         } else if (
             (isPlainObject(target[key]) || Array.isArray(target[key])) &&

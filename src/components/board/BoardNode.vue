@@ -1,13 +1,38 @@
 <template>
     <g
         class="boardnode"
-        :style="{ opacity: dragging?.id === node.id ? 0.5 : 1 }"
+        :style="{ opacity: dragging?.id === node.id && hasDragged ? 0.5 : 1 }"
         :transform="`translate(${position.x},${position.y})`"
-        @mouseenter="mouseEnter"
-        @mouseleave="mouseLeave"
-        @mousedown="mouseDown"
     >
-        <g v-if="shape === Shape.Circle">
+        <transition name="actions" appear>
+            <g v-if="selected && actions">
+                <g
+                    v-for="(action, index) in actions"
+                    :key="action.id"
+                    class="action"
+                    :transform="
+                        `translate(
+                            ${(-size - 30) *
+                                Math.sin(((actions.length - 1) / 2 - index) * actionDistance)},
+                            ${(size + 30) *
+                                Math.cos(((actions.length - 1) / 2 - index) * actionDistance)}
+                        )`
+                    "
+                    @click="performAction(action)"
+                >
+                    <circle :fill="fillColor" r="20" />
+                    <text :fill="titleColor" class="material-icons">{{ action.icon }}</text>
+                </g>
+            </g>
+        </transition>
+
+        <g
+            v-if="shape === Shape.Circle"
+            @mouseenter="mouseEnter"
+            @mouseleave="mouseLeave"
+            @mousedown="mouseDown"
+            @mouseup="mouseUp"
+        >
             <circle
                 v-if="canAccept"
                 :r="size + 8"
@@ -36,21 +61,30 @@
                 :stroke="progressColor"
             />
         </g>
-        <g v-else-if="shape === Shape.Diamond" transform="rotate(45, 0, 0)">
+        <g
+            v-else-if="shape === Shape.Diamond"
+            transform="rotate(45, 0, 0)"
+            @mouseenter="mouseEnter"
+            @mouseleave="mouseLeave"
+            @mousedown="mouseDown"
+            @mouseup="mouseUp"
+        >
             <rect
                 v-if="canAccept"
-                :width="size + 16"
-                :height="size + 16"
-                :transform="`translate(${-(size + 16) / 2}, ${-(size + 16) / 2})`"
+                :width="size * sqrtTwo + 16"
+                :height="size * sqrtTwo + 16"
+                :transform="
+                    `translate(${-(size * sqrtTwo + 16) / 2}, ${-(size * sqrtTwo + 16) / 2})`
+                "
                 :fill="backgroundColor"
                 :stroke="receivingNode ? '#0F0' : '#0F03'"
                 :stroke-width="2"
             />
 
             <rect
-                :width="size"
-                :height="size"
-                :transform="`translate(${-size / 2}, ${-size / 2})`"
+                :width="size * sqrtTwo"
+                :height="size * sqrtTwo"
+                :transform="`translate(${(-size * sqrtTwo) / 2}, ${(-size * sqrtTwo) / 2})`"
                 :fill="fillColor"
                 :stroke="outlineColor"
                 :stroke-width="4"
@@ -58,11 +92,11 @@
 
             <rect
                 v-if="progressDisplay === ProgressDisplay.Fill"
-                :width="Math.max(size * progress - 2, 0)"
-                :height="Math.max(size * progress - 2, 0)"
+                :width="Math.max(size * sqrtTwo * progress - 2, 0)"
+                :height="Math.max(size * sqrtTwo * progress - 2, 0)"
                 :transform="
-                    `translate(${-Math.max(size * progress - 2, 0) / 2}, ${-Math.max(
-                        size * progress - 2,
+                    `translate(${-Math.max(size * sqrtTwo * progress - 2, 0) / 2}, ${-Math.max(
+                        size * sqrtTwo * progress - 2,
                         0
                     ) / 2})`
                 "
@@ -70,13 +104,13 @@
             />
             <rect
                 v-else
-                :width="size + 9"
-                :height="size + 9"
-                :transform="`translate(${-(size + 9) / 2}, ${-(size + 9) / 2})`"
+                :width="size * sqrtTwo + 9"
+                :height="size * sqrtTwo + 9"
+                :transform="`translate(${-(size * sqrtTwo + 9) / 2}, ${-(size * sqrtTwo + 9) / 2})`"
                 fill="transparent"
-                :stroke-dasharray="(size + 9) * 4"
+                :stroke-dasharray="(size * sqrtTwo + 9) * 4"
                 :stroke-width="5"
-                :stroke-dashoffset="(size + 9) * 4 - progress * (size + 9) * 4"
+                :stroke-dashoffset="(size * sqrtTwo + 9) * 4 - progress * (size * sqrtTwo + 9) * 4"
                 :stroke="progressColor"
             />
         </g>
@@ -88,8 +122,9 @@
 <script lang="ts">
 import themes from "@/data/themes";
 import { ProgressDisplay, Shape } from "@/game/enums";
+import { layers } from "@/game/layers";
 import player from "@/game/player";
-import { BoardNode, NodeType } from "@/typings/features/board";
+import { BoardNode, BoardNodeAction, NodeType } from "@/typings/features/board";
 import { getNodeTypeProperty } from "@/util/features";
 import { InjectLayerMixin } from "@/util/vue";
 import { defineComponent, PropType } from "vue";
@@ -102,10 +137,11 @@ export default defineComponent({
             ProgressDisplay,
             Shape,
             lastMousePosition: { x: 0, y: 0 },
-            hovering: false
+            hovering: false,
+            sqrtTwo: Math.sqrt(2)
         };
     },
-    emits: ["startDragging", "endDragging"],
+    emits: ["mouseDown", "endDragging"],
     props: {
         node: {
             type: Object as PropType<BoardNode>,
@@ -122,12 +158,25 @@ export default defineComponent({
             type: Object as PropType<{ x: number; y: number }>,
             required: true
         },
+        hasDragged: {
+            type: Boolean,
+            default: false
+        },
         receivingNode: {
             type: Boolean,
             default: false
         }
     },
     computed: {
+        board() {
+            return layers[this.nodeType.layer].boards!.data[this.nodeType.id];
+        },
+        selected() {
+            return this.board.selectedNode?.id === this.node.id;
+        },
+        actions(): BoardNodeAction[] | null | undefined {
+            return getNodeTypeProperty(this.nodeType, this.node, "actions");
+        },
         draggable(): boolean {
             return getNodeTypeProperty(this.nodeType, this.node, "draggable");
         },
@@ -146,7 +195,7 @@ export default defineComponent({
             let size: number = getNodeTypeProperty(this.nodeType, this.node, "size");
             if (this.receivingNode) {
                 size *= 1.25;
-            } else if (this.hovering) {
+            } else if (this.hovering || this.selected) {
                 size *= 1.15;
             }
             return size;
@@ -188,18 +237,24 @@ export default defineComponent({
             );
         },
         canAccept(): boolean {
-            if (this.dragging == null) {
+            if (this.dragging == null || !this.hasDragged) {
                 return false;
             }
             return typeof this.nodeType.canAccept === "boolean"
                 ? this.nodeType.canAccept
                 : this.nodeType.canAccept(this.node, this.dragging);
+        },
+        actionDistance(): number {
+            return getNodeTypeProperty(this.nodeType, this.node, "actionDistance");
         }
     },
     methods: {
         mouseDown(e: MouseEvent) {
-            if (this.draggable) {
-                this.$emit('startDragging', e, this.node.id);
+            this.$emit("mouseDown", e, this.node.id, this.draggable);
+        },
+        mouseUp() {
+            if (!this.hasDragged) {
+                this.nodeType.onClick?.(this.node);
             }
         },
         mouseEnter() {
@@ -207,11 +262,14 @@ export default defineComponent({
         },
         mouseLeave() {
             this.hovering = false;
+        },
+        performAction(action: BoardNodeAction) {
+            action.onClick(this.node);
         }
     },
     watch: {
         onDraggableChanged() {
-            if (this.dragging && !this.draggable) {
+            if (this.dragging?.id === this.node.id && !this.draggable) {
                 this.$emit("endDragging", this.node.id);
             }
         }
@@ -230,9 +288,30 @@ export default defineComponent({
     dominant-baseline: middle;
     font-family: monospace;
     font-size: 200%;
+    pointer-events: none;
 }
 
 .progressRing {
     transform: rotate(-90deg);
+}
+
+.action:hover circle {
+    r: 25;
+}
+
+.action:hover text {
+    font-size: 187.5%; /* 150% * 1.25 */
+}
+
+.action text {
+    text-anchor: middle;
+    dominant-baseline: central;
+}
+</style>
+
+<style>
+.actions-enter-from .action,
+.actions-leave-to .action {
+    transform: translate(0, 0);
 }
 </style>

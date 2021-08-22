@@ -13,9 +13,10 @@ export interface BoardNode {
     data?: State;
 }
 
-export interface CardOption {
-    text: string;
-    selected: (node: BoardNode) => void;
+export interface BoardData {
+    nodes: BoardNode[];
+    selectedNode: string | null;
+    selectedAction: string | null;
 }
 
 export interface Board extends Feature {
@@ -24,6 +25,9 @@ export interface Board extends Feature {
     height: string;
     width: string;
     types: Record<string, NodeType>;
+    nodes: BoardNode[];
+    selectedNode: BoardNode | null;
+    selectedAction: BoardNodeAction | null;
 }
 
 export type RawBoard = Omit<RawFeature<Board>, "types" | "startNodes"> & {
@@ -43,8 +47,17 @@ export interface NodeType extends Feature {
     fillColor?: string | ((node: BoardNode) => string);
     outlineColor?: string | ((node: BoardNode) => string);
     titleColor?: string | ((node: BoardNode) => string);
+    actions?: BoardNodeAction[] | ((node: BoardNode) => BoardNodeAction[]);
+    actionDistance: number | ((node: BoardNode) => number);
     onClick?: (node: BoardNode) => void;
     onDrop?: (node: BoardNode, otherNode: BoardNode) => void;
     update?: (node: BoardNode, diff: DecimalSource) => void;
     nodes: BoardNode[];
+}
+
+export interface BoardNodeAction {
+    id: string;
+    icon: string;
+    tooltip: string;
+    onClick: (node: BoardNode) => void;
 }

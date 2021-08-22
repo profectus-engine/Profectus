@@ -1,7 +1,7 @@
 import { hotkeys, layers } from "@/game/layers";
 import player from "@/game/player";
 import { CacheableFunction } from "@/typings/cacheableFunction";
-import { Board, BoardNode, RawBoard } from "@/typings/features/board";
+import { Board, BoardData, BoardNode, RawBoard } from "@/typings/features/board";
 import { Buyable } from "@/typings/features/buyable";
 import { Challenge } from "@/typings/features/challenge";
 import { Clickable } from "@/typings/features/clickable";
@@ -73,17 +73,21 @@ export function getStartingChallenges(
 
 export function getStartingBoards(
     boards?: Record<string, Board> | Record<string, RawBoard> | undefined
-): Record<string, BoardNode[]> {
+): Record<string, BoardData> {
     return boards
-        ? Object.keys(boards).reduce((acc: Record<string, BoardNode[]>, curr: string): Record<
+        ? Object.keys(boards).reduce((acc: Record<string, BoardData>, curr: string): Record<
               string,
-              BoardNode[]
+              BoardData
           > => {
               const nodes = boards[curr].startNodes?.() || [];
-              acc[curr] = nodes.map((node, index) => ({
-                  id: index.toString(),
-                  ...node
-              })) as BoardNode[];
+              acc[curr] = {
+                  nodes: nodes.map((node, index) => ({
+                      id: index.toString(),
+                      ...node
+                  })),
+                  selectedNode: null,
+                  selectedAction: null
+              } as BoardData;
               return acc;
           }, {})
         : {};

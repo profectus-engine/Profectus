@@ -4,36 +4,34 @@ import Decimal, { DecimalSource } from "@/lib/break_eternity";
 import { RawLayer } from "@/typings/layer";
 import { camelToTitle } from "@/util/common";
 import themes from "../themes";
+import Main from "./Main.vue";
 
-type ResourceNodeData = {
+export type ResourceNodeData = {
     resourceType: string;
     amount: DecimalSource;
     maxAmount: DecimalSource;
 };
 
-type ItemNodeData = {
+export type ItemNodeData = {
     itemType: string;
     amount: DecimalSource;
 };
 
-type ActionNodeData = {
+export type ActionNodeData = {
     actionType: string;
+    log: string[];
 };
 
 export default {
     id: "main",
-    display: `
-        <div v-if="player.devSpeed === 0">Game Paused</div>
-        <div v-else-if="player.devSpeed && player.devSpeed !== 1">Dev Speed: {{ format(player.devSpeed) }}x</div>
-        <div>TODO: Board</div>
-        <Board id="main" />
-
-    `,
+    display: Main,
     startData() {
         return {
-            openNode: null
+            openNode: null,
+            showModal: false
         } as {
             openNode: string | null;
+            showModal: boolean;
         };
     },
     minimizable: false,
@@ -71,7 +69,8 @@ export default {
                             position: { x: -150, y: 150 },
                             type: "action",
                             data: {
-                                actionType: "browse"
+                                actionType: "web",
+                                log: []
                             }
                         }
                     ];
@@ -101,16 +100,24 @@ export default {
                         canAccept(node, otherNode) {
                             return otherNode.type === "item";
                         },
+                        onClick(node) {
+                            player.layers.main.openNode = node.id;
+                            player.layers.main.showModal = true;
+                        },
                         onDrop(node, otherNode) {
-                            const index = player.layers[this.layer].boards[this.id].indexOf(
+                            const index = player.layers[this.layer].boards[this.id].nodes.indexOf(
                                 otherNode
                             );
-                            player.layers[this.layer].boards[this.id].splice(index, 1);
+                            player.layers[this.layer].boards[this.id].nodes.splice(index, 1);
                         }
                     },
                     item: {
                         title(node) {
                             return (node.data as ItemNodeData).itemType;
+                        },
+                        onClick(node) {
+                            player.layers.main.openNode = node.id;
+                            player.layers.main.showModal = true;
                         },
                         draggable: true
                     },
@@ -118,14 +125,30 @@ export default {
                         title(node) {
                             return camelToTitle((node.data as ActionNodeData).actionType);
                         },
-                        fillColor() {
-                            return themes[player.theme].variables["--background-tooltip"];
-                        },
+                        fillColor: "#000",
                         draggable: true,
                         shape: Shape.Diamond,
-                        size: 100,
                         progressColor: "#0FF3",
-                        progressDisplay: ProgressDisplay.Outline
+                        progressDisplay: ProgressDisplay.Outline,
+                        actions: [
+                            {
+                                id: "info",
+                                icon: "history_edu",
+                                tooltip: "Log",
+                                onClick(node) {
+                                    player.layers.main.openNode = node.id;
+                                    player.layers.main.showModal = true;
+                                }
+                            },
+                            {
+                                id: "reddit",
+                                icon: "reddit",
+                                tooltip: "Browse Reddit",
+                                onClick(node) {
+                                    // TODO
+                                }
+                            }
+                        ]
                     }
                 }
             }

@@ -35,7 +35,7 @@ const data = function(): Record<string, unknown> {
     return { Decimal, player, layers, hasWon, pointGain, ...numberUtils };
 };
 export function coerceComponent(
-    component: string | ComponentOptions,
+    component: string | ComponentOptions | Component,
     defaultWrapper = "span"
 ): Component | string {
     if (typeof component === "string") {
