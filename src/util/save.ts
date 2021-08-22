@@ -187,6 +187,9 @@ window.onbeforeunload = () => {
     }
 };
 window.save = save;
-window.hardReset = () => {
-    loadSave(newSave());
+window.hardReset = async () => {
+    await loadSave(newSave());
+    const modData = JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)!))));
+    modData.active = player.id;
+    localStorage.setItem(modInfo.id, btoa(unescape(encodeURIComponent(JSON.stringify(modData)))));
 };
