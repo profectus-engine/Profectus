@@ -4,7 +4,7 @@ import { State } from "../state";
 import { Feature, RawFeature } from "./feature";
 
 export interface BoardNode {
-    id: string;
+    id: number;
     position: {
         x: number;
         y: number;
@@ -28,6 +28,7 @@ export interface Board extends Feature {
     nodes: BoardNode[];
     selectedNode: BoardNode | null;
     selectedAction: BoardNodeAction | null;
+    links: BoardNodeLink[] | null;
 }
 
 export type RawBoard = Omit<RawFeature<Board>, "types" | "startNodes"> & {
@@ -37,7 +38,8 @@ export type RawBoard = Omit<RawFeature<Board>, "types" | "startNodes"> & {
 
 export interface NodeType extends Feature {
     title: string | ((node: BoardNode) => string);
-    size: number | ((node: BoardNode) => number);
+    label?: NodeLabel | null | ((node: BoardNode) => NodeLabel | null);
+    size: number | string | ((node: BoardNode) => number | string);
     draggable: boolean | ((node: BoardNode) => boolean);
     shape: Shape | ((node: BoardNode) => Shape);
     canAccept: boolean | ((node: BoardNode, otherNode: BoardNode) => boolean);
@@ -57,7 +59,24 @@ export interface NodeType extends Feature {
 
 export interface BoardNodeAction {
     id: string;
-    icon: string;
-    tooltip: string;
+    icon: string | ((node: BoardNode) => string);
+    fillColor?: string | ((node: BoardNode) => string);
+    tooltip: string | ((node: BoardNode) => string);
     onClick: (node: BoardNode) => void;
+    links?: BoardNodeLink[] | ((node: BoardNode) => BoardNodeLink[]);
+}
+
+export interface BoardNodeLink {
+    from: BoardNode;
+    to: BoardNode;
+    stroke: string;
+    strokeWidth: number | string;
+    pulsing?: boolean;
+    [key: string]: any;
+}
+
+export interface NodeLabel {
+    text: string;
+    color?: string;
+    pulsing?: boolean;
 }

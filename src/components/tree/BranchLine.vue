@@ -37,11 +37,11 @@ export default defineComponent({
             }
             return this.options.stroke!;
         },
-        strokeWidth(): string {
-            if (typeof this.options === "string" || !("stroke-width" in this.options)) {
-                return "15px";
+        strokeWidth(): number | string {
+            if (typeof this.options === "string" || !("strokeWidth" in this.options)) {
+                return "15";
             }
-            return this.options["stroke-width"]!;
+            return this.options["strokeWidth"]!;
         },
         startPosition(): Position {
             const position = { x: this.startNode.x || 0, y: this.startNode.y || 0 };

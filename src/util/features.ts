@@ -1,5 +1,5 @@
 import { layers } from "@/game/layers";
-import { NodeType, BoardNode } from "@/typings/features/board";
+import { NodeType, BoardNode, Board } from "@/typings/features/board";
 import { GridCell } from "@/typings/features/grid";
 import { State } from "@/typings/state";
 import Decimal, { DecimalSource } from "@/util/bignum";
@@ -106,4 +106,14 @@ export function getNodeTypeProperty<T, S extends NodeType, R extends keyof S>(
     return typeof nodeType[property] === "function"
         ? (nodeType[property] as (node: BoardNode) => T)(node)
         : (nodeType[property] as T);
+}
+
+export function getUniqueNodeID(board: Board): number {
+    let id = 0;
+    board.nodes.forEach(node => {
+        if (node.id >= id) {
+            id = node.id + 1;
+        }
+    });
+    return id;
 }

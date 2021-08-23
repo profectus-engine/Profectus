@@ -6,10 +6,12 @@
     >
         <transition name="actions" appear>
             <g v-if="selected && actions">
+                <!-- TODO move to separate file -->
                 <g
                     v-for="(action, index) in actions"
                     :key="action.id"
                     class="action"
+                    :class="{ selected: selectedAction === action }"
                     :transform="
                         `translate(
                             ${(-size - 30) *
@@ -18,10 +20,23 @@
                                 Math.cos(((actions.length - 1) / 2 - index) * actionDistance)}
                         )`
                     "
-                    @click="performAction(action)"
+                    @mousedown="e => performAction(e, action)"
                 >
-                    <circle :fill="fillColor" r="20" />
-                    <text :fill="titleColor" class="material-icons">{{ action.icon }}</text>
+                    <circle
+                        :fill="
+                            action.fillColor
+                                ? typeof action.fillColor === 'function'
+                                    ? action.fillColor(node)
+                                    : action.fillColor
+                                : fillColor
+                        "
+                        r="20"
+                        :stroke-width="selectedAction === action ? 4 : 0"
+                        :stroke="outlineColor"
+                    />
+                    <text :fill="titleColor" class="material-icons">{{
+                        typeof action.icon === "function" ? action.icon(node) : action.icon
+                    }}</text>
                 </g>
             </g>
         </transition>
@@ -31,7 +46,9 @@
             @mouseenter="mouseEnter"
             @mouseleave="mouseLeave"
             @mousedown="mouseDown"
+            @touchstart="mouseDown"
             @mouseup="mouseUp"
+            @touchend="mouseUp"
         >
             <circle
                 v-if="canAccept"
@@ -67,7 +84,9 @@
             @mouseenter="mouseEnter"
             @mouseleave="mouseLeave"
             @mousedown="mouseDown"
+            @touchstart="mouseDown"
             @mouseup="mouseUp"
+            @touchend="mouseUp"
         >
             <rect
                 v-if="canAccept"
@@ -116,6 +135,27 @@
         </g>
 
         <text :fill="titleColor" class="node-title">{{ title }}</text>
+
+        <transition name="fade" appear>
+            <text
+                v-if="label"
+                :fill="label.color || titleColor"
+                class="node-title"
+                :class="{ pulsing: label.pulsing }"
+                :y="-size - 20"
+                >{{ label.text }}</text
+            >
+        </transition>
+
+        <transition name="fade" appear>
+            <text
+                :fill="titleColor"
+                class="node-title"
+                :y="size + 75"
+                v-if="selected && selectedAction"
+                >Tap again to confirm</text
+            >
+        </transition>
     </g>
 </template>
 
@@ -124,14 +164,12 @@ import themes from "@/data/themes";
 import { ProgressDisplay, Shape } from "@/game/enums";
 import { layers } from "@/game/layers";
 import player from "@/game/player";
-import { BoardNode, BoardNodeAction, NodeType } from "@/typings/features/board";
+import { BoardNode, BoardNodeAction, NodeLabel, NodeType } from "@/typings/features/board";
 import { getNodeTypeProperty } from "@/util/features";
-import { InjectLayerMixin } from "@/util/vue";
 import { defineComponent, PropType } from "vue";
 
 export default defineComponent({
     name: "BoardNode",
-    mixins: [InjectLayerMixin],
     data() {
         return {
             ProgressDisplay,
@@ -174,6 +212,9 @@ export default defineComponent({
         selected() {
             return this.board.selectedNode?.id === this.node.id;
         },
+        selectedAction() {
+            return this.board.selectedAction;
+        },
         actions(): BoardNodeAction[] | null | undefined {
             return getNodeTypeProperty(this.nodeType, this.node, "actions");
         },
@@ -202,6 +243,9 @@ export default defineComponent({
         },
         title(): string {
             return getNodeTypeProperty(this.nodeType, this.node, "title");
+        },
+        label(): NodeLabel | null | undefined {
+            return getNodeTypeProperty(this.nodeType, this.node, "label");
         },
         progress(): number {
             return getNodeTypeProperty(this.nodeType, this.node, "progress") || 0;
@@ -263,8 +307,14 @@ export default defineComponent({
         mouseLeave() {
             this.hovering = false;
         },
-        performAction(action: BoardNodeAction) {
+        performAction(e: MouseEvent, action: BoardNodeAction) {
             action.onClick(this.node);
+            // If the onClick function made this action selected,
+            // don't propagate the event (which will deselect everything)
+            if (this.board.selectedAction === action) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
         }
     },
     watch: {
@@ -295,17 +345,42 @@ export default defineComponent({
     transform: rotate(-90deg);
 }
 
-.action:hover circle {
+.action:hover circle,
+.action.selected circle {
     r: 25;
 }
 
-.action:hover text {
+.action:hover text,
+.action.selected text {
     font-size: 187.5%; /* 150% * 1.25 */
 }
 
 .action text {
     text-anchor: middle;
     dominant-baseline: central;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+
+.pulsing {
+    animation: pulsing 2s ease-in infinite;
+}
+
+@keyframes pulsing {
+    0% {
+        opacity: 0.25;
+    }
+
+    50% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.25;
+    }
 }
 </style>
 

@@ -1,6 +1,7 @@
 import { RawLayer } from "@/typings/layer";
 import { PlayerData } from "@/typings/player";
 import Decimal from "@/util/bignum";
+import { hardReset } from "@/util/save";
 import { computed } from "vue";
 import main from "./layers/main";
 

@@ -2,16 +2,24 @@
     <panZoom
         :style="style"
         selector="#g1"
-        :options="{ initialZoom: 1, minZoom: 0.1, maxZoom: 10 }"
+        :options="{ initialZoom: 1, minZoom: 0.1, maxZoom: 10, zoomDoubleClickSpeed: 1 }"
         ref="stage"
         @init="onInit"
         @mousemove="drag"
-        @mousedown="deselect"
+        @touchmove="drag"
+        @mousedown="mouseDown"
+        @touchstart="mouseDown"
         @mouseup="() => endDragging(dragging)"
+        @touchend="() => endDragging(dragging)"
         @mouseleave="() => endDragging(dragging)"
     >
         <svg class="stage" width="100%" height="100%">
             <g id="g1">
+                <transition-group name="link" appear>
+                    <g v-for="(link, index) in board.links || []" :key="index">
+                        <BoardLink :link="link" />
+                    </g>
+                </transition-group>
                 <BoardNode
                     v-for="node in nodes"
                     :key="node.id"
@@ -127,11 +135,7 @@ export default defineComponent({
         onInit(panzoomInstance: any) {
             panzoomInstance.setTransformOrigin(null);
         },
-        deselect() {
-            player.layers[this.layer].boards[this.id].selectedNode = null;
-            player.layers[this.layer].boards[this.id].selectedAction = null;
-        },
-        mouseDown(e: MouseEvent, nodeID: string, draggable: boolean) {
+        mouseDown(e: MouseEvent, nodeID: string | null = null, draggable = false) {
             if (this.dragging == null) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -147,8 +151,10 @@ export default defineComponent({
                     this.dragging = nodeID;
                 }
             }
-            player.layers[this.layer].boards[this.id].selectedNode = null;
-            player.layers[this.layer].boards[this.id].selectedAction = null;
+            if (nodeID != null) {
+                player.layers[this.layer].boards[this.id].selectedNode = null;
+                player.layers[this.layer].boards[this.id].selectedAction = null;
+            }
         },
         drag(e: MouseEvent) {
             const zoom = (this.getZoomLevel as () => number)();
@@ -186,6 +192,9 @@ export default defineComponent({
                 }
 
                 this.dragging = null;
+            } else if (!this.hasDragged) {
+                player.layers[this.layer].boards[this.id].selectedNode = null;
+                player.layers[this.layer].boards[this.id].selectedAction = null;
             }
         }
     }
@@ -201,5 +210,10 @@ export default defineComponent({
 
 #g1 {
     transition-duration: 0s;
+}
+
+.link-enter-from,
+.link-leave-to {
+    opacity: 0;
 }
 </style>

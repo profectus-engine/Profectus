@@ -450,10 +450,26 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
                 if (nodeType.actions === null) {
                     return null;
                 }
-                if (typeof nodeType.actions === "function") {
-                    return nodeType.actions(this.selectedNode);
+                const actions =
+                    typeof nodeType.actions === "function"
+                        ? nodeType.actions(this.selectedNode)
+                        : nodeType.actions;
+                return actions?.find(
+                    action =>
+                        action.id === playerProxy.layers[this.layer].boards[this.id].selectedAction
+                );
+            });
+            setDefault(layer.boards.data[id], "links", function() {
+                if (this.selectedAction == null) {
+                    return null;
                 }
-                return nodeType.actions;
+                if (this.selectedAction.links) {
+                    if (typeof this.selectedAction.links === "function") {
+                        return this.selectedAction.links(this.selectedNode);
+                    }
+                    return this.selectedAction.links;
+                }
+                return null;
             });
             for (const nodeType in layer.boards.data[id].types) {
                 layer.boards.data[id].types[nodeType].layer = layer.id;

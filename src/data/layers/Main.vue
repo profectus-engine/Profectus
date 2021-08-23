@@ -59,8 +59,16 @@ export default defineComponent(function Main() {
                     camelToTitle((node.data as ActionNodeData).actionType)
                 );
                 body.value = coerceComponent(
-                    "<div><div>" +
-                        (node.data as ActionNodeData).log.join("</div><div>") +
+                    "<div><div class='entry'>" +
+                        (node.data as ActionNodeData).log
+                            .map(log => {
+                                let display = log.description;
+                                if (log.effectDescription) {
+                                    display += `<div style="font-style: italic;">${log.effectDescription}</div>`;
+                                }
+                                return display;
+                            })
+                            .join("</div><div class='entry'>") +
                         "</div></div>"
                 );
                 break;

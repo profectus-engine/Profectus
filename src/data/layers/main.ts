@@ -1,8 +1,10 @@
 import { ProgressDisplay, Shape } from "@/game/enums";
+import { layers } from "@/game/layers";
 import player from "@/game/player";
 import Decimal, { DecimalSource } from "@/lib/break_eternity";
 import { RawLayer } from "@/typings/layer";
 import { camelToTitle } from "@/util/common";
+import { getUniqueNodeID } from "@/util/features";
 import themes from "../themes";
 import Main from "./Main.vue";
 
@@ -19,8 +21,63 @@ export type ItemNodeData = {
 
 export type ActionNodeData = {
     actionType: string;
-    log: string[];
+    log: LogEntry[];
 };
+
+export type LogEntry = {
+    description: string;
+    effectDescription?: string;
+};
+
+export type WeightedEvent = {
+    event: () => LogEntry;
+    weight: number;
+};
+
+const redditEvents = [
+    {
+        event: () => ({ description: "You blink and half an hour has passed before you know it." }),
+        weight: 1
+    },
+    {
+        event: () => {
+            const id = getUniqueNodeID(layers.main.boards!.data.main);
+            player.layers.main.boards.main.nodes.push({
+                id,
+                position: { x: 0, y: 150 }, // TODO function to get nearest unoccupied space
+                type: "item",
+                data: {
+                    itemType: "speed",
+                    amount: new Decimal(15 * 60)
+                }
+            });
+            return {
+                description: "You found some funny memes and actually feel a bit refreshed.",
+                effectDescription: `Added <span style="color: #0FF;">Speed</span> node`
+            };
+        },
+        weight: 0.5
+    }
+];
+
+function getRandomEvent(events: WeightedEvent[]): LogEntry | null {
+    if (events.length === 0) {
+        return null;
+    }
+    const totalWeight = events.reduce((acc, curr) => acc + curr.weight, 0);
+    const random = Math.random() * totalWeight;
+
+    let weight = 0;
+    for (const outcome of events) {
+        weight += outcome.weight;
+        if (random <= weight) {
+            return outcome.event();
+        }
+    }
+
+    // Should never reach here
+    return null;
+}
 
 export default {
     id: "main",
@@ -80,6 +137,21 @@ export default {
                         title(node) {
                             return (node.data as ResourceNodeData).resourceType;
                         },
+                        label(node) {
+                            if (player.layers[this.layer].boards[this.id].selectedAction == null) {
+                                return null;
+                            }
+                            const action = player.layers[this.layer].boards[this.id].selectedAction;
+                            switch (action) {
+                                default:
+                                    return null;
+                                case "reddit":
+                                    if ((node.data as ResourceNodeData).resourceType === "time") {
+                                        return { text: "30m", color: "red", pulsing: true };
+                                    }
+                                    return null;
+                            }
+                        },
                         draggable: true,
                         progress(node) {
                             const data = node.data as ResourceNodeData;
@@ -109,6 +181,10 @@ export default {
                                 otherNode
                             );
                             player.layers[this.layer].boards[this.id].nodes.splice(index, 1);
+                            (node.data as ResourceNodeData).amount = Decimal.add(
+                                (node.data as ResourceNodeData).amount,
+                                (otherNode.data as ItemNodeData).amount
+                            );
                         }
                     },
                     item: {
@@ -134,6 +210,9 @@ export default {
                             {
                                 id: "info",
                                 icon: "history_edu",
+                                fillColor() {
+                                    return themes[player.theme].variables["--separator"];
+                                },
                                 tooltip: "Log",
                                 onClick(node) {
                                     player.layers.main.openNode = node.id;
@@ -145,7 +224,44 @@ export default {
                                 icon: "reddit",
                                 tooltip: "Browse Reddit",
                                 onClick(node) {
-                                    // TODO
+                                    if (player.layers.main.boards.main.selectedAction === this.id) {
+                                        const timeNode = player.layers.main.boards.main.nodes.find(
+                                            node =>
+                                                node.type === "resource" &&
+                                                (node.data as ResourceNodeData).resourceType ===
+                                                    "time"
+                                        );
+                                        if (timeNode) {
+                                            (timeNode.data as ResourceNodeData).amount = Decimal.sub(
+                                                (timeNode.data as ResourceNodeData).amount,
+                                                30 * 60
+                                            );
+                                            player.layers.main.boards.main.selectedAction = null;
+                                            (node.data as ActionNodeData).log.push(
+                                                getRandomEvent(redditEvents)!
+                                            );
+                                        }
+                                    } else {
+                                        player.layers.main.boards.main.selectedAction = this.id;
+                                    }
+                                },
+                                links(node) {
+                                    return [
+                                        {
+                                            // TODO this is ridiculous and needs some utility
+                                            //  function to shrink it down
+                                            from: player.layers.main.boards.main.nodes.find(
+                                                node =>
+                                                    node.type === "resource" &&
+                                                    (node.data as ResourceNodeData).resourceType ===
+                                                        "time"
+                                            ),
+                                            to: node,
+                                            stroke: "red",
+                                            "stroke-width": 4,
+                                            pulsing: true
+                                        }
+                                    ];
                                 }
                             }
                         ]

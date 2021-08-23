@@ -17,9 +17,10 @@ export interface BranchOptions {
     target?: string;
     featureType?: string;
     stroke?: string;
-    "stroke-width"?: string;
+    strokeWidth?: number | string;
     startOffset?: Position;
     endOffset?: Position;
+    [key: string]: any;
 }
 
 export interface Position {
