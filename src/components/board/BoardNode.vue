@@ -21,6 +21,7 @@
                         )`
                     "
                     @mousedown="e => performAction(e, action)"
+                    @touchstart="e => performAction(e, action)"
                 >
                     <circle
                         :fill="
