@@ -82,7 +82,7 @@ export function getStartingBoards(
               const nodes = boards[curr].startNodes?.() || [];
               acc[curr] = {
                   nodes: nodes.map((node, index) => ({
-                      id: index.toString(),
+                      id: index,
                       ...node
                   })),
                   selectedNode: null,

@@ -15,7 +15,7 @@ export interface BoardNode {
 
 export interface BoardData {
     nodes: BoardNode[];
-    selectedNode: string | null;
+    selectedNode: number | null;
     selectedAction: string | null;
 }
 
