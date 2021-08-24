@@ -22,6 +22,8 @@
                     "
                     @mousedown="e => performAction(e, action)"
                     @touchstart="e => performAction(e, action)"
+                    @mouseup="e => actionMouseUp(e, action)"
+                    @touchend.stop="e => actionMouseUp(e, action)"
                 >
                     <circle
                         :fill="
@@ -175,7 +177,6 @@ export default defineComponent({
         return {
             ProgressDisplay,
             Shape,
-            lastMousePosition: { x: 0, y: 0 },
             hovering: false,
             sqrtTwo: Math.sqrt(2)
         };
@@ -211,7 +212,7 @@ export default defineComponent({
             return layers[this.nodeType.layer].boards!.data[this.nodeType.id];
         },
         selected() {
-            return this.board.selectedNode?.id === this.node.id;
+            return this.board.selectedNode === this.node;
         },
         selectedAction() {
             return this.board.selectedAction;
@@ -316,11 +317,17 @@ export default defineComponent({
                 e.preventDefault();
                 e.stopPropagation();
             }
+        },
+        actionMouseUp(e: MouseEvent, action: BoardNodeAction) {
+            if (this.board.selectedAction === action) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
         }
     },
     watch: {
         onDraggableChanged() {
-            if (this.dragging?.id === this.node.id && !this.draggable) {
+            if (this.dragging === this.node && !this.draggable) {
                 this.$emit("endDragging", this.node.id);
             }
         }

@@ -7,8 +7,8 @@
         @init="onInit"
         @mousemove="drag"
         @touchmove="drag"
-        @mousedown="mouseDown"
-        @touchstart="mouseDown"
+        @mousedown="e => mouseDown(e)"
+        @touchstart="e => mouseDown(e)"
         @mouseup="() => endDragging(dragging)"
         @touchend="() => endDragging(dragging)"
         @mouseleave="() => endDragging(dragging)"
@@ -56,7 +56,7 @@ export default defineComponent({
         } as {
             lastMousePosition: { x: number; y: number };
             dragged: { x: number; y: number };
-            dragging: string | null;
+            dragging: number | null;
             hasDragged: boolean;
         };
     },
@@ -81,7 +81,9 @@ export default defineComponent({
             ];
         },
         draggingNode() {
-            return this.dragging ? this.board.nodes.find(node => node.id === this.dragging) : null;
+            return this.dragging == null
+                ? null
+                : this.board.nodes.find(node => node.id === this.dragging);
         },
         nodes() {
             const nodes = this.board.nodes.slice();
@@ -135,7 +137,7 @@ export default defineComponent({
         onInit(panzoomInstance: any) {
             panzoomInstance.setTransformOrigin(null);
         },
-        mouseDown(e: MouseEvent, nodeID: string | null = null, draggable = false) {
+        mouseDown(e: MouseEvent, nodeID: number | null = null, draggable = false) {
             if (this.dragging == null) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -176,7 +178,7 @@ export default defineComponent({
                 e.stopPropagation();
             }
         },
-        endDragging(nodeID: string | null) {
+        endDragging(nodeID: number | null) {
             if (this.dragging != null && this.dragging === nodeID) {
                 const draggingNode = this.draggingNode!;
                 const receivingNode = this.receivingNode;
