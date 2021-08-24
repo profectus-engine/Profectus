@@ -22,7 +22,7 @@ import { format } from "@/util/break_eternity";
 import { camelToTitle } from "@/util/common";
 import { coerceComponent } from "@/util/vue";
 import { computed, defineComponent, shallowRef, watchEffect } from "vue";
-import { ActionNodeData, ResourceNodeData } from "./main";
+import { ActionNodeData } from "./main";
 
 export default defineComponent(function Main() {
     const title = shallowRef<CoercableComponent | null>(null);
@@ -40,19 +40,6 @@ export default defineComponent(function Main() {
         switch (node.type) {
             default:
                 player.layers.main.showModal = false;
-                break;
-            case "resource":
-                switch ((node.data as ResourceNodeData).resourceType) {
-                    default:
-                        player.layers.main.showModal = false;
-                        break;
-                    case "time":
-                        title.value = coerceComponent("<h2>Time</h2>");
-                        body.value = coerceComponent(
-                            "The ultimate resource, that you'll never have enough of."
-                        );
-                        break;
-                }
                 break;
             case "action":
                 title.value = coerceComponent(

@@ -4,9 +4,10 @@ import player from "@/game/player";
 import Decimal, { DecimalSource } from "@/lib/break_eternity";
 import { RawLayer } from "@/typings/layer";
 import { formatTime } from "@/util/bignum";
-import { format } from "@/util/break_eternity";
+import { format, formatWhole } from "@/util/break_eternity";
 import { camelToTitle } from "@/util/common";
 import { getUniqueNodeID } from "@/util/features";
+import { watch } from "vue";
 import themes from "../themes";
 import Main from "./Main.vue";
 
@@ -81,6 +82,71 @@ function getRandomEvent(events: WeightedEvent[]): LogEntry | null {
     return null;
 }
 
+enum LinkType {
+    LossOnly,
+    GainOnly,
+    Both
+}
+
+// Links cause gain/loss of one resource to also affect other resources
+const links = {
+    time: [
+        { resource: "social", amount: 1 / 60, linkType: LinkType.LossOnly },
+        { resource: "mental", amount: 1 / 120, linkType: LinkType.LossOnly }
+    ]
+} as Record<
+    string,
+    {
+        resource: string;
+        amount: DecimalSource;
+        linkType: LinkType;
+    }[]
+>;
+
+for (const resource in links) {
+    const resourceLinks = links[resource];
+    watch(
+        () =>
+            (player.layers.main?.boards.main.nodes.find(
+                node =>
+                    node.type === "resource" &&
+                    (node.data as ResourceNodeData).resourceType === resource
+            )?.data as ResourceNodeData | null)?.amount,
+        (amount, oldAmount) => {
+            if (amount == null || oldAmount == null) {
+                return;
+            }
+            const resourceGain = Decimal.sub(amount, oldAmount);
+            resourceLinks.forEach(link => {
+                switch (link.linkType) {
+                    case LinkType.LossOnly:
+                        if (Decimal.gt(amount, oldAmount)) {
+                            return;
+                        }
+                        break;
+                    case LinkType.GainOnly:
+                        if (Decimal.lt(amount, oldAmount)) {
+                            return;
+                        }
+                        break;
+                }
+                const node = player.layers.main.boards.main.nodes.find(
+                    node =>
+                        node.type === "resource" &&
+                        (node.data as ResourceNodeData).resourceType === link.resource
+                );
+                if (node) {
+                    const data = node.data as ResourceNodeData;
+                    data.amount = Decimal.add(
+                        data.amount,
+                        Decimal.times(link.amount, resourceGain)
+                    ).clamp(0, data.maxAmount);
+                }
+            });
+        }
+    );
+}
+
 export default {
     id: "main",
     display: Main,
@@ -117,6 +183,33 @@ export default {
                             }
                         },
                         {
+                            position: { x: 0, y: 0 },
+                            type: "resource",
+                            data: {
+                                resourceType: "mental",
+                                amount: new Decimal(100),
+                                maxAmount: new Decimal(100)
+                            }
+                        },
+                        {
+                            position: { x: 0, y: 0 },
+                            type: "resource",
+                            data: {
+                                resourceType: "social",
+                                amount: new Decimal(100),
+                                maxAmount: new Decimal(100)
+                            }
+                        },
+                        {
+                            position: { x: 0, y: 0 },
+                            type: "resource",
+                            data: {
+                                resourceType: "focus",
+                                amount: new Decimal(100),
+                                maxAmount: new Decimal(100)
+                            }
+                        },
+                        {
                             position: { x: 0, y: 150 },
                             type: "item",
                             data: {
@@ -145,7 +238,47 @@ export default {
                                 if (data.resourceType === "time") {
                                     return { text: formatTime(data.amount), color: "#0FF3" };
                                 }
+                                if (Decimal.eq(data.maxAmount, 100)) {
+                                    return { text: formatWhole(data.amount) + "%", color: "#0FF3" };
+                                }
                                 return { text: format(data.amount), color: "#0FF3" };
+                            }
+                            if (player.layers[this.layer].boards[this.id].selectedNode == null) {
+                                return null;
+                            }
+                            const selectedNode = layers[this.layer].boards!.data[this.id]
+                                .selectedNode;
+                            if (selectedNode.type === "resource") {
+                                const data = selectedNode.data as ResourceNodeData;
+                                if (data.resourceType in links) {
+                                    const link = links[data.resourceType].find(
+                                        link =>
+                                            link.resource ===
+                                            (node.data as ResourceNodeData).resourceType
+                                    );
+                                    if (link) {
+                                        let text;
+                                        if (
+                                            (node.data as ResourceNodeData).resourceType === "time"
+                                        ) {
+                                            text = formatTime(link.amount);
+                                        } else if (
+                                            Decimal.eq(
+                                                (node.data as ResourceNodeData).maxAmount,
+                                                100
+                                            )
+                                        ) {
+                                            text = formatWhole(link.amount) + "%";
+                                        } else {
+                                            text = format(link.amount);
+                                        }
+                                        let negativeLink = Decimal.lt(link.amount, 0);
+                                        if (link.linkType === LinkType.LossOnly) {
+                                            negativeLink = !negativeLink;
+                                        }
+                                        return { text, color: negativeLink ? "red" : "green" };
+                                    }
+                                }
                             }
                             if (player.layers[this.layer].boards[this.id].selectedAction == null) {
                                 return null;
@@ -170,13 +303,7 @@ export default {
                             return themes[player.theme].variables["--background"];
                         },
                         progressColor(node) {
-                            const data = node.data as ResourceNodeData;
-                            switch (data.resourceType) {
-                                case "time":
-                                    return "#0FF3";
-                                default:
-                                    return "none";
-                            }
+                            return "#0FF3";
                         },
                         canAccept(node, otherNode) {
                             return otherNode.type === "item";
@@ -189,7 +316,7 @@ export default {
                             (node.data as ResourceNodeData).amount = Decimal.add(
                                 (node.data as ResourceNodeData).amount,
                                 (otherNode.data as ItemNodeData).amount
-                            );
+                            ).min((node.data as ResourceNodeData).maxAmount);
                         }
                     },
                     item: {
@@ -281,6 +408,43 @@ export default {
                             }
                         ]
                     }
+                },
+                links() {
+                    if (this.selectedAction?.links) {
+                        if (typeof this.selectedAction!.links === "function") {
+                            return this.selectedAction!.links(this.selectedNode);
+                        }
+                        return this.selectedAction!.links;
+                    }
+                    if (player.layers[this.layer].boards[this.id].selectedNode == null) {
+                        return null;
+                    }
+                    const selectedNode = layers[this.layer].boards!.data[this.id].selectedNode;
+                    if (selectedNode.type === "resource") {
+                        const data = selectedNode.data as ResourceNodeData;
+                        if (data.resourceType in links) {
+                            return links[data.resourceType].map(link => {
+                                const node = player.layers.main.boards.main.nodes.find(
+                                    node =>
+                                        node.type === "resource" &&
+                                        (node.data as ResourceNodeData).resourceType ===
+                                            link.resource
+                                );
+                                let negativeLink = Decimal.lt(link.amount, 0);
+                                if (link.linkType === LinkType.LossOnly) {
+                                    negativeLink = !negativeLink;
+                                }
+                                return {
+                                    from: selectedNode,
+                                    to: node,
+                                    stroke: negativeLink ? "red" : "green",
+                                    "stroke-width": 4,
+                                    pulsing: true
+                                };
+                            });
+                        }
+                    }
+                    return null;
                 }
             }
         }
