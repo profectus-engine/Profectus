@@ -86,3 +86,13 @@ export default defineComponent(function Main() {
     return { title, body, footer, showModal, closeModal, devSpeed, formattedDevSpeed };
 });
 </script>
+
+<style>
+.entry {
+    padding: var(--feature-margin);
+}
+
+.entry:not(:last-child) {
+    border-bottom: solid 4px var(--separator);
+}
+</style>
