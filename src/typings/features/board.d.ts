@@ -11,6 +11,7 @@ export interface BoardNode {
     };
     type: string;
     data?: State;
+    pinned?: boolean;
 }
 
 export interface BoardData {
@@ -62,7 +63,7 @@ export interface BoardNodeAction {
     icon: string | ((node: BoardNode) => string);
     fillColor?: string | ((node: BoardNode) => string);
     tooltip: string | ((node: BoardNode) => string);
-    onClick: (node: BoardNode) => void;
+    onClick: (node: BoardNode) => boolean | undefined;
     links?: BoardNodeLink[] | ((node: BoardNode) => BoardNodeLink[]);
 }
 

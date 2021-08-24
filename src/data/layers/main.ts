@@ -2,6 +2,7 @@ import { ProgressDisplay, Shape } from "@/game/enums";
 import { layers } from "@/game/layers";
 import player from "@/game/player";
 import Decimal, { DecimalSource } from "@/lib/break_eternity";
+import { BoardNodeAction } from "@/typings/features/board";
 import { RawLayer } from "@/typings/layer";
 import { formatTime } from "@/util/bignum";
 import { format, formatWhole } from "@/util/break_eternity";
@@ -147,6 +148,22 @@ for (const resource in links) {
     );
 }
 
+const pinAction = {
+    id: "pin",
+    icon: "push_pin",
+    fillColor(node) {
+        if (node.pinned) {
+            return themes[player.theme].variables["--bought"];
+        }
+        return themes[player.theme].variables["--secondary-background"];
+    },
+    tooltip: "Always show resource",
+    onClick(node) {
+        node.pinned = !node.pinned;
+        return true;
+    }
+} as BoardNodeAction;
+
 export default {
     id: "main",
     display: Main,
@@ -233,22 +250,29 @@ export default {
                             return (node.data as ResourceNodeData).resourceType;
                         },
                         label(node) {
-                            if (player.layers[this.layer].boards[this.id].selectedNode == node.id) {
-                                const data = node.data as ResourceNodeData;
-                                if (data.resourceType === "time") {
-                                    return { text: formatTime(data.amount), color: "#0FF3" };
-                                }
-                                if (Decimal.eq(data.maxAmount, 100)) {
-                                    return { text: formatWhole(data.amount) + "%", color: "#0FF3" };
-                                }
-                                return { text: format(data.amount), color: "#0FF3" };
-                            }
-                            if (player.layers[this.layer].boards[this.id].selectedNode == null) {
-                                return null;
-                            }
                             const selectedNode = layers[this.layer].boards!.data[this.id]
                                 .selectedNode;
-                            if (selectedNode.type === "resource") {
+                            if (
+                                selectedNode != node &&
+                                player.layers[this.layer].boards[this.id].selectedAction != null
+                            ) {
+                                const action =
+                                    player.layers[this.layer].boards[this.id].selectedAction;
+                                switch (action) {
+                                    case "reddit":
+                                        if (
+                                            (node.data as ResourceNodeData).resourceType === "time"
+                                        ) {
+                                            return { text: "30m", color: "red", pulsing: true };
+                                        }
+                                        break;
+                                }
+                            }
+                            if (
+                                selectedNode != node &&
+                                selectedNode != null &&
+                                selectedNode.type === "resource"
+                            ) {
                                 const data = selectedNode.data as ResourceNodeData;
                                 if (data.resourceType in links) {
                                     const link = links[data.resourceType].find(
@@ -280,18 +304,15 @@ export default {
                                     }
                                 }
                             }
-                            if (player.layers[this.layer].boards[this.id].selectedAction == null) {
-                                return null;
-                            }
-                            const action = player.layers[this.layer].boards[this.id].selectedAction;
-                            switch (action) {
-                                default:
-                                    return null;
-                                case "reddit":
-                                    if ((node.data as ResourceNodeData).resourceType === "time") {
-                                        return { text: "30m", color: "red", pulsing: true };
-                                    }
-                                    return null;
+                            if (selectedNode == node || node.pinned) {
+                                const data = node.data as ResourceNodeData;
+                                if (data.resourceType === "time") {
+                                    return { text: formatTime(data.amount), color: "#0FF3" };
+                                }
+                                if (Decimal.eq(data.maxAmount, 100)) {
+                                    return { text: formatWhole(data.amount) + "%", color: "#0FF3" };
+                                }
+                                return { text: format(data.amount), color: "#0FF3" };
                             }
                         },
                         draggable: true,
@@ -317,7 +338,8 @@ export default {
                                 (node.data as ResourceNodeData).amount,
                                 (otherNode.data as ItemNodeData).amount
                             ).min((node.data as ResourceNodeData).maxAmount);
-                        }
+                        },
+                        actions: [pinAction]
                     },
                     item: {
                         title(node) {
@@ -329,7 +351,10 @@ export default {
                             }
                         },
                         label(node) {
-                            if (player.layers[this.layer].boards[this.id].selectedNode == node.id) {
+                            if (
+                                player.layers[this.layer].boards[this.id].selectedNode == node.id ||
+                                node.pinned
+                            ) {
                                 const data = node.data as ItemNodeData;
                                 if (data.itemType === "time") {
                                     return { text: formatTime(data.amount), color: "#0FF3" };
@@ -337,7 +362,8 @@ export default {
                                 return { text: format(data.amount), color: "#0FF3" };
                             }
                         },
-                        draggable: true
+                        draggable: true,
+                        actions: [pinAction]
                     },
                     action: {
                         title(node) {

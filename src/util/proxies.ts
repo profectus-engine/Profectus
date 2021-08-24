@@ -30,7 +30,7 @@ function travel(
     objectProxy: Record<string, any>
 ) {
     for (const key in object) {
-        if (object[key] == undefined || object[key].isProxy) {
+        if (object[key] == undefined || object[key].isProxy || isRef(object[key])) {
             continue;
         }
         if (isFunction(object[key])) {

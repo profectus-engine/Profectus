@@ -310,10 +310,9 @@ export default defineComponent({
             this.hovering = false;
         },
         performAction(e: MouseEvent, action: BoardNodeAction) {
-            action.onClick(this.node);
             // If the onClick function made this action selected,
             // don't propagate the event (which will deselect everything)
-            if (this.board.selectedAction === action) {
+            if (action.onClick(this.node) || this.board.selectedAction === action) {
                 e.preventDefault();
                 e.stopPropagation();
             }
