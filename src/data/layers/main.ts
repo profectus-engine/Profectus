@@ -3,6 +3,8 @@ import { layers } from "@/game/layers";
 import player from "@/game/player";
 import Decimal, { DecimalSource } from "@/lib/break_eternity";
 import { RawLayer } from "@/typings/layer";
+import { formatTime } from "@/util/bignum";
+import { format } from "@/util/break_eternity";
 import { camelToTitle } from "@/util/common";
 import { getUniqueNodeID } from "@/util/features";
 import themes from "../themes";
@@ -47,7 +49,7 @@ const redditEvents = [
                 position: { x: 0, y: 150 }, // TODO function to get nearest unoccupied space
                 type: "item",
                 data: {
-                    itemType: "speed",
+                    itemType: "time",
                     amount: new Decimal(15 * 60)
                 }
             });
@@ -118,7 +120,7 @@ export default {
                             position: { x: 0, y: 150 },
                             type: "item",
                             data: {
-                                itemType: "speed",
+                                itemType: "time",
                                 amount: new Decimal(5 * 60 * 60)
                             }
                         },
@@ -138,6 +140,13 @@ export default {
                             return (node.data as ResourceNodeData).resourceType;
                         },
                         label(node) {
+                            if (player.layers[this.layer].boards[this.id].selectedNode == node.id) {
+                                const data = node.data as ResourceNodeData;
+                                if (data.resourceType === "time") {
+                                    return { text: formatTime(data.amount), color: "#0FF3" };
+                                }
+                                return { text: format(data.amount), color: "#0FF3" };
+                            }
                             if (player.layers[this.layer].boards[this.id].selectedAction == null) {
                                 return null;
                             }
@@ -172,10 +181,6 @@ export default {
                         canAccept(node, otherNode) {
                             return otherNode.type === "item";
                         },
-                        onClick(node) {
-                            player.layers.main.openNode = node.id;
-                            player.layers.main.showModal = true;
-                        },
                         onDrop(node, otherNode) {
                             const index = player.layers[this.layer].boards[this.id].nodes.indexOf(
                                 otherNode
@@ -189,11 +194,21 @@ export default {
                     },
                     item: {
                         title(node) {
-                            return (node.data as ItemNodeData).itemType;
+                            switch ((node.data as ItemNodeData).itemType) {
+                                default:
+                                    return null;
+                                case "time":
+                                    return "speed";
+                            }
                         },
-                        onClick(node) {
-                            player.layers.main.openNode = node.id;
-                            player.layers.main.showModal = true;
+                        label(node) {
+                            if (player.layers[this.layer].boards[this.id].selectedNode == node.id) {
+                                const data = node.data as ItemNodeData;
+                                if (data.itemType === "time") {
+                                    return { text: formatTime(data.amount), color: "#0FF3" };
+                                }
+                                return { text: format(data.amount), color: "#0FF3" };
+                            }
                         },
                         draggable: true
                     },
@@ -211,7 +226,7 @@ export default {
                                 id: "info",
                                 icon: "history_edu",
                                 fillColor() {
-                                    return themes[player.theme].variables["--separator"];
+                                    return themes[player.theme].variables["--secondary-background"];
                                 },
                                 tooltip: "Log",
                                 onClick(node) {
