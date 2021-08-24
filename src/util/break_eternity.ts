@@ -114,48 +114,42 @@ export function formatWhole(num: DecimalSource): string {
     return format(num, 0);
 }
 
-export function formatTime(s: DecimalSource): string {
-    if (Decimal.gt(s, 2 ^ 51)) {
+export function formatTime(seconds: DecimalSource): string {
+    if (Decimal.gt(seconds, 2 ** 51)) {
         // integer precision limit
-        return format(Decimal.div(s, 31536000)) + "y";
+        return format(Decimal.div(seconds, 31536000)) + "y";
     }
-    s = new Decimal(s).toNumber();
-    if (s < 60) {
-        return format(s) + "s";
-    } else if (s < 3600) {
-        return formatWhole(Math.floor(s / 60)) + "m " + format(s % 60) + "s";
-    } else if (s < 86400) {
+    seconds = new Decimal(seconds).toNumber();
+    if (seconds < 60) {
+        return format(seconds) + "s";
+    } else if (seconds < 3600) {
+        return formatWhole(Math.floor(seconds / 60)) + "m " + format(seconds % 60) + "s";
+    } else if (seconds < 86400) {
         return (
-            formatWhole(Math.floor(s / 3600)) +
+            formatWhole(Math.floor(seconds / 3600)) +
             "h " +
-            formatWhole(Math.floor(s / 60) % 60) +
+            formatWhole(Math.floor(seconds / 60) % 60) +
             "m " +
-            format(s % 60) +
+            format(seconds % 60) +
             "s"
         );
-    } else if (s < 31536000) {
+    } else if (seconds < 31536000) {
         return (
-            formatWhole(Math.floor(s / 84600) % 365) +
+            formatWhole(Math.floor(seconds / 84600) % 365) +
             "d " +
-            formatWhole(Math.floor(s / 3600) % 24) +
+            formatWhole(Math.floor(seconds / 3600) % 24) +
             "h " +
-            formatWhole(Math.floor(s / 60) % 60) +
-            "m " +
-            format(s % 60) +
-            "s"
+            formatWhole(Math.floor(seconds / 60) % 60) +
+            "m"
         );
     } else {
         return (
-            formatWhole(Math.floor(s / 31536000)) +
+            formatWhole(Math.floor(seconds / 31536000)) +
             "y " +
-            formatWhole(Math.floor(s / 84600) % 365) +
+            formatWhole(Math.floor(seconds / 84600) % 365) +
             "d " +
-            formatWhole(Math.floor(s / 3600) % 24) +
-            "h " +
-            formatWhole(Math.floor(s / 60) % 60) +
-            "m " +
-            format(s % 60) +
-            "s"
+            formatWhole(Math.floor(seconds / 3600) % 24) +
+            "h"
         );
     }
 }
