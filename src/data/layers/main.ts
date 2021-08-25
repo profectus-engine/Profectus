@@ -2,20 +2,20 @@ import { ProgressDisplay, Shape } from "@/game/enums";
 import { layers } from "@/game/layers";
 import player from "@/game/player";
 import Decimal, { DecimalSource } from "@/lib/break_eternity";
-import { BoardNodeAction } from "@/typings/features/board";
+import { BoardNode, BoardNodeAction } from "@/typings/features/board";
 import { RawLayer } from "@/typings/layer";
 import { formatTime } from "@/util/bignum";
 import { format, formatWhole } from "@/util/break_eternity";
 import { camelToTitle } from "@/util/common";
 import { getUniqueNodeID } from "@/util/features";
-import { watch } from "vue";
+import { computed, watch } from "vue";
 import themes from "../themes";
 import Main from "./Main.vue";
 
 export type ResourceNodeData = {
     resourceType: string;
     amount: DecimalSource;
-    maxAmount: DecimalSource;
+    [key: string]: any;
 };
 
 export type ItemNodeData = {
@@ -92,8 +92,8 @@ enum LinkType {
 // Links cause gain/loss of one resource to also affect other resources
 const links = {
     time: [
-        { resource: "social", amount: 1 / 60, linkType: LinkType.LossOnly },
-        { resource: "mental", amount: 1 / 120, linkType: LinkType.LossOnly }
+        { resource: "social", amount: 1 / (60 * 60), linkType: LinkType.LossOnly },
+        { resource: "mental", amount: 1 / (120 * 60), linkType: LinkType.LossOnly }
     ]
 } as Record<
     string,
@@ -107,41 +107,25 @@ const links = {
 for (const resource in links) {
     const resourceLinks = links[resource];
     watch(
-        () =>
-            (player.layers.main?.boards.main.nodes.find(
-                node =>
-                    node.type === "resource" &&
-                    (node.data as ResourceNodeData).resourceType === resource
-            )?.data as ResourceNodeData | null)?.amount,
+        () => resources[resource].amount,
         (amount, oldAmount) => {
             if (amount == null || oldAmount == null) {
                 return;
             }
             const resourceGain = Decimal.sub(amount, oldAmount);
             resourceLinks.forEach(link => {
-                switch (link.linkType) {
-                    case LinkType.LossOnly:
-                        if (Decimal.gt(amount, oldAmount)) {
-                            return;
-                        }
-                        break;
-                    case LinkType.GainOnly:
-                        if (Decimal.lt(amount, oldAmount)) {
-                            return;
-                        }
-                        break;
+                if (link.linkType === LinkType.LossOnly && Decimal.gt(amount, oldAmount)) {
+                    return;
                 }
-                const node = player.layers.main.boards.main.nodes.find(
-                    node =>
-                        node.type === "resource" &&
-                        (node.data as ResourceNodeData).resourceType === link.resource
-                );
-                if (node) {
-                    const data = node.data as ResourceNodeData;
-                    data.amount = Decimal.add(
-                        data.amount,
+                if (link.linkType === LinkType.GainOnly && Decimal.lt(amount, oldAmount)) {
+                    return;
+                }
+                const resource = resources[link.resource];
+                if (resource.amount != null) {
+                    resource.amount = Decimal.add(
+                        resource.amount,
                         Decimal.times(link.amount, resourceGain)
-                    ).clamp(0, data.maxAmount);
+                    );
                 }
             });
         }
@@ -163,6 +147,53 @@ const pinAction = {
         return true;
     }
 } as BoardNodeAction;
+
+type Resource = {
+    readonly name: string;
+    readonly color: string;
+    readonly node: BoardNode | undefined;
+    amount: DecimalSource | undefined;
+    readonly maxAmount: DecimalSource;
+};
+
+const resources = {
+    time: createResource("time", "#3EB48933", 24 * 60 * 60),
+    energy: createResource("energy", "#FFA50033", 100),
+    social: createResource("social", "#80008033", 100),
+    mental: createResource("mental", "#32CD3233", 100),
+    focus: createResource("focus", "#0000FF33", 100)
+} as Record<string, Resource>;
+
+function createResource(name: string, color: string, maxAmount: DecimalSource): Resource {
+    const node = computed(() =>
+        player.layers.main?.boards.main.nodes.find(
+            node =>
+                node.type === "resource" && (node.data as ResourceNodeData).resourceType === name
+        )
+    );
+    const data = computed(() => node.value?.data as ResourceNodeData);
+    return {
+        name,
+        color,
+        get node() {
+            return node.value;
+        },
+        get amount() {
+            return data.value?.amount;
+        },
+        set amount(amount: DecimalSource) {
+            data.value.amount = Decimal.clamp(amount, 0, maxAmount);
+        },
+        maxAmount
+    };
+}
+
+function getResource(node: BoardNode): Resource | undefined {
+    return Object.values(resources).find(resource => resource.node === node);
+}
+
+const selectedNode = computed(() => layers.main?.boards?.data.main.selectedNode);
+const selectedAction = computed(() => layers.main?.boards?.data.main.selectedAction);
 
 export default {
     id: "main",
@@ -196,43 +227,40 @@ export default {
                             type: "resource",
                             data: {
                                 resourceType: "time",
-                                amount: new Decimal(24 * 60 * 60),
-                                maxAmount: new Decimal(24 * 60 * 60)
+                                amount: new Decimal(24 * 60 * 60)
                             }
                         },
                         {
-                            position: { x: 0, y: 0 },
+                            position: { x: 300, y: 0 },
                             type: "resource",
                             data: {
                                 resourceType: "mental",
-                                amount: new Decimal(100),
-                                maxAmount: new Decimal(100)
+                                amount: new Decimal(100)
                             }
                         },
                         {
-                            position: { x: 0, y: 0 },
+                            position: { x: 150, y: 0 },
                             type: "resource",
                             data: {
                                 resourceType: "social",
-                                amount: new Decimal(100),
-                                maxAmount: new Decimal(100)
+                                amount: new Decimal(100)
                             }
                         },
                         {
-                            position: { x: 0, y: 0 },
+                            position: { x: -150, y: 0 },
                             type: "resource",
                             data: {
                                 resourceType: "focus",
-                                amount: new Decimal(100),
-                                maxAmount: new Decimal(100)
+                                amount: new Decimal(0),
+                                currentFocus: ""
                             }
                         },
                         {
-                            position: { x: 0, y: 150 },
-                            type: "item",
+                            position: { x: -300, y: 0 },
+                            type: "resource",
                             data: {
-                                itemType: "time",
-                                amount: new Decimal(5 * 60 * 60)
+                                resourceType: "energy",
+                                amount: new Decimal(100)
                             }
                         },
                         {
@@ -251,48 +279,52 @@ export default {
                             return (node.data as ResourceNodeData).resourceType;
                         },
                         label(node) {
-                            const selectedNode = layers[this.layer].boards!.data[this.id]
-                                .selectedNode;
-                            if (
-                                selectedNode != node &&
-                                player.layers[this.layer].boards[this.id].selectedAction != null
-                            ) {
-                                const action =
-                                    player.layers[this.layer].boards[this.id].selectedAction;
-                                switch (action) {
+                            const resource = getResource(node)!;
+                            if (selectedNode.value != node && selectedAction.value != null) {
+                                if (resource && resource.name === "focus") {
+                                    const currentFocus =
+                                        (resource.node?.data as ResourceNodeData | undefined)
+                                            ?.currentFocus === selectedAction.value?.id;
+                                    return {
+                                        text: currentFocus ? "10%" : "X",
+                                        color: currentFocus ? "green" : "black",
+                                        pulsing: true
+                                    };
+                                }
+                                switch (selectedAction.value.id) {
                                     case "reddit":
-                                        if (
-                                            (node.data as ResourceNodeData).resourceType === "time"
-                                        ) {
-                                            return { text: "30m", color: "red", pulsing: true };
+                                        switch (resource.name) {
+                                            case "time":
+                                                return {
+                                                    text: "30m",
+                                                    color: "red",
+                                                    pulsing: true
+                                                };
+                                            case "energy":
+                                                return {
+                                                    text: "5%",
+                                                    color: "green",
+                                                    pulsing: true
+                                                };
                                         }
                                         break;
                                 }
                             }
                             if (
-                                selectedNode != node &&
-                                selectedNode != null &&
-                                selectedNode.type === "resource"
+                                selectedNode.value != node &&
+                                selectedNode.value != null &&
+                                selectedNode.value.type === "resource"
                             ) {
-                                const data = selectedNode.data as ResourceNodeData;
-                                if (data.resourceType in links) {
-                                    const link = links[data.resourceType].find(
-                                        link =>
-                                            link.resource ===
-                                            (node.data as ResourceNodeData).resourceType
+                                const selectedResource = getResource(selectedNode.value);
+                                if (selectedResource && selectedResource.name in links) {
+                                    const link = links[selectedResource.name].find(
+                                        link => link.resource === resource.name
                                     );
                                     if (link) {
                                         let text;
-                                        if (
-                                            (node.data as ResourceNodeData).resourceType === "time"
-                                        ) {
+                                        if (resource.name === "time") {
                                             text = formatTime(link.amount);
-                                        } else if (
-                                            Decimal.eq(
-                                                (node.data as ResourceNodeData).maxAmount,
-                                                100
-                                            )
-                                        ) {
+                                        } else if (Decimal.eq(resource.maxAmount, 100)) {
                                             text = formatWhole(link.amount) + "%";
                                         } else {
                                             text = format(link.amount);
@@ -305,12 +337,12 @@ export default {
                                     }
                                 }
                             }
-                            if (selectedNode == node || node.pinned) {
+                            if (selectedNode.value == node || node.pinned) {
                                 const data = node.data as ResourceNodeData;
                                 if (data.resourceType === "time") {
                                     return { text: formatTime(data.amount), color: "#0FF3" };
                                 }
-                                if (Decimal.eq(data.maxAmount, 100)) {
+                                if (Decimal.eq(resource.maxAmount, 100)) {
                                     return { text: formatWhole(data.amount) + "%", color: "#0FF3" };
                                 }
                                 return { text: format(data.amount), color: "#0FF3" };
@@ -318,27 +350,28 @@ export default {
                         },
                         draggable: true,
                         progress(node) {
-                            const data = node.data as ResourceNodeData;
-                            return Decimal.div(data.amount, data.maxAmount).toNumber();
+                            const resource = getResource(node)!;
+                            return Decimal.div(resource.amount || 0, resource.maxAmount).toNumber();
                         },
                         fillColor() {
                             return themes[player.theme].variables["--background"];
                         },
                         progressColor(node) {
-                            return "#0FF3";
+                            return getResource(node)!.color;
                         },
                         canAccept(node, otherNode) {
                             return otherNode.type === "item";
                         },
                         onDrop(node, otherNode) {
+                            const resource = getResource(node)!;
                             const index = player.layers[this.layer].boards[this.id].nodes.indexOf(
                                 otherNode
                             );
                             player.layers[this.layer].boards[this.id].nodes.splice(index, 1);
-                            (node.data as ResourceNodeData).amount = Decimal.add(
-                                (node.data as ResourceNodeData).amount,
+                            resource.amount = Decimal.add(
+                                resource.amount || 0,
                                 (otherNode.data as ItemNodeData).amount
-                            ).min((node.data as ResourceNodeData).maxAmount);
+                            );
                         },
                         actions: [pinAction]
                     },
@@ -352,10 +385,7 @@ export default {
                             }
                         },
                         label(node) {
-                            if (
-                                player.layers[this.layer].boards[this.id].selectedNode == node.id ||
-                                node.pinned
-                            ) {
+                            if (selectedNode.value == node || node.pinned) {
                                 const data = node.data as ItemNodeData;
                                 if (data.itemType === "time") {
                                     return { text: formatTime(data.amount), color: "#0FF3" };
@@ -393,23 +423,34 @@ export default {
                                 icon: "reddit",
                                 tooltip: "Browse Reddit",
                                 onClick(node) {
-                                    if (player.layers.main.boards.main.selectedAction === this.id) {
-                                        const timeNode = player.layers.main.boards.main.nodes.find(
-                                            node =>
-                                                node.type === "resource" &&
-                                                (node.data as ResourceNodeData).resourceType ===
-                                                    "time"
-                                        );
-                                        if (timeNode) {
-                                            (timeNode.data as ResourceNodeData).amount = Decimal.sub(
-                                                (timeNode.data as ResourceNodeData).amount,
-                                                30 * 60
+                                    if (selectedAction.value?.id === this.id) {
+                                        const focusData = resources.focus.node
+                                            ?.data as ResourceNodeData;
+                                        if (focusData.currentFocus === "reddit") {
+                                            resources.focus.amount = Decimal.add(
+                                                resources.focus.amount || 0,
+                                                10
                                             );
-                                            player.layers.main.boards.main.selectedAction = null;
-                                            (node.data as ActionNodeData).log.push(
-                                                getRandomEvent(redditEvents)!
-                                            );
+                                        } else {
+                                            focusData.currentFocus = "reddit";
+                                            resources.focus.amount = 10;
                                         }
+                                        const focusMult = Decimal.div(
+                                            resources.focus.amount,
+                                            100
+                                        ).add(1);
+                                        resources.time.amount = Decimal.sub(
+                                            resources.time.amount || 0,
+                                            Decimal.times(30 * 60, focusMult)
+                                        );
+                                        resources.energy.amount = Decimal.sub(
+                                            resources.energy.amount || 0,
+                                            Decimal.times(5, focusMult)
+                                        );
+                                        player.layers.main.boards.main.selectedAction = null;
+                                        (node.data as ActionNodeData).log.push(
+                                            getRandomEvent(redditEvents)!
+                                        );
                                     } else {
                                         player.layers.main.boards.main.selectedAction = this.id;
                                     }
@@ -417,16 +458,27 @@ export default {
                                 links(node) {
                                     return [
                                         {
-                                            // TODO this is ridiculous and needs some utility
-                                            //  function to shrink it down
-                                            from: player.layers.main.boards.main.nodes.find(
-                                                node =>
-                                                    node.type === "resource" &&
-                                                    (node.data as ResourceNodeData).resourceType ===
-                                                        "time"
-                                            ),
+                                            from: resources.time.node,
                                             to: node,
                                             stroke: "red",
+                                            "stroke-width": 4,
+                                            pulsing: true
+                                        },
+                                        {
+                                            from: resources.energy.node,
+                                            to: node,
+                                            stroke: "green",
+                                            "stroke-width": 4,
+                                            pulsing: true
+                                        },
+                                        {
+                                            from: resources.focus.node,
+                                            to: node,
+                                            stroke:
+                                                (resources.focus.node?.data as ResourceNodeData)
+                                                    .currentFocus === selectedAction.value?.id
+                                                    ? "green"
+                                                    : "black",
                                             "stroke-width": 4,
                                             pulsing: true
                                         }
@@ -443,27 +495,21 @@ export default {
                         }
                         return this.selectedAction!.links;
                     }
-                    if (player.layers[this.layer].boards[this.id].selectedNode == null) {
+                    if (selectedNode.value == null) {
                         return null;
                     }
-                    const selectedNode = layers[this.layer].boards!.data[this.id].selectedNode;
-                    if (selectedNode.type === "resource") {
-                        const data = selectedNode.data as ResourceNodeData;
-                        if (data.resourceType in links) {
-                            return links[data.resourceType].map(link => {
-                                const node = player.layers.main.boards.main.nodes.find(
-                                    node =>
-                                        node.type === "resource" &&
-                                        (node.data as ResourceNodeData).resourceType ===
-                                            link.resource
-                                );
+                    if (selectedNode.value.type === "resource") {
+                        const resource = getResource(selectedNode.value)!;
+                        if (resource.name in links) {
+                            return links[resource.name].map(link => {
+                                const linkResource = resources[link.resource];
                                 let negativeLink = Decimal.lt(link.amount, 0);
                                 if (link.linkType === LinkType.LossOnly) {
                                     negativeLink = !negativeLink;
                                 }
                                 return {
-                                    from: selectedNode,
-                                    to: node,
+                                    from: selectedNode.value,
+                                    to: linkResource.node,
                                     stroke: negativeLink ? "red" : "green",
                                     "stroke-width": 4,
                                     pulsing: true

@@ -65,13 +65,13 @@ export interface BoardNodeAction {
     tooltip: string | ((node: BoardNode) => string);
     onClick: (node: BoardNode) => boolean | undefined;
     links?: BoardNodeLink[] | ((node: BoardNode) => BoardNodeLink[]);
+    [key: string]: any;
 }
 
 export interface BoardNodeLink {
     from: BoardNode;
     to: BoardNode;
     stroke: string;
-    strokeWidth: number | string;
     pulsing?: boolean;
     [key: string]: any;
 }
