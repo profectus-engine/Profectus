@@ -28,6 +28,53 @@ export type ActionNodeData = {
     log: LogEntry[];
 };
 
+type Resource = {
+    readonly name: string;
+    readonly color: string;
+    readonly node: BoardNode | undefined;
+    amount: DecimalSource | undefined;
+    readonly maxAmount: DecimalSource;
+};
+
+const resources = {
+    time: createResource("time", "#3EB48933", 24 * 60 * 60),
+    energy: createResource("energy", "#FFA50033", 100),
+    social: createResource("social", "#80008033", 100),
+    mental: createResource("mental", "#32CD3233", 100),
+    focus: createResource("focus", "#0000FF33", 100)
+} as Record<string, Resource>;
+
+function createResource(name: string, color: string, maxAmount: DecimalSource): Resource {
+    const node = computed(() =>
+        player.layers.main?.boards.main.nodes.find(
+            node =>
+                node.type === "resource" && (node.data as ResourceNodeData).resourceType === name
+        )
+    );
+    const data = computed(() => node.value?.data as ResourceNodeData);
+    return {
+        name,
+        color,
+        get node() {
+            return node.value;
+        },
+        get amount() {
+            return data.value?.amount;
+        },
+        set amount(amount: DecimalSource) {
+            data.value.amount = Decimal.clamp(amount, 0, maxAmount);
+        },
+        maxAmount
+    };
+}
+
+function getResource(node: BoardNode): Resource | undefined {
+    return Object.values(resources).find(resource => resource.node === node);
+}
+
+const selectedNode = computed(() => layers.main?.boards?.data.main.selectedNode);
+const selectedAction = computed(() => layers.main?.boards?.data.main.selectedAction);
+
 export type LogEntry = {
     description: string;
     effectDescription?: string;
@@ -147,53 +194,6 @@ const pinAction = {
         return true;
     }
 } as BoardNodeAction;
-
-type Resource = {
-    readonly name: string;
-    readonly color: string;
-    readonly node: BoardNode | undefined;
-    amount: DecimalSource | undefined;
-    readonly maxAmount: DecimalSource;
-};
-
-const resources = {
-    time: createResource("time", "#3EB48933", 24 * 60 * 60),
-    energy: createResource("energy", "#FFA50033", 100),
-    social: createResource("social", "#80008033", 100),
-    mental: createResource("mental", "#32CD3233", 100),
-    focus: createResource("focus", "#0000FF33", 100)
-} as Record<string, Resource>;
-
-function createResource(name: string, color: string, maxAmount: DecimalSource): Resource {
-    const node = computed(() =>
-        player.layers.main?.boards.main.nodes.find(
-            node =>
-                node.type === "resource" && (node.data as ResourceNodeData).resourceType === name
-        )
-    );
-    const data = computed(() => node.value?.data as ResourceNodeData);
-    return {
-        name,
-        color,
-        get node() {
-            return node.value;
-        },
-        get amount() {
-            return data.value?.amount;
-        },
-        set amount(amount: DecimalSource) {
-            data.value.amount = Decimal.clamp(amount, 0, maxAmount);
-        },
-        maxAmount
-    };
-}
-
-function getResource(node: BoardNode): Resource | undefined {
-    return Object.values(resources).find(resource => resource.node === node);
-}
-
-const selectedNode = computed(() => layers.main?.boards?.data.main.selectedNode);
-const selectedAction = computed(() => layers.main?.boards?.data.main.selectedAction);
 
 export default {
     id: "main",
