@@ -137,14 +137,26 @@ export default defineComponent({
         onInit(panzoomInstance: any) {
             panzoomInstance.setTransformOrigin(null);
         },
-        mouseDown(e: MouseEvent, nodeID: number | null = null, draggable = false) {
+        mouseDown(e: MouseEvent | TouchEvent, nodeID: number | null = null, draggable = false) {
             if (this.dragging == null) {
                 e.preventDefault();
                 e.stopPropagation();
 
+                let clientX, clientY;
+                if ("touches" in e) {
+                    if (e.touches.length === 1) {
+                        clientX = e.touches[0].clientX;
+                        clientY = e.touches[0].clientY;
+                    } else {
+                        return;
+                    }
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
                 this.lastMousePosition = {
-                    x: e.clientX,
-                    y: e.clientY
+                    x: clientX,
+                    y: clientY
                 };
                 this.dragged = { x: 0, y: 0 };
                 this.hasDragged = false;
@@ -158,15 +170,30 @@ export default defineComponent({
                 player.layers[this.layer].boards[this.id].selectedAction = null;
             }
         },
-        drag(e: MouseEvent) {
+        drag(e: MouseEvent | TouchEvent) {
             const zoom = (this.getZoomLevel as () => number)();
+
+            let clientX, clientY;
+            if ("touches" in e) {
+                if (e.touches.length === 1) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    this.endDragging(this.dragging);
+                    return;
+                }
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
             this.dragged = {
-                x: this.dragged.x + (e.clientX - this.lastMousePosition.x) / zoom,
-                y: this.dragged.y + (e.clientY - this.lastMousePosition.y) / zoom
+                x: this.dragged.x + (clientX - this.lastMousePosition.x) / zoom,
+                y: this.dragged.y + (clientY - this.lastMousePosition.y) / zoom
             };
             this.lastMousePosition = {
-                x: e.clientX,
-                y: e.clientY
+                x: clientX,
+                y: clientY
             };
 
             if (Math.abs(this.dragged.x) > 10 || Math.abs(this.dragged.y) > 10) {

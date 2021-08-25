@@ -167,6 +167,7 @@ const pinAction = {
 export default {
     id: "main",
     display: Main,
+    minWidth: undefined,
     startData() {
         return {
             openNode: null,

@@ -295,7 +295,7 @@ export default defineComponent({
         }
     },
     methods: {
-        mouseDown(e: MouseEvent) {
+        mouseDown(e: MouseEvent | TouchEvent) {
             this.$emit("mouseDown", e, this.node.id, this.draggable);
         },
         mouseUp() {
@@ -309,7 +309,7 @@ export default defineComponent({
         mouseLeave() {
             this.hovering = false;
         },
-        performAction(e: MouseEvent, action: BoardNodeAction) {
+        performAction(e: MouseEvent | TouchEvent, action: BoardNodeAction) {
             // If the onClick function made this action selected,
             // don't propagate the event (which will deselect everything)
             if (action.onClick(this.node) || this.board.selectedAction === action) {
@@ -317,7 +317,7 @@ export default defineComponent({
                 e.stopPropagation();
             }
         },
-        actionMouseUp(e: MouseEvent, action: BoardNodeAction) {
+        actionMouseUp(e: MouseEvent | TouchEvent, action: BoardNodeAction) {
             if (this.board.selectedAction === action) {
                 e.preventDefault();
                 e.stopPropagation();

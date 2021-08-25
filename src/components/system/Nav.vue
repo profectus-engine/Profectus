@@ -139,6 +139,7 @@ export default defineComponent({
     width: 46px;
     display: flex;
     cursor: pointer;
+    flex-shrink: 0;
 }
 
 .overlay-nav {
@@ -169,6 +170,9 @@ export default defineComponent({
 
 .nav > .title {
     width: unset;
+    flex-shrink: 1;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .nav .saves,
