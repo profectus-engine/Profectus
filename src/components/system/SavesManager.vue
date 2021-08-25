@@ -181,6 +181,7 @@ export default defineComponent({
         },
         openSave(id: string) {
             this.saves[player.id].time = player.time;
+            save();
             loadSave(this.saves[id]);
             const modData = JSON.parse(
                 decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)!)))
