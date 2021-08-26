@@ -36,16 +36,33 @@ type ActionNodeData = {
     log: LogEntry[];
 };
 
+enum LinkType {
+    LossOnly,
+    GainOnly,
+    Both
+}
+
+// Links cause gain/loss of one resource to also affect other resources
+type ResourceLink = {
+    resource: string;
+    amount: DecimalSource;
+    linkType: LinkType;
+};
+
 type Resource = {
     readonly name: string;
     readonly color: string;
     readonly node: BoardNode;
+    readonly links?: ResourceLink[];
     readonly maxAmount: DecimalSource;
     amount: DecimalSource;
 };
 
 const resources = {
-    time: createResource("time", "#3EB489", 24 * 60 * 60, 24 * 60 * 60),
+    time: createResource("time", "#3EB489", 24 * 60 * 60, 24 * 60 * 60, [
+        { resource: "social", amount: 1 / (60 * 60), linkType: LinkType.LossOnly },
+        { resource: "mental", amount: 1 / (120 * 60), linkType: LinkType.LossOnly }
+    ]),
     energy: createResource("energy", "#FFA500", 100, 100),
     social: createResource("social", "#800080", 100, 100),
     mental: createResource("mental", "#32CD32", 100, 100),
@@ -56,7 +73,8 @@ function createResource(
     name: string,
     color: string,
     maxAmount: DecimalSource,
-    defaultAmount: DecimalSource
+    defaultAmount: DecimalSource,
+    links?: ResourceLink[]
 ): Resource {
     const node = computed(() =>
         player.layers.main?.boards.main.nodes.find(
@@ -67,6 +85,7 @@ function createResource(
     return {
         name,
         color,
+        links,
         get node() {
             // Should only run once, but this tricks TS into knowing node.value exists
             while (node.value == null) {
@@ -319,37 +338,16 @@ function getRandomEvent(events: WeightedEvent[]): LogEntry | null {
     return null;
 }
 
-enum LinkType {
-    LossOnly,
-    GainOnly,
-    Both
-}
-
-// Links cause gain/loss of one resource to also affect other resources
-const links = {
-    time: [
-        { resource: "social", amount: 1 / (60 * 60), linkType: LinkType.LossOnly },
-        { resource: "mental", amount: 1 / (120 * 60), linkType: LinkType.LossOnly }
-    ]
-} as Record<
-    string,
-    {
-        resource: string;
-        amount: DecimalSource;
-        linkType: LinkType;
-    }[]
->;
-
-for (const resource in links) {
-    const resourceLinks = links[resource];
+for (const id in resources) {
+    const resource = resources[id];
     watch(
-        () => resources[resource].amount,
+        () => resource.amount,
         (amount, oldAmount) => {
             if (amount == null || oldAmount == null) {
                 return;
             }
             const resourceGain = Decimal.sub(amount, oldAmount);
-            resourceLinks.forEach(link => {
+            resource.links?.forEach(link => {
                 if (link.linkType === LinkType.LossOnly && Decimal.gt(amount, oldAmount)) {
                     return;
                 }
@@ -412,10 +410,8 @@ const resourceNodeType = {
             selectedNode.value.type === "resource"
         ) {
             const selectedResource = getResource(selectedNode.value);
-            if (selectedResource.name in links) {
-                const link = links[selectedResource.name].find(
-                    link => link.resource === resource.name
-                );
+            if (selectedResource.links) {
+                const link = selectedResource.links.find(link => link.resource === resource.name);
                 if (link) {
                     let text;
                     if (resource.name === "time") {
@@ -691,8 +687,8 @@ export default {
                     }
                     if (selectedNode.value.type === "resource") {
                         const resource = getResource(selectedNode.value);
-                        if (resource.name in links) {
-                            return links[resource.name].map(link => {
+                        if (resource.links) {
+                            return resource.links.map(link => {
                                 const linkResource = resources[link.resource];
                                 let negativeLink = Decimal.lt(link.amount, 0);
                                 if (link.linkType === LinkType.LossOnly) {
