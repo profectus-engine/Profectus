@@ -20,18 +20,20 @@
                         <BoardLink :link="link" />
                     </g>
                 </transition-group>
-                <BoardNode
-                    v-for="node in nodes"
-                    :key="node.id"
-                    :node="node"
-                    :nodeType="board.types[node.type]"
-                    :dragging="draggingNode"
-                    :dragged="dragged"
-                    :hasDragged="hasDragged"
-                    :receivingNode="receivingNode?.id === node.id"
-                    @mouseDown="mouseDown"
-                    @endDragging="endDragging"
-                />
+                <transition-group name="grow" :duration="500" appear>
+                    <g v-for="node in nodes" :key="node.id" style="transition-duration: 0s">
+                        <BoardNode
+                            :node="node"
+                            :nodeType="board.types[node.type]"
+                            :dragging="draggingNode"
+                            :dragged="dragged"
+                            :hasDragged="hasDragged"
+                            :receivingNode="receivingNode?.id === node.id"
+                            @mouseDown="mouseDown"
+                            @endDragging="endDragging"
+                        />
+                    </g>
+                </transition-group>
             </g>
         </svg>
     </panZoom>
