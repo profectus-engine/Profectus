@@ -381,7 +381,7 @@ const resourceNodeType = {
                     selectedAction.value?.id;
                 return {
                     text: currentFocus ? "10%" : "X",
-                    color: currentFocus ? "green" : "black",
+                    color: currentFocus ? "green" : "white",
                     pulsing: true
                 };
             }
@@ -398,7 +398,7 @@ const resourceNodeType = {
                 }
                 let color;
                 if (change.assign) {
-                    color = "black";
+                    color = "white";
                 } else {
                     color = Decimal.gt(change.amount, 0) ? "green" : "red";
                 }
@@ -542,14 +542,14 @@ const actionNodeType = {
                                     (resources.focus.node.data as ResourceNodeData).currentFocus ===
                                     selectedAction.value?.id
                                         ? "green"
-                                        : "black",
+                                        : "white",
                                 "stroke-width": 4,
                                 pulsing: true
                             },
                             ...action.baseChanges.map(change => {
                                 let color;
                                 if (change.assign) {
-                                    color = "black";
+                                    color = "white";
                                 } else {
                                     color = Decimal.gt(change.amount, 0) ? "green" : "red";
                                 }
