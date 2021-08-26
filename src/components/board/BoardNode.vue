@@ -44,100 +44,97 @@
             </g>
         </transition>
 
-        <g
-            v-if="shape === Shape.Circle"
-            @mouseenter="mouseEnter"
-            @mouseleave="mouseLeave"
-            @mousedown="mouseDown"
-            @touchstart="mouseDown"
-            @mouseup="mouseUp"
-            @touchend="mouseUp"
-        >
-            <circle
-                v-if="canAccept"
-                :r="size + 8"
-                :fill="backgroundColor"
-                :stroke="receivingNode ? '#0F0' : '#0F03'"
-                :stroke-width="2"
-            />
+        <transition name="grow" appear>
+            <g
+                @mouseenter="mouseEnter"
+                @mouseleave="mouseLeave"
+                @mousedown="mouseDown"
+                @touchstart="mouseDown"
+                @mouseup="mouseUp"
+                @touchend="mouseUp"
+            >
+                <g v-if="shape === Shape.Circle">
+                    <circle
+                        v-if="canAccept"
+                        :r="size + 8"
+                        :fill="backgroundColor"
+                        :stroke="receivingNode ? '#0F0' : '#0F03'"
+                        :stroke-width="2"
+                    />
 
-            <circle :r="size" :fill="fillColor" :stroke="outlineColor" :stroke-width="4" />
+                    <circle :r="size" :fill="fillColor" :stroke="outlineColor" :stroke-width="4" />
 
-            <circle
-                v-if="progressDisplay === ProgressDisplay.Fill"
-                :r="Math.max(size * progress - 2, 0)"
-                :fill="progressColor"
-            />
-            <circle
-                v-else
-                :r="size + 4.5"
-                class="progressRing"
-                fill="transparent"
-                :stroke-dasharray="(size + 4.5) * 2 * Math.PI"
-                :stroke-width="5"
-                :stroke-dashoffset="
-                    (size + 4.5) * 2 * Math.PI - progress * (size + 4.5) * 2 * Math.PI
-                "
-                :stroke="progressColor"
-            />
-        </g>
-        <g
-            v-else-if="shape === Shape.Diamond"
-            transform="rotate(45, 0, 0)"
-            @mouseenter="mouseEnter"
-            @mouseleave="mouseLeave"
-            @mousedown="mouseDown"
-            @touchstart="mouseDown"
-            @mouseup="mouseUp"
-            @touchend="mouseUp"
-        >
-            <rect
-                v-if="canAccept"
-                :width="size * sqrtTwo + 16"
-                :height="size * sqrtTwo + 16"
-                :transform="
-                    `translate(${-(size * sqrtTwo + 16) / 2}, ${-(size * sqrtTwo + 16) / 2})`
-                "
-                :fill="backgroundColor"
-                :stroke="receivingNode ? '#0F0' : '#0F03'"
-                :stroke-width="2"
-            />
+                    <circle
+                        v-if="progressDisplay === ProgressDisplay.Fill"
+                        :r="Math.max(size * progress - 2, 0)"
+                        :fill="progressColor"
+                    />
+                    <circle
+                        v-else
+                        :r="size + 4.5"
+                        class="progressRing"
+                        fill="transparent"
+                        :stroke-dasharray="(size + 4.5) * 2 * Math.PI"
+                        :stroke-width="5"
+                        :stroke-dashoffset="
+                            (size + 4.5) * 2 * Math.PI - progress * (size + 4.5) * 2 * Math.PI
+                        "
+                        :stroke="progressColor"
+                    />
+                </g>
+                <g v-else-if="shape === Shape.Diamond" transform="rotate(45, 0, 0)">
+                    <rect
+                        v-if="canAccept"
+                        :width="size * sqrtTwo + 16"
+                        :height="size * sqrtTwo + 16"
+                        :transform="
+                            `translate(${-(size * sqrtTwo + 16) / 2}, ${-(size * sqrtTwo + 16) /
+                                2})`
+                        "
+                        :fill="backgroundColor"
+                        :stroke="receivingNode ? '#0F0' : '#0F03'"
+                        :stroke-width="2"
+                    />
 
-            <rect
-                :width="size * sqrtTwo"
-                :height="size * sqrtTwo"
-                :transform="`translate(${(-size * sqrtTwo) / 2}, ${(-size * sqrtTwo) / 2})`"
-                :fill="fillColor"
-                :stroke="outlineColor"
-                :stroke-width="4"
-            />
+                    <rect
+                        :width="size * sqrtTwo"
+                        :height="size * sqrtTwo"
+                        :transform="`translate(${(-size * sqrtTwo) / 2}, ${(-size * sqrtTwo) / 2})`"
+                        :fill="fillColor"
+                        :stroke="outlineColor"
+                        :stroke-width="4"
+                    />
 
-            <rect
-                v-if="progressDisplay === ProgressDisplay.Fill"
-                :width="Math.max(size * sqrtTwo * progress - 2, 0)"
-                :height="Math.max(size * sqrtTwo * progress - 2, 0)"
-                :transform="
-                    `translate(${-Math.max(size * sqrtTwo * progress - 2, 0) / 2}, ${-Math.max(
-                        size * sqrtTwo * progress - 2,
-                        0
-                    ) / 2})`
-                "
-                :fill="progressColor"
-            />
-            <rect
-                v-else
-                :width="size * sqrtTwo + 9"
-                :height="size * sqrtTwo + 9"
-                :transform="`translate(${-(size * sqrtTwo + 9) / 2}, ${-(size * sqrtTwo + 9) / 2})`"
-                fill="transparent"
-                :stroke-dasharray="(size * sqrtTwo + 9) * 4"
-                :stroke-width="5"
-                :stroke-dashoffset="(size * sqrtTwo + 9) * 4 - progress * (size * sqrtTwo + 9) * 4"
-                :stroke="progressColor"
-            />
-        </g>
+                    <rect
+                        v-if="progressDisplay === ProgressDisplay.Fill"
+                        :width="Math.max(size * sqrtTwo * progress - 2, 0)"
+                        :height="Math.max(size * sqrtTwo * progress - 2, 0)"
+                        :transform="
+                            `translate(${-Math.max(size * sqrtTwo * progress - 2, 0) /
+                                2}, ${-Math.max(size * sqrtTwo * progress - 2, 0) / 2})`
+                        "
+                        :fill="progressColor"
+                    />
+                    <rect
+                        v-else
+                        :width="size * sqrtTwo + 9"
+                        :height="size * sqrtTwo + 9"
+                        :transform="
+                            `translate(${-(size * sqrtTwo + 9) / 2}, ${-(size * sqrtTwo + 9) / 2})`
+                        "
+                        fill="transparent"
+                        :stroke-dasharray="(size * sqrtTwo + 9) * 4"
+                        :stroke-width="5"
+                        :stroke-dashoffset="
+                            (size * sqrtTwo + 9) * 4 - progress * (size * sqrtTwo + 9) * 4
+                        "
+                        :stroke="progressColor"
+                    />
+                </g>
 
-        <text :fill="titleColor" class="node-title">{{ title }}</text>
+                <text :fill="titleColor" class="node-title">{{ title }}</text>
+            </g>
+        </transition>
 
         <transition name="fade" appear>
             <text
@@ -388,6 +385,11 @@ export default defineComponent({
     100% {
         opacity: 0.25;
     }
+}
+
+.grow-enter-from,
+.fade-leave-to {
+    transform: scale(0);
 }
 </style>
 
