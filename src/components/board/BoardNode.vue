@@ -11,7 +11,7 @@
                     v-for="(action, index) in actions"
                     :key="action.id"
                     class="action"
-                    :class="{ selected: selectedAction === action }"
+                    :class="{ selected: selectedAction?.id === action.id }"
                     :transform="
                         `translate(
                             ${(-size - 30) *
@@ -34,7 +34,7 @@
                                 : fillColor
                         "
                         r="20"
-                        :stroke-width="selectedAction === action ? 4 : 0"
+                        :stroke-width="selectedAction?.id === action.id ? 4 : 0"
                         :stroke="outlineColor"
                     />
                     <text :fill="titleColor" class="material-icons">{{
@@ -88,8 +88,7 @@
                     :width="size * sqrtTwo + 16"
                     :height="size * sqrtTwo + 16"
                     :transform="
-                        `translate(${-(size * sqrtTwo + 16) / 2}, ${-(size * sqrtTwo + 16) /
-                            2})`
+                        `translate(${-(size * sqrtTwo + 16) / 2}, ${-(size * sqrtTwo + 16) / 2})`
                     "
                     :fill="backgroundColor"
                     :stroke="receivingNode ? '#0F0' : '#0F03'"
@@ -110,8 +109,10 @@
                     :width="Math.max(size * sqrtTwo * progress - 2, 0)"
                     :height="Math.max(size * sqrtTwo * progress - 2, 0)"
                     :transform="
-                        `translate(${-Math.max(size * sqrtTwo * progress - 2, 0) /
-                            2}, ${-Math.max(size * sqrtTwo * progress - 2, 0) / 2})`
+                        `translate(${-Math.max(size * sqrtTwo * progress - 2, 0) / 2}, ${-Math.max(
+                            size * sqrtTwo * progress - 2,
+                            0
+                        ) / 2})`
                     "
                     :fill="progressColor"
                 />
@@ -136,22 +137,23 @@
         </g>
 
         <transition name="fade" appear>
-            <text
-                v-if="label"
-                :fill="label.color || titleColor"
-                class="node-title"
-                :class="{ pulsing: label.pulsing }"
-                :y="-size - 20"
-                >{{ label.text }}</text
-            >
+            <g v-if="label">
+                <text
+                    :fill="label.color || titleColor"
+                    class="node-title"
+                    :class="{ pulsing: label.pulsing }"
+                    :y="-size - 20"
+                    >{{ label.text }}
+                </text>
+            </g>
         </transition>
 
         <transition name="fade" appear>
             <text
+                v-if="selected && selectedAction"
                 :fill="titleColor"
                 class="node-title"
                 :y="size + 75"
-                v-if="selected && selectedAction"
                 >Tap again to confirm</text
             >
         </transition>
@@ -308,13 +310,13 @@ export default defineComponent({
         performAction(e: MouseEvent | TouchEvent, action: BoardNodeAction) {
             // If the onClick function made this action selected,
             // don't propagate the event (which will deselect everything)
-            if (action.onClick(this.node) || this.board.selectedAction === action) {
+            if (action.onClick(this.node) || this.board.selectedAction?.id === action.id) {
                 e.preventDefault();
                 e.stopPropagation();
             }
         },
         actionMouseUp(e: MouseEvent | TouchEvent, action: BoardNodeAction) {
-            if (this.board.selectedAction === action) {
+            if (this.board.selectedAction?.id === action.id) {
                 e.preventDefault();
                 e.stopPropagation();
             }
