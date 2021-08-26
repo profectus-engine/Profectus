@@ -115,6 +115,9 @@ export function formatWhole(num: DecimalSource): string {
 }
 
 export function formatTime(seconds: DecimalSource): string {
+    if (Decimal.lt(seconds, 0)) {
+        return "-" + formatTime(Decimal.neg(seconds));
+    }
     if (Decimal.gt(seconds, 2 ** 51)) {
         // integer precision limit
         return format(Decimal.div(seconds, 31536000)) + "y";
@@ -130,7 +133,7 @@ export function formatTime(seconds: DecimalSource): string {
             "h " +
             formatWhole(Math.floor(seconds / 60) % 60) +
             "m " +
-            format(seconds % 60) +
+            formatWhole(seconds % 60) +
             "s"
         );
     } else if (seconds < 31536000) {

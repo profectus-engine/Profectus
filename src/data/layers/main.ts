@@ -2,7 +2,14 @@ import { ProgressDisplay, Shape } from "@/game/enums";
 import { layers } from "@/game/layers";
 import player from "@/game/player";
 import Decimal, { DecimalSource } from "@/lib/break_eternity";
-import { BoardNode, BoardNodeAction } from "@/typings/features/board";
+import {
+    Board,
+    BoardNode,
+    BoardNodeAction,
+    BoardNodeLink,
+    NodeType
+} from "@/typings/features/board";
+import { RawFeature } from "@/typings/features/feature";
 import { RawLayer } from "@/typings/layer";
 import { formatTime } from "@/util/bignum";
 import { format, formatWhole } from "@/util/break_eternity";
@@ -12,18 +19,19 @@ import { computed, watch } from "vue";
 import themes from "../themes";
 import Main from "./Main.vue";
 
-export type ResourceNodeData = {
+type ResourceNodeData = {
     resourceType: string;
     amount: DecimalSource;
-    [key: string]: any;
+    [key: string]: unknown;
 };
 
-export type ItemNodeData = {
-    itemType: string;
+type ItemNodeData = {
+    resource: string;
     amount: DecimalSource;
+    display: string;
 };
 
-export type ActionNodeData = {
+type ActionNodeData = {
     actionType: string;
     log: LogEntry[];
 };
@@ -31,49 +39,71 @@ export type ActionNodeData = {
 type Resource = {
     readonly name: string;
     readonly color: string;
-    readonly node: BoardNode | undefined;
-    amount: DecimalSource | undefined;
+    readonly node: BoardNode;
     readonly maxAmount: DecimalSource;
+    amount: DecimalSource;
 };
 
 const resources = {
-    time: createResource("time", "#3EB48933", 24 * 60 * 60),
-    energy: createResource("energy", "#FFA50033", 100),
-    social: createResource("social", "#80008033", 100),
-    mental: createResource("mental", "#32CD3233", 100),
-    focus: createResource("focus", "#0000FF33", 100)
+    time: createResource("time", "#3EB48933", 24 * 60 * 60, 24 * 60 * 60),
+    energy: createResource("energy", "#FFA50033", 100, 100),
+    social: createResource("social", "#80008033", 100, 100),
+    mental: createResource("mental", "#32CD3233", 100, 100),
+    focus: createResource("focus", "#0000FF33", 100, 0)
 } as Record<string, Resource>;
 
-function createResource(name: string, color: string, maxAmount: DecimalSource): Resource {
+function createResource(
+    name: string,
+    color: string,
+    maxAmount: DecimalSource,
+    defaultAmount: DecimalSource
+): Resource {
     const node = computed(() =>
         player.layers.main?.boards.main.nodes.find(
             node =>
                 node.type === "resource" && (node.data as ResourceNodeData).resourceType === name
         )
     );
-    const data = computed(() => node.value?.data as ResourceNodeData);
     return {
         name,
         color,
         get node() {
+            // Should only run once, but this tricks TS into knowing node.value exists
+            while (node.value == null) {
+                player.layers.main.boards.main.nodes.push({
+                    id: getUniqueNodeID(layers.main.boards!.data.main),
+                    position: { x: 0, y: 150 }, // TODO function to get nearest unoccupied space
+                    type: "resource",
+                    data: {
+                        resourceType: name,
+                        amount: defaultAmount
+                    }
+                });
+            }
             return node.value;
         },
         get amount() {
-            return data.value?.amount;
+            return node.value ? (node.value.data as ResourceNodeData).amount : defaultAmount;
         },
         set amount(amount: DecimalSource) {
-            data.value.amount = Decimal.clamp(amount, 0, maxAmount);
+            (this.node.data as ResourceNodeData).amount = Decimal.clamp(amount, 0, maxAmount);
         },
         maxAmount
     };
 }
 
-function getResource(node: BoardNode): Resource | undefined {
-    return Object.values(resources).find(resource => resource.node === node);
+function getResource(node: BoardNode): Resource {
+    const resource = Object.values(resources).find(resource => resource.node === node);
+    if (resource == null) {
+        console.error("No resource associated with node", node);
+        throw Error();
+    }
+    return resource;
 }
 
 const selectedNode = computed(() => layers.main?.boards?.data.main.selectedNode);
 const selectedAction = computed(() => layers.main?.boards?.data.main.selectedAction);
+const focusMult = computed(() => Decimal.div(resources.focus.amount, 100).add(1));
 
 export type LogEntry = {
     description: string;
@@ -85,31 +115,190 @@ export type WeightedEvent = {
     weight: number;
 };
 
-const redditEvents = [
-    {
-        event: () => ({ description: "You blink and half an hour has passed before you know it." }),
-        weight: 1
+function createItem(resource: string, amount: DecimalSource, display?: string) {
+    display = display || camelToTitle(resource);
+    const item = {
+        id: getUniqueNodeID(layers.main.boards!.data.main),
+        position: { x: 0, y: 150 }, // TODO function to get nearest unoccupied space
+        type: "item",
+        data: { resource, amount, display } as ItemNodeData
+    };
+    player.layers.main.boards.main.nodes.push(item);
+    return item;
+}
+
+type Action = {
+    icon: string;
+    fillColor?: string;
+    tooltip?: string;
+    events: Array<{
+        event: () => LogEntry;
+        weight: number;
+    }>;
+    baseChanges: Array<{
+        resource: string;
+        amount: DecimalSource;
+        assign?: boolean;
+    }>;
+};
+
+const actions = {
+    reddit: {
+        icon: "reddit",
+        tooltip: "Browse Reddit",
+        events: [
+            {
+                event: () => ({
+                    description: "You blink and half an hour has passed before you know it."
+                }),
+                weight: 1
+            },
+            {
+                event: () => {
+                    createItem("time", 15 * 60, "Speed");
+                    return {
+                        description:
+                            "You found some funny memes and actually feel a bit refreshed.",
+                        effectDescription: `Added <span style="color: #0FF;">Speed</span> node`
+                    };
+                },
+                weight: 0.5
+            }
+        ],
+        baseChanges: [
+            { resource: "time", amount: -30 * 60 },
+            { resource: "energy", amount: 5 }
+        ]
     },
-    {
-        event: () => {
-            const id = getUniqueNodeID(layers.main.boards!.data.main);
-            player.layers.main.boards.main.nodes.push({
-                id,
-                position: { x: 0, y: 150 }, // TODO function to get nearest unoccupied space
-                type: "item",
-                data: {
-                    itemType: "time",
-                    amount: new Decimal(15 * 60)
+    sleep: {
+        icon: "bed",
+        tooltip: "Sleep",
+        events: [
+            {
+                event: () => ({ description: "You have a normal evening of undisturbed sleep" }),
+                weight: 90
+            },
+            {
+                event: () => {
+                    resources.energy.amount = 50;
+                    return {
+                        description: "You had a very restless sleep filled with nightmares :(",
+                        effectDescription: `50% <span style="color: ${resources.energy.color};">Energy</span>`
+                    };
+                },
+                weight() {
+                    return Decimal.sub(100, resources.mental.amount || 100);
                 }
-            });
-            return {
-                description: "You found some funny memes and actually feel a bit refreshed.",
-                effectDescription: `Added <span style="color: #0FF;">Speed</span> node`
-            };
-        },
-        weight: 0.5
+            },
+            {
+                event: () => {
+                    createItem("energy", 25, "Refreshed");
+                    return {
+                        description:
+                            "You dreamt of your future and woke up feeling extra refreshed",
+                        effectDescription: `Added <span style="color: ${resources.energy.color};">Refreshed</span> node`
+                    };
+                },
+                weight() {
+                    return Decimal.sub(resources.mental.amount || 100, 75).max(5);
+                }
+            }
+        ],
+        baseChanges: [
+            { resource: "time", amount: -8 * 30 * 60 },
+            { resource: "energy", amount: 100, assign: true }
+        ]
+    },
+    rest: {
+        icon: "chair",
+        tooltip: "Rest",
+        events: [
+            {
+                event: () => {
+                    resources.energy.amount = Decimal.sub(
+                        resources.energy.amount || 100,
+                        Decimal.times(10, focusMult.value)
+                    );
+                    return { description: "You rest your eyes for a bit and wake up rejuvenated" };
+                },
+                weight: 90
+            },
+            {
+                event: () => ({
+                    description:
+                        "You close your eyes and it feels like no time has gone by before you wake up with a start, slightly less rested than you feel you should be given the time that's passed",
+                    effectDescription: `-25% effective <span style="color: ${resources.energy.color};">Energy</span> restoration`
+                }),
+                weight: 5
+            },
+            {
+                event: () => {
+                    resources.energy.amount = Decimal.add(
+                        resources.energy.amount,
+                        Decimal.times(20, focusMult.value)
+                    );
+                    return {
+                        description:
+                            "You take an incredible power nap and wake up significantly more refreshed",
+                        effectDescription: `+50% effectvie <span style="color: ${resources.energy.color};">Energy</span> restoration`
+                    };
+                },
+                weight: 5
+            }
+        ],
+        baseChanges: [
+            { resource: "time", amount: -4 * 30 * 60 },
+            // 30 is the lowest it can be from any event
+            // typically you'll get 40 though
+            { resource: "energy", amount: 30 }
+        ]
     }
-];
+} as Record<string, Action>;
+
+const pinAction = {
+    id: "pin",
+    icon: "push_pin",
+    fillColor(node) {
+        if (node.pinned) {
+            return themes[player.theme].variables["--bought"];
+        }
+        return themes[player.theme].variables["--secondary-background"];
+    },
+    tooltip: "Always show resource",
+    onClick(node) {
+        node.pinned = !node.pinned;
+        return true;
+    }
+} as BoardNodeAction;
+
+const logAction = {
+    id: "info",
+    icon: "history_edu",
+    fillColor() {
+        return themes[player.theme].variables["--secondary-background"];
+    },
+    tooltip: "Log",
+    onClick(node) {
+        player.layers.main.openNode = node.id;
+        player.layers.main.showModal = true;
+    }
+} as BoardNodeAction;
+
+type ActionNode = {
+    actions: string[];
+    display: string;
+};
+
+const actionNodes = {
+    web: {
+        actions: ["reddit"],
+        display: "Web"
+    },
+    bed: {
+        actions: ["sleep", "rest"],
+        display: "Bed"
+    }
+} as Record<string, ActionNode>;
 
 function getRandomEvent(events: WeightedEvent[]): LogEntry | null {
     if (events.length === 0) {
@@ -179,21 +368,206 @@ for (const resource in links) {
     );
 }
 
-const pinAction = {
-    id: "pin",
-    icon: "push_pin",
-    fillColor(node) {
-        if (node.pinned) {
-            return themes[player.theme].variables["--bought"];
-        }
-        return themes[player.theme].variables["--secondary-background"];
+const resourceNodeType = {
+    title(node) {
+        return (node.data as ResourceNodeData).resourceType;
     },
-    tooltip: "Always show resource",
-    onClick(node) {
-        node.pinned = !node.pinned;
-        return true;
+    label(node) {
+        const resource = getResource(node);
+        if (selectedNode.value != node && selectedAction.value != null) {
+            if (resource.name === "focus") {
+                const currentFocus =
+                    (resource.node.data as ResourceNodeData).currentFocus ===
+                    selectedAction.value?.id;
+                return {
+                    text: currentFocus ? "10%" : "X",
+                    color: currentFocus ? "green" : "black",
+                    pulsing: true
+                };
+            }
+            const action = actions[selectedAction.value.id];
+            const change = action.baseChanges.find(change => change.resource === resource.name);
+            if (change != null) {
+                let text;
+                if (resource.name === "time") {
+                    text = formatTime(change.amount);
+                } else if (Decimal.eq(resource.maxAmount, 100)) {
+                    text = formatWhole(change.amount) + "%";
+                } else {
+                    text = format(change.amount);
+                }
+                let color;
+                if (change.assign) {
+                    color = "black";
+                } else {
+                    color = Decimal.gt(change.amount, 0) ? "green" : "red";
+                }
+                return { text, color, pulsing: true };
+            }
+        }
+
+        if (
+            selectedNode.value != node &&
+            selectedNode.value != null &&
+            selectedNode.value.type === "resource"
+        ) {
+            const selectedResource = getResource(selectedNode.value);
+            if (selectedResource.name in links) {
+                const link = links[selectedResource.name].find(
+                    link => link.resource === resource.name
+                );
+                if (link) {
+                    let text;
+                    if (resource.name === "time") {
+                        text = formatTime(link.amount);
+                    } else if (Decimal.eq(resource.maxAmount, 100)) {
+                        text = formatWhole(link.amount) + "%";
+                    } else {
+                        text = format(link.amount);
+                    }
+                    let negativeLink = Decimal.lt(link.amount, 0);
+                    if (link.linkType === LinkType.LossOnly) {
+                        negativeLink = !negativeLink;
+                    }
+                    return { text, color: negativeLink ? "red" : "green" };
+                }
+            }
+        }
+
+        if (selectedNode.value == node || node.pinned) {
+            const data = node.data as ResourceNodeData;
+            if (data.resourceType === "time") {
+                return { text: formatTime(data.amount), color: resource.color };
+            }
+            if (Decimal.eq(resource.maxAmount, 100)) {
+                return {
+                    text: formatWhole(data.amount) + "%",
+                    color: resource.color
+                };
+            }
+            return { text: format(data.amount), color: resource.color };
+        }
+    },
+    draggable: true,
+    progress(node) {
+        const resource = getResource(node);
+        return Decimal.div(resource.amount, resource.maxAmount).toNumber();
+    },
+    fillColor() {
+        return themes[player.theme].variables["--background"];
+    },
+    progressColor(node) {
+        return getResource(node).color;
+    },
+    canAccept(node, otherNode) {
+        return (
+            otherNode.type === "item" &&
+            (otherNode.data as ItemNodeData).resource === getResource(node).name
+        );
+    },
+    onDrop(node, otherNode) {
+        const resource = getResource(node);
+        const index = player.layers[this.layer].boards[this.id].nodes.indexOf(otherNode);
+        player.layers[this.layer].boards[this.id].nodes.splice(index, 1);
+        resource.amount = Decimal.add(resource.amount, (otherNode.data as ItemNodeData).amount);
+    },
+    actions: [pinAction]
+} as RawFeature<NodeType>;
+
+const actionNodeType = {
+    title(node) {
+        return actionNodes[(node.data as ActionNodeData).actionType].display;
+    },
+    label(node) {
+        if (selectedNode.value == node && selectedAction.value != null) {
+            return { text: selectedAction.value.tooltip, color: "#000" };
+        }
+    },
+    fillColor: "#000",
+    draggable: true,
+    shape: Shape.Diamond,
+    progressColor: "#0FF3",
+    progressDisplay: ProgressDisplay.Outline,
+    actions(node) {
+        const actionNode = actionNodes[(node.data as ActionNodeData).actionType];
+        return [
+            logAction,
+            ...actionNode.actions.map(id => {
+                const action = actions[id];
+                return {
+                    id,
+                    icon: action.icon,
+                    tooltip: action.tooltip,
+                    fillColor: action.fillColor,
+                    onClick(node) {
+                        if (selectedAction.value?.id === this.id) {
+                            const focusData = resources.focus.node.data as ResourceNodeData;
+                            if (focusData.currentFocus === id) {
+                                resources.focus.amount = Decimal.add(resources.focus.amount, 10);
+                            } else {
+                                focusData.currentFocus = id;
+                                resources.focus.amount = 10;
+                            }
+                            for (const change of action.baseChanges) {
+                                if (change.assign) {
+                                    resources[change.resource].amount = change.amount;
+                                } else if (change.resource === "time") {
+                                    // Time isn't affected by focus multiplier
+                                    resources.time.amount = Decimal.add(
+                                        resources.time.amount,
+                                        change.amount
+                                    );
+                                } else {
+                                    resources.time.amount = Decimal.add(
+                                        resources.time.amount,
+                                        Decimal.times(change.amount, focusMult.value)
+                                    );
+                                }
+                            }
+                            player.layers.main.boards.main.selectedAction = null;
+                            const logEntry = getRandomEvent(action.events);
+                            if (logEntry) {
+                                (node.data as ActionNodeData).log.push(logEntry);
+                            }
+                        } else {
+                            player.layers.main.boards.main.selectedAction = this.id;
+                        }
+                    },
+                    links(node) {
+                        return [
+                            {
+                                from: resources.focus.node,
+                                to: node,
+                                stroke:
+                                    (resources.focus.node.data as ResourceNodeData).currentFocus ===
+                                    selectedAction.value?.id
+                                        ? "green"
+                                        : "black",
+                                "stroke-width": 4,
+                                pulsing: true
+                            },
+                            ...action.baseChanges.map(change => {
+                                let color;
+                                if (change.assign) {
+                                    color = "black";
+                                } else {
+                                    color = Decimal.gt(change.amount, 0) ? "green" : "red";
+                                }
+                                return {
+                                    from: resources[change.resource].node,
+                                    to: node,
+                                    stroke: color,
+                                    "stroke-width": 4,
+                                    pulsing: true
+                                } as BoardNodeLink;
+                            })
+                        ];
+                    }
+                } as BoardNodeAction;
+            })
+        ];
     }
-} as BoardNodeAction;
+} as RawFeature<NodeType>;
 
 export default {
     id: "main",
@@ -228,7 +602,7 @@ export default {
                             data: {
                                 resourceType: "time",
                                 amount: new Decimal(24 * 60 * 60)
-                            }
+                            } as ResourceNodeData
                         },
                         {
                             position: { x: 300, y: 0 },
@@ -236,7 +610,7 @@ export default {
                             data: {
                                 resourceType: "mental",
                                 amount: new Decimal(100)
-                            }
+                            } as ResourceNodeData
                         },
                         {
                             position: { x: 150, y: 0 },
@@ -244,7 +618,7 @@ export default {
                             data: {
                                 resourceType: "social",
                                 amount: new Decimal(100)
-                            }
+                            } as ResourceNodeData
                         },
                         {
                             position: { x: -150, y: 0 },
@@ -253,7 +627,7 @@ export default {
                                 resourceType: "focus",
                                 amount: new Decimal(0),
                                 currentFocus: ""
-                            }
+                            } as ResourceNodeData
                         },
                         {
                             position: { x: -300, y: 0 },
@@ -261,7 +635,7 @@ export default {
                             data: {
                                 resourceType: "energy",
                                 amount: new Decimal(100)
-                            }
+                            } as ResourceNodeData
                         },
                         {
                             position: { x: -150, y: 150 },
@@ -269,237 +643,54 @@ export default {
                             data: {
                                 actionType: "web",
                                 log: []
-                            }
+                            } as ActionNodeData
+                        },
+                        {
+                            position: { x: 150, y: 150 },
+                            type: "action",
+                            data: {
+                                actionType: "bed",
+                                log: []
+                            } as ActionNodeData
                         }
                     ];
                 },
                 types: {
-                    resource: {
-                        title(node) {
-                            return (node.data as ResourceNodeData).resourceType;
-                        },
-                        label(node) {
-                            const resource = getResource(node)!;
-                            if (selectedNode.value != node && selectedAction.value != null) {
-                                if (resource && resource.name === "focus") {
-                                    const currentFocus =
-                                        (resource.node?.data as ResourceNodeData | undefined)
-                                            ?.currentFocus === selectedAction.value?.id;
-                                    return {
-                                        text: currentFocus ? "10%" : "X",
-                                        color: currentFocus ? "green" : "black",
-                                        pulsing: true
-                                    };
-                                }
-                                switch (selectedAction.value.id) {
-                                    case "reddit":
-                                        switch (resource.name) {
-                                            case "time":
-                                                return {
-                                                    text: "30m",
-                                                    color: "red",
-                                                    pulsing: true
-                                                };
-                                            case "energy":
-                                                return {
-                                                    text: "5%",
-                                                    color: "green",
-                                                    pulsing: true
-                                                };
-                                        }
-                                        break;
-                                }
-                            }
-                            if (
-                                selectedNode.value != node &&
-                                selectedNode.value != null &&
-                                selectedNode.value.type === "resource"
-                            ) {
-                                const selectedResource = getResource(selectedNode.value);
-                                if (selectedResource && selectedResource.name in links) {
-                                    const link = links[selectedResource.name].find(
-                                        link => link.resource === resource.name
-                                    );
-                                    if (link) {
-                                        let text;
-                                        if (resource.name === "time") {
-                                            text = formatTime(link.amount);
-                                        } else if (Decimal.eq(resource.maxAmount, 100)) {
-                                            text = formatWhole(link.amount) + "%";
-                                        } else {
-                                            text = format(link.amount);
-                                        }
-                                        let negativeLink = Decimal.lt(link.amount, 0);
-                                        if (link.linkType === LinkType.LossOnly) {
-                                            negativeLink = !negativeLink;
-                                        }
-                                        return { text, color: negativeLink ? "red" : "green" };
-                                    }
-                                }
-                            }
-                            if (selectedNode.value == node || node.pinned) {
-                                const data = node.data as ResourceNodeData;
-                                if (data.resourceType === "time") {
-                                    return { text: formatTime(data.amount), color: "#0FF3" };
-                                }
-                                if (Decimal.eq(resource.maxAmount, 100)) {
-                                    return { text: formatWhole(data.amount) + "%", color: "#0FF3" };
-                                }
-                                return { text: format(data.amount), color: "#0FF3" };
-                            }
-                        },
-                        draggable: true,
-                        progress(node) {
-                            const resource = getResource(node)!;
-                            return Decimal.div(resource.amount || 0, resource.maxAmount).toNumber();
-                        },
-                        fillColor() {
-                            return themes[player.theme].variables["--background"];
-                        },
-                        progressColor(node) {
-                            return getResource(node)!.color;
-                        },
-                        canAccept(node, otherNode) {
-                            return otherNode.type === "item";
-                        },
-                        onDrop(node, otherNode) {
-                            const resource = getResource(node)!;
-                            const index = player.layers[this.layer].boards[this.id].nodes.indexOf(
-                                otherNode
-                            );
-                            player.layers[this.layer].boards[this.id].nodes.splice(index, 1);
-                            resource.amount = Decimal.add(
-                                resource.amount || 0,
-                                (otherNode.data as ItemNodeData).amount
-                            );
-                        },
-                        actions: [pinAction]
-                    },
+                    resource: resourceNodeType,
+                    action: actionNodeType,
                     item: {
                         title(node) {
-                            switch ((node.data as ItemNodeData).itemType) {
-                                default:
-                                    return null;
-                                case "time":
-                                    return "speed";
-                            }
+                            return (node.data as ItemNodeData).display;
                         },
                         label(node) {
                             if (selectedNode.value == node || node.pinned) {
                                 const data = node.data as ItemNodeData;
-                                if (data.itemType === "time") {
-                                    return { text: formatTime(data.amount), color: "#0FF3" };
+                                const resource = resources[data.resource];
+                                let text;
+                                if (data.resource === "time") {
+                                    text = formatTime(data.amount);
+                                } else if (Decimal.eq(100, resource.maxAmount)) {
+                                    text = format(data.amount) + "%";
                                 }
-                                return { text: format(data.amount), color: "#0FF3" };
+                                return { text, color: resource.color };
                             }
                         },
                         draggable: true,
                         actions: [pinAction]
-                    },
-                    action: {
-                        title(node) {
-                            return camelToTitle((node.data as ActionNodeData).actionType);
-                        },
-                        fillColor: "#000",
-                        draggable: true,
-                        shape: Shape.Diamond,
-                        progressColor: "#0FF3",
-                        progressDisplay: ProgressDisplay.Outline,
-                        actions: [
-                            {
-                                id: "info",
-                                icon: "history_edu",
-                                fillColor() {
-                                    return themes[player.theme].variables["--secondary-background"];
-                                },
-                                tooltip: "Log",
-                                onClick(node) {
-                                    player.layers.main.openNode = node.id;
-                                    player.layers.main.showModal = true;
-                                }
-                            },
-                            {
-                                id: "reddit",
-                                icon: "reddit",
-                                tooltip: "Browse Reddit",
-                                onClick(node) {
-                                    if (selectedAction.value?.id === this.id) {
-                                        const focusData = resources.focus.node
-                                            ?.data as ResourceNodeData;
-                                        if (focusData.currentFocus === "reddit") {
-                                            resources.focus.amount = Decimal.add(
-                                                resources.focus.amount || 0,
-                                                10
-                                            );
-                                        } else {
-                                            focusData.currentFocus = "reddit";
-                                            resources.focus.amount = 10;
-                                        }
-                                        const focusMult = Decimal.div(
-                                            resources.focus.amount,
-                                            100
-                                        ).add(1);
-                                        resources.time.amount = Decimal.sub(
-                                            resources.time.amount || 0,
-                                            Decimal.times(30 * 60, focusMult)
-                                        );
-                                        resources.energy.amount = Decimal.sub(
-                                            resources.energy.amount || 0,
-                                            Decimal.times(5, focusMult)
-                                        );
-                                        player.layers.main.boards.main.selectedAction = null;
-                                        (node.data as ActionNodeData).log.push(
-                                            getRandomEvent(redditEvents)!
-                                        );
-                                    } else {
-                                        player.layers.main.boards.main.selectedAction = this.id;
-                                    }
-                                },
-                                links(node) {
-                                    return [
-                                        {
-                                            from: resources.time.node,
-                                            to: node,
-                                            stroke: "red",
-                                            "stroke-width": 4,
-                                            pulsing: true
-                                        },
-                                        {
-                                            from: resources.energy.node,
-                                            to: node,
-                                            stroke: "green",
-                                            "stroke-width": 4,
-                                            pulsing: true
-                                        },
-                                        {
-                                            from: resources.focus.node,
-                                            to: node,
-                                            stroke:
-                                                (resources.focus.node?.data as ResourceNodeData)
-                                                    .currentFocus === selectedAction.value?.id
-                                                    ? "green"
-                                                    : "black",
-                                            "stroke-width": 4,
-                                            pulsing: true
-                                        }
-                                    ];
-                                }
-                            }
-                        ]
                     }
                 },
-                links() {
-                    if (this.selectedAction?.links) {
-                        if (typeof this.selectedAction!.links === "function") {
-                            return this.selectedAction!.links(this.selectedNode);
+                links(this: Board) {
+                    if (this.selectedNode && this.selectedAction?.links) {
+                        if (typeof this.selectedAction.links === "function") {
+                            return this.selectedAction.links(this.selectedNode);
                         }
-                        return this.selectedAction!.links;
+                        return this.selectedAction.links;
                     }
                     if (selectedNode.value == null) {
                         return null;
                     }
                     if (selectedNode.value.type === "resource") {
-                        const resource = getResource(selectedNode.value)!;
+                        const resource = getResource(selectedNode.value);
                         if (resource.name in links) {
                             return links[resource.name].map(link => {
                                 const linkResource = resources[link.resource];
