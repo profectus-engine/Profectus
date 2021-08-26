@@ -23,6 +23,7 @@ const defaultTheme: Theme = {
 export enum Themes {
     Classic = "classic",
     Paper = "paper",
+    Nordic = "nordic",
     Aqua = "aqua"
 }
 
@@ -39,6 +40,27 @@ export default {
             "--separator": "#333c4a",
             "--border-radius": "4px",
             "--modal-border": "",
+            "--feature-margin": "5px"
+        },
+        stackedInfoboxes: true,
+        floatingTabs: false
+    } as Theme,
+    // Based on https://www.nordtheme.com
+    nordic: {
+        ...defaultTheme,
+        variables: {
+            ...defaultTheme.variables,
+            "--color": "#D8DEE9",
+            "--points": "#E5E9F0",
+            "--background": "#2E3440",
+            "--secondary-background": "#3B4252",
+            "--locked": "#3B4252",
+            "--bought": "#8FBCBB",
+            "--link": "#88C0D0",
+            "--separator": "#3B4252",
+            "--border-radius": "4px",
+            "--danger": "#D08770",
+            "--modal-border": "solid 2px #3B4252",
             "--feature-margin": "5px"
         },
         stackedInfoboxes: true,
