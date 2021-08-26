@@ -45,11 +45,11 @@ type Resource = {
 };
 
 const resources = {
-    time: createResource("time", "#3EB48933", 24 * 60 * 60, 24 * 60 * 60),
-    energy: createResource("energy", "#FFA50033", 100, 100),
-    social: createResource("social", "#80008033", 100, 100),
-    mental: createResource("mental", "#32CD3233", 100, 100),
-    focus: createResource("focus", "#0000FF33", 100, 0)
+    time: createResource("time", "#3EB489", 24 * 60 * 60, 24 * 60 * 60),
+    energy: createResource("energy", "#FFA500", 100, 100),
+    social: createResource("social", "#800080", 100, 100),
+    mental: createResource("mental", "#32CD32", 100, 100),
+    focus: createResource("focus", "#0000FF", 100, 0)
 } as Record<string, Resource>;
 
 function createResource(
@@ -486,7 +486,7 @@ const actionNodeType = {
     fillColor: "#000",
     draggable: true,
     shape: Shape.Diamond,
-    progressColor: "#0FF3",
+    progressColor: "#000",
     progressDisplay: ProgressDisplay.Outline,
     actions(node) {
         const actionNode = actionNodes[(node.data as ActionNodeData).actionType];
