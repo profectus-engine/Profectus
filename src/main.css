@@ -62,3 +62,7 @@ a:hover,
 ul {
 	list-style-type: none;
 }
+
+.Vue-Toastification__toast {
+	margin: unset;
+}

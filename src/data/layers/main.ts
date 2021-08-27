@@ -16,8 +16,11 @@ import { format, formatWhole } from "@/util/break_eternity";
 import { camelToTitle } from "@/util/common";
 import { getUniqueNodeID } from "@/util/features";
 import { computed, watch } from "vue";
+import { useToast } from "vue-toastification";
 import themes from "../themes";
 import Main from "./Main.vue";
+
+const toast = useToast();
 
 type ResourceNodeData = {
     resourceType: string;
@@ -129,7 +132,7 @@ export type LogEntry = {
 
 export type WeightedEvent = {
     event: () => LogEntry;
-    weight: number;
+    weight: number | (() => number);
 };
 
 function createItem(resource: string, amount: DecimalSource, display?: string) {
@@ -148,10 +151,7 @@ type Action = {
     icon?: string;
     fillColor?: string;
     tooltip?: string;
-    events?: Array<{
-        event: () => LogEntry;
-        weight: number;
-    }>;
+    events?: Array<WeightedEvent>;
     baseChanges?: Array<{
         resource: string;
         amount: DecimalSource;
@@ -254,11 +254,11 @@ const actions = {
                     resources.energy.amount = 50;
                     return {
                         description: "You had a very restless sleep filled with nightmares :(",
-                        effectDescription: `50% <span style="color: ${resources.energy.color};">Energy</span>`
+                        effectDescription: `50% <span style="color: ${resources.energy.color};">Energy</span> `
                     };
                 },
                 weight() {
-                    return Decimal.sub(100, resources.mental.amount || 100);
+                    return Decimal.sub(100, resources.mental.amount);
                 }
             },
             {
@@ -272,7 +272,7 @@ const actions = {
                     };
                 },
                 weight() {
-                    return Decimal.sub(resources.mental.amount || 100, 75).max(5);
+                    return Decimal.sub(resources.mental.amount, 75).max(5);
                 }
             }
         ],
@@ -431,13 +431,22 @@ function getRandomEvent(events: WeightedEvent[]): LogEntry | null {
     if (events.length === 0) {
         return null;
     }
-    const totalWeight = events.reduce((acc, curr) => acc + curr.weight, 0);
-    const random = Math.random() * totalWeight;
+    const totalWeight = events.reduce((acc, curr) => {
+        let weight = curr.weight;
+        if (typeof weight === "function") {
+            weight = weight();
+        }
+        return Decimal.add(acc, weight);
+    }, new Decimal(0));
+    const random = Decimal.times(Math.random(), totalWeight);
 
-    let weight = 0;
+    let weight = new Decimal(0);
     for (const outcome of events) {
-        weight += outcome.weight;
-        if (random <= weight) {
+        weight = Decimal.add(
+            weight,
+            typeof outcome.weight === "function" ? outcome.weight() : outcome.weight
+        );
+        if (Decimal.lte(random, weight)) {
             return outcome.event();
         }
     }
@@ -613,6 +622,7 @@ function performAction(id: string, action: Action, node: BoardNode) {
     if (action.events) {
         const logEntry = getRandomEvent(action.events);
         if (logEntry) {
+            toast.info(logEntry.description);
             (node.data as ActionNodeData).log.push(logEntry);
         }
     }
