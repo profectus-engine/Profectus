@@ -15,6 +15,7 @@ import { formatTime } from "@/util/bignum";
 import { format, formatWhole } from "@/util/break_eternity";
 import { camelToTitle } from "@/util/common";
 import { getUniqueNodeID } from "@/util/features";
+import { coerceComponent } from "@/util/vue";
 import { computed, watch } from "vue";
 import { useToast } from "vue-toastification";
 import themes from "../themes";
@@ -291,7 +292,7 @@ const actions = {
                     resources.mental.amount = Decimal.sub(resources.mental.amount, 10);
                     player.day = (player.day as Decimal).add(1);
                     return {
-                        description: `You passed out! That was <span style="font-style: italicize">not</span> a good night's sleep`
+                        description: `You passed out! That was <span style="font-style: italic">not</span> a good night's sleep`
                     };
                 },
                 weight: 1
@@ -622,7 +623,7 @@ function performAction(id: string, action: Action, node: BoardNode) {
     if (action.events) {
         const logEntry = getRandomEvent(action.events);
         if (logEntry) {
-            toast.info(logEntry.description);
+            toast.info(coerceComponent(logEntry.description));
             (node.data as ActionNodeData).log.push(logEntry);
         }
     }
@@ -716,6 +717,7 @@ function registerResourceDepletedAction(resource: string, nodeID: string, action
         }),
         ({ amount, forcedAction }) => {
             if (Decimal.eq(amount, 0) && forcedAction == null) {
+                toast.error(coerceComponent(`${camelToTitle(resources[resource].name)} depleted!`));
                 player.layers.main.forcedAction = {
                     resource,
                     node: layers.main.boards!.data.main.nodes.find(
