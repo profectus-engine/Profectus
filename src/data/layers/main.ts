@@ -31,7 +31,7 @@ type ItemNodeData = {
     display: string;
 };
 
-type ActionNodeData = {
+export type ActionNodeData = {
     actionType: string;
     log: LogEntry[];
 };
@@ -147,14 +147,14 @@ function createItem(resource: string, amount: DecimalSource, display?: string) {
 }
 
 type Action = {
-    icon: string;
+    icon?: string;
     fillColor?: string;
     tooltip?: string;
-    events: Array<{
+    events?: Array<{
         event: () => LogEntry;
         weight: number;
     }>;
-    baseChanges: Array<{
+    baseChanges?: Array<{
         resource: string;
         amount: DecimalSource;
         assign?: boolean;
@@ -194,11 +194,15 @@ const actions = {
         tooltip: "Sleep",
         events: [
             {
-                event: () => ({ description: "You have a normal evening of undisturbed sleep" }),
+                event: () => {
+                    player.day = (player.day as Decimal).add(1);
+                    return { description: "You have a normal evening of undisturbed sleep" };
+                },
                 weight: 90
             },
             {
                 event: () => {
+                    player.day = (player.day as Decimal).add(1);
                     resources.energy.amount = 50;
                     return {
                         description: "You had a very restless sleep filled with nightmares :(",
@@ -211,6 +215,7 @@ const actions = {
             },
             {
                 event: () => {
+                    player.day = (player.day as Decimal).add(1);
                     createItem("energy", 25, "Refreshed");
                     return {
                         description:
@@ -224,9 +229,27 @@ const actions = {
             }
         ],
         baseChanges: [
-            { resource: "time", amount: -8 * 30 * 60 },
+            { resource: "time", amount: 16 * 60 * 60, assign: true },
             { resource: "energy", amount: 100, assign: true }
         ]
+    },
+    forcedSleep: {
+        events: [
+            {
+                event: () => {
+                    const amount = resources.time.amount;
+                    resources.time.amount = 16 * 60 * 60;
+                    resources.energy.amount = Decimal.sub(100, Decimal.div(amount, 6 * 60));
+                    resources.mental.amount = Decimal.sub(resources.mental.amount, 10);
+                    player.day = (player.day as Decimal).add(1);
+                    return {
+                        description: `You passed out! That was <span style="font-style: italicize">not</span> a good night's sleep`
+                    };
+                },
+                weight: 1
+            }
+        ],
+        baseChanges: [{ resource: "mental", amount: -10 }]
     },
     rest: {
         icon: "chair",
@@ -259,17 +282,32 @@ const actions = {
                     return {
                         description:
                             "You take an incredible power nap and wake up significantly more refreshed",
-                        effectDescription: `+50% effectvie <span style="color: ${resources.energy.color};">Energy</span> restoration`
+                        effectDescription: `+50% effective <span style="color: ${resources.energy.color};">Energy</span> restoration`
                     };
                 },
                 weight: 5
             }
         ],
         baseChanges: [
-            { resource: "time", amount: -4 * 30 * 60 },
+            { resource: "time", amount: -4 * 60 * 60 },
             // 30 is the lowest it can be from any event
             // typically you'll get 40 though
             { resource: "energy", amount: 30 }
+        ]
+    },
+    forcedRest: {
+        events: [
+            {
+                event: () => ({
+                    description: `You drag yourself to the couch before collapsing. You wake back up but still feel oddly drained`
+                }),
+                weight: 1
+            }
+        ],
+        baseChanges: [
+            { resource: "time", amount: -6 * 60 * 60 },
+            { resource: "energy", amount: 30 },
+            { resource: "mental", amount: -5 }
         ]
     }
 } as Record<string, Action>;
@@ -378,21 +416,21 @@ const resourceNodeType = {
                     (resource.node.data as ResourceNodeData).currentFocus ===
                     selectedAction.value?.id;
                 return {
-                    text: currentFocus ? "10%" : "X",
+                    text: "10%",
                     color: currentFocus ? "green" : "white",
                     pulsing: true
                 };
             }
             const action = actions[selectedAction.value.id];
-            const change = action.baseChanges.find(change => change.resource === resource.name);
+            const change = action.baseChanges?.find(change => change.resource === resource.name);
             if (change != null) {
-                let text;
+                let text = Decimal.gt(change.amount, 0) ? "+" : "";
                 if (resource.name === "time") {
-                    text = formatTime(change.amount);
+                    text += formatTime(change.amount);
                 } else if (Decimal.eq(resource.maxAmount, 100)) {
-                    text = formatWhole(change.amount) + "%";
+                    text += formatWhole(change.amount) + "%";
                 } else {
-                    text = format(change.amount);
+                    text += format(change.amount);
                 }
                 let color;
                 if (change.assign) {
@@ -470,6 +508,44 @@ const resourceNodeType = {
     actions: [pinAction]
 } as RawFeature<NodeType>;
 
+function performAction(id: string, action: Action, node: BoardNode) {
+    if (
+        player.layers.main.forcedAction &&
+        (player.layers.main.forcedAction as { action: string }).action !== id
+    ) {
+        return;
+    }
+    const focusData = resources.focus.node.data as ResourceNodeData;
+    if (focusData.currentFocus === id) {
+        resources.focus.amount = Decimal.add(resources.focus.amount, 10);
+    } else {
+        focusData.currentFocus = id;
+        resources.focus.amount = 10;
+    }
+    if (action.baseChanges) {
+        for (const change of action.baseChanges) {
+            if (change.assign) {
+                resources[change.resource].amount = change.amount;
+            } else if (change.resource === "time") {
+                // Time isn't affected by focus multiplier
+                resources.time.amount = Decimal.add(resources.time.amount, change.amount);
+            } else {
+                resources[change.resource].amount = Decimal.add(
+                    resources[change.resource].amount,
+                    Decimal.times(change.amount, focusMult.value)
+                );
+            }
+        }
+    }
+    player.layers.main.boards.main.selectedAction = null;
+    if (action.events) {
+        const logEntry = getRandomEvent(action.events);
+        if (logEntry) {
+            (node.data as ActionNodeData).log.push(logEntry);
+        }
+    }
+}
+
 const actionNodeType = {
     title(node) {
         return actionNodes[(node.data as ActionNodeData).actionType].display;
@@ -484,6 +560,17 @@ const actionNodeType = {
     shape: Shape.Diamond,
     progressColor: "#000",
     progressDisplay: ProgressDisplay.Outline,
+    progress(node) {
+        const forcedAction = player.layers.main.forcedAction as {
+            resource: string;
+            node: number;
+            action: string;
+            progress: number;
+        } | null;
+        if (forcedAction && node.id === forcedAction.node) {
+            return forcedAction.progress;
+        }
+    },
     actions(node) {
         const actionNode = actionNodes[(node.data as ActionNodeData).actionType];
         return [
@@ -495,38 +582,11 @@ const actionNodeType = {
                     icon: action.icon,
                     tooltip: action.tooltip,
                     fillColor: action.fillColor,
-                    onClick(node) {
-                        if (selectedAction.value?.id === this.id) {
-                            const focusData = resources.focus.node.data as ResourceNodeData;
-                            if (focusData.currentFocus === id) {
-                                resources.focus.amount = Decimal.add(resources.focus.amount, 10);
-                            } else {
-                                focusData.currentFocus = id;
-                                resources.focus.amount = 10;
-                            }
-                            for (const change of action.baseChanges) {
-                                if (change.assign) {
-                                    resources[change.resource].amount = change.amount;
-                                } else if (change.resource === "time") {
-                                    // Time isn't affected by focus multiplier
-                                    resources.time.amount = Decimal.add(
-                                        resources.time.amount,
-                                        change.amount
-                                    );
-                                } else {
-                                    resources.time.amount = Decimal.add(
-                                        resources.time.amount,
-                                        Decimal.times(change.amount, focusMult.value)
-                                    );
-                                }
-                            }
-                            player.layers.main.boards.main.selectedAction = null;
-                            const logEntry = getRandomEvent(action.events);
-                            if (logEntry) {
-                                (node.data as ActionNodeData).log.push(logEntry);
-                            }
+                    onClick: node => {
+                        if (selectedAction.value?.id === id) {
+                            performAction(id, action, node);
                         } else {
-                            player.layers.main.boards.main.selectedAction = this.id;
+                            player.layers.main.boards.main.selectedAction = id;
                         }
                     },
                     links(node) {
@@ -542,7 +602,7 @@ const actionNodeType = {
                                 "stroke-width": 4,
                                 pulsing: true
                             },
-                            ...action.baseChanges.map(change => {
+                            ...(action.baseChanges || []).map(change => {
                                 let color;
                                 if (change.assign) {
                                     color = "white";
@@ -565,6 +625,32 @@ const actionNodeType = {
     }
 } as RawFeature<NodeType>;
 
+function registerResourceDepletedAction(resource: string, nodeID: string, action: string) {
+    watch(
+        () => ({
+            amount: resources[resource].amount,
+            forcedAction: player.layers.main?.forcedAction
+        }),
+        ({ amount, forcedAction }) => {
+            if (Decimal.eq(amount, 0) && forcedAction == null) {
+                player.layers.main.forcedAction = {
+                    resource,
+                    node: layers.main.boards!.data.main.nodes.find(
+                        node =>
+                            node.type === "action" &&
+                            (node.data as ActionNodeData).actionType === nodeID
+                    )!.id,
+                    action,
+                    progress: 0
+                };
+            }
+        }
+    );
+}
+
+registerResourceDepletedAction("time", "bed", "forcedSleep");
+registerResourceDepletedAction("energy", "bed", "forcedRest");
+
 export default {
     id: "main",
     display: Main,
@@ -572,10 +658,17 @@ export default {
     startData() {
         return {
             openNode: null,
-            showModal: false
+            showModal: false,
+            forcedAction: null
         } as {
             openNode: string | null;
             showModal: boolean;
+            forcedAction: {
+                resource: string;
+                node: number;
+                action: string;
+                progress: number;
+            } | null;
         };
     },
     minimizable: false,
@@ -584,6 +677,25 @@ export default {
             position: "absolute",
             top: "0",
             left: "0"
+        }
+    },
+    update(diff) {
+        const forcedAction = player.layers.main.forcedAction as {
+            resource: string;
+            node: number;
+            action: string;
+            progress: number;
+        } | null;
+        if (forcedAction) {
+            forcedAction.progress += new Decimal(diff).div(4).toNumber();
+            if (forcedAction.progress >= 1) {
+                performAction(
+                    forcedAction.action,
+                    actions[forcedAction.action],
+                    this.boards!.data.main.nodes.find(node => node.id === forcedAction.node)!
+                );
+                player.layers.main.forcedAction = null;
+            }
         }
     },
     boards: {
@@ -676,35 +788,49 @@ export default {
                     }
                 },
                 links(this: Board) {
+                    const links: BoardNodeLink[] = [];
+                    const forcedAction = player.layers.main.forcedAction as {
+                        resource: string;
+                        node: number;
+                        action: string;
+                        progress: number;
+                    } | null;
+                    if (forcedAction) {
+                        links.push({
+                            from: resources[forcedAction.resource].node,
+                            to: this.nodes.find(node => node.id === forcedAction.node)!,
+                            stroke: "black",
+                            "stroke-width": 4
+                        });
+                    }
                     if (this.selectedNode && this.selectedAction?.links) {
                         if (typeof this.selectedAction.links === "function") {
                             return this.selectedAction.links(this.selectedNode);
                         }
-                        return this.selectedAction.links;
+                        links.push(...this.selectedAction.links);
                     }
-                    if (selectedNode.value == null) {
-                        return null;
-                    }
-                    if (selectedNode.value.type === "resource") {
+                    if (selectedNode.value && selectedNode.value.type === "resource") {
                         const resource = getResource(selectedNode.value);
                         if (resource.links) {
-                            return resource.links.map(link => {
-                                const linkResource = resources[link.resource];
-                                let negativeLink = Decimal.lt(link.amount, 0);
-                                if (link.linkType === LinkType.LossOnly) {
-                                    negativeLink = !negativeLink;
-                                }
-                                return {
-                                    from: selectedNode.value,
-                                    to: linkResource.node,
-                                    stroke: negativeLink ? "red" : "green",
-                                    "stroke-width": 4,
-                                    pulsing: true
-                                };
-                            });
+                            links.push(
+                                ...resource.links.map(link => {
+                                    const linkResource = resources[link.resource];
+                                    let negativeLink = Decimal.lt(link.amount, 0);
+                                    if (link.linkType === LinkType.LossOnly) {
+                                        negativeLink = !negativeLink;
+                                    }
+                                    return {
+                                        from: selectedNode.value,
+                                        to: linkResource.node,
+                                        stroke: negativeLink ? "red" : "green",
+                                        "stroke-width": 4,
+                                        pulsing: true
+                                    } as BoardNodeLink;
+                                })
+                            );
                         }
                     }
-                    return null;
+                    return links;
                 }
             }
         }

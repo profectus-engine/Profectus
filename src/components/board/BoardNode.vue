@@ -1,6 +1,7 @@
 <template>
     <g
         class="boardnode"
+        :class="node.type"
         :style="{ opacity: dragging?.id === node.id && hasDragged ? 0.5 : 1 }"
         :transform="`translate(${position.x},${position.y})`"
     >
@@ -56,15 +57,23 @@
             <g v-if="shape === Shape.Circle">
                 <circle
                     v-if="canAccept"
+                    class="receiver"
                     :r="size + 8"
                     :fill="backgroundColor"
                     :stroke="receivingNode ? '#0F0' : '#0F03'"
                     :stroke-width="2"
                 />
 
-                <circle :r="size" :fill="fillColor" :stroke="outlineColor" :stroke-width="4" />
+                <circle
+                    class="body"
+                    :r="size"
+                    :fill="fillColor"
+                    :stroke="outlineColor"
+                    :stroke-width="4"
+                />
 
                 <circle
+                    class="progressFill"
                     v-if="progressDisplay === ProgressDisplay.Fill"
                     :r="Math.max(size * progress - 2, 0)"
                     :fill="progressColor"
@@ -85,6 +94,7 @@
             <g v-else-if="shape === Shape.Diamond" transform="rotate(45, 0, 0)">
                 <rect
                     v-if="canAccept"
+                    class="receiver"
                     :width="size * sqrtTwo + 16"
                     :height="size * sqrtTwo + 16"
                     :transform="
@@ -96,6 +106,7 @@
                 />
 
                 <rect
+                    class="body"
                     :width="size * sqrtTwo"
                     :height="size * sqrtTwo"
                     :transform="`translate(${(-size * sqrtTwo) / 2}, ${(-size * sqrtTwo) / 2})`"
@@ -106,6 +117,7 @@
 
                 <rect
                     v-if="progressDisplay === ProgressDisplay.Fill"
+                    class="progressFill"
                     :width="Math.max(size * sqrtTwo * progress - 2, 0)"
                     :height="Math.max(size * sqrtTwo * progress - 2, 0)"
                     :transform="
@@ -118,6 +130,7 @@
                 />
                 <rect
                     v-else
+                    class="progressDiamond"
                     :width="size * sqrtTwo + 9"
                     :height="size * sqrtTwo + 9"
                     :transform="
