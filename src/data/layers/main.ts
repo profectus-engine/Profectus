@@ -60,11 +60,9 @@ type Resource = {
 
 const resources = {
     time: createResource("time", "#3EB489", 24 * 60 * 60, 24 * 60 * 60, [
-        { resource: "social", amount: 1 / (60 * 60), linkType: LinkType.LossOnly },
         { resource: "mental", amount: 1 / (120 * 60), linkType: LinkType.LossOnly }
     ]),
     energy: createResource("energy", "#FFA500", 100, 100),
-    social: createResource("social", "#800080", 100, 100),
     mental: createResource("mental", "#32CD32", 100, 100),
     focus: createResource("focus", "#0000FF", 100, 0)
 } as Record<string, Resource>;
@@ -159,6 +157,7 @@ type Action = {
         amount: DecimalSource;
         assign?: boolean;
     }>;
+    enabled?: boolean | (() => boolean);
 };
 
 const actions = {
@@ -190,7 +189,7 @@ const actions = {
         ]
     },
     sleep: {
-        icon: "bed",
+        icon: "mode_night",
         tooltip: "Sleep",
         events: [
             {
@@ -309,6 +308,28 @@ const actions = {
             { resource: "energy", amount: 30 },
             { resource: "mental", amount: -5 }
         ]
+    },
+    makeBed: {
+        icon: "king_bed",
+        tooltip: "Make Bed",
+        enabled: () =>
+            Decimal.lt(player.lastDayBedMade as DecimalSource, player.day as DecimalSource),
+        events: [
+            {
+                event: () => {
+                    player.lastDayBedMade = player.day;
+                    return {
+                        description: `It's a small thing, but you feel better after making your bed`
+                    };
+                },
+                weight: 1
+            }
+        ],
+        baseChanges: [
+            { resource: "time", amount: -10 * 60 },
+            { resource: "energy", amount: -5 },
+            { resource: "mental", amount: 5 }
+        ]
     }
 } as Record<string, Action>;
 
@@ -352,7 +373,7 @@ const actionNodes = {
         display: "Web"
     },
     bed: {
-        actions: ["sleep", "rest"],
+        actions: ["sleep", "rest", "makeBed"],
         display: "Bed"
     }
 } as Record<string, ActionNode>;
@@ -618,7 +639,8 @@ const actionNodeType = {
                                 } as BoardNodeLink;
                             })
                         ];
-                    }
+                    },
+                    enabled: action.enabled
                 } as BoardNodeAction;
             })
         ];
@@ -717,14 +739,6 @@ export default {
                             type: "resource",
                             data: {
                                 resourceType: "mental",
-                                amount: new Decimal(100)
-                            } as ResourceNodeData
-                        },
-                        {
-                            position: { x: 150, y: 0 },
-                            type: "resource",
-                            data: {
-                                resourceType: "social",
                                 amount: new Decimal(100)
                             } as ResourceNodeData
                         },

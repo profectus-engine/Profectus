@@ -1,7 +1,6 @@
 import { RawLayer } from "@/typings/layer";
 import { PlayerData } from "@/typings/player";
 import Decimal from "@/util/bignum";
-import { hardReset } from "@/util/save";
 import { computed } from "vue";
 import main from "./layers/main";
 
@@ -12,7 +11,9 @@ export const getInitialLayers = (
 
 export function getStartingData(): Record<string, unknown> {
     return {
-        points: new Decimal(10)
+        points: new Decimal(10),
+        day: new Decimal(1),
+        lastDayBedMade: new Decimal(0)
     };
 }
 

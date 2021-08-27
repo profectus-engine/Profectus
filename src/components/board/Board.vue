@@ -16,7 +16,7 @@
         <svg class="stage" width="100%" height="100%">
             <g id="g1">
                 <transition-group name="link" appear>
-                    <g v-for="(link, index) in board.links || []" :key="index">
+                    <g v-for="link in board.links || []" :key="link">
                         <BoardLink :link="link" />
                     </g>
                 </transition-group>

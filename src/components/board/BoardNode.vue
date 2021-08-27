@@ -229,7 +229,22 @@ export default defineComponent({
             return this.board.selectedAction;
         },
         actions(): BoardNodeAction[] | null | undefined {
-            return getNodeTypeProperty(this.nodeType, this.node, "actions");
+            const actions = getNodeTypeProperty(this.nodeType, this.node, "actions") as
+                | BoardNodeAction[]
+                | null
+                | undefined;
+            if (actions) {
+                return actions.filter(action => {
+                    if (action.enabled == null) {
+                        return true;
+                    }
+                    if (typeof action.enabled === "function") {
+                        return action.enabled();
+                    }
+                    return action.enabled;
+                });
+            }
+            return null;
         },
         draggable(): boolean {
             return getNodeTypeProperty(this.nodeType, this.node, "draggable");
@@ -363,17 +378,17 @@ export default defineComponent({
     transform: rotate(-90deg);
 }
 
-.action:hover circle,
-.action.selected circle {
+.action:not(.boardnode):hover circle,
+.action:not(.boardnode).selected circle {
     r: 25;
 }
 
-.action:hover text,
-.action.selected text {
+.action:not(.boardnode):hover text,
+.action:not(.boardnode).selected text {
     font-size: 187.5%; /* 150% * 1.25 */
 }
 
-.action text {
+.action:not(.boardnode) text {
     text-anchor: middle;
     dominant-baseline: central;
 }

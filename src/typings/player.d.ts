@@ -1,7 +1,7 @@
 import { Themes } from "@/data/themes";
 import { DecimalSource } from "@/lib/break_eternity";
 import Decimal from "@/util/bignum";
-import { BoardData, BoardNode } from "./features/board";
+import { BoardData } from "./features/board";
 import { MilestoneDisplay } from "./features/milestone";
 import { State } from "./state";
 

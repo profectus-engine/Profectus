@@ -1,6 +1,7 @@
 <template>
     <div v-if="devSpeed === 0">Game Paused</div>
     <div v-else-if="devSpeed && devSpeed !== 1">Dev Speed: {{ formattedDevSpeed }}x</div>
+    <div>Day {{ day }}</div>
     <Board id="main" />
     <Modal :show="showModal" @close="closeModal">
         <template v-slot:header v-if="title">
@@ -70,7 +71,9 @@ export default defineComponent(function Main() {
     const devSpeed = computed(() => player.devSpeed);
     const formattedDevSpeed = computed(() => player.devSpeed && format(player.devSpeed));
 
-    return { title, body, footer, showModal, closeModal, devSpeed, formattedDevSpeed };
+    const day = computed(() => player.day);
+
+    return { title, body, footer, showModal, closeModal, devSpeed, formattedDevSpeed, day };
 });
 </script>
 
@@ -81,5 +84,9 @@ export default defineComponent(function Main() {
 
 .entry:not(:last-child) {
     border-bottom: solid 4px var(--separator);
+}
+
+.boardnode.action .progressDiamond {
+    transition-duration: 0s;
 }
 </style>
