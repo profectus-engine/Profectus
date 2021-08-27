@@ -25,7 +25,7 @@ export function getInitialStore(playerData: Partial<PlayerData> = {}): PlayerDat
             showTPS: true,
             msDisplay: MilestoneDisplay.All,
             hideChallenges: false,
-            theme: Themes.Paper,
+            theme: Themes.Nordic,
             subtabs: {},
             minimized: {},
             modID: modInfo.id,

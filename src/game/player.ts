@@ -22,7 +22,7 @@ const state = reactive<PlayerData>({
     showTPS: true,
     msDisplay: MilestoneDisplay.All,
     hideChallenges: false,
-    theme: Themes.Paper,
+    theme: Themes.Nordic,
     subtabs: {},
     minimized: {},
     modID: "",

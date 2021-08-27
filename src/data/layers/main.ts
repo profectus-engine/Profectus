@@ -160,7 +160,56 @@ type Action = {
     enabled?: boolean | (() => boolean);
 };
 
+const developSteps = [
+    "Spring break just started, and I've got no real obligations! Time to start working on a new project! Just gotta keep it scoped small enough this time so I can actually finish before school starts back up.",
+    "Created a new repo! I even added a README and LICENSE!",
+    "I created an index.html file, and a main.css and main.js",
+    "Thought about what the game should actually be about. Robots?",
+    `Actually had a better idea: <span style="font-style: italic">Ninjas</span>!`,
+    "Ok Ok that was a bit ridiculous. I'm pretty sure I'm actually going to create a game about... game development! It's a perfect and original idea!",
+    "Hmm, what if it involved starting in a garage then growing to become a AAA studio?",
+    "Or, what if it was more abstract. It could use different development-related features in a sort of tree structure, and the numbers get increasingly absurd!",
+    `No, that won't work. What if it got <span style="font-style: italic">too</span> ridiculous? Or got really boring towards the end? What would the end game even be? Probably something silly, that's what`,
+    `It could be self-documenting. A game about its own development process? Or maybe its narrated, and following the path of a developer over time. That could be something <a href="https://store.steampowered.com/app/303210/The_Beginners_Guide/">really special</href>.`,
+    "Maybe meta games are passé these days. How about I start with some first person shooter",
+    "You know what? I'll figure it out as I go along. Let's start with stuff any game would need",
+    "Made an options screen!",
+    "Made a credits screen! It's just me lol",
+    "Added a new option to the options screen! That's adding real value to the game!",
+    "Made a fancy title screen, minus the title itself!",
+    "I changed around some of the colors in the credits screen. Am I procrastinating?",
+    "Thought hard about a core mechanic. Decided it'd be better to just pick a theme that sounds cool and assume the mechanics will follow",
+    "Trying to come up with a theme, but I keep thinking of pokémon, and I'm pretty sure Nintendo will sue me if I make a fangame",
+    "Screw it I'm making pong",
+    "Added a paddle that you can control with the mouse!",
+    "Added a ball that bounces off the paddle",
+    "Added an enemy paddle - it doesn't move yet",
+    "Made the enemy paddle just move up and down in a loop",
+    "Added a number at the top that goes up every time your paddle hits the ball",
+    "Made the enemy paddle and ball move faster over time",
+    "Made the enemy paddle move in the direction of the ball",
+    `Thought of what to add next. I can't <span style="font-style: italic">just</span> make pong!`
+];
+
 const actions = {
+    develop: {
+        icon: "code",
+        tooltip: "Develop",
+        events: [
+            {
+                event() {
+                    const description = developSteps[player.devStep as number];
+                    (player.devStep as number)++;
+                    return { description };
+                },
+                weight: 1
+            }
+        ],
+        baseChanges: [
+            { resource: "time", amount: -60 * 60 },
+            { resource: "energy", amount: -5 }
+        ]
+    },
     reddit: {
         icon: "reddit",
         tooltip: "Browse Reddit",
@@ -368,9 +417,9 @@ type ActionNode = {
 };
 
 const actionNodes = {
-    web: {
-        actions: ["reddit"],
-        display: "Web"
+    pc: {
+        actions: ["develop", "reddit"],
+        display: "PC"
     },
     bed: {
         actions: ["sleep", "rest", "makeBed"],
@@ -447,7 +496,7 @@ const resourceNodeType = {
             if (change != null) {
                 let text = Decimal.gt(change.amount, 0) ? "+" : "";
                 if (resource.name === "time") {
-                    text += formatTime(change.amount);
+                    text += formatTime(Decimal.div(change.amount, focusMult.value));
                 } else if (Decimal.eq(resource.maxAmount, 100)) {
                     text += formatWhole(change.amount) + "%";
                 } else {
@@ -548,12 +597,14 @@ function performAction(id: string, action: Action, node: BoardNode) {
             if (change.assign) {
                 resources[change.resource].amount = change.amount;
             } else if (change.resource === "time") {
-                // Time isn't affected by focus multiplier
-                resources.time.amount = Decimal.add(resources.time.amount, change.amount);
+                resources.time.amount = Decimal.add(
+                    resources.time.amount,
+                    Decimal.div(change.amount, focusMult.value)
+                );
             } else {
                 resources[change.resource].amount = Decimal.add(
                     resources[change.resource].amount,
-                    Decimal.times(change.amount, focusMult.value)
+                    change.amount
                 );
             }
         }
@@ -763,7 +814,7 @@ export default {
                             position: { x: -150, y: 150 },
                             type: "action",
                             data: {
-                                actionType: "web",
+                                actionType: "pc",
                                 log: []
                             } as ActionNodeData
                         },

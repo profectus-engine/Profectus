@@ -13,7 +13,8 @@ export function getStartingData(): Record<string, unknown> {
     return {
         points: new Decimal(10),
         day: new Decimal(1),
-        lastDayBedMade: new Decimal(0)
+        lastDayBedMade: new Decimal(0),
+        devStep: 0
     };
 }
 
