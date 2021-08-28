@@ -67,8 +67,8 @@ const resources = {
         { resource: "mental", amount: 1 / (120 * 60), linkType: LinkType.LossOnly },
         { resource: "hunger", amount: -1 / (15 * 60), linkType: LinkType.LossOnly }
     ]),
-    energy: createResource("energy", "#FFA500", 100, 100),
-    mental: createResource("mental", "#32CD32", 100, 100),
+    energy: createResource("energy", "#FFA500", 100),
+    mental: createResource("mental", "#800080", 100),
     focus: createResource("focus", "#0000FF", 100, 0),
     hunger: createResource("hunger", "#FFFF00", 100, 0, [
         {
@@ -85,14 +85,15 @@ const resources = {
             },
             linkType: LinkType.GainOnly
         }
-    ])
+    ]),
+    money: createResource("money", "#32CD32", 1000, 0)
 } as Record<string, Resource>;
 
 function createResource(
     name: string,
     color: string,
     maxAmount: DecimalSource,
-    defaultAmount: DecimalSource,
+    defaultAmount?: DecimalSource,
     links?: ResourceLink[]
 ): Resource {
     const node = computed(() =>
@@ -121,7 +122,10 @@ function createResource(
             return node.value;
         },
         get amount() {
-            return node.value ? (node.value.data as ResourceNodeData).amount : defaultAmount;
+            if (node.value) {
+                return (node.value.data as ResourceNodeData).amount;
+            }
+            return defaultAmount == null ? maxAmount : defaultAmount;
         },
         set amount(amount: DecimalSource) {
             (this.node.data as ResourceNodeData).amount = Decimal.clamp(amount, 0, maxAmount);
@@ -142,6 +146,7 @@ function getResource(node: BoardNode): Resource {
 const selectedNode = computed(() => layers.main?.boards?.data.main.selectedNode);
 const selectedAction = computed(() => layers.main?.boards?.data.main.selectedAction);
 const focusMult = computed(() => Decimal.div(resources.focus.amount, 100).add(1));
+const chapter = computed(() => ((player.devSteps as number) >= chapterOne.length ? 2 : 1));
 
 export type LogEntry = {
     description: string;
@@ -170,15 +175,21 @@ type Action = {
     fillColor?: string;
     tooltip?: string;
     events?: Array<WeightedEvent>;
-    baseChanges?: Array<{
-        resource: string;
-        amount: DecimalSource;
-        assign?: boolean;
-    }>;
+    baseChanges?:
+        | Array<{
+              resource: string;
+              amount: DecimalSource;
+              assign?: boolean;
+          }>
+        | (() => Array<{
+              resource: string;
+              amount: DecimalSource;
+              assign?: boolean;
+          }>);
     enabled?: boolean | (() => boolean);
 };
 
-const developSteps = [
+const chapterOne = [
     "Spring break just started, and I've got no real obligations! Time to start working on a new project! Just gotta keep it scoped small enough this time so I can actually finish before school starts back up.",
     "Created a new repo! I even added a README and LICENSE!",
     "I created an index.html file, and a main.css and main.js",
@@ -188,7 +199,7 @@ const developSteps = [
     "Hmm, what if it involved starting in a garage then growing to become a AAA studio?",
     "Or, what if it was more abstract. It could use different development-related features in a sort of tree structure, and the numbers get increasingly absurd!",
     `No, that won't work. What if it got <span style="font-style: italic">too</span> ridiculous? Or got really boring towards the end? What would the end game even be? Probably something silly, that's what`,
-    `It could be self-documenting. A game about its own development process? Or maybe its narrated, and following the path of a developer over time. That could be something <a href="https://store.steampowered.com/app/303210/The_Beginners_Guide/">really special</href>.`,
+    `It could be self-documenting. A game about its own development process? Or maybe its narrated, and following the path of a developer over time. That could be something <a href="https://store.steampowered.com/app/303210/The_Beginners_Guide/">really special</a>.`,
     "Maybe meta games are passé these days. How about I start with some first person shooter",
     "You know what? I'll figure it out as I go along. Let's start with stuff any game would need",
     "Made an options screen!",
@@ -209,6 +220,43 @@ const developSteps = [
     `Thought of what to add next. I can't <span style="font-style: italic">just</span> make pong!`
 ];
 
+// Y'all ready for a stream of conciousness?
+const chapterTwo = [
+    "Aw geeze. Break ended... but I don't want to stop developing! I think it'll be okay if I just continue working on it a bit after school... Otherwise, how would I be able to add all the new features I currently and have always intended on adding!",
+    "So I have to level with you. Dev to player. This was intended to be the chapter where you unlock a school node with actions about going to class. It'd take tons of time but give you experience, and not doing it by EOD would cause a fight with your parents, causing a mental health penalty",
+    "Buuuut, I don't think the game is really hard enough right now. The experience was supposed to be a buff and overall you wouldn't get nerfed that hard",
+    "The plan for a chapter 3 was having your parents tell you to start paying for food and rent, so you'd have to start working as well. That was when the difficulty would ramp up: you'd have to take fewer classes per day and sleeping and food would cost money now",
+    "Due to a lack of time, I've cut the school mechanic and adapted the money mechanic so it could be implemented in a reasonable amount of time",
+    "Unfortunately I don't have a good way of making the story work, and I've never been good at writing anyways, so I'm making this in-universe devlog a meta one instead",
+    "This also means I don't have to spend time explaining what got cut due to time separately in the game description or something :sunglasses:",
+    "I know the sunglasses emoji didn't appear in the last message, I just like typing stuff like that. I do it in my markdown notes a lot",
+    "I spent way too long working on the board itself. Which is fine - I really like the board, and will use it in other projects",
+    "Like Kronos. I know its taking a long time to make but it'll be worth it, trust me :)",
+    "Let's just hope my writing skills improve in that game :sweat_smile:",
+    "Does anyone else not like the name of :sweat_smile:? It's a good emoji but man typing it out is kinda gross",
+    "I think it's ironic that I keep wanting to make more narratively driven games, despite how slow I am at writing, and my insecurities about any story I've written. But I love narratively driven games, so its only natural to want to make one myself, right?",
+    "Anyways. I don't actually have many regrets on how I spent my time these last two weeks. I've been incredibly productive, I actually think. The project was a bit ambitious",
+    "And let me tell you: the work does not stop here! After this jam I need to massively refactor this project, or at least how boards work",
+    "Did you know most of the code for this is in a single 1300+ LoC file? It's a mess to find the section of code I need. And all the actions are in one massive object!",
+    'Speaking of, eventually I wanted to have a "refactor" action on the PC node.',
+    `I'm wondering if I'll need some sort of dependency injection to get around cyclical dependencies, which sounds like a whole mess that'll just make it <span style="font-style: italic">more</span> complicated, but I'd love to have each mechanic in its own file`,
+    "e.g. a file could register the energy resource, bed node, and its various actions. That would be really nice, and avoid this massive nest of a file where every mechanic appears in several spread out parts",
+    "kinda like how the new Composition API in Vue 3 is supposed to make code relating to a specific thing able to be kept close to itself, versus the Options API where it all gets spread out",
+    "I actually used the composition API in this game, although TMT-X itself mainly uses the Options API still. That'll probably change at some point, I really like the Composition API",
+    "I think my stream of conciousness is just about running out of things to say, so I guess the game should end soon",
+    "heh, I said the theme of the jam in that last message. If you didn't notice, you can read it by opening the log in the PC action. I maybe should have mentioned that earlier",
+    "Ah well. It's not like I have a tutorial anyways",
+    "Before I go, I have to say one last thing: If I had a bit more time, I would've liked to restyle these notifications",
+    `I used a nice library that was super easy to implement and use, but the notifications look <span style="font-style: italic">so</span> out of place`,
+    "I also wanted to add more random events, especially to the browsing the web action. Imagine finding a plant store page that adds an action to buy said plant, which you could then care for each day. Stuff like that.",
+    "Anyways. I guess that's it. I hope you enjoyed this experience. Once TMT-X is closer to public release I'll probably use it to finish/continue this game.",
+    "Or not. Historically I don't really return to my game jam games.",
+    `Although the mod loader made for Lit (<a href="https://qq1010903229.github.io/lit/">Lit+</a>) is fantastic, and makes me want to work on that game more. It's probably my favorite TMT mod, apart from Kronos.`,
+    "I actually hadn't told anyone about this publicly yet, but since you've been reading thse I guess it won't hurt:",
+    "Loader gave me permission to use his content if/when I port Lit to TMT. Lit+ will become part of the base game! I'm very excited to do that. :D",
+    `So yeah. Thanks for playing. See you in the remake of this game. <span style="font-style: italic">oh god I'll have to rewrite all of this</span> `
+];
+
 const actions = {
     develop: {
         icon: "code",
@@ -216,7 +264,42 @@ const actions = {
         events: [
             {
                 event() {
-                    const description = developSteps[player.devStep as number];
+                    const step = player.devStep as number;
+                    let description;
+                    if (step < chapterOne.length) {
+                        description = chapterOne[step];
+                    } else {
+                        if (step === chapterOne.length) {
+                            player.layers.main.boards.main.nodes.push({
+                                id: getUniqueNodeID(layers.main.boards!.data.main),
+                                position: { x: 0, y: 0 },
+                                type: "resource",
+                                data: {
+                                    resourceType: "money",
+                                    amount: 10
+                                } as ResourceNodeData
+                            });
+                            player.layers.main.boards.main.nodes.push({
+                                id: getUniqueNodeID(layers.main.boards!.data.main),
+                                position: { x: -300, y: 150 },
+                                type: "action",
+                                data: {
+                                    actionType: "job",
+                                    log: []
+                                } as ActionNodeData
+                            });
+                            player.layers.main.boards.main.nodes.push({
+                                id: getUniqueNodeID(layers.main.boards!.data.main),
+                                position: { x: 300, y: 150 },
+                                type: "action",
+                                data: {
+                                    actionType: "home",
+                                    log: []
+                                } as ActionNodeData
+                            });
+                        }
+                        description = chapterTwo[step - chapterOne.length];
+                    }
                     (player.devStep as number)++;
                     return { description };
                 },
@@ -294,11 +377,22 @@ const actions = {
                 }
             }
         ],
-        baseChanges: [
-            { resource: "time", amount: 16 * 60 * 60, assign: true },
-            { resource: "energy", amount: 100, assign: true },
-            { resource: "hunger", amount: 20 }
-        ]
+        baseChanges: () => {
+            if (chapter.value === 1) {
+                return [
+                    { resource: "time", amount: 16 * 60 * 60, assign: true },
+                    { resource: "energy", amount: 100, assign: true },
+                    { resource: "hunger", amount: 20 }
+                ];
+            } else {
+                return [
+                    { resource: "time", amount: 16 * 60 * 60, assign: true },
+                    { resource: "energy", amount: 100, assign: true },
+                    { resource: "hunger", amount: 20 },
+                    { resource: "money", amount: -25 }
+                ];
+            }
+        }
     },
     forcedSleep: {
         events: [
@@ -316,10 +410,20 @@ const actions = {
                 weight: 1
             }
         ],
-        baseChanges: [
-            { resource: "mental", amount: -10 },
-            { resource: "hunger", amount: 20 }
-        ]
+        baseChanges: () => {
+            if (chapter.value === 1) {
+                return [
+                    { resource: "mental", amount: -10 },
+                    { resource: "hunger", amount: 20 }
+                ];
+            } else {
+                return [
+                    { resource: "mental", amount: -10 },
+                    { resource: "hunger", amount: 20 },
+                    { resource: "money", amount: -25 }
+                ];
+            }
+        }
     },
     rest: {
         icon: "chair",
@@ -426,11 +530,22 @@ const actions = {
                 weight: 1
             }
         ],
-        baseChanges: [
-            { resource: "time", amount: -30 * 60 },
-            { resource: "energy", amount: 10 },
-            { resource: "hunger", amount: -70 }
-        ]
+        baseChanges: () => {
+            if (chapter.value === 1) {
+                return [
+                    { resource: "time", amount: -30 * 60 },
+                    { resource: "energy", amount: 10 },
+                    { resource: "hunger", amount: -70 }
+                ];
+            } else {
+                return [
+                    { resource: "time", amount: -30 * 60 },
+                    { resource: "energy", amount: 10 },
+                    { resource: "hunger", amount: -70 },
+                    { resource: "money", amount: 10 }
+                ];
+            }
+        }
     },
     snack: {
         icon: "icecream",
@@ -462,11 +577,22 @@ const actions = {
                 weight: 1
             }
         ],
-        baseChanges: [
-            { resource: "time", amount: -20 * 60 },
-            { resource: "mental", amount: 2 },
-            { resource: "hunger", amount: -25 }
-        ]
+        baseChanges: () => {
+            if (chapter.value === 1) {
+                return [
+                    { resource: "time", amount: -20 * 60 },
+                    { resource: "mental", amount: 2 },
+                    { resource: "hunger", amount: -25 }
+                ];
+            } else {
+                return [
+                    { resource: "time", amount: -20 * 60 },
+                    { resource: "mental", amount: 2 },
+                    { resource: "hunger", amount: -25 },
+                    { resource: "money", amount: 5 }
+                ];
+            }
+        }
     },
     forcedSnack: {
         events: [
@@ -481,10 +607,20 @@ const actions = {
                 weight: 1
             }
         ],
-        baseChanges: [
-            { resource: "time", amount: -20 * 60 },
-            { resource: "hunger", amount: -25 }
-        ]
+        baseChanges: () => {
+            if (chapter.value === 1) {
+                return [
+                    { resource: "time", amount: -20 * 60 },
+                    { resource: "hunger", amount: -25 }
+                ];
+            } else {
+                return [
+                    { resource: "time", amount: -20 * 60 },
+                    { resource: "hunger", amount: -25 },
+                    { resource: "money", amount: 5 }
+                ];
+            }
+        }
     },
     brush: {
         icon: "mood",
@@ -507,6 +643,90 @@ const actions = {
             { resource: "energy", amount: -2 },
             { resource: "mental", amount: 2 }
         ]
+    },
+    work: {
+        icon: "work",
+        tooltip: "Work",
+        events: [
+            {
+                event: () => ({ description: "Work was... tolerable... today" }),
+                weight: 8
+            },
+            {
+                event: () => {
+                    resources.mental.amount = Decimal.sub(resources.mental.amount, 12);
+                    return {
+                        description: `Work was a nightmare today. You're pretty sure the shades of red on your boss' angry face aren't healthy`,
+                        effectDescription: `-12% <span style="color: ${resources.mental.color}">Mental</span> `
+                    };
+                },
+                weight: 1
+            },
+            {
+                event: () => {
+                    resources.mental.amount = Decimal.add(resources.mental.amount, 4);
+                    resources.money.amount = Decimal.add(resources.money.amount, 20);
+                    return {
+                        description:
+                            "You were so productive today! The boss even handed you a below-the-table bonus at the end of the day. Wow!",
+                        effectDescription: `+4% <span style="color: ${resources.mental.color}">Mental</span>, +$20 <span style="color: ${resources.money.color}">Money</span> `
+                    };
+                },
+                weight: 1
+            }
+        ],
+        baseChanges: [
+            { resource: "time", amount: -9 * 60 * 60 },
+            { resource: "hunger", amount: -50 },
+            { resource: "money", amount: 40 },
+            { resource: "energy", amount: -70 }
+        ]
+    },
+    promote: {
+        icon: "badge",
+        tooltip: "Ask for promotion",
+        events: [
+            {
+                event: () => {
+                    resources.mental.amount = Decimal.sub(resources.mental.amount, 10);
+                    return {
+                        description:
+                            "I didn't get promoted :( This could be bad luck or the result of the develop not having enough time to implement experience lol",
+                        effectDescription: `-10% <span style="color: ${resources.mental.color}">Mental</span> `
+                    };
+                },
+                weight: 1
+            }
+        ],
+        baseChanges: [
+            { resource: "time", amount: -60 * 60 },
+            { resource: "energy", amount: -20 }
+        ]
+    },
+    money: {
+        icon: "attach_money",
+        tooltip: "Ask parents for money",
+        events: [
+            {
+                event: () => {
+                    resources.mental.amount = Decimal.sub(
+                        resources.mental.amount,
+                        Decimal.times(5, Decimal.add(player.moneyRequests as DecimalSource, 1))
+                    );
+                    player.moneyRequests = Decimal.add(player.moneyRequests as DecimalSource, 1);
+                    return {
+                        description:
+                            "I asked my parents for money and got $100. That should help, but every time I ask I feel guiltier",
+                        effectDescription: `-${Decimal.times(
+                            5,
+                            player.moneyRequests as DecimalSource
+                        )}% <span style="color: ${resources.mental.color}">Mental</span> `
+                    };
+                },
+                weight: 1
+            }
+        ],
+        baseChanges: [{ resource: "money", amount: 100 }]
     }
 } as Record<string, Action>;
 
@@ -556,6 +776,14 @@ const actionNodes = {
     food: {
         actions: ["eat", "snack", "brush"],
         display: "Food"
+    },
+    job: {
+        actions: ["work", "promote"],
+        display: "Job"
+    },
+    home: {
+        actions: ["money"],
+        display: "Home"
     }
 } as Record<string, ActionNode>;
 
@@ -634,11 +862,19 @@ const resourceNodeType = {
                 };
             }
             const action = actions[selectedAction.value.id];
-            const change = action.baseChanges?.find(change => change.resource === resource.name);
+            const baseChanges =
+                action.baseChanges &&
+                (typeof action.baseChanges === "function"
+                    ? action.baseChanges()
+                    : action.baseChanges);
+            const change = baseChanges?.find(change => change.resource === resource.name);
             if (change != null) {
                 let text = Decimal.gt(change.amount, 0) ? "+" : "";
                 if (resource.name === "time") {
+                    // TODO only apply focusMult if focus is on this action
                     text += formatTime(Decimal.div(change.amount, focusMult.value));
+                } else if (resource.name === "money") {
+                    text = "$" + formatWhole(change.amount);
                 } else if (Decimal.eq(resource.maxAmount, 100)) {
                     text += formatWhole(change.amount) + "%";
                 } else {
@@ -669,6 +905,8 @@ const resourceNodeType = {
                     ).neg();
                     if (resource.name === "time") {
                         text = formatTime(amount);
+                    } else if (resource.name === "money") {
+                        text = "$" + formatWhole(resource.amount);
                     } else if (Decimal.eq(resource.maxAmount, 100)) {
                         text = formatWhole(amount) + "%";
                     } else {
@@ -687,6 +925,9 @@ const resourceNodeType = {
             const data = node.data as ResourceNodeData;
             if (data.resourceType === "time") {
                 return { text: formatTime(data.amount), color: resource.color };
+            }
+            if (resource.name === "money") {
+                return { text: "$" + formatWhole(resource.amount), color: resource.color };
             }
             if (Decimal.eq(resource.maxAmount, 100)) {
                 return {
@@ -738,7 +979,9 @@ function performAction(id: string, action: Action, node: BoardNode) {
         resources.focus.amount = 10;
     }
     if (action.baseChanges) {
-        for (const change of action.baseChanges) {
+        const baseChanges =
+            typeof action.baseChanges === "function" ? action.baseChanges() : action.baseChanges;
+        for (const change of baseChanges) {
             if (change.assign) {
                 resources[change.resource].amount = change.amount;
             } else if (change.resource === "time") {
@@ -808,6 +1051,11 @@ const actionNodeType = {
                         }
                     },
                     links(node) {
+                        const baseChanges =
+                            action.baseChanges &&
+                            (typeof action.baseChanges === "function"
+                                ? action.baseChanges()
+                                : action.baseChanges);
                         return [
                             {
                                 from: resources.focus.node,
@@ -820,7 +1068,7 @@ const actionNodeType = {
                                 "stroke-width": 4,
                                 pulsing: true
                             },
-                            ...(action.baseChanges || []).map(change => {
+                            ...(baseChanges || []).map(change => {
                                 let color;
                                 if (change.assign) {
                                     color = "white";
@@ -853,18 +1101,24 @@ function registerResourceDepletedAction(
     watch(
         () => ({
             amount: resources[resource].amount,
-            forcedAction: player.layers.main?.forcedAction
+            forcedAction: player.layers.main?.forcedAction,
+            node: layers.main?.boards?.data.main.nodes.find(
+                node =>
+                    node.type === "action" && (node.data as ActionNodeData).actionType === nodeID
+            )
         }),
-        ({ amount, forcedAction }) => {
-            if (Decimal.eq(amount, threshold) && forcedAction == null) {
-                toast.error(coerceComponent(`${camelToTitle(resources[resource].name)} depleted!`));
+        ({ amount, forcedAction, node }) => {
+            if (Decimal.eq(amount, threshold) && forcedAction == null && node != null) {
+                toast.error(
+                    coerceComponent(
+                        `${camelToTitle(resources[resource].name)} depleted!`,
+                        "span",
+                        false
+                    )
+                );
                 player.layers.main.forcedAction = {
                     resource,
-                    node: layers.main.boards!.data.main.nodes.find(
-                        node =>
-                            node.type === "action" &&
-                            (node.data as ActionNodeData).actionType === nodeID
-                    )!.id,
+                    node: node.id,
                     action,
                     progress: 0
                 };
@@ -876,6 +1130,7 @@ function registerResourceDepletedAction(
 registerResourceDepletedAction("time", "bed", "forcedSleep");
 registerResourceDepletedAction("energy", "bed", "forcedRest");
 registerResourceDepletedAction("hunger", "food", "forcedSnack", 100);
+registerResourceDepletedAction("money", "home", "money");
 
 export default {
     id: "main",
@@ -931,7 +1186,7 @@ export default {
                 startNodes() {
                     return [
                         {
-                            position: { x: 0, y: 0 },
+                            position: { x: 0, y: -150 },
                             type: "resource",
                             data: {
                                 resourceType: "time",
@@ -980,7 +1235,7 @@ export default {
                             } as ActionNodeData
                         },
                         {
-                            position: { x: 150, y: 150 },
+                            position: { x: 0, y: 150 },
                             type: "action",
                             data: {
                                 actionType: "bed",
@@ -988,7 +1243,7 @@ export default {
                             } as ActionNodeData
                         },
                         {
-                            position: { x: -300, y: 150 },
+                            position: { x: 150, y: 150 },
                             type: "action",
                             data: {
                                 actionType: "food",
@@ -1009,8 +1264,10 @@ export default {
                                 const data = node.data as ItemNodeData;
                                 const resource = resources[data.resource];
                                 let text;
-                                if (data.resource === "time") {
+                                if (resource.name === "time") {
                                     text = formatTime(data.amount);
+                                } else if (resource.name === "money") {
+                                    text = "$" + formatWhole(resource.amount);
                                 } else if (Decimal.eq(100, resource.maxAmount)) {
                                     text = format(data.amount) + "%";
                                 }

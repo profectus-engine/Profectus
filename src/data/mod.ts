@@ -1,3 +1,4 @@
+import player from "@/game/player";
 import { RawLayer } from "@/typings/layer";
 import { PlayerData } from "@/typings/player";
 import Decimal from "@/util/bignum";
@@ -15,12 +16,13 @@ export function getStartingData(): Record<string, unknown> {
         day: new Decimal(1),
         lastDayBedMade: new Decimal(0),
         lastDayBrushed: new Decimal(0),
-        devStep: 0
+        devStep: 0,
+        moneyRequests: new Decimal(0)
     };
 }
 
 export const hasWon = computed(() => {
-    return false;
+    return (player.devSpeed as number) >= 61;
 });
 
 export const pointGain = computed(() => {
