@@ -49,7 +49,7 @@ enum LinkType {
 // Links cause gain/loss of one resource to also affect other resources
 type ResourceLink = {
     resource: string;
-    amount: DecimalSource;
+    amount: DecimalSource | (() => DecimalSource);
     linkType: LinkType;
 };
 
@@ -64,11 +64,28 @@ type Resource = {
 
 const resources = {
     time: createResource("time", "#3EB489", 24 * 60 * 60, 24 * 60 * 60, [
-        { resource: "mental", amount: 1 / (120 * 60), linkType: LinkType.LossOnly }
+        { resource: "mental", amount: 1 / (120 * 60), linkType: LinkType.LossOnly },
+        { resource: "hunger", amount: -1 / (15 * 60), linkType: LinkType.LossOnly }
     ]),
     energy: createResource("energy", "#FFA500", 100, 100),
     mental: createResource("mental", "#32CD32", 100, 100),
-    focus: createResource("focus", "#0000FF", 100, 0)
+    focus: createResource("focus", "#0000FF", 100, 0),
+    hunger: createResource("hunger", "#FFFF00", 100, 0, [
+        {
+            resource: "focus",
+            amount() {
+                // the higher hunger goes, the more focus it consumes
+                // the idea being the amount lost is the area under the y=x line
+                // that's right, using calculus in a video game :sunglasses:
+                return new Decimal(resources.hunger.amount)
+                    .div(10)
+                    .pow(1.5)
+                    .div(1.5)
+                    .neg();
+            },
+            linkType: LinkType.GainOnly
+        }
+    ])
 } as Record<string, Resource>;
 
 function createResource(
@@ -279,7 +296,8 @@ const actions = {
         ],
         baseChanges: [
             { resource: "time", amount: 16 * 60 * 60, assign: true },
-            { resource: "energy", amount: 100, assign: true }
+            { resource: "energy", amount: 100, assign: true },
+            { resource: "hunger", amount: 20 }
         ]
     },
     forcedSleep: {
@@ -298,7 +316,10 @@ const actions = {
                 weight: 1
             }
         ],
-        baseChanges: [{ resource: "mental", amount: -10 }]
+        baseChanges: [
+            { resource: "mental", amount: -10 },
+            { resource: "hunger", amount: 20 }
+        ]
     },
     rest: {
         icon: "chair",
@@ -306,10 +327,7 @@ const actions = {
         events: [
             {
                 event: () => {
-                    resources.energy.amount = Decimal.sub(
-                        resources.energy.amount || 100,
-                        Decimal.times(10, focusMult.value)
-                    );
+                    resources.energy.amount = Decimal.add(resources.energy.amount, 10);
                     return { description: "You rest your eyes for a bit and wake up rejuvenated" };
                 },
                 weight: 90
@@ -324,10 +342,7 @@ const actions = {
             },
             {
                 event: () => {
-                    resources.energy.amount = Decimal.add(
-                        resources.energy.amount,
-                        Decimal.times(20, focusMult.value)
-                    );
+                    resources.energy.amount = Decimal.add(resources.energy.amount, 20);
                     return {
                         description:
                             "You take an incredible power nap and wake up significantly more refreshed",
@@ -380,6 +395,118 @@ const actions = {
             { resource: "energy", amount: -5 },
             { resource: "mental", amount: 5 }
         ]
+    },
+    eat: {
+        icon: "restaurant",
+        tooltip: "Eat meal",
+        events: [
+            {
+                event: () => ({ description: `You eat a delicious meal. Nice!` }),
+                weight: 8
+            },
+            {
+                event: () => {
+                    resources.mental.amount = Decimal.add(resources.mental.amount, 10);
+                    return {
+                        description: `This is your favorite meal! Oh, what a treat!`,
+                        effectDescription: `+10% <span style="color: ${resources.mental.color}">Mental</span> `
+                    };
+                },
+                weight: 1
+            },
+            {
+                event: () => {
+                    resources.energy.amount = Decimal.sub(resources.energy.amount, 10);
+                    resources.hunger.amount = Decimal.add(resources.hunger.amount, 25);
+                    return {
+                        description: `Oh no, I'm not sure that food was still good`,
+                        effectDescription: `-10% <span style="color: ${resources.energy.color}">Energy</span>, -25% <span style="color: ${resources.hunger.color}">Hunger</span> depletion `
+                    };
+                },
+                weight: 1
+            }
+        ],
+        baseChanges: [
+            { resource: "time", amount: -30 * 60 },
+            { resource: "energy", amount: 10 },
+            { resource: "hunger", amount: -70 }
+        ]
+    },
+    snack: {
+        icon: "icecream",
+        tooltip: "Eat snack",
+        events: [
+            {
+                event: () => ({ description: `You have a nice, small snack. Nice!` }),
+                weight: 8
+            },
+            {
+                event: () => {
+                    resources.energy.amount = Decimal.add(resources.energy.amount, 10);
+                    return {
+                        description: `You chose a healthy, delicious snack. You feel really good!`,
+                        effectDescription: `+10% <span style="color: ${resources.energy.color}">Energy</span> `
+                    };
+                },
+                weight: 1
+            },
+            {
+                event: () => {
+                    resources.mental.amount = Decimal.sub(resources.mental.amount, 5);
+                    resources.hunger.amount = Decimal.add(resources.hunger.amount, 10);
+                    return {
+                        description: `You gorge yourself on unhealthy foods, and don't feel so good`,
+                        effectDescription: `-5% <span style="color: ${resources.mental.color}">Mental</span>, -10% <span style="color: ${resources.hunger.color}">Hunger</span> depletion `
+                    };
+                },
+                weight: 1
+            }
+        ],
+        baseChanges: [
+            { resource: "time", amount: -20 * 60 },
+            { resource: "mental", amount: 2 },
+            { resource: "hunger", amount: -25 }
+        ]
+    },
+    forcedSnack: {
+        events: [
+            {
+                event: () => {
+                    resources.mental.amount = Decimal.sub(resources.mental.amount, 15);
+                    return {
+                        description: `You scarf down anything and everything around you. That can't be good for you.`,
+                        effectDescription: `-15% <span style="color: ${resources.mental.color}">Mental</span> `
+                    };
+                },
+                weight: 1
+            }
+        ],
+        baseChanges: [
+            { resource: "time", amount: -20 * 60 },
+            { resource: "hunger", amount: -25 }
+        ]
+    },
+    brush: {
+        icon: "mood",
+        tooltip: "Brush Teeth",
+        enabled: () =>
+            Decimal.lt(player.lastDayBrushed as DecimalSource, player.day as DecimalSource),
+        events: [
+            {
+                event: () => {
+                    player.lastDayBrushed = player.day;
+                    return {
+                        description: `Brushing once a day is 33% of the way towards keeping the dentist at bay`
+                    };
+                },
+                weight: 1
+            }
+        ],
+        baseChanges: [
+            { resource: "time", amount: -5 * 60 },
+            { resource: "energy", amount: -2 },
+            { resource: "mental", amount: 2 }
+        ]
     }
 } as Record<string, Action>;
 
@@ -425,6 +552,10 @@ const actionNodes = {
     bed: {
         actions: ["sleep", "rest", "makeBed"],
         display: "Bed"
+    },
+    food: {
+        actions: ["eat", "snack", "brush"],
+        display: "Food"
     }
 } as Record<string, ActionNode>;
 
@@ -474,9 +605,10 @@ for (const id in resources) {
                 }
                 const resource = resources[link.resource];
                 if (resource.amount != null) {
+                    const amount = typeof link.amount === "function" ? link.amount() : link.amount;
                     resource.amount = Decimal.add(
                         resource.amount,
-                        Decimal.times(link.amount, resourceGain)
+                        Decimal.times(amount, resourceGain)
                     );
                 }
             });
@@ -532,14 +664,17 @@ const resourceNodeType = {
                 const link = selectedResource.links.find(link => link.resource === resource.name);
                 if (link) {
                     let text;
+                    const amount = new Decimal(
+                        typeof link.amount === "function" ? link.amount() : link.amount
+                    ).neg();
                     if (resource.name === "time") {
-                        text = formatTime(link.amount);
+                        text = formatTime(amount);
                     } else if (Decimal.eq(resource.maxAmount, 100)) {
-                        text = formatWhole(link.amount) + "%";
+                        text = formatWhole(amount) + "%";
                     } else {
-                        text = format(link.amount);
+                        text = format(amount);
                     }
-                    let negativeLink = Decimal.lt(link.amount, 0);
+                    let negativeLink = Decimal.gt(amount, 0);
                     if (link.linkType === LinkType.LossOnly) {
                         negativeLink = !negativeLink;
                     }
@@ -709,14 +844,19 @@ const actionNodeType = {
     }
 } as RawFeature<NodeType>;
 
-function registerResourceDepletedAction(resource: string, nodeID: string, action: string) {
+function registerResourceDepletedAction(
+    resource: string,
+    nodeID: string,
+    action: string,
+    threshold: 0 | 100 = 0
+) {
     watch(
         () => ({
             amount: resources[resource].amount,
             forcedAction: player.layers.main?.forcedAction
         }),
         ({ amount, forcedAction }) => {
-            if (Decimal.eq(amount, 0) && forcedAction == null) {
+            if (Decimal.eq(amount, threshold) && forcedAction == null) {
                 toast.error(coerceComponent(`${camelToTitle(resources[resource].name)} depleted!`));
                 player.layers.main.forcedAction = {
                     resource,
@@ -735,6 +875,7 @@ function registerResourceDepletedAction(resource: string, nodeID: string, action
 
 registerResourceDepletedAction("time", "bed", "forcedSleep");
 registerResourceDepletedAction("energy", "bed", "forcedRest");
+registerResourceDepletedAction("hunger", "food", "forcedSnack", 100);
 
 export default {
     id: "main",
@@ -823,6 +964,14 @@ export default {
                             } as ResourceNodeData
                         },
                         {
+                            position: { x: 150, y: 0 },
+                            type: "resource",
+                            data: {
+                                resourceType: "hunger",
+                                amount: new Decimal(0)
+                            } as ResourceNodeData
+                        },
+                        {
                             position: { x: -150, y: 150 },
                             type: "action",
                             data: {
@@ -835,6 +984,14 @@ export default {
                             type: "action",
                             data: {
                                 actionType: "bed",
+                                log: []
+                            } as ActionNodeData
+                        },
+                        {
+                            position: { x: -300, y: 150 },
+                            type: "action",
+                            data: {
+                                actionType: "food",
                                 log: []
                             } as ActionNodeData
                         }
@@ -892,14 +1049,14 @@ export default {
                             links.push(
                                 ...resource.links.map(link => {
                                     const linkResource = resources[link.resource];
-                                    let negativeLink = Decimal.lt(link.amount, 0);
-                                    if (link.linkType === LinkType.LossOnly) {
-                                        negativeLink = !negativeLink;
-                                    }
+                                    const amount =
+                                        typeof link.amount === "function"
+                                            ? link.amount()
+                                            : link.amount;
                                     return {
                                         from: selectedNode.value,
                                         to: linkResource.node,
-                                        stroke: negativeLink ? "red" : "green",
+                                        stroke: Decimal.gt(amount, 0) ? "red" : "green",
                                         "stroke-width": 4,
                                         pulsing: true
                                     } as BoardNodeLink;
