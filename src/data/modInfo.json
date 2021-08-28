@@ -13,7 +13,7 @@
 	"defaultDecimalsShown": 2,
 	"useHeader": true,
 	"banner": null,
-	"logo": null,
+	"logo": "android-chrome-512x512.png",
 	"initialTabs": [ "main" ],
 
 	"maxTickLength": 3600,
