@@ -172,6 +172,8 @@ function update() {
     modUpdate(diff);
     updateOOMPS(trueDiff);
     updateLayers(diff);
+
+    player.justLoaded = false;
 }
 
 export default function startGameLoop(): void {

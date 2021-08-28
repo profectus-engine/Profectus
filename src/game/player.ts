@@ -27,6 +27,7 @@ const state = reactive<PlayerData>({
     minimized: {},
     modID: "",
     modVersion: "",
+    justLoaded: false,
     hasNaN: false,
     NaNPath: [],
     NaNReceiver: null,

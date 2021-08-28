@@ -38,6 +38,7 @@ export interface PlayerData {
     minimized: Record<string, boolean>;
     modID: string;
     modVersion: string;
+    justLoaded: boolean;
     hasNaN: boolean;
     NaNPath?: Array<string>;
     NaNReceiver?: Record<string, unknown> | null;

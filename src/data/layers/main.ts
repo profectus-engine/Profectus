@@ -820,7 +820,7 @@ for (const id in resources) {
     watch(
         () => resource.amount,
         (amount, oldAmount) => {
-            if (amount == null || oldAmount == null) {
+            if (amount == null || oldAmount == null || player.justLoaded) {
                 return;
             }
             const resourceGain = Decimal.sub(amount, oldAmount);
