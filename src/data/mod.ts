@@ -52,7 +52,7 @@ const h = {
         })
     ],
     tooltip() {
-        return "Restore your points to {{ player.c.otherThingy }}";
+        return "Restore your points to {{ player.layers.c.otherThingy }}";
     },
     row: "side",
     position: 3,

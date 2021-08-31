@@ -43,7 +43,7 @@ export default {
     return false;
   },
   name: "Farms",
-  //directMult() {return new Decimal(player.c.otherThingy)},
+  //directMult() {return new Decimal(player.layers.c.otherThingy)},
 
   row: 1,
   branches: [

@@ -531,7 +531,7 @@ export default {
 				<spacer />
 				<microtab family="stuff" style="width: 660px; height: 370px; background-color: brown; --background: brown; border: solid white; margin: auto" />
 				<div>Adjust how many points H gives you!</div>
-				<Slider :value="player.layers.c.otherThingy" @change="value => player.c.otherThingy = value" :min="1" :max="30" />`
+				<Slider :value="player.layers.c.otherThingy" @change="value => player.layers.c.otherThingy = value" :min="1" :max="30" />`
     }
   },
   style() {

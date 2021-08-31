@@ -1,7 +1,6 @@
 /* eslint-disable */
 import { layers } from "@/game/layers";
 import player from "@/game/player";
-import { DecimalSource } from "@/lib/break_eternity";
 import { RawLayer } from "@/typings/layer";
 import Decimal, { format } from "@/util/bignum";
 import {

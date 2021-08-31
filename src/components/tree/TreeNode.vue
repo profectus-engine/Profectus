@@ -88,7 +88,7 @@ export default defineComponent({
             if (player.layers[this.id].unlocked) {
                 return (
                     this.layer.tooltip ||
-                    `{{ formatWhole(player.${this.id}.points) }} {{ layers.${this.id}.resource }}`
+                    `{{ formatWhole(player.layers.${this.id}.points) }} {{ layers.${this.id}.resource }}`
                 );
             } else {
                 return (
