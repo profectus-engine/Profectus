@@ -61,6 +61,7 @@ export interface Layer extends Feature {
     midsection?: CoercableComponent;
     style?: Partial<CSSStyleDeclaration>;
     nodeStyle?: Partial<CSSStyleDeclaration>;
+    nodeDisplay?: CoercableComponent;
     display?: CoercableComponent;
     shown: boolean;
     layerShown: boolean | "ghost";

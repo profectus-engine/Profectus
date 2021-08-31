@@ -66,8 +66,8 @@ export default defineComponent({
             ];
         },
         display(): Component | string {
-            if (this.layer.display != undefined) {
-                return coerceComponent(this.layer.display);
+            if (this.layer.nodeDisplay != undefined) {
+                return coerceComponent(this.layer.nodeDisplay);
             } else if (this.layer.image != undefined) {
                 return coerceComponent(`<img src=${this.layer.image}/>`);
             } else {
