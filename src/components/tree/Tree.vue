@@ -1,12 +1,14 @@
 <template>
     <span class="row" v-for="(row, index) in rows" :key="index">
-        <tree-node
-            v-for="(node, nodeIndex) in row"
-            :key="nodeIndex"
-            :id="node"
-            @show-modal="openModal"
-            :append="append"
-        />
+        <template v-if="index !== 'side'">
+            <tree-node
+                v-for="(node, nodeIndex) in row"
+                :key="nodeIndex"
+                :id="node"
+                @show-modal="openModal"
+                :append="append"
+            />
+        </template>
     </span>
     <span class="side-nodes" v-if="rows.side">
         <tree-node
@@ -65,7 +67,7 @@ export default defineComponent({
                 }
                 if (layers[curr].position != undefined) {
                     acc[layers[curr].displayRow][layers[curr].position!] = curr;
-                } else {
+                } else if (layers[curr].displayRow) {
                     acc[layers[curr].displayRow].push(curr);
                 }
                 return acc;
