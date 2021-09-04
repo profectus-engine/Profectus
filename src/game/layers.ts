@@ -514,8 +514,10 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         setDefault(player.subtabs, layer.id, {});
         setDefault(player.subtabs[layer.id], "mainTabs", Object.keys(layer.subtabs)[0]);
         for (const id in layer.subtabs) {
+            layer.subtabs[id].id = id;
+            layer.subtabs[id].layer = layer.id;
             layer.subtabs[id].active = function() {
-                return playerProxy.subtabs[this.layer].mainTabs === this.id;
+                return layers[this.layer].activeSubtab === this;
             };
         }
     }

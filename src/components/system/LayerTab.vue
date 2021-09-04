@@ -27,7 +27,7 @@
                                 v-for="(subtab, id) in subtabs"
                                 @selectTab="selectSubtab(id)"
                                 :key="id"
-                                :activeTab="id === activeSubtab"
+                                :activeTab="subtab.active"
                                 :options="subtab"
                                 :text="id"
                             />
@@ -107,9 +107,6 @@ export default defineComponent({
                     }, {});
             }
             return null;
-        },
-        activeSubtab(): string | undefined {
-            return layers[this.layer].activeSubtab?.id;
         },
         firstTab(): boolean {
             if (this.forceFirstTab != undefined) {
