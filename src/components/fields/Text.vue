@@ -5,16 +5,18 @@
             <textarea-autosize
                 v-if="textarea"
                 :placeholder="placeholder"
-                :value="value"
+                :value="val"
                 :maxHeight="maxHeight"
-                @input="value => $emit('change', value)"
+                @input="change"
+                @blur="() => $emit('blur')"
                 ref="field"
             />
             <input
                 v-else
                 type="text"
-                :value="value"
-                @input="e => $emit('change', e.target.value)"
+                :value="val"
+                @input="e => change(e.target.value)"
+                @blur="() => $emit('blur')"
                 :placeholder="placeholder"
                 ref="field"
                 :class="{ fullWidth: !title }"
@@ -31,13 +33,25 @@ export default defineComponent({
     props: {
         title: String,
         value: String,
+        modelValue: String,
         textarea: Boolean,
         placeholder: String,
         maxHeight: Number
     },
-    emits: ["change", "submit"],
+    emits: ["change", "submit", "blur", "update:modelValue"],
     mounted() {
         (this.$refs.field as HTMLElement).focus();
+    },
+    computed: {
+        val() {
+            return this.modelValue || this.value || "";
+        }
+    },
+    methods: {
+        change(value: string) {
+            this.$emit("change", value);
+            this.$emit("update:modelValue", value);
+        }
     }
 });
 </script>

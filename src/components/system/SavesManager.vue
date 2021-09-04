@@ -20,7 +20,7 @@
                 <TextField
                     :value="saveToImport"
                     @submit="importSave"
-                    @input="importSave"
+                    @change="importSave"
                     title="Import Save"
                     placeholder="Paste your save here!"
                     :class="{ importingFailed }"
@@ -227,11 +227,16 @@ export default defineComponent({
             }
         },
         importSave(text: string) {
+            console.log(text);
             this.saveToImport = text;
             if (text) {
                 this.$nextTick(() => {
                     try {
                         const playerData = JSON.parse(decodeURIComponent(escape(atob(text))));
+                        if (typeof playerData !== "object") {
+                            this.importingFailed = true;
+                            return;
+                        }
                         const id = getUniqueID();
                         playerData.id = id;
                         localStorage.setItem(

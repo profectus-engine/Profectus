@@ -468,7 +468,7 @@ export default {
 				<spacer height="5px" />
 				<button onclick='console.log("yeet")'>'HI'</button>
 				<div>Name your points!</div>
-				<TextField :value="player.layers.c.thingy" @input="value => player.layers.c.thingy = value" :field="false" />
+				<TextField :value="player.layers.c.thingy" @change="value => player.layers.c.thingy = value" :field="false" />
 				<sticky style="color: red; font-size: 32px; font-family: Comic Sans MS;">I have {{ format(player.points) }} {{ player.layers.c.thingy }} points!</sticky>
 				<hr />
 				<milestones />

@@ -395,6 +395,9 @@ export const defaultLayerProperties = {
 } as Omit<RawLayer, "id"> & Partial<Pick<RawLayer, "id">> & ThisType<Layer>;
 
 document.onkeydown = function(e) {
+    if ((e.target as HTMLElement | null)?.tagName === "INPUT") {
+        return;
+    }
     if (player.hasWon && !player.keepGoing) {
         return;
     }

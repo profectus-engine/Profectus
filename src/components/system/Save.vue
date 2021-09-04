@@ -49,7 +49,7 @@
             <div v-if="time">Last played {{ dateFormat.format(time) }}</div>
         </div>
         <div class="details" v-else-if="save.error == undefined && editing">
-            <TextField v-model="newName" class="editname" @submit="changeName" />
+            <TextField v-model="newName" class="editname" @submit="changeName" @blur="changeName" />
         </div>
         <div v-else class="details error">Error: Failed to load save with id {{ save.id }}</div>
     </div>

@@ -566,6 +566,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
     }
     if (layer.hotkeys) {
         for (const id in layer.hotkeys) {
+            layer.hotkeys[id].layer = layer.id;
             setDefault(layer.hotkeys[id], "press", undefined, false);
             setDefault(layer.hotkeys[id], "unlocked", function() {
                 return layers[this.layer].unlocked;
