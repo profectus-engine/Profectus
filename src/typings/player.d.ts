@@ -54,9 +54,9 @@ export interface LayerSaveData {
     unlockOrder?: number;
     forceTooltip?: boolean;
     resetTime: Decimal;
-    upgrades: Array<string>;
-    achievements: Array<string>;
-    milestones: Array<string>;
+    upgrades: Array<string | number>;
+    achievements: Array<string | number>;
+    milestones: Array<string | number>;
     infoboxes: Record<string, boolean>;
     buyables: Record<string, Decimal>;
     clickables: Record<string, State>;

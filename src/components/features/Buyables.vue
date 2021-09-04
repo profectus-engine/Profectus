@@ -1,5 +1,5 @@
 <template>
-    <div v-if="filteredBuyables" class="table">
+    <div v-if="filtered" class="table">
         <respec-button
             v-if="showRespec"
             style="margin-bottom: 12px;"
@@ -8,11 +8,11 @@
             @set-confirm-respec="setConfirmRespec"
             @respec="respec"
         />
-        <template v-if="filteredBuyables.rows && filteredBuyables.cols">
-            <div v-for="row in filteredBuyables.rows" class="row" :key="row">
-                <div v-for="col in filteredBuyables.cols" :key="col">
+        <template v-if="rows && cols">
+            <div v-for="row in rows" class="row" :key="row">
+                <div v-for="col in cols" :key="col">
                     <buyable
-                        v-if="filteredBuyables[row * 10 + col] !== undefined"
+                        v-if="filtered[row * 10 + col] !== undefined"
                         class="align buyable-container"
                         :style="{ height }"
                         :id="row * 10 + col"
@@ -23,7 +23,7 @@
         </template>
         <row v-else>
             <buyable
-                v-for="(buyable, id) in filteredBuyables"
+                v-for="(buyable, id) in filtered"
                 :key="id"
                 class="align buyable-container"
                 :style="{ height }"
@@ -39,28 +39,19 @@ import { layers } from "@/game/layers";
 import player from "@/game/player";
 import { CoercableComponent } from "@/typings/component";
 import { Buyable } from "@/typings/features/buyable";
-import { getFiltered, InjectLayerMixin } from "@/util/vue";
-import { defineComponent, PropType } from "vue";
+import { FilteredFeaturesMixin, InjectLayerMixin } from "@/util/vue";
+import { defineComponent } from "vue";
 
 export default defineComponent({
     name: "buyables",
-    mixins: [InjectLayerMixin],
+    mixins: [InjectLayerMixin, FilteredFeaturesMixin<Buyable>("buyables")],
     props: {
-        buyables: {
-            type: Object as PropType<Array<string>>
-        },
         height: {
             type: [Number, String],
             default: "inherit"
         }
     },
     computed: {
-        filteredBuyables(): Record<string, Buyable> {
-            if (layers[this.layer].buyables) {
-                return getFiltered<Buyable>(layers[this.layer].buyables!.data, this.buyables);
-            }
-            return {};
-        },
         showRespec(): boolean | undefined {
             return layers[this.layer].buyables!.showRespecButton;
         },

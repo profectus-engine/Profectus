@@ -1,9 +1,9 @@
 <template>
     <button
-        v-if="gridable.unlocked"
+        v-if="gridCell.unlocked"
         :class="{ feature: true, tile: true, can: canClick, locked: !canClick }"
         :style="style"
-        @click="gridable.click"
+        @click="gridCell.click"
         @mousedown="start"
         @mouseleave="stop"
         @mouseup="stop"
@@ -14,7 +14,7 @@
     >
         <div v-if="title"><component :is="title" /></div>
         <component :is="display" style="white-space: pre-line;" />
-        <branch-node :branches="gridable.branches" :id="id" featureType="gridable" />
+        <branch-node :branches="gridCell.branches" :id="id" featureType="gridCell" />
     </button>
 </template>
 

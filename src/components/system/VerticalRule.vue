@@ -18,6 +18,6 @@ export default defineComponent({
     width: 4px;
     background: var(--separator);
     height: 100%;
-    margin: 0 7px;
+    margin: auto 7px;
 }
 </style>

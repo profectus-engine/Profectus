@@ -1,7 +1,9 @@
 import { hasWon, pointGain } from "@/data/mod";
 import { layers } from "@/game/layers";
 import player from "@/game/player";
-import { App, Component, ComponentOptions, defineComponent, inject } from "vue";
+import { Feature, Features, GridFeatures } from "@/typings/features/feature";
+import { Layer } from "@/typings/layer";
+import { App, Component, ComponentOptions, defineComponent, inject, PropType } from "vue";
 import Decimal, * as numberUtils from "./bignum";
 import {
     achievementEffect,
@@ -112,3 +114,48 @@ export const InjectLayerMixin = {
         }
     }
 };
+
+export function FilteredFeaturesMixin<T extends Feature>(
+    feature: keyof Layer
+): {
+    mixins: [typeof InjectLayerMixin];
+    props: {
+        [feature]: {
+            type: PropType<Array<string>>;
+        };
+    };
+    computed: {
+        filtered: () => Record<string, T> | undefined;
+        rows: () => number | undefined;
+        cols: () => number | undefined;
+    };
+} {
+    return {
+        mixins: [InjectLayerMixin],
+        props: {
+            [feature]: {
+                type: Object as PropType<Array<string>>
+            }
+        },
+        computed: {
+            filtered(this: { layer: string; [feature]: string[] }) {
+                return (
+                    (layers[this.layer][feature] as Features<T> | undefined) &&
+                    getFiltered((layers[this.layer][feature] as Features<T>).data, this[feature])
+                );
+            },
+            rows(this: { layer: string }) {
+                return (
+                    (layers[this.layer][feature] as Features<T> | undefined) &&
+                    (layers[this.layer][feature] as Features<T> | GridFeatures<T>).rows
+                );
+            },
+            cols(this: { layer: string }) {
+                return (
+                    (layers[this.layer][feature] as Features<T> | undefined) &&
+                    (layers[this.layer][feature] as Features<T> | GridFeatures<T>).cols
+                );
+            }
+        }
+    };
+}

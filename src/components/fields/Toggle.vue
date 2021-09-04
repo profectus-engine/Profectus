@@ -36,6 +36,7 @@ input {
 
 span {
     width: 100%;
+    position: relative;
 }
 
 /* track */
@@ -55,7 +56,7 @@ span::before {
 span::after {
     content: "";
     position: absolute;
-    top: 6px;
+    top: 2px;
     right: 16px;
     border-radius: 50%;
     width: 20px;

@@ -84,6 +84,15 @@ const main = {
 			({{ player.oompsMag != 0 ? format(player.oomps) + " OOM" + (player.oompsMag < 0 ? "^OOM" : player.oompsMag > 1 ? "^" + player.oompsMag : "") + "s" : formatSmall(pointGain) }}/sec)
 		</div>
 		<spacer />
+        <modal :show="false">
+            <svg style="height: 80vmin; width: 80vmin;">
+                <path d="M 32 222 Q 128 222, 128 0 Q 128 222, 224 222 L 224 224 L 32 224"/>
+
+                <circle cx="64" cy="128" r="64" fill="#8da8b0"/>
+                <circle cx="128" cy="64" r="64" fill="#71368a"/>
+                <circle cx="192" cy="128" r="64" fill="#fa8508"/>
+            </svg>
+        </modal>
 		<tree :append="true" />`,
     name: "Tree"
 } as RawLayer;
