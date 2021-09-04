@@ -284,13 +284,13 @@ export default defineComponent({
         outlineColor(): string {
             return (
                 getNodeTypeProperty(this.nodeType, this.node, "outlineColor") ||
-                themes[player.theme].variables["--separator"]
+                themes[player.theme].variables["--outline"]
             );
         },
         fillColor(): string {
             return (
                 getNodeTypeProperty(this.nodeType, this.node, "fillColor") ||
-                themes[player.theme].variables["--secondary-background"]
+                themes[player.theme].variables["--raised-background"]
             );
         },
         progressColor(): string {
@@ -299,7 +299,7 @@ export default defineComponent({
         titleColor(): string {
             return (
                 getNodeTypeProperty(this.nodeType, this.node, "titleColor") ||
-                themes[player.theme].variables["--color"]
+                themes[player.theme].variables["--foreground"]
             );
         },
         progressDisplay(): ProgressDisplay {

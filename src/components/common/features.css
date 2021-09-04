@@ -6,6 +6,7 @@
     border: 2px solid rgba(0, 0, 0, 0.125);
     margin: var(--feature-margin);
     box-sizing: border-box;
+    color: var(--feature-foreground);
 }
 
 .can,

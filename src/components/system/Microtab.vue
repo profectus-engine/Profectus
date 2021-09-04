@@ -84,7 +84,7 @@ export default defineComponent({
 .microtabs {
     margin: var(--feature-margin) -11px;
     position: relative;
-    border: solid 4px var(--separator);
+    border: solid 4px var(--outline);
 }
 
 .tabs:not(.floating) {

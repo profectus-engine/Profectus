@@ -92,7 +92,7 @@ export default defineComponent({
     transform: translateX(-50%);
     padding: 7px;
     border-radius: 3px;
-    background-color: var(--background-tooltip);
+    background-color: var(--tooltip-background);
     color: var(--points);
     z-index: 100 !important;
     word-break: break-word;
@@ -117,7 +117,7 @@ export default defineComponent({
     margin-left: -5px;
     border-width: 5px;
     border-style: solid;
-    border-color: var(--background-tooltip) transparent transparent transparent;
+    border-color: var(--tooltip-background) transparent transparent transparent;
 }
 
 .tooltip.left,
@@ -138,7 +138,7 @@ export default defineComponent({
     right: 100%;
     margin-left: unset;
     margin-top: -5px;
-    border-color: transparent transparent transparent var(--background-tooltip);
+    border-color: transparent transparent transparent var(--tooltip-background);
 }
 
 .tooltip.right {
@@ -155,7 +155,7 @@ export default defineComponent({
     right: 100%;
     margin-left: -10px;
     margin-top: -5px;
-    border-color: transparent var(--background-tooltip) transparent transparent;
+    border-color: transparent var(--tooltip-background) transparent transparent;
 }
 
 .tooltip.bottom {
@@ -170,6 +170,6 @@ export default defineComponent({
 .tooltip.bottom::after {
     top: 0;
     margin-top: -10px;
-    border-color: transparent transparent var(--background-tooltip) transparent;
+    border-color: transparent transparent var(--tooltip-background) transparent;
 }
 </style>

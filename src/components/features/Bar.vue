@@ -117,7 +117,7 @@ export default defineComponent({
 .border {
     border: 2px solid;
     border-radius: 10px;
-    border-color: var(--color);
+    border-color: var(--foreground);
     overflow: hidden;
     mask-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAA5JREFUeNpiYGBgAAgwAAAEAAGbA+oJAAAAAElFTkSuQmCC);
     margin: 0;
@@ -125,7 +125,7 @@ export default defineComponent({
 
 .fill {
     position: absolute;
-    background-color: var(--color);
+    background-color: var(--foreground);
     overflow: hidden;
     margin-left: -0.5px;
     transition-duration: 0.2s;

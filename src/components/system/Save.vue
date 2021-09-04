@@ -111,9 +111,9 @@ export default defineComponent({
 <style scoped>
 .save {
     position: relative;
-    border: solid 4px var(--separator);
+    border: solid 4px var(--outline);
     padding: 4px;
-    background: var(--secondary-background);
+    background: var(--raised-background);
     margin: var(--feature-margin);
     display: flex;
     align-items: center;

@@ -54,6 +54,10 @@ form {
 
 input {
     width: 50%;
+    outline: none;
+    border: solid 1px var(--outline);
+    background-color: unset;
+    border-radius: var(--border-radius);
 }
 
 .fullWidth {

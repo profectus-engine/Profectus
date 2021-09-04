@@ -78,7 +78,7 @@ export default defineComponent({
 .game-over-modal-header {
     margin: -20px;
     margin-bottom: 0;
-    background: var(--secondary-background);
+    background: var(--raised-background);
 }
 
 .game-over-modal-header * {

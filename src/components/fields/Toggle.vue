@@ -40,20 +40,21 @@ span {
 }
 
 /* track */
-span::before {
+input + span::before {
     content: "";
     float: right;
     margin: 5px 0 5px 10px;
     border-radius: 7px;
     width: 36px;
     height: 14px;
-    background-color: rgba(0, 0, 0, 0.38);
+    background-color: var(--outline);
+    opacity: 0.38;
     vertical-align: top;
     transition: background-color 0.2s, opacity 0.2s;
 }
 
 /* thumb */
-span::after {
+input + span::after {
     content: "";
     position: absolute;
     top: 2px;
@@ -61,28 +62,31 @@ span::after {
     border-radius: 50%;
     width: 20px;
     height: 20px;
-    background-color: white;
+    background-color: var(--locked);
     box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14),
         0 1px 5px 0 rgba(0, 0, 0, 0.12);
     transition: background-color 0.2s, transform 0.2s;
 }
 
 input:checked + span::before {
-    background-color: rgba(33, 150, 243, 0.6);
+    background-color: var(--link);
+    opacity: 0.6;
 }
 
 input:checked + span::after {
-    background-color: rgb(33, 150, 243);
+    background-color: var(--link);
     transform: translateX(16px);
 }
 
 /* active */
 input:active + span::before {
-    background-color: rgba(33, 150, 243, 0.6);
+    background-color: var(--link);
+    opacity: 0.6;
 }
 
 input:checked:active + span::before {
-    background-color: rgba(0, 0, 0, 0.38);
+    background-color: var(--outline);
+    opacity: 0.38;
 }
 
 /* disabled */
@@ -93,10 +97,12 @@ input:disabled + span {
 }
 
 input:disabled + span::before {
-    background-color: rgba(0, 0, 0, 0.38);
+    background-color: var(--outline);
+    opacity: 0.38;
 }
 
 input:checked:disabled + span::before {
-    background-color: rgba(33, 150, 243, 0.6);
+    background-color: var(--link);
+    opacity: 0.6;
 }
 </style>

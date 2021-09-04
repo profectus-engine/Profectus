@@ -1,16 +1,18 @@
 export interface Theme {
     variables: {
+        "--foreground": string;
         "--background": string;
-        "--background-tooltip": string;
-        "--secondary-background": string;
-        "--color": string;
+        "--feature-foreground": string;
+        "--tooltip-background": string;
+        "--raised-background": string;
         "--points": string;
         "--locked": string;
+        "--highlighted": string;
         "--bought": string;
-        "--link": string;
-        "--separator": string;
-        "--border-radius": string;
         "--danger": string;
+        "--link": string;
+        "--outline": string;
+        "--border-radius": string;
         "--modal-border": string;
         "--feature-margin": string;
     };

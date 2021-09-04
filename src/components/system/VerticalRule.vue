@@ -16,7 +16,7 @@ export default defineComponent({
 <style scoped>
 .vr {
     width: 4px;
-    background: var(--separator);
+    background: var(--outline);
     height: 100%;
     margin: auto 7px;
 }

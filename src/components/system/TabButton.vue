@@ -70,7 +70,7 @@ export default defineComponent({
 <style scoped>
 .tabButton {
     background-color: transparent;
-    color: var(--color);
+    color: var(--foreground);
     font-size: 20px;
     cursor: pointer;
     padding: 5px 20px;
@@ -82,7 +82,7 @@ export default defineComponent({
 
 .tabButton:hover {
     transform: scale(1.1, 1.1);
-    text-shadow: 0 0 7px var(--color);
+    text-shadow: 0 0 7px var(--foreground);
 }
 
 .tabButton:not(.floating) {

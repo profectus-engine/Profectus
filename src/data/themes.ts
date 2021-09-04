@@ -2,17 +2,20 @@ import { Theme } from "@/typings/theme";
 
 const defaultTheme: Theme = {
     variables: {
+        "--foreground": "#dfdfdf",
         "--background": "#0f0f0f",
-        "--background-tooltip": "rgba(0, 0, 0, 0.75)",
-        "--secondary-background": "#0f0f0f",
-        "--color": "#dfdfdf",
+        "--feature-foreground": "#eee",
+        "--tooltip-background": "rgba(0, 0, 0, 0.75)",
+        "--raised-background": "#0f0f0f",
         "--points": "#ffffff",
         "--locked": "#bf8f8f",
+        "--highlighted": "#333",
         "--bought": "#77bf5f",
-        "--link": "#02f2f2",
-        "--separator": "#dfdfdf",
-        "--border-radius": "25%",
         "--danger": "rgb(220, 53, 69)",
+        "--link": "#02f2f2",
+        "--outline": "#dfdfdf",
+
+        "--border-radius": "15px",
         "--modal-border": "solid 2px var(--color)",
         "--feature-margin": "0px"
     },
@@ -34,10 +37,11 @@ export default {
         variables: {
             ...defaultTheme.variables,
             "--background": "#2a323d",
-            "--secondary-background": "#333c4a",
+            "--feature-foreground": "#000",
+            "--raised-background": "#333c4a",
             "--locked": "#3a3e45",
             "--bought": "#5C8A58",
-            "--separator": "#333c4a",
+            "--outline": "#333c4a",
             "--border-radius": "4px",
             "--modal-border": "",
             "--feature-margin": "5px"
@@ -50,16 +54,18 @@ export default {
         ...defaultTheme,
         variables: {
             ...defaultTheme.variables,
-            "--color": "#D8DEE9",
-            "--points": "#E5E9F0",
+            "--foreground": "#D8DEE9",
             "--background": "#2E3440",
-            "--secondary-background": "#3B4252",
-            "--locked": "#3B4252",
+            "--feature-foreground": "#000",
+            "--raised-background": "#3B4252",
+            "--points": "#E5E9F0",
+            "--locked": "#4c566a",
+            "--highlighted": "#434c5e",
             "--bought": "#8FBCBB",
-            "--link": "#88C0D0",
-            "--separator": "#3B4252",
-            "--border-radius": "4px",
             "--danger": "#D08770",
+            "--link": "#88C0D0",
+            "--outline": "#3B4252",
+            "--border-radius": "4px",
             "--modal-border": "solid 2px #3B4252",
             "--feature-margin": "5px"
         },
@@ -70,13 +76,13 @@ export default {
         ...defaultTheme,
         variables: {
             ...defaultTheme.variables,
+            "--foreground": "#bfdfff",
             "--background": "#001f3f",
-            "--background-tooltip": "rgba(0, 15, 31, 0.75)",
-            "--secondary-background": "#001f3f",
-            "--color": "#bfdfff",
+            "--tooltip-background": "rgba(0, 15, 31, 0.75)",
+            "--raised-background": "#001f3f",
             "--points": "#dfefff",
             "--locked": "#c4a7b3",
-            "--separator": "#bfdfff"
+            "--outline": "#bfdfff"
         }
     } as Theme
 } as Record<Themes, Theme>;

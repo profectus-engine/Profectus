@@ -96,7 +96,7 @@ export default defineComponent({
     top: 0;
     bottom: 0;
     width: 6px;
-    background: var(--separator);
+    background: var(--outline);
     z-index: 1;
 }
 </style>
@@ -105,7 +105,7 @@ export default defineComponent({
 .tab hr {
     height: 4px;
     border: none;
-    background: var(--separator);
+    background: var(--outline);
     margin: 7px -10px;
 }
 

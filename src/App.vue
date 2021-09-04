@@ -39,7 +39,7 @@ export default defineComponent({
 <style scoped>
 .app {
     background-color: var(--background);
-    color: var(--color);
+    color: var(--foreground);
     display: flex;
     flex-flow: column;
     min-height: 100%;

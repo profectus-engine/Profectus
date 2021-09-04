@@ -128,14 +128,14 @@ export default defineComponent({
 
 <style scoped>
 .nav {
-    background-color: var(--secondary-background);
+    background-color: var(--raised-background);
     display: flex;
     left: 0;
     right: 0;
     top: 0;
     height: 46px;
     width: 100%;
-    border-bottom: 4px solid var(--separator);
+    border-bottom: 4px solid var(--outline);
 }
 
 .nav > * {
@@ -206,7 +206,7 @@ export default defineComponent({
     right: -280px;
     width: 200px;
     transition: right 0.25s ease;
-    background: var(--secondary-background);
+    background: var(--raised-background);
     z-index: 10;
 }
 
@@ -250,7 +250,7 @@ export default defineComponent({
 
 .saves:hover span {
     transform: scale(1.2, 1.2);
-    text-shadow: 5px 0 10px var(--color), -3px 0 12px var(--color);
+    text-shadow: 5px 0 10px var(--foreground), -3px 0 12px var(--foreground);
 }
 
 .options img {

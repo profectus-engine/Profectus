@@ -112,7 +112,7 @@ export default defineComponent({
     display: flex;
     margin: -20px;
     margin-bottom: 0;
-    background: var(--secondary-background);
+    background: var(--raised-background);
     align-items: center;
 }
 

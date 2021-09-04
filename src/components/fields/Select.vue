@@ -42,6 +42,7 @@ export default defineComponent({
 <style>
 .vue-select {
     width: 50%;
+    border-radius: var(--border-radius);
 }
 
 .field-buttons .vue-select {
@@ -50,23 +51,32 @@ export default defineComponent({
 
 .vue-select,
 .vue-dropdown {
-    border-color: rgba(var(--color), 0.26);
+    border-color: var(--outline);
 }
 
 .vue-dropdown {
-    background: var(--secondary-background);
+    background: var(--raised-background);
 }
 
 .vue-dropdown-item {
-    color: var(--color);
+    color: var(--feature-foreground);
+}
+
+.vue-dropdown-item,
+.vue-dropdown-item * {
+    transition-duration: 0s;
 }
 
 .vue-dropdown-item.highlighted {
-    background-color: var(--background-tooltip);
+    background-color: var(--highlighted);
 }
 
 .vue-dropdown-item.selected,
 .vue-dropdown-item.highlighted.selected {
     background-color: var(--bought);
+}
+
+.vue-input input::placeholder {
+    color: var(--link);
 }
 </style>

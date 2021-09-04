@@ -215,7 +215,7 @@ export default defineComponent({
     margin: 0;
     cursor: pointer;
     font-size: 40px;
-    color: var(--color);
+    color: var(--foreground);
     border: none;
     background-color: transparent;
 }
@@ -241,8 +241,8 @@ export default defineComponent({
 }
 
 .subtabs-container:not(.floating) {
-    border-top: solid 4px var(--separator);
-    border-bottom: solid 4px var(--separator);
+    border-top: solid 4px var(--outline);
+    border-bottom: solid 4px var(--outline);
 }
 
 .subtabs-container:not(.floating) .subtabs {
@@ -307,7 +307,7 @@ export default defineComponent({
     background: var(--background);
     box-shadow: var(--background) 0 2px 3px 5px;
     border-radius: 50%;
-    color: var(--color);
+    color: var(--foreground);
     font-size: 40px;
     cursor: pointer;
     padding: 0;
@@ -324,7 +324,7 @@ export default defineComponent({
     left: 20px;
     background-color: transparent;
     border: 1px solid transparent;
-    color: var(--color);
+    color: var(--foreground);
     font-size: 40px;
     cursor: pointer;
     line-height: 40px;
@@ -333,7 +333,7 @@ export default defineComponent({
 
 .goBack:hover {
     transform: scale(1.1, 1.1);
-    text-shadow: 0 0 7px var(--color);
+    text-shadow: 0 0 7px var(--foreground);
 }
 </style>
 
