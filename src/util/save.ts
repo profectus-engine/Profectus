@@ -18,18 +18,20 @@ export function getInitialStore(playerData: Partial<PlayerData> = {}): PlayerDat
             time: Date.now(),
             autosave: true,
             offlineProd: true,
+            offlineTime: new Decimal(0),
             timePlayed: new Decimal(0),
             keepGoing: false,
             lastTenTicks: [],
             showTPS: true,
             msDisplay: MilestoneDisplay.All,
             hideChallenges: false,
-            theme: Themes.Paper,
+            theme: Themes.Nordic,
             subtabs: {},
             minimized: {},
             modID: modInfo.id,
             modVersion: modInfo.versionNumber,
             layers: {},
+            justLoaded: false,
             ...getStartingData(),
 
             // Values that don't get loaded/saved
@@ -147,6 +149,7 @@ export async function loadSave(playerData: Partial<PlayerData>): Promise<void> {
             delete player.layers[prop];
         }
     }
+    player.justLoaded = true;
 }
 
 export function applyPlayerData<T extends Record<string, any>>(
@@ -186,6 +189,9 @@ window.onbeforeunload = () => {
     }
 };
 window.save = save;
-window.hardReset = () => {
-    loadSave(newSave());
-};
+export const hardReset = (window.hardReset = async () => {
+    await loadSave(newSave());
+    const modData = JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)!))));
+    modData.active = player.id;
+    localStorage.setItem(modInfo.id, btoa(unescape(encodeURIComponent(JSON.stringify(modData)))));
+});

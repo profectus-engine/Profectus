@@ -37,12 +37,13 @@ const data = function(): Record<string, unknown> {
     return { Decimal, player, layers, hasWon, pointGain, ...numberUtils };
 };
 export function coerceComponent(
-    component: string | ComponentOptions,
-    defaultWrapper = "span"
+    component: string | ComponentOptions | Component,
+    defaultWrapper = "span",
+    allowComponentNames = true
 ): Component | string {
     if (typeof component === "string") {
         component = component.trim();
-        if (!(component in vue._context.components)) {
+        if (!allowComponentNames || !(component in vue._context.components)) {
             if (component.charAt(0) !== "<") {
                 component = `<${defaultWrapper}>${component}</${defaultWrapper}>`;
             }
@@ -50,7 +51,7 @@ export function coerceComponent(
             return defineComponent({
                 template: component,
                 data,
-                inject: ["tab"],
+                mixins: [InjectLayerMixin],
                 methods: {
                     hasUpgrade,
                     hasMilestone,
@@ -109,7 +110,7 @@ export const InjectLayerMixin = {
         layer: {
             type: String,
             default(): string {
-                return (inject("tab") as { layer: string }).layer;
+                return (inject("tab", { layer: "" }) as { layer: string }).layer;
             }
         }
     }

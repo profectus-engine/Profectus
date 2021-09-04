@@ -2,14 +2,18 @@
     <div class="nav" v-if="useHeader" v-bind="$attrs">
         <img v-if="banner" :src="banner" height="100%" :alt="title" />
         <div v-else class="title">{{ title }}</div>
-        <div @click="openDialog('Changelog')" class="version-container">
+        <div
+            @click="openDialog('Changelog')"
+            class="version-container"
+            style="pointer-events: none"
+        >
             <tooltip display="Changelog" bottom class="version"
                 ><span>v{{ version }}</span></tooltip
             >
         </div>
         <div style="flex-grow: 1; cursor: unset;"></div>
         <div class="discord">
-            <img src="images/discord.png" @click="window.open(discordLink, 'mywindow')" />
+            <img src="images/discord.png" @click="openDiscord" />
             <ul class="discord-links">
                 <li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
                     <a :href="discordLink" target="_blank">{{ discordName }}</a>
@@ -139,6 +143,7 @@ export default defineComponent({
     width: 46px;
     display: flex;
     cursor: pointer;
+    flex-shrink: 0;
 }
 
 .overlay-nav {
@@ -169,6 +174,9 @@ export default defineComponent({
 
 .nav > .title {
     width: unset;
+    flex-shrink: 1;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .nav .saves,

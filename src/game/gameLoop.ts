@@ -68,6 +68,14 @@ function updateLayers(diff: DecimalSource) {
             );
         }
         layers[layer].update?.(diff);
+        if (layers[layer].boards && layers[layer].boards?.data) {
+            Object.values(layers[layer].boards!.data!).forEach(board => {
+                board.nodes.forEach(node => {
+                    const nodeType = board.types[node.type];
+                    nodeType.update?.(node, diff);
+                });
+            });
+        }
     });
     // Automate each active layer
     activeLayers.forEach(layer => {
@@ -164,6 +172,8 @@ function update() {
     modUpdate(diff);
     updateOOMPS(trueDiff);
     updateLayers(diff);
+
+    player.justLoaded = false;
 }
 
 export default function startGameLoop(): void {

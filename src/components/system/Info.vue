@@ -17,7 +17,7 @@
                     Aarex
                 </div>
                 <br />
-                <div class="link" @click="$emit('openDialog', 'Changelog')">
+                <div v-if="false" class="link" @click="$emit('openDialog', 'Changelog')">
                     Changelog
                 </div>
                 <br />
@@ -51,7 +51,7 @@
                 </div>
                 <br />
                 <div>Time Played: {{ timePlayed }}</div>
-                <div v-if="hotkeys">
+                <div v-if="hotkeys.length > 0">
                     <br />
                     <h4>Hotkeys</h4>
                     <div v-for="key in hotkeys" :key="key.key">

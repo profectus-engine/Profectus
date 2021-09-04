@@ -1,3 +1,3 @@
-import { ComponentOptions } from "vue";
+import { Component, ComponentOptions } from "vue";
 
-export type CoercableComponent = string | ComponentOptions;
+export type CoercableComponent = string | ComponentOptions | Component;

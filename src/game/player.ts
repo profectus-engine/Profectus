@@ -22,11 +22,12 @@ const state = reactive<PlayerData>({
     showTPS: true,
     msDisplay: MilestoneDisplay.All,
     hideChallenges: false,
-    theme: Themes.Paper,
+    theme: Themes.Nordic,
     subtabs: {},
     minimized: {},
     modID: "",
     modVersion: "",
+    justLoaded: false,
     hasNaN: false,
     NaNPath: [],
     NaNReceiver: null,
@@ -104,6 +105,12 @@ const playerHandler: ProxyHandler<Record<string, any>> = {
             }
         }
         return true;
+    },
+    ownKeys(target: Record<string, any>) {
+        return Reflect.ownKeys(target.__state);
+    },
+    has(target: Record<string, any>, key: string) {
+        return Reflect.has(target.__state, key);
     }
 };
 export default window.player = new Proxy(

@@ -95,6 +95,7 @@ export default defineComponent({
     background-color: var(--background-tooltip);
     color: var(--points);
     z-index: 100 !important;
+    word-break: break-word;
 }
 
 .shown {

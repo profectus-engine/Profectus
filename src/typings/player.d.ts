@@ -1,7 +1,7 @@
 import { Themes } from "@/data/themes";
 import { DecimalSource } from "@/lib/break_eternity";
 import Decimal from "@/util/bignum";
-import { BoardNode } from "./features/board";
+import { BoardData } from "./features/board";
 import { MilestoneDisplay } from "./features/milestone";
 import { State } from "./state";
 
@@ -38,6 +38,7 @@ export interface PlayerData {
     minimized: Record<string, boolean>;
     modID: string;
     modVersion: string;
+    justLoaded: boolean;
     hasNaN: boolean;
     NaNPath?: Array<string>;
     NaNReceiver?: Record<string, unknown> | null;
@@ -62,7 +63,7 @@ export interface LayerSaveData {
     clickables: Record<string, State>;
     challenges: Record<string, Decimal>;
     grids: Record<string, Record<string, State>>;
-    boards: Record<string, Array<BoardNode>>;
+    boards: Record<string, BoardData>;
     confirmRespecBuyables: boolean;
     [index: string]: unknown;
 }

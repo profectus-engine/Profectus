@@ -1,4 +1,5 @@
 import { layers } from "@/game/layers";
+import { NodeType, BoardNode, Board } from "@/typings/features/board";
 import { GridCell } from "@/typings/features/grid";
 import { State } from "@/typings/state";
 import Decimal, { DecimalSource } from "@/util/bignum";
@@ -86,4 +87,33 @@ export function achievementEffect(layer: string, id: string | number): State | u
 
 export function gridEffect(layer: string, id: string, cell: string | number): State | undefined {
     return (layers[layer].grids?.data[id][cell] as GridCell).effect;
+}
+
+// TODO will blindly use any T given (can't restrict it to S[R] because I can't figure out how
+//  to make it support narrowing the return type)
+export function getNodeTypeProperty<T, S extends NodeType, R extends keyof S>(
+    nodeType: S,
+    node: BoardNode,
+    property: R
+): S[R] extends Pick<
+    S,
+    {
+        [K in keyof S]-?: undefined extends S[K] ? never : K;
+    }[keyof S]
+>
+    ? T
+    : T | undefined {
+    return typeof nodeType[property] === "function"
+        ? (nodeType[property] as (node: BoardNode) => T)(node)
+        : (nodeType[property] as T);
+}
+
+export function getUniqueNodeID(board: Board): number {
+    let id = 0;
+    board.nodes.forEach(node => {
+        if (node.id >= id) {
+            id = node.id + 1;
+        }
+    });
+    return id;
 }

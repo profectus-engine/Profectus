@@ -14,7 +14,7 @@
                     :layer="tab"
                     :index="index"
                     v-else-if="tab in components"
-                    :minimizable="true"
+                    :minimizable="minimizable[tab]"
                     :tab="() => $refs[`tab-${index}`]"
                 />
                 <component :is="tab" :index="index" v-else />
@@ -47,6 +47,12 @@ export default defineComponent({
                 },
                 {}
             );
+        },
+        minimizable() {
+            return Object.keys(layers).reduce((acc: Record<string, boolean>, curr) => {
+                acc[curr] = layers[curr].minimizable !== false;
+                return acc;
+            }, {});
         }
     }
 });

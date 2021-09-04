@@ -20,7 +20,7 @@
 	margin: 0 10px;
 }
 
-.row > * {
+.row > :not(.feature) {
     margin: 0;
     display: flex;
 }
