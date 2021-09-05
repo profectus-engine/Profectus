@@ -2,12 +2,8 @@
     <div class="nav" v-if="useHeader" v-bind="$attrs">
         <img v-if="banner" :src="banner" height="100%" :alt="title" />
         <div v-else class="title">{{ title }}</div>
-        <div
-            @click="openDialog('Changelog')"
-            class="version-container"
-            style="pointer-events: none"
-        >
-            <tooltip display="Changelog" bottom class="version"
+        <div @click="openDialog('Changelog')" class="version-container">
+            <tooltip display="<span>Changelog</span>" bottom class="version"
                 ><span>v{{ version }}</span></tooltip
             >
         </div>
@@ -87,6 +83,7 @@
     <Info :show="showInfo" @openDialog="openDialog" @closeDialog="closeDialog" />
     <SavesManager :show="showSaves" @closeDialog="closeDialog" />
     <Options :show="showOptions" @closeDialog="closeDialog" />
+    <Changelog :show="showChangelog" @closeDialog="closeDialog" />
 </template>
 
 <script lang="ts">

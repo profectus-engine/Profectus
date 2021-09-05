@@ -10,6 +10,7 @@ import Sortable from "vue-sortable";
 import VueTextareaAutosize from "vue-textarea-autosize";
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
+import Changelog from "../data/Changelog.vue";
 
 export function registerComponents(vue: App): void {
     /* from files */
@@ -20,6 +21,7 @@ export function registerComponents(vue: App): void {
             vue.component(component.name, component);
         }
     });
+    vue.component("Changelog", Changelog);
 
     /* from packages */
     vue.component("collapse-transition", CollapseTransition);

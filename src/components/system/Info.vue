@@ -17,7 +17,7 @@
                     Aarex
                 </div>
                 <br />
-                <div v-if="false" class="link" @click="$emit('openDialog', 'Changelog')">
+                <div class="link" @click="$emit('openDialog', 'Changelog')">
                     Changelog
                 </div>
                 <br />
