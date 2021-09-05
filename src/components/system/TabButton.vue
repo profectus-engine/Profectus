@@ -18,6 +18,7 @@
 import themes from "@/data/themes";
 import { layers } from "@/game/layers";
 import player from "@/game/player";
+import settings from "@/game/settings";
 import { Subtab } from "@/typings/features/subtab";
 import { InjectLayerMixin } from "@/util/vue";
 import { defineComponent, PropType } from "vue";
@@ -36,7 +37,7 @@ export default defineComponent({
     emits: ["selectTab"],
     computed: {
         floating(): boolean {
-            return themes[player.theme].floatingTabs;
+            return themes[settings.theme].floatingTabs;
         },
         style(): Array<Partial<CSSStyleDeclaration> | undefined> {
             return [

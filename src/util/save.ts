@@ -1,9 +1,9 @@
 import { fixOldSave, getInitialLayers, getStartingData } from "@/data/mod";
 import modInfo from "@/data/modInfo.json";
-import { Themes } from "@/data/themes";
-import { ImportingStatus, MilestoneDisplay } from "@/game/enums";
 import player from "@/game/player";
-import { ModSaveData, PlayerData } from "@/typings/player";
+import settings, { loadSettings } from "@/game/settings";
+import state from "@/game/state";
+import { PlayerData } from "@/typings/player";
 import Decimal from "./bignum";
 
 export function getInitialStore(playerData: Partial<PlayerData> = {}): PlayerData {
@@ -11,8 +11,6 @@ export function getInitialStore(playerData: Partial<PlayerData> = {}): PlayerDat
         {
             id: `${modInfo.id}-0`,
             points: new Decimal(0),
-            oomps: new Decimal(0),
-            oompsMag: 0,
             name: "Default Save",
             tabs: modInfo.initialTabs.slice(),
             time: Date.now(),
@@ -21,61 +19,29 @@ export function getInitialStore(playerData: Partial<PlayerData> = {}): PlayerDat
             offlineTime: new Decimal(0),
             timePlayed: new Decimal(0),
             keepGoing: false,
-            lastTenTicks: [],
-            showTPS: true,
-            msDisplay: MilestoneDisplay.All,
-            hideChallenges: false,
-            theme: Themes.Nordic,
             subtabs: {},
             minimized: {},
             modID: modInfo.id,
             modVersion: modInfo.versionNumber,
             layers: {},
             justLoaded: false,
-            ...getStartingData(),
-
-            // Values that don't get loaded/saved
-            hasNaN: false,
-            NaNPath: [],
-            NaNReceiver: null,
-            importing: ImportingStatus.NotImporting,
-            saveToImport: "",
-            saveToExport: ""
+            ...getStartingData()
         },
         playerData
     ) as PlayerData;
 }
 
 export function save(): void {
-    /* eslint-disable @typescript-eslint/no-unused-vars */
-    const {
-        hasNaN,
-        NaNPath,
-        NaNReceiver,
-        importing,
-        saveToImport,
-        saveToExport,
-        ...playerData
-    } = player.__state as PlayerData;
-    /* eslint-enable @typescript-eslint/no-unused-vars */
-    player.saveToExport = btoa(unescape(encodeURIComponent(JSON.stringify(playerData))));
-
-    localStorage.setItem(player.id, player.saveToExport);
+    state.saveToExport = btoa(unescape(encodeURIComponent(JSON.stringify(player.__state))));
+    localStorage.setItem(player.id, state.saveToExport);
 }
 
 export async function load(): Promise<void> {
+    // Load global settings
+    loadSettings();
+
     try {
-        let modData: string | ModSaveData | null = localStorage.getItem(modInfo.id);
-        if (modData == null) {
-            await loadSave(newSave());
-            return;
-        }
-        modData = JSON.parse(decodeURIComponent(escape(atob(modData)))) as ModSaveData;
-        if (modData?.active == null) {
-            await loadSave(newSave());
-            return;
-        }
-        const save = localStorage.getItem(modData.active);
+        const save = localStorage.getItem(settings.active);
         if (save == null) {
             await loadSave(newSave());
             return;
@@ -85,7 +51,7 @@ export async function load(): Promise<void> {
             await loadSave(newSave());
             return;
         }
-        playerData.id = modData.active;
+        playerData.id = settings.active;
         await loadSave(playerData);
     } catch (e) {
         await loadSave(newSave());
@@ -97,21 +63,7 @@ export function newSave(): PlayerData {
     const playerData = getInitialStore({ id });
     localStorage.setItem(id, btoa(unescape(encodeURIComponent(JSON.stringify(playerData)))));
 
-    const rawModData = localStorage.getItem(modInfo.id);
-    if (rawModData == null) {
-        const modData = { active: id, saves: [id] };
-        localStorage.setItem(
-            modInfo.id,
-            btoa(unescape(encodeURIComponent(JSON.stringify(modData))))
-        );
-    } else {
-        const modData = JSON.parse(decodeURIComponent(escape(atob(rawModData))));
-        modData.saves.push(id);
-        localStorage.setItem(
-            modInfo.id,
-            btoa(unescape(encodeURIComponent(JSON.stringify(modData))))
-        );
-    }
+    settings.saves.push(id);
 
     return playerData;
 }
@@ -150,6 +102,7 @@ export async function loadSave(playerData: Partial<PlayerData>): Promise<void> {
         }
     }
     player.justLoaded = true;
+    settings.active = player.id;
 }
 
 export function applyPlayerData<T extends Record<string, any>>(
@@ -191,7 +144,4 @@ window.onbeforeunload = () => {
 window.save = save;
 export const hardReset = (window.hardReset = async () => {
     await loadSave(newSave());
-    const modData = JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)!))));
-    modData.active = player.id;
-    localStorage.setItem(modInfo.id, btoa(unescape(encodeURIComponent(JSON.stringify(modData)))));
 });

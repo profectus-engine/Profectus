@@ -23,7 +23,8 @@
 import themes from "@/data/themes";
 import { layers } from "@/game/layers";
 import player from "@/game/player";
-import { Microtab, MicrotabFamily } from "@/typings/features/subtab";
+import settings from "@/game/settings";
+import { Microtab } from "@/typings/features/subtab";
 import { coerceComponent, InjectLayerMixin } from "@/util/vue";
 import { defineComponent } from "vue";
 
@@ -40,9 +41,9 @@ export default defineComponent({
     inject: ["tab"],
     computed: {
         floating() {
-            return themes[player.theme].floatingTabs;
+            return themes[settings.theme].floatingTabs;
         },
-        tabFamily(): MicrotabFamily {
+        tabFamily() {
             return layers[this.layer].microtabs![this.family];
         },
         microtabs() {
@@ -61,13 +62,13 @@ export default defineComponent({
         activeMicrotab() {
             return this.id != undefined
                 ? this.tabFamily.data[this.id]
-                : this.tabFamily.activeMicrotab;
+                : this.tabFamily.activeMicrotab!;
         },
         embed() {
             return this.activeMicrotab!.embedLayer;
         },
         display() {
-            return this.activeMicrotab!.display && coerceComponent(this.activeMicrotab!.display!);
+            return this.activeMicrotab!.display && coerceComponent(this.activeMicrotab!.display);
         }
     },
     methods: {

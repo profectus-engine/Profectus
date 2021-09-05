@@ -11,11 +11,11 @@
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import themes from "./data/themes";
-import player from "./game/player";
 import modInfo from "./data/modInfo.json";
-import { mapState } from "./util/vue";
+import themes from "./data/themes";
+import settings from "./game/settings";
 import "./main.css";
+import { mapSettings } from "./util/vue";
 
 export default defineComponent({
     name: "App",
@@ -23,9 +23,9 @@ export default defineComponent({
         return { useHeader: modInfo.useHeader };
     },
     computed: {
-        ...mapState(["showTPS"]),
+        ...mapSettings(["showTPS"]),
         theme() {
-            return themes[player.theme].variables;
+            return themes[settings.theme].variables;
         }
     },
     methods: {

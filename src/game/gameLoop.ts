@@ -3,11 +3,7 @@ import modInfo from "@/data/modInfo.json";
 import Decimal, { DecimalSource } from "@/util/bignum";
 import { layers } from "./layers";
 import player from "./player";
-
-/* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-function updatePopups(diff: number) {
-    // TODO
-}
+import state from "./state";
 
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
 function updateParticles(diff: number) {
@@ -16,21 +12,21 @@ function updateParticles(diff: number) {
 
 function updateOOMPS(diff: DecimalSource) {
     if (player.points != undefined) {
-        player.oompsMag = 0;
+        state.oompsMag = 0;
         if (player.points.lte(new Decimal(1e100))) {
-            player.lastPoints = player.points;
+            state.lastPoints = player.points;
             return;
         }
 
         let curr = player.points;
-        let prev = (player.lastPoints as Decimal) || new Decimal(0);
-        player.lastPoints = curr;
+        let prev = (state.lastPoints as Decimal) || new Decimal(0);
+        state.lastPoints = curr;
         if (curr.gt(prev)) {
             if (curr.gte("10^^8")) {
                 curr = curr.slog(1e10);
                 prev = prev.slog(1e10);
-                player.oomps = curr.sub(prev).div(diff);
-                player.oompsMag = -1;
+                state.oomps = curr.sub(prev).div(diff);
+                state.oompsMag = -1;
             } else {
                 while (
                     curr
@@ -38,13 +34,13 @@ function updateOOMPS(diff: DecimalSource) {
                         .log(10)
                         .div(diff)
                         .gte("100") &&
-                    player.oompsMag <= 5 &&
+                    state.oompsMag <= 5 &&
                     prev.gt(0)
                 ) {
                     curr = curr.log(10);
                     prev = prev.log(10);
-                    player.oomps = curr.sub(prev).div(diff);
-                    player.oompsMag++;
+                    state.oomps = curr.sub(prev).div(diff);
+                    state.oompsMag++;
                 }
             }
         }
@@ -118,11 +114,10 @@ function update() {
     const trueDiff = diff;
 
     // Always update UI
-    updatePopups(trueDiff);
     updateParticles(trueDiff);
-    player.lastTenTicks.push(trueDiff);
-    if (player.lastTenTicks.length > 10) {
-        player.lastTenTicks = player.lastTenTicks.slice(1);
+    state.lastTenTicks.push(trueDiff);
+    if (state.lastTenTicks.length > 10) {
+        state.lastTenTicks = state.lastTenTicks.slice(1);
     }
 
     // Stop here if the game is paused on the win screen
@@ -130,7 +125,7 @@ function update() {
         return;
     }
     // Stop here if the player had a NaN value
-    if (player.hasNaN) {
+    if (state.hasNaN) {
         return;
     }
 

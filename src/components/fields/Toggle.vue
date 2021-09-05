@@ -1,11 +1,12 @@
 <template>
     <label class="field">
         <input type="checkbox" class="toggle" :checked="value" @input="handleInput" />
-        <span>{{ title }}</span>
+        <component :is="display" />
     </label>
 </template>
 
 <script lang="ts">
+import { coerceComponent } from "@/util/vue";
 import { defineComponent } from "vue";
 
 // Reference: https://codepen.io/finnhvman/pen/pOeyjE
@@ -16,6 +17,11 @@ export default defineComponent({
         value: Boolean
     },
     emits: ["change"],
+    computed: {
+        display() {
+            return coerceComponent(this.title || "", "span");
+        }
+    },
     methods: {
         handleInput(e: InputEvent) {
             this.$emit("change", (e.target as HTMLInputElement).checked);

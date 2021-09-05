@@ -1,15 +1,12 @@
-import { Themes } from "@/data/themes";
 import { PlayerData } from "@/typings/player";
 import Decimal from "@/util/bignum";
 import { isPlainObject } from "@/util/common";
 import { reactive } from "vue";
-import { ImportingStatus, MilestoneDisplay } from "./enums";
+import transientState from "./state";
 
 const state = reactive<PlayerData>({
     id: "",
     points: new Decimal(0),
-    oomps: new Decimal(0),
-    oompsMag: 0,
     name: "",
     tabs: [],
     time: -1,
@@ -18,22 +15,11 @@ const state = reactive<PlayerData>({
     offlineTime: null,
     timePlayed: new Decimal(0),
     keepGoing: false,
-    lastTenTicks: [],
-    showTPS: true,
-    msDisplay: MilestoneDisplay.All,
-    hideChallenges: false,
-    theme: Themes.Nordic,
     subtabs: {},
     minimized: {},
     modID: "",
     modVersion: "",
     justLoaded: false,
-    hasNaN: false,
-    NaNPath: [],
-    NaNReceiver: null,
-    importing: ImportingStatus.NotImporting,
-    saveToImport: "",
-    saveToExport: "",
     layers: {}
 });
 
@@ -65,7 +51,7 @@ const playerHandler: ProxyHandler<Record<string, any>> = {
         receiver: ProxyConstructor
     ): boolean {
         if (
-            !state.hasNaN &&
+            !transientState.hasNaN &&
             ((typeof value === "number" && isNaN(value)) ||
                 (value instanceof Decimal &&
                     (isNaN(value.sign) || isNaN(value.layer) || isNaN(value.mag))))
@@ -81,9 +67,9 @@ const playerHandler: ProxyHandler<Record<string, any>> = {
                 )
             ) {
                 state.autosave = false;
-                state.hasNaN = true;
-                state.NaNPath = [...target.__path, property];
-                state.NaNReceiver = (receiver as unknown) as Record<string, unknown>;
+                transientState.hasNaN = true;
+                transientState.NaNPath = [...target.__path, property];
+                transientState.NaNReceiver = (receiver as unknown) as Record<string, unknown>;
                 console.error(
                     `Attempted to set NaN value`,
                     [...target.__path, property],

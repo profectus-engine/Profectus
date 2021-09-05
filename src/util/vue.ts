@@ -1,8 +1,13 @@
 import { hasWon, pointGain } from "@/data/mod";
 import { layers } from "@/game/layers";
 import player from "@/game/player";
+import settings from "@/game/settings";
+import state from "@/game/state";
 import { Feature, Features, GridFeatures } from "@/typings/features/feature";
 import { Layer } from "@/typings/layer";
+import { PlayerData } from "@/typings/player";
+import { Settings } from "@/typings/settings";
+import { Transient } from "@/typings/transient";
 import { App, Component, ComponentOptions, defineComponent, inject, PropType } from "vue";
 import Decimal, * as numberUtils from "./bignum";
 import {
@@ -34,7 +39,7 @@ export function setVue(vm: App): void {
 
 // Pass in various data that the template could potentially use
 const data = function(): Record<string, unknown> {
-    return { Decimal, player, layers, hasWon, pointGain, ...numberUtils };
+    return { Decimal, player, state, settings, layers, hasWon, pointGain, ...numberUtils };
 };
 export function coerceComponent(
     component: string | ComponentOptions | Component,
@@ -95,14 +100,41 @@ export function getFiltered<T>(
     return objects;
 }
 
-export function mapState(properties: Array<string> = []): Record<string, unknown> {
-    return properties.reduce((acc: Record<string, unknown>, curr: string): Record<
-        string,
-        unknown
-    > => {
+type OmitIndex<T> = {
+    [K in keyof T as unknown extends Record<K, 1> ? never : K]: T[K];
+};
+
+export function mapPlayer<K extends keyof OmitIndex<PlayerData>>(
+    properties: K[] = []
+): {
+    [P in K]: () => PlayerData[P];
+} {
+    return properties.reduce((acc, curr: keyof PlayerData) => {
         acc[curr] = () => player[curr];
         return acc;
-    }, {});
+    }, {} as any);
+}
+
+export function mapSettings<K extends keyof OmitIndex<Settings>>(
+    properties: K[] = []
+): {
+    [P in K]: () => Settings[P];
+} {
+    return properties.reduce((acc, curr: keyof Settings) => {
+        acc[curr] = () => settings[curr];
+        return acc;
+    }, {} as any);
+}
+
+export function mapState<K extends keyof OmitIndex<Transient>>(
+    properties: K[] = []
+): {
+    [P in K]: () => Transient[P];
+} {
+    return properties.reduce((acc, curr: keyof Transient) => {
+        acc[curr] = () => state[curr];
+        return acc;
+    }, {} as any);
 }
 
 export const InjectLayerMixin = {
@@ -126,9 +158,9 @@ export function FilteredFeaturesMixin<T extends Feature>(
         };
     };
     computed: {
-        filtered: () => Record<string, T> | undefined;
-        rows: () => number | undefined;
-        cols: () => number | undefined;
+        filtered: (this: { layer: string; [feature]: string[] }) => Record<string, T> | undefined;
+        rows: (this: { layer: string }) => number | undefined;
+        cols: (this: { layer: string }) => number | undefined;
     };
 } {
     return {
@@ -139,19 +171,19 @@ export function FilteredFeaturesMixin<T extends Feature>(
             }
         },
         computed: {
-            filtered(this: { layer: string; [feature]: string[] }) {
+            filtered() {
                 return (
                     (layers[this.layer][feature] as Features<T> | undefined) &&
                     getFiltered((layers[this.layer][feature] as Features<T>).data, this[feature])
                 );
             },
-            rows(this: { layer: string }) {
+            rows() {
                 return (
                     (layers[this.layer][feature] as Features<T> | undefined) &&
                     (layers[this.layer][feature] as Features<T> | GridFeatures<T>).rows
                 );
             },
-            cols(this: { layer: string }) {
+            cols() {
                 return (
                     (layers[this.layer][feature] as Features<T> | undefined) &&
                     (layers[this.layer][feature] as Features<T> | GridFeatures<T>).cols

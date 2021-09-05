@@ -1,14 +1,19 @@
 import Decimal, { DecimalSource } from "@/util/bignum";
 import { App } from "vue";
 import { PlayerData } from "./player";
+import { Settings } from "./settings";
+import { Transient } from "./transient";
 
 declare global {
     interface Window {
         vue: App;
         save: () => void;
         hardReset: () => void;
+        hardResetSettings: () => void;
         layers: Dictionary<typeof Proxy>;
         player: PlayerData;
+        state: Transient;
+        settings: Settings;
         Decimal: typeof Decimal;
         exponentialFormat: (
             num: DecimalSource,

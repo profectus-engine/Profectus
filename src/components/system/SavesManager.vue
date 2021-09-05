@@ -3,17 +3,19 @@
         <template v-slot:header>
             <h2>Saves Manager</h2>
         </template>
-        <template v-slot:body v-sortable="{ update, handle: '.handle' }">
-            <save
-                v-for="(save, index) in saves"
-                :key="index"
-                :save="save"
-                @open="openSave(save.id)"
-                @export="exportSave(save.id)"
-                @editSave="name => editSave(save.id, name)"
-                @duplicate="duplicateSave(save.id)"
-                @delete="deleteSave(save.id)"
-            />
+        <template v-slot:body>
+            <div v-sortable="{ update, handle: '.handle' }">
+                <save
+                    v-for="(save, index) in saves"
+                    :key="index"
+                    :save="save"
+                    @open="openSave(save.id)"
+                    @export="exportSave(save.id)"
+                    @editSave="name => editSave(save.id, name)"
+                    @duplicate="duplicateSave(save.id)"
+                    @delete="deleteSave(save.id)"
+                />
+            </div>
         </template>
         <template v-slot:footer>
             <div class="modal-footer">
@@ -55,8 +57,9 @@
 </template>
 
 <script lang="ts">
-import modInfo from "@/data/modInfo.json";
 import player from "@/game/player";
+import settings from "@/game/settings";
+import state from "@/game/state";
 import { PlayerData } from "@/typings/player";
 import { getUniqueID, loadSave, newSave, save } from "@/util/save";
 import { defineComponent } from "vue";
@@ -86,7 +89,10 @@ export default defineComponent({
             bank
         } as {
             importingFailed: boolean;
-            saves: Record<string, Partial<PlayerData>>;
+            saves: Record<
+                string,
+                Omit<Partial<PlayerData>, "id"> & { id: string; error?: unknown }
+            >;
             saveToImport: string;
             bank: Array<{ label: string; value: string }>;
         };
@@ -100,39 +106,36 @@ export default defineComponent({
     },
     methods: {
         loadSaveData() {
-            try {
-                const { saves } = JSON.parse(
-                    decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)!)))
-                );
-                this.saves = saves.reduce(
-                    (acc: Record<string, Partial<PlayerData>>, curr: string) => {
-                        try {
-                            acc[curr] = JSON.parse(
-                                decodeURIComponent(escape(atob(localStorage.getItem(curr)!)))
-                            );
+            this.saves = settings.saves.reduce(
+                (
+                    acc: Record<
+                        string,
+                        Omit<Partial<PlayerData>, "id"> & { id: string; error?: unknown }
+                    >,
+                    curr: string
+                ) => {
+                    try {
+                        const save = localStorage.getItem(curr);
+                        if (save == null) {
+                            acc[curr] = { error: `Save with id "${curr}" doesn't exist`, id: curr };
+                        } else {
+                            acc[curr] = JSON.parse(decodeURIComponent(escape(atob(save))));
                             acc[curr].id = curr;
-                        } catch (error) {
-                            console.warn(`Can't load save with id "${curr}"`, error);
-                            acc[curr] = { error, id: curr };
                         }
-                        return acc;
-                    },
-                    {}
-                );
-            } catch (e) {
-                this.saves = { [player.id]: player };
-                const modData = { active: player.id, saves: [player.id] };
-                localStorage.setItem(
-                    modInfo.id,
-                    btoa(unescape(encodeURIComponent(JSON.stringify(modData))))
-                );
-            }
+                    } catch (error) {
+                        console.warn(`Can't load save with id "${curr}"`, error);
+                        acc[curr] = { error, id: curr };
+                    }
+                    return acc;
+                },
+                {}
+            );
         },
         exportSave(id: string) {
             let saveToExport;
             if (player.id === id) {
                 save();
-                saveToExport = player.saveToExport;
+                saveToExport = state.saveToExport;
             } else {
                 saveToExport = btoa(unescape(encodeURIComponent(JSON.stringify(this.saves[id]))));
             }
@@ -157,40 +160,18 @@ export default defineComponent({
                 btoa(unescape(encodeURIComponent(JSON.stringify(playerData))))
             );
 
-            const modData = JSON.parse(
-                decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)!)))
-            );
-            modData.saves.push(playerData.id);
-            localStorage.setItem(
-                modInfo.id,
-                btoa(unescape(encodeURIComponent(JSON.stringify(modData))))
-            );
+            settings.saves.push(playerData.id);
             this.saves[playerData.id] = playerData;
         },
         deleteSave(id: string) {
-            const modData = JSON.parse(
-                decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)!)))
-            );
-            modData.saves = modData.saves.filter((save: string) => save !== id);
+            settings.saves = settings.saves.filter((save: string) => save !== id);
             localStorage.removeItem(id);
-            localStorage.setItem(
-                modInfo.id,
-                btoa(unescape(encodeURIComponent(JSON.stringify(modData))))
-            );
             delete this.saves[id];
         },
         openSave(id: string) {
             this.saves[player.id].time = player.time;
             save();
             loadSave(this.saves[id]);
-            const modData = JSON.parse(
-                decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)!)))
-            );
-            modData.active = id;
-            localStorage.setItem(
-                modInfo.id,
-                btoa(unescape(encodeURIComponent(JSON.stringify(modData))))
-            );
         },
         newSave() {
             const playerData = newSave();
@@ -204,14 +185,7 @@ export default defineComponent({
                 btoa(unescape(encodeURIComponent(JSON.stringify(playerData))))
             );
 
-            const modData = JSON.parse(
-                decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)!)))
-            );
-            modData.saves.push(playerData.id);
-            localStorage.setItem(
-                modInfo.id,
-                btoa(unescape(encodeURIComponent(JSON.stringify(modData))))
-            );
+            settings.saves.push(playerData.id);
             this.saves[playerData.id] = playerData;
         },
         editSave(id: string, newName: string) {
@@ -227,7 +201,6 @@ export default defineComponent({
             }
         },
         importSave(text: string) {
-            console.log(text);
             this.saveToImport = text;
             if (text) {
                 this.$nextTick(() => {
@@ -247,14 +220,7 @@ export default defineComponent({
                         this.saveToImport = "";
                         this.importingFailed = false;
 
-                        const modData = JSON.parse(
-                            decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)!)))
-                        );
-                        modData.saves.push(id);
-                        localStorage.setItem(
-                            modInfo.id,
-                            btoa(unescape(encodeURIComponent(JSON.stringify(modData))))
-                        );
+                        settings.saves.push(id);
                     } catch (e) {
                         this.importingFailed = true;
                     }
@@ -264,14 +230,7 @@ export default defineComponent({
             }
         },
         update(e: { newIndex: number; oldIndex: number }) {
-            const modData = JSON.parse(
-                decodeURIComponent(escape(atob(localStorage.getItem(modInfo.id)!)))
-            );
-            modData.saves.splice(e.newIndex, 0, modData.saves.splice(e.oldIndex, 1)[0]);
-            localStorage.setItem(
-                modInfo.id,
-                btoa(unescape(encodeURIComponent(JSON.stringify(modData))))
-            );
+            settings.saves.splice(e.newIndex, 0, settings.saves.splice(e.oldIndex, 1)[0]);
         }
     }
 });

@@ -17,6 +17,7 @@
 import themes from "@/data/themes";
 import { layers } from "@/game/layers";
 import player from "@/game/player";
+import settings from "@/game/settings";
 import { Infobox } from "@/typings/features/infobox";
 import { coerceComponent, InjectLayerMixin } from "@/util/vue";
 import { Component, defineComponent } from "vue";
@@ -67,7 +68,7 @@ export default defineComponent({
             return player.layers[this.layer].infoboxes[this.id];
         },
         stacked(): boolean {
-            return themes[player.theme].stackedInfoboxes;
+            return themes[settings.theme].stackedInfoboxes;
         }
     },
     methods: {

@@ -46,8 +46,9 @@
 <script lang="ts">
 import modInfo from "@/data/modInfo.json";
 import player from "@/game/player";
+import state from "@/game/state";
 import Decimal, { format } from "@/util/bignum";
-import { mapState } from "@/util/vue";
+import { mapPlayer, mapState } from "@/util/vue";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -57,13 +58,14 @@ export default defineComponent({
         return { discordName, discordLink, format, showSaves: false };
     },
     computed: {
-        ...mapState(["hasNaN", "autosave"]),
+        ...mapPlayer(["autosave"]),
+        ...mapState(["hasNaN"]),
         path(): string | undefined {
-            return player.NaNPath?.join(".");
+            return state.NaNPath?.join(".");
         },
-        previous(): any {
-            if (player.NaNReceiver && this.property) {
-                return player.NaNReceiver[this.property];
+        previous(): unknown {
+            if (state.NaNReceiver && this.property) {
+                return state.NaNReceiver[this.property];
             }
             return null;
         },
@@ -71,29 +73,29 @@ export default defineComponent({
             return player.devSpeed === 0;
         },
         property(): string | undefined {
-            return player.NaNPath?.slice(-1)[0];
+            return state.NaNPath?.slice(-1)[0];
         }
     },
     methods: {
         setZero() {
-            if (player.NaNReceiver && this.property) {
-                player.NaNReceiver[this.property] = new Decimal(0);
-                player.hasNaN = false;
+            if (state.NaNReceiver && this.property) {
+                state.NaNReceiver[this.property] = new Decimal(0);
+                state.hasNaN = false;
             }
         },
         setOne() {
-            if (player.NaNReceiver && this.property) {
-                player.NaNReceiver[this.property] = new Decimal(1);
-                player.hasNaN = false;
+            if (state.NaNReceiver && this.property) {
+                state.NaNReceiver[this.property] = new Decimal(1);
+                state.hasNaN = false;
             }
         },
         setPrev() {
-            player.hasNaN = false;
+            state.hasNaN = false;
         },
         ignore() {
-            if (player.NaNReceiver && this.property) {
-                player.NaNReceiver[this.property] = new Decimal(NaN);
-                player.hasNaN = false;
+            if (state.NaNReceiver && this.property) {
+                state.NaNReceiver[this.property] = new Decimal(NaN);
+                state.hasNaN = false;
             }
         },
         setAutosave(autosave: boolean) {

@@ -20,18 +20,26 @@
                 @change="setMSDisplay"
                 default="all"
             />
-            <Toggle
-                title="Offline Production"
-                :value="offlineProd"
-                @change="toggleOption('offlineProd')"
-            />
-            <Toggle title="Autosave" :value="autosave" @change="toggleOption('autosave')" />
-            <Toggle title="Pause game" :value="paused" @change="togglePaused" />
-            <Toggle title="Show TPS" :value="showTPS" @change="toggleOption('showTPS')" />
+            <Toggle title="Show TPS" :value="showTPS" @change="toggleSettingsOption('showTPS')" />
             <Toggle
                 title="Hide Maxed Challenges"
                 :value="hideChallenges"
-                @change="toggleOption('hideChallenges')"
+                @change="toggleSettingsOption('hideChallenges')"
+            />
+            <Toggle
+                title="Offline Production<tooltip display='Save-specific'>*</tooltip>"
+                :value="offlineProd"
+                @change="togglePlayerOption('offlineProd')"
+            />
+            <Toggle
+                title="Autosave<tooltip display='Save-specific'>*</tooltip>"
+                :value="autosave"
+                @change="togglePlayerOption('autosave')"
+            />
+            <Toggle
+                title="Pause game<tooltip display='Save-specific'>*</tooltip>"
+                :value="paused"
+                @change="togglePaused"
             />
         </template>
     </Modal>
@@ -41,9 +49,12 @@
 import { defineComponent } from "vue";
 import themes, { Themes } from "@/data/themes";
 import { camelToTitle } from "@/util/common";
-import { mapState } from "@/util/vue";
+import { mapPlayer, mapSettings } from "@/util/vue";
 import player from "@/game/player";
 import { MilestoneDisplay } from "@/game/enums";
+import { PlayerData } from "@/typings/player";
+import settings from "@/game/settings";
+import { Settings } from "@/typings/settings";
 
 export default defineComponent({
     name: "Options",
@@ -57,27 +68,31 @@ export default defineComponent({
                 label: camelToTitle(theme),
                 value: theme
             })),
-            msDisplayOptions: ["all", "last", "configurable", "incomplete", "none"].map(option => ({
+            msDisplayOptions: Object.values(MilestoneDisplay).map(option => ({
                 label: camelToTitle(option),
                 value: option
             }))
         };
     },
     computed: {
-        ...mapState(["autosave", "offlineProd", "showTPS", "hideChallenges", "theme", "msDisplay"]),
+        ...mapSettings(["showTPS", "hideChallenges", "theme", "msDisplay"]),
+        ...mapPlayer(["autosave", "offlineProd"]),
         paused() {
             return player.devSpeed === 0;
         }
     },
     methods: {
-        toggleOption(option: string) {
+        togglePlayerOption(option: keyof PlayerData) {
             player[option] = !player[option];
         },
+        toggleSettingsOption(option: keyof Settings) {
+            settings[option] = !settings[option];
+        },
         setTheme(theme: Themes) {
-            player.theme = theme;
+            settings.theme = theme;
         },
         setMSDisplay(msDisplay: MilestoneDisplay) {
-            player.msDisplay = msDisplay;
+            settings.msDisplay = msDisplay;
         },
         togglePaused() {
             player.devSpeed = this.paused ? 1 : 0;
@@ -89,5 +104,10 @@ export default defineComponent({
 <style scoped>
 .header {
     margin-bottom: -10px;
+}
+
+* >>> .tooltip-container {
+    display: inline;
+    margin-left: 5px;
 }
 </style>

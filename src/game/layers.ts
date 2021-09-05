@@ -36,6 +36,7 @@ import clone from "lodash.clonedeep";
 import { isRef } from "vue";
 import { ProgressDisplay, Shape } from "./enums";
 import { default as playerProxy } from "./player";
+import settings from "./settings";
 
 export const layers: Record<string, Readonly<Layer>> = {};
 export const hotkeys: Hotkey[] = [];
@@ -217,7 +218,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         for (const id in layer.challenges.data) {
             layer.challenges.data[id].shown = function() {
                 return (
-                    this.unlocked !== false && (playerProxy.hideChallenges === false || !this.maxed)
+                    this.unlocked !== false && (settings.hideChallenges === false || !this.maxed)
                 );
             };
             layer.challenges.data[id].completed = function() {
@@ -376,7 +377,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
                 if (!this.unlocked) {
                     return false;
                 }
-                switch (playerProxy.msDisplay) {
+                switch (settings.msDisplay) {
                     default:
                     case "all":
                         return true;

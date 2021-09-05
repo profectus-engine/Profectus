@@ -178,6 +178,7 @@ import themes from "@/data/themes";
 import { ProgressDisplay, Shape } from "@/game/enums";
 import { layers } from "@/game/layers";
 import player from "@/game/player";
+import settings from "@/game/settings";
 import { BoardNode, BoardNodeAction, NodeLabel, NodeType } from "@/typings/features/board";
 import { getNodeTypeProperty } from "@/util/features";
 import { defineComponent, PropType } from "vue";
@@ -279,18 +280,18 @@ export default defineComponent({
             return getNodeTypeProperty(this.nodeType, this.node, "progress") || 0;
         },
         backgroundColor(): string {
-            return themes[player.theme].variables["--background"];
+            return themes[settings.theme].variables["--background"];
         },
         outlineColor(): string {
             return (
                 getNodeTypeProperty(this.nodeType, this.node, "outlineColor") ||
-                themes[player.theme].variables["--outline"]
+                themes[settings.theme].variables["--outline"]
             );
         },
         fillColor(): string {
             return (
                 getNodeTypeProperty(this.nodeType, this.node, "fillColor") ||
-                themes[player.theme].variables["--raised-background"]
+                themes[settings.theme].variables["--raised-background"]
             );
         },
         progressColor(): string {
@@ -299,7 +300,7 @@ export default defineComponent({
         titleColor(): string {
             return (
                 getNodeTypeProperty(this.nodeType, this.node, "titleColor") ||
-                themes[player.theme].variables["--foreground"]
+                themes[settings.theme].variables["--foreground"]
             );
         },
         progressDisplay(): ProgressDisplay {

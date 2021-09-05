@@ -81,7 +81,7 @@ const main = {
 			<span v-if="player.points.lt('1e1e6')"> points</span>
 		</div>
 		<div v-if="Decimal.gt(pointGain, 0)">
-			({{ player.oompsMag != 0 ? format(player.oomps) + " OOM" + (player.oompsMag < 0 ? "^OOM" : player.oompsMag > 1 ? "^" + player.oompsMag : "") + "s" : formatSmall(pointGain) }}/sec)
+			({{ state.oompsMag != 0 ? format(state.oomps) + " OOM" + (state.oompsMag < 0 ? "^OOM" : state.oompsMag > 1 ? "^" + state.oompsMag : "") + "s" : formatSmall(pointGain) }}/sec)
 		</div>
 		<spacer />
         <modal :show="false">

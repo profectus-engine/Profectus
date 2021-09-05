@@ -27,7 +27,7 @@
 <script lang="ts">
 import modInfo from "@/data/modInfo.json";
 import { layers } from "@/game/layers";
-import { coerceComponent, mapState } from "@/util/vue";
+import { coerceComponent, mapPlayer } from "@/util/vue";
 import { Component, defineComponent } from "vue";
 
 export default defineComponent({
@@ -36,7 +36,7 @@ export default defineComponent({
         return { useHeader: modInfo.useHeader };
     },
     computed: {
-        ...mapState(["tabs"]),
+        ...mapPlayer(["tabs"]),
         components() {
             return Object.keys(layers).reduce(
                 (acc: Record<string, Component | string | false>, curr) => {

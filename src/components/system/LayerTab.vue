@@ -49,6 +49,7 @@ import modInfo from "@/data/modInfo.json";
 import themes from "@/data/themes";
 import { layers } from "@/game/layers";
 import player from "@/game/player";
+import settings from "@/game/settings";
 import { Subtab } from "@/typings/features/subtab";
 import { coerceComponent } from "@/util/vue";
 import { Component, defineComponent } from "vue";
@@ -76,7 +77,7 @@ export default defineComponent({
             return layers[this.layer].name || this.layer;
         },
         floating(): boolean {
-            return themes[player.theme].floatingTabs;
+            return themes[settings.theme].floatingTabs;
         },
         style(): Array<Partial<CSSStyleDeclaration> | undefined> {
             const style = [];

@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts">
-import player from "@/game/player";
+import state from "@/game/state";
 import Decimal, { formatWhole } from "@/util/bignum";
 import { defineComponent } from "vue";
 
@@ -13,8 +13,8 @@ export default defineComponent({
         tps() {
             return formatWhole(
                 Decimal.div(
-                    player.lastTenTicks.length,
-                    player.lastTenTicks.reduce((acc, curr) => acc + curr, 0)
+                    state.lastTenTicks.length,
+                    state.lastTenTicks.reduce((acc, curr) => acc + curr, 0)
                 )
             );
         }

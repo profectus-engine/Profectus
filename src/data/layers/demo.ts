@@ -1230,11 +1230,11 @@ export default {
         },
         effect() {
           if (!hasChallenge(this.layer, this.id)) return 0;
-          if (player.layers[this.layer].challenges![this.id] == new Decimal(1))
+          if (Decimal.eq(player.layers[this.layer].challenges![this.id], 1))
             return 50;
-          if (player.layers[this.layer].challenges![this.id] == new Decimal(2))
+            if (Decimal.eq(player.layers[this.layer].challenges![this.id], 2))
             return 60;
-          if (player.layers[this.layer].challenges![this.id] == new Decimal(3))
+            if (Decimal.eq(player.layers[this.layer].challenges![this.id], 3))
             return 70;
         },
         completionLimit() {
