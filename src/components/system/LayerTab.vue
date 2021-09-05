@@ -185,6 +185,7 @@ export default defineComponent({
     margin: 0;
     flex-grow: 1;
     display: flex;
+    isolation: isolate;
 }
 
 .layer-tab:not(.minimized) {
