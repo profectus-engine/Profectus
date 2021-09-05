@@ -1,5 +1,5 @@
-.feature,
-.feature button {
+.feature:not(li),
+.feature:not(li) button {
     position: relative;
     padding: 5px;
     border-radius: var(--border-radius);

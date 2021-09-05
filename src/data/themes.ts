@@ -14,6 +14,9 @@ const defaultTheme: Theme = {
         "--danger": "rgb(220, 53, 69)",
         "--link": "#02f2f2",
         "--outline": "#dfdfdf",
+        "--accent1": "#627a82",
+        "--accent2": "#658262",
+        "--accent3": "#7c6282",
 
         "--border-radius": "15px",
         "--modal-border": "solid 2px var(--color)",
@@ -65,6 +68,9 @@ export default {
             "--danger": "#D08770",
             "--link": "#88C0D0",
             "--outline": "#3B4252",
+            "--accent1": "#B48EAD",
+            "--accent2": "#A3BE8C",
+            "--accent3": "#EBCB8B",
             "--border-radius": "4px",
             "--modal-border": "solid 2px #3B4252",
             "--feature-margin": "5px"

@@ -12,6 +12,9 @@ export interface Theme {
         "--danger": string;
         "--link": string;
         "--outline": string;
+        "--accent1": string;
+        "--accent2": string;
+        "--accent3": string;
         "--border-radius": string;
         "--modal-border": string;
         "--feature-margin": string;
