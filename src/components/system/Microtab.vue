@@ -25,7 +25,7 @@ import { layers } from "@/game/layers";
 import player from "@/game/player";
 import { Microtab, MicrotabFamily } from "@/typings/features/subtab";
 import { coerceComponent, InjectLayerMixin } from "@/util/vue";
-import { Component, defineComponent } from "vue";
+import { defineComponent } from "vue";
 
 export default defineComponent({
     name: "microtab",
@@ -35,11 +35,9 @@ export default defineComponent({
             type: String,
             required: true
         },
-        id: {
-            type: String,
-            required: true
-        }
+        id: String
     },
+    inject: ["tab"],
     computed: {
         floating() {
             return themes[player.theme].floatingTabs;
@@ -47,7 +45,7 @@ export default defineComponent({
         tabFamily(): MicrotabFamily {
             return layers[this.layer].microtabs![this.family];
         },
-        microtabs(): Record<string, Microtab> {
+        microtabs() {
             return Object.keys(this.tabFamily.data)
                 .filter(
                     microtab =>
@@ -60,15 +58,15 @@ export default defineComponent({
                     return acc;
                 }, {});
         },
-        activeMicrotab(): Microtab | undefined {
+        activeMicrotab() {
             return this.id != undefined
                 ? this.tabFamily.data[this.id]
                 : this.tabFamily.activeMicrotab;
         },
-        embed(): string | undefined {
+        embed() {
             return this.activeMicrotab!.embedLayer;
         },
-        display(): Component | string | undefined {
+        display() {
             return this.activeMicrotab!.display && coerceComponent(this.activeMicrotab!.display!);
         }
     },

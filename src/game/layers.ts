@@ -539,14 +539,14 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
                     this.data[playerProxy.subtabs[this.layer as string][family]] &&
                     this.data[playerProxy.subtabs[this.layer as string][family]].unlocked !== false
                 ) {
-                    return this[playerProxy.subtabs[this.layer as string][family]];
+                    return this.data[playerProxy.subtabs[this.layer as string][family]];
                 }
                 // Default to first unlocked tab
-                const firstUnlocked: string | undefined = Object.keys(this).find(
+                const firstUnlocked: string | undefined = Object.keys(this.data).find(
                     microtab =>
                         microtab !== "activeMicrotab" && this.data[microtab].unlocked !== false
                 );
-                return firstUnlocked != undefined ? this[firstUnlocked] : undefined;
+                return firstUnlocked != undefined ? this.data[firstUnlocked] : undefined;
             };
             setDefault(
                 player.subtabs[layer.id],
@@ -561,7 +561,7 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
                 microtab.family = family;
                 microtab.id = id;
                 microtab.active = function() {
-                    return playerProxy.subtabs[this.layer][this.family] === this.id;
+                    return layers[this.layer].microtabs![this.family].activeMicrotab === this;
                 };
             }
         }
