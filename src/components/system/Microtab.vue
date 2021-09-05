@@ -1,7 +1,7 @@
 <template>
     <div v-if="microtabs" class="microtabs">
         <LayerProvider :layer="layer" :index="tab.index">
-            <div v-if="microtabs" class="tabs" :class="{ floating }">
+            <div v-if="microtabs && this.id == undefined" class="tabs" :class="{ floating }">
                 <tab-button
                     v-for="(microtab, id) in microtabs"
                     @selectTab="selectMicrotab(id)"
