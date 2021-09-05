@@ -1932,7 +1932,7 @@ export default {
           return getBuyableAmount("p", 11)!.gte(1);
         },
         unlocked() {
-          return layers.p.activeSubtab?.id == "Pointy points";
+          return layers.p.activeSubtab?.id != "Pointy points";
         }
       },
       1: {
@@ -1945,7 +1945,7 @@ export default {
         unlocked() {
           return (
             hasMilestone(this.layer, Number(this.id) - 1) &&
-            layers.p.activeSubtab?.id == "Pointy points"
+            layers.p.activeSubtab?.id != "Pointy points"
           );
         }
       },
@@ -1959,7 +1959,7 @@ export default {
         unlocked() {
           return (
             hasMilestone(this.layer, Number(this.id) - 1) &&
-            layers.p.activeSubtab?.id == "Pointy points"
+            layers.p.activeSubtab?.id != "Pointy points"
           );
         }
       },
@@ -1973,7 +1973,7 @@ export default {
         unlocked() {
           return (
             hasMilestone(this.layer, Number(this.id) - 1) &&
-            layers.p.activeSubtab?.id == "Pointy points"
+            layers.p.activeSubtab?.id != "Pointy points"
           );
         }
       },
@@ -1986,7 +1986,7 @@ export default {
         unlocked() {
           return (
             hasMilestone(this.layer, Number(this.id) - 1) &&
-            layers.p.activeSubtab?.id == "Pointy points"
+            layers.p.activeSubtab?.id != "Pointy points"
           );
         }
       },
@@ -1999,7 +1999,7 @@ export default {
         unlocked() {
           return (
             hasMilestone(this.layer, Number(this.id) - 1) &&
-            layers.p.activeSubtab?.id == "Pointy points"
+            layers.p.activeSubtab?.id != "Pointy points"
           );
         }
       },
@@ -2013,7 +2013,7 @@ export default {
           return (
             hasMilestone(this.layer, Number(this.id) - 1) &&
             (hasUpgrade(this.layer, 104) || player.layers.i.unlocked) &&
-            layers.p.activeSubtab?.id == "Pointy points"
+            layers.p.activeSubtab?.id != "Pointy points"
           );
         }
       },
@@ -2028,7 +2028,7 @@ export default {
           return (
             hasMilestone(this.layer, Number(this.id) - 1) &&
             (hasUpgrade(this.layer, 111) || player.layers.i.unlocked) &&
-            layers.p.activeSubtab?.id == "Pointy points"
+            layers.p.activeSubtab?.id != "Pointy points"
           );
         }
       },
@@ -2045,7 +2045,7 @@ export default {
               hasUpgrade(this.layer, 143) ||
               hasUpgrade(this.layer, 142) ||
               player.layers.i.unlocked) &&
-            layers.p.activeSubtab?.id == "Pointy points"
+            layers.p.activeSubtab?.id != "Pointy points"
           );
         }
       },
@@ -2268,19 +2268,19 @@ export default {
         return hasUpgrade("p", 104) || player.layers.i.points.gte(1);
       },
       display: `
-				<div style="color: red; font-size: 32px; font-family: Comic Sans MS">{{ format(player.layers.p.buyables![21]) }} pointy points</div>
-				<div style="color: red; font-size: 32px; font-family: Comic Sans MS">My pointy points are multiplying generator efficiency by {{ format(new Decimal(player.layers.p.buyables![21]).plus(1)) }}</div>
+				<div style="color: red; font-size: 32px; font-family: Comic Sans MS">{{ format(player.layers.p.buyables[21]) }} pointy points</div>
+				<div style="color: red; font-size: 32px; font-family: Comic Sans MS">My pointy points are multiplying generator efficiency by {{ format(new Decimal(player.layers.p.buyables[21]).plus(1)) }}</div>
 				<spacer />
 				<spacer />
 				<row><buyable id="21" /></row>
-				<div v-if="hasMilestone('i', 5)" style="color: red; font-size: 32px; font-family: Comic Sans MS">I have {{ format(player.layers.p.buyables![22]) }} pointy prestige points</div>
+				<div v-if="hasMilestone('i', 5)" style="color: red; font-size: 32px; font-family: Comic Sans MS">I have {{ format(player.layers.p.buyables[22]) }} pointy prestige points</div>
 				<row><buyable id="22" /></row>
 				<spacer />
 				<upgrades :upgrades="[211, 212, 213, 214, 215]" />
 				<upgrades :upgrades="[221, 222, 223, 224, 225]" />
-				<div v-if="hasMilestone('p', 225)" style="color: red; font-size: 32px; font-family: Comic Sans MS">I have {{ format(player.layers.p.buyables![23]) }} pointy boosters!</div>
+				<div v-if="hasUpgrade('p', 225)" style="color: red; font-size: 32px; font-family: Comic Sans MS">I have {{ format(player.layers.p.buyables[23]) }} pointy boosters!</div>
 				<row><buyable id="23" /></row>
-				<div v-if="hasMilestone('p', 225) || getBuyableAmount('p', 23).gt(0)" style="color: red; font-size: 32px; font-family: Comic Sans MS">My pointy boosters are raising generator efficiency to the ^{{ format(new Decimal(player.layers.p.buyables![23]).div(10).mul(new Decimal(0.1).plus(layers.p.buyables[41].effect).times(10)).plus(1)) }}</div>
+				<div v-if="hasUpgrade('p', 225) || getBuyableAmount('p', 23).gt(0)" style="color: red; font-size: 32px; font-family: Comic Sans MS">My pointy boosters are raising generator efficiency to the ^{{ format(new Decimal(player.layers.p.buyables[23]).div(10).mul(new Decimal(0.1).plus(layers.p.buyables[41].effect).times(10)).plus(1)) }}</div>
 				<spacer />
 				<spacer />
 				<div v-if="hasMilestone('p', 11)" style="font-size: 24px">Booster upgrades</div>

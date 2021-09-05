@@ -617,7 +617,7 @@ function setRowCol<T extends GridFeatures<S>, S extends Feature>(features: RawGr
     }
     let maxRow = 0;
     let maxCol = 0;
-    for (const id in features) {
+    for (const id in features.data) {
         const index = Number(id);
         if (!isNaN(index)) {
             if (Math.floor(index / 10) > maxRow) {
