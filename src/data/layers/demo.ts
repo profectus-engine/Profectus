@@ -112,8 +112,6 @@ export default {
     return true;
   },
   upgrades: {
-    rows: 999,
-    cols: 5,
     data: {
       11: {
         title: "Gain points",

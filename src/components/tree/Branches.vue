@@ -27,14 +27,16 @@ export default defineComponent({
     data() {
         return {
             observer: new MutationObserver(this.updateNodes as (...args: unknown[]) => void),
-            resizeObserver: new ResizeObserver(this.updateNodes as (...args: unknown[]) => void),
+            resizeObserver: new ResizeObserver(this.updateBounds as (...args: unknown[]) => void),
             nodes: {},
-            links: []
+            links: [],
+            boundingRect: new DOMRect()
         } as {
             observer: MutationObserver;
             resizeObserver: ResizeObserver;
             nodes: Record<string, BranchNode>;
             links: Array<BranchLink>;
+            boundingRect: DOMRect;
         };
     },
     mounted() {
@@ -64,17 +66,22 @@ export default defineComponent({
         }
     },
     methods: {
-        updateNodes() {
+        updateBounds() {
             if (this.$refs.resizeListener != undefined) {
-                const containerRect = (this.$refs
-                    .resizeListener as HTMLElement).getBoundingClientRect();
-                Object.keys(this.nodes).forEach(id => this.updateNode(id, containerRect));
+                this.boundingRect = (this.$refs
+                   .resizeListener as HTMLElement).getBoundingClientRect();
+                this.updateNodes();
             }
         },
-        updateNode(id: string, containerRect: DOMRect) {
+        updateNodes() {
+            if (this.$refs.resizeListener != undefined) {
+                Object.keys(this.nodes).forEach(id => this.updateNode(id));
+            }
+        },
+        updateNode(id: string) {
             const linkStartRect = this.nodes[id].element.getBoundingClientRect();
-            this.nodes[id].x = linkStartRect.x + linkStartRect.width / 2 - containerRect.x;
-            this.nodes[id].y = linkStartRect.y + linkStartRect.height / 2 - containerRect.y;
+            this.nodes[id].x = linkStartRect.x + linkStartRect.width / 2 - this.boundingRect.x;
+            this.nodes[id].y = linkStartRect.y + linkStartRect.height / 2 - this.boundingRect.y;
         },
         registerNode(id: string, component: ComponentPublicInstance) {
             const element = component.$el.parentElement;
@@ -82,10 +89,7 @@ export default defineComponent({
             this.observer.observe(element, observerOptions);
             this.$nextTick(() => {
                 if (this.$refs.resizeListener != undefined) {
-                    this.updateNode(
-                        id,
-                        (this.$refs.resizeListener as HTMLElement).getBoundingClientRect()
-                    );
+                    this.updateNode(id);
                 }
             });
         },
