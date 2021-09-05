@@ -57,10 +57,10 @@ export default defineComponent({
 .sticky {
     position: sticky;
     background: var(--background);
-    margin-left: -7px;
-    margin-right: -7px;
-    padding-left: 7px;
-    padding-right: 7px;
+    margin-left: -10px;
+    margin-right: -10px;
+    padding-left: 10px;
+    padding-right: 10px;
     z-index: 3;
 }
 

@@ -295,9 +295,9 @@ export default defineComponent({
 }
 
 .minimize {
-    position: absolute;
+    position: sticky;
     top: 6px;
-    right: 16px;
+    right: 9px;
     z-index: 7;
     line-height: 30px;
     width: 30px;
@@ -309,11 +309,14 @@ export default defineComponent({
     font-size: 40px;
     cursor: pointer;
     padding: 0;
+    margin-top: -44px;
+    margin-right: -30px;
 }
 
 .minimized + .minimize {
     transform: rotate(-90deg);
     top: 10px;
+    right: 18px;
 }
 
 .goBack {
