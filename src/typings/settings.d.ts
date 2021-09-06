@@ -9,5 +9,6 @@ export interface Settings {
     msDisplay: MilestoneDisplay;
     hideChallenges: boolean;
     theme: Themes;
+    unthrottled: boolean;
     [index: string]: unknown;
 }

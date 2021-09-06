@@ -27,6 +27,11 @@
                 @change="toggleSettingsOption('hideChallenges')"
             />
             <Toggle
+                title="Unthrottled"
+                :value="unthrottled"
+                @change="toggleSettingsOption('unthrottled')"
+            />
+            <Toggle
                 title="Offline Production<tooltip display='Save-specific'>*</tooltip>"
                 :value="offlineProd"
                 @change="togglePlayerOption('offlineProd')"
@@ -75,7 +80,7 @@ export default defineComponent({
         };
     },
     computed: {
-        ...mapSettings(["showTPS", "hideChallenges", "theme", "msDisplay"]),
+        ...mapSettings(["showTPS", "hideChallenges", "theme", "msDisplay", "unthrottled"]),
         ...mapPlayer(["autosave", "offlineProd"]),
         paused() {
             return player.devSpeed === 0;

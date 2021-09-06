@@ -3,6 +3,7 @@ import modInfo from "@/data/modInfo.json";
 import Decimal, { DecimalSource } from "@/util/bignum";
 import { layers } from "./layers";
 import player from "./player";
+import settings from "./settings";
 import state from "./state";
 
 /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
@@ -107,6 +108,8 @@ function updateLayers(diff: DecimalSource) {
     });
 }
 
+let intervalID: number | null = null;
+
 function update() {
     const now = Date.now();
     let diff: DecimalSource = (now - player.time) / 1e3;
@@ -169,8 +172,22 @@ function update() {
     updateLayers(diff);
 
     player.justLoaded = false;
+
+    if (settings.unthrottled) {
+        requestAnimationFrame(update);
+        if (intervalID != null) {
+            clearInterval(intervalID);
+            intervalID = null;
+        }
+    } else if (intervalID == null) {
+        intervalID = setInterval(update, 50);
+    }
 }
 
 export default function startGameLoop(): void {
-    setInterval(update, 50);
+    if (settings.unthrottled) {
+        requestAnimationFrame(update);
+    } else {
+        intervalID = setInterval(update, 50);
+    }
 }

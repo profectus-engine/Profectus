@@ -12,7 +12,8 @@ const state = reactive<Settings>({
     showTPS: true,
     msDisplay: MilestoneDisplay.All,
     hideChallenges: false,
-    theme: Themes.Nordic
+    theme: Themes.Nordic,
+    unthrottled: false
 });
 
 const settingsHandler: ProxyHandler<Record<string, any>> = {
