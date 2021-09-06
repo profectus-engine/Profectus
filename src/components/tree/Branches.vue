@@ -69,7 +69,7 @@ export default defineComponent({
         updateBounds() {
             if (this.$refs.resizeListener != undefined) {
                 this.boundingRect = (this.$refs
-                   .resizeListener as HTMLElement).getBoundingClientRect();
+                    .resizeListener as HTMLElement).getBoundingClientRect();
                 this.updateNodes();
             }
         },

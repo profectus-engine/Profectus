@@ -9,7 +9,7 @@ module.exports = {
             .use(require("tsconfig-paths-webpack-plugin"));
         // Remove this if/when all "core" code has no non-ignored more type errors
         // https://github.com/vuejs/vue-cli/issues/3157#issuecomment-657090338
-        config.plugins.delete('fork-ts-checker');
+        config.plugins.delete("fork-ts-checker");
     },
     devServer: {
         disableHostCheck: true

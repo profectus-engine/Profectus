@@ -106,7 +106,7 @@ export default defineComponent({
     margin-bottom: -10px;
 }
 
-* >>> .tooltip-container {
+*:deep() .tooltip-container {
     display: inline;
     margin-left: 5px;
 }
