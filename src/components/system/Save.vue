@@ -161,7 +161,6 @@ export default defineComponent({
     right: 4px;
     display: flex;
     padding: 4px;
-    background: inherit;
     z-index: 1;
 }
 
