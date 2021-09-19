@@ -5,11 +5,11 @@ export interface Grid extends Feature {
     maxRows: number;
     rows: number;
     cols: number;
-    getData?: (cell: string | number) => State;
-    setData?: (cell: string | number, data: State) => void;
+    getState?: (cell: string | number) => State;
+    setState?: (cell: string | number, state: State) => void;
     getUnlocked: boolean | ((cell: string | number) => boolean);
     getCanClick: boolean | ((cell: string | number) => boolean);
-    getStartData: State | ((cell: string | number) => State);
+    getStartState: State | ((cell: string | number) => State);
     getStyle?:
         | Partial<CSSStyleDeclaration>
         | ((cell: string | number) => Partial<CSSStyleDeclaration> | undefined);
@@ -20,8 +20,8 @@ export interface Grid extends Feature {
 }
 
 export interface GridCell extends Feature {
-    data: State;
-    dataSet: (data: State) => void;
+    state: State;
+    stateSet: (state: State) => void;
     effect?: State;
     unlocked: boolean;
     canClick: boolean;

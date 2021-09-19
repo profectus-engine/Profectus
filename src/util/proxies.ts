@@ -151,7 +151,7 @@ function getCellHandler(id: string) {
             let prop = target[key];
 
             if (isFunction(prop) && prop.forceCached === false) {
-                return () => prop.call(receiver, id, target.getData(id));
+                return () => prop.call(receiver, id, target.getState(id));
             }
             if (prop != undefined || key.slice == undefined) {
                 return prop;
@@ -160,14 +160,14 @@ function getCellHandler(id: string) {
             key = key.slice(0, 1).toUpperCase() + key.slice(1);
             prop = target[`get${key}`];
             if (isFunction(prop)) {
-                return prop.call(receiver, id, target.getData(id));
+                return prop.call(receiver, id, target.getState(id));
             } else if (prop != undefined) {
                 return prop;
             }
 
             prop = target[`on${key}`];
             if (isFunction(prop)) {
-                return () => prop.call(receiver, id, target.getData(id));
+                return () => prop.call(receiver, id, target.getState(id));
             } else if (prop != undefined) {
                 return prop;
             }

@@ -62,7 +62,7 @@ export default {
         maxRows: 3,
         rows: 2,
         cols: 2,
-        getStartData(cell: string) {
+        getStartState(cell: string) {
           return cell;
         },
         getUnlocked() {
@@ -73,11 +73,11 @@ export default {
           return player.points.eq(10);
         },
         getStyle(cell) {
-          return { backgroundColor: "#" + ((Number((this[cell] as GridCell).data) * 1234) % 999999) };
+          return { backgroundColor: "#" + ((Number((this[cell] as GridCell).state) * 1234) % 999999) };
         },
         click(cell) {
           // Don't forget onHold
-          (this[cell] as GridCell).data = ((this[cell] as GridCell).data as number) + 1;
+          (this[cell] as GridCell).state = ((this[cell] as GridCell).state as number) + 1;
         },
         getTitle(cell) {
           let direction;
@@ -95,7 +95,7 @@ export default {
                     </tooltip>`;
         },
         getDisplay(cell) {
-          return (this[cell] as GridCell).data;
+          return (this[cell] as GridCell).state;
         }
       }
     }

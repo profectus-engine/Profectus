@@ -404,23 +404,23 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         setupFeatures<NonNullable<RawLayer["grids"]>, Grid>(layer.id, layer.grids);
         for (const id in layer.grids.data) {
             setDefault(player.layers[layer.id].grids, id, {});
-            layer.grids.data[id].getData = function(cell): State {
+            layer.grids.data[id].getState = function(cell): State {
                 if (playerProxy.layers[this.layer].grids[id][cell] != undefined) {
                     return playerProxy.layers[this.layer].grids[id][cell];
                 }
-                if (isFunction(this.getStartData)) {
-                    return (this.getStartData as (this: Grid, cell: string | number) => State)(
+                if (isFunction(this.getStartState)) {
+                    return (this.getStartState as (this: Grid, cell: string | number) => State)(
                         cell
                     );
                 }
-                return this.getStartData;
+                return this.getStartState;
             };
-            layer.grids.data[id].setData = function(cell, data) {
-                playerProxy.layers[this.layer].grids[id][cell] = data;
+            layer.grids.data[id].setState = function(cell, state) {
+                playerProxy.layers[this.layer].grids[id][cell] = state;
             };
             setDefault(layer.grids.data[id], "getUnlocked", true, false);
             setDefault(layer.grids.data[id], "getCanClick", true, false);
-            setDefault(layer.grids.data[id], "getStartData", "", false);
+            setDefault(layer.grids.data[id], "getStartState", "", false);
             setDefault(layer.grids.data[id], "getStyle", undefined, false);
             setDefault(layer.grids.data[id], "click", undefined, false);
             setDefault(layer.grids.data[id], "hold", undefined, false);
@@ -433,15 +433,15 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
         for (const id in layer.boards.data) {
             setDefault(layer.boards.data[id], "width", "100%");
             setDefault(layer.boards.data[id], "height", "400px");
-            setDefault(layer.boards.data[id], "nodes", function() {
+            setDefault(layer.boards.data[id], "nodes", function(this: Board) {
                 return playerProxy.layers[this.layer].boards[this.id].nodes;
             });
-            setDefault(layer.boards.data[id], "selectedNode", function() {
+            setDefault(layer.boards.data[id], "selectedNode", function(this: Board) {
                 return playerProxy.layers[this.layer].boards[this.id].nodes.find(
                     node => node.id === playerProxy.layers[this.layer].boards[this.id].selectedNode
                 );
             });
-            setDefault(layer.boards.data[id], "selectedAction", function() {
+            setDefault(layer.boards.data[id], "selectedAction", function(this: Board) {
                 if (this.selectedNode == null) {
                     return null;
                 }
@@ -460,11 +460,11 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
                         action.id === playerProxy.layers[this.layer].boards[this.id].selectedAction
                 );
             });
-            setDefault(layer.boards.data[id], "links", function() {
+            setDefault(layer.boards.data[id], "links", function(this: Board) {
                 if (this.selectedAction == null) {
                     return null;
                 }
-                if (this.selectedAction.links) {
+                if (this.selectedAction.links && this.selectedNode) {
                     if (typeof this.selectedAction.links === "function") {
                         return this.selectedAction.links(this.selectedNode);
                     }
