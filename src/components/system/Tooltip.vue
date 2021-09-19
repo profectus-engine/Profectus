@@ -102,7 +102,7 @@ export default defineComponent({
     z-index: 10;
 }
 
-.fade-enter,
+.fade-enter-from,
 .fade-leave-to {
     opacity: 0;
 }
