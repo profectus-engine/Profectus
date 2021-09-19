@@ -23,7 +23,8 @@ const defaultTheme: Theme = {
         "--feature-margin": "0px"
     },
     stackedInfoboxes: false,
-    floatingTabs: true
+    floatingTabs: true,
+    showSingleTab: false
 };
 
 export enum Themes {

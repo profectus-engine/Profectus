@@ -21,4 +21,5 @@ export interface Theme {
     };
     stackedInfoboxes: boolean;
     floatingTabs: boolean;
+    showSingleTab: boolean;
 }

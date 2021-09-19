@@ -47,7 +47,7 @@ export default defineComponent({
             return layers[this.layer].microtabs![this.family];
         },
         microtabs() {
-            return Object.keys(this.tabFamily.data)
+            const microtabs = Object.keys(this.tabFamily.data)
                 .filter(
                     microtab =>
                         microtab !== "activeMicrotab" &&
@@ -58,6 +58,10 @@ export default defineComponent({
                     acc[curr] = this.tabFamily.data[curr];
                     return acc;
                 }, {});
+            if (Object.keys(microtabs).length === 1 && !themes[settings.theme].showSingleTab) {
+                return null;
+            }
+            return microtabs;
         },
         activeMicrotab() {
             return this.id != undefined

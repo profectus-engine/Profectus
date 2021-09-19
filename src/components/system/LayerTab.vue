@@ -100,12 +100,16 @@ export default defineComponent({
         },
         subtabs(): Record<string, Subtab> | null {
             if (layers[this.layer].subtabs) {
-                return Object.entries(layers[this.layer].subtabs!)
+                const subtabs = Object.entries(layers[this.layer].subtabs!)
                     .filter(subtab => subtab[1].unlocked !== false)
                     .reduce((acc: Record<string, Subtab>, curr: [string, Subtab]) => {
                         acc[curr[0]] = curr[1];
                         return acc;
                     }, {});
+                if (Object.keys(subtabs).length === 1 && !themes[settings.theme].showSingleTab) {
+                    return null;
+                }
+                return subtabs;
             }
             return null;
         },
