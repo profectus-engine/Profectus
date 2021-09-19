@@ -9,11 +9,15 @@
             resetNotify: challenge.active,
             notify: challenge.active && challenge.canComplete,
             done: challenge.completed,
+            canStart: challenge.canStart,
             maxed: challenge.maxed
         }"
     >
         <div v-if="title"><component :is="title" /></div>
-        <button :style="{ backgroundColor: challenge.maxed ? null : buttonColor }" @click="toggle">
+        <button
+            :style="{ backgroundColor: challenge.canStart ? buttonColor : null }"
+            @click="toggle"
+        >
             {{ buttonText }}
         </button>
         <component v-if="fullDisplay" :is="fullDisplay" />
@@ -101,12 +105,11 @@ export default defineComponent({
     min-height: 50px;
     width: 120px;
     border-radius: var(--border-radius);
-    cursor: pointer;
     box-shadow: none !important;
     background: transparent;
 }
 
-.challenge.maxed button {
-    cursor: unset;
+.challenge.canStart button {
+    cursor: pointer;
 }
 </style>

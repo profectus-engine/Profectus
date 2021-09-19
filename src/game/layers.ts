@@ -268,7 +268,9 @@ export function addLayer(layer: RawLayer, player?: Partial<PlayerData>): void {
             setDefault(layer.challenges.data[id], "onComplete", undefined, false);
             setDefault(layer.challenges.data[id], "onEnter", undefined, false);
             setDefault(layer.challenges.data[id], "onExit", undefined, false);
-            setDefault(layer.challenges.data[id], "canStart", true);
+            setDefault(layer.challenges.data[id], "canStart", function() {
+                return Decimal.lt(this.completions, this.completionLimit);
+            });
             setDefault(layer.challenges.data[id], "completionLimit", new Decimal(1));
             setDefault(layer.challenges.data[id], "mark", function() {
                 return Decimal.gt(this.completionLimit, 1) && this.maxed;
