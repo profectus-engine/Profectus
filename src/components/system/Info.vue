@@ -27,25 +27,25 @@
                         v-if="discordLink !== 'https://discord.gg/WzejVAx'"
                         class="info-modal-discord-link"
                     >
-                        <img src="images/discord.png" class="info-modal-discord" />
+                        <span class="material-icons info-modal-discord">discord</span>
                         {{ discordName }}
                     </a>
                 </div>
                 <div>
                     <a href="https://discord.gg/WzejVAx" class="info-modal-discord-link">
-                        <img src="images/discord.png" class="info-modal-discord" />
+                        <span class="material-icons info-modal-discord">discord</span>
                         The Paper Pilot Community
                     </a>
                 </div>
                 <div>
                     <a href="https://discord.gg/F3xveHV" class="info-modal-discord-link">
-                        <img src="images/discord.png" class="info-modal-discord" />
+                        <span class="material-icons info-modal-discord">discord</span>
                         The Modding Tree
                     </a>
                 </div>
                 <div>
                     <a href="https://discord.gg/wwQfgPa" class="info-modal-discord-link">
-                        <img src="images/discord.png" class="info-modal-discord" />
+                        <span class="material-icons info-modal-discord">discord</span>
                         Jacorb's Games
                     </a>
                 </div>
@@ -138,7 +138,6 @@ export default defineComponent({
 }
 
 .info-modal-discord {
-    height: 2em;
     margin: 0;
     margin-right: 4px;
 }

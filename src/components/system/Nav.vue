@@ -9,7 +9,7 @@
         </div>
         <div style="flex-grow: 1; cursor: unset;"></div>
         <div class="discord">
-            <img src="images/discord.png" @click="openDiscord" />
+            <span @click="openDialog('Info')" class="material-icons">discord</span>
             <ul class="discord-links">
                 <li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
                     <a :href="discordLink" target="_blank">{{ discordName }}</a>
@@ -28,7 +28,9 @@
             </ul>
         </div>
         <div @click="openDialog('Info')">
-            <tooltip display="<span>Info</span>" bottom class="info"><span>i</span></tooltip>
+            <tooltip display="<span>Info</span>" bottom class="info">
+                <span class="material-icons">info</span>
+            </tooltip>
         </div>
         <div @click="openDialog('Saves')">
             <tooltip display="Saves" bottom class="saves" xoffset="-20px">
@@ -37,13 +39,13 @@
         </div>
         <div @click="openDialog('Options')">
             <tooltip display="<span>Options</span>" bottom class="options" xoffset="-70px">
-                <img src="images/options_wheel.png" />
+                <span class="material-icons">settings</span>
             </tooltip>
         </div>
     </div>
     <div v-else class="overlay-nav" v-bind="$attrs">
         <div @click="openDialog('Changelog')" class="version-container">
-            <tooltip display="Changelog" right xoffset="25%" class="version"
+            <tooltip display="<span>Changelog</span>" right xoffset="25%" class="version"
                 ><span>v{{ version }}</span></tooltip
             >
         </div>
@@ -53,15 +55,17 @@
             >
         </div>
         <div @click="openDialog('Options')">
-            <tooltip display="<span>Options</span>" right class="options"
-                ><img src="images/options_wheel.png"
-            /></tooltip>
+            <tooltip display="<span>Options</span>" right class="options">
+                <span class="material-icons">settings</span>
+            </tooltip>
         </div>
         <div @click="openDialog('Info')">
-            <tooltip display="<span>Info</span>" right class="info"><span>i</span></tooltip>
+            <tooltip display="<span>Info</span>" right class="info">
+                <span class="material-icons">info</span>
+            </tooltip>
         </div>
         <div class="discord">
-            <img src="images/discord.png" @click="openDiscord" />
+            <span @click="openDialog('Info')" class="material-icons">discord</span>
             <ul class="discord-links">
                 <li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
                     <a :href="discordLink" target="_blank">{{ discordName }}</a>
@@ -230,33 +234,12 @@ export default defineComponent({
     right: 0;
 }
 
-.info {
-    font-size: 30px;
-    color: var(--link);
-    line-height: 14px;
-}
-
-.info:hover span {
-    transform: scale(1.2, 1.2);
-    text-shadow: 5px 0 10px var(--link), -3px 0 12px var(--link);
-}
-
-.saves span {
+.material-icons {
     font-size: 36px;
 }
 
-.saves:hover span {
-    transform: scale(1.2, 1.2);
-    text-shadow: 5px 0 10px var(--foreground), -3px 0 12px var(--foreground);
-}
-
-.options img {
-    width: 100%;
-    height: 100%;
-}
-
-.options:hover img {
-    transform: rotate(360deg);
+.material-icons:hover {
+    text-shadow: 5px 0 10px var(--link), -3px 0 12px var(--foreground);
 }
 
 .nav .version-container {
