@@ -1,7 +1,7 @@
 <template>
     <panZoom
         :style="style"
-        selector="#g1"
+        selector=".g1"
         :options="{ initialZoom: 1, minZoom: 0.1, maxZoom: 10, zoomDoubleClickSpeed: 1 }"
         ref="stage"
         @init="onInit"
@@ -14,7 +14,7 @@
         @mouseleave="() => endDragging(dragging)"
     >
         <svg class="stage" width="100%" height="100%">
-            <g id="g1">
+            <g class="g1">
                 <transition-group name="link" appear>
                     <g v-for="link in board.links || []" :key="link">
                         <BoardLink :link="link" />
@@ -239,7 +239,7 @@ export default defineComponent({
     cursor: move;
 }
 
-#g1 {
+.g1 {
     transition-duration: 0s;
 }
 
