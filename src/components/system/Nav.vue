@@ -27,42 +27,56 @@
                 </li>
             </ul>
         </div>
+        <div>
+            <a href="https://forums.moddingtree.com/" target="_blank">
+                <tooltip display="Forums" bottom yoffset="5px">
+                    <span class="material-icons">forum</span>
+                </tooltip>
+            </a>
+        </div>
         <div @click="openDialog('Info')">
             <tooltip display="Info" bottom class="info">
                 <span class="material-icons">info</span>
             </tooltip>
         </div>
         <div @click="openDialog('Saves')">
-            <tooltip display="Saves" bottom class="saves" xoffset="-20px">
+            <tooltip display="Saves" bottom xoffset="-20px">
                 <span class="material-icons">library_books</span>
             </tooltip>
         </div>
         <div @click="openDialog('Options')">
-            <tooltip display="Options" bottom class="options" xoffset="-70px">
+            <tooltip display="Options" bottom xoffset="-66px">
                 <span class="material-icons">settings</span>
             </tooltip>
         </div>
     </div>
     <div v-else class="overlay-nav" v-bind="$attrs">
         <div @click="openDialog('Changelog')" class="version-container">
-            <tooltip display="Changelog" right xoffset="25%" class="version"
-                ><span>v{{ version }}</span></tooltip
-            >
+            <tooltip display="Changelog" right xoffset="25%" class="version">
+                <span>v{{ version }}</span>
+            </tooltip>
         </div>
         <div @click="openDialog('Saves')">
-            <tooltip display="Saves" right class="saves"
-                ><span class="material-icons">library_books</span></tooltip
-            >
+            <tooltip display="Saves" right>
+                <span class="material-icons">library_books</span>
+            </tooltip>
         </div>
         <div @click="openDialog('Options')">
-            <tooltip display="Options" right class="options">
+            <tooltip display="Options" right>
                 <span class="material-icons">settings</span>
             </tooltip>
         </div>
         <div @click="openDialog('Info')">
-            <tooltip display="Info" right class="info">
+            <tooltip display="Info" right>
                 <span class="material-icons">info</span>
             </tooltip>
+        </div>
+        <div>
+            <a href="https://forums.moddingtree.com/" target="_blank">
+                <tooltip display="Forums" right xoffset="7px">
+                    <span class="material-icons">forum</span>
+                </tooltip>
+            </a>
         </div>
         <div class="discord">
             <span @click="openDialog('Info')" class="material-icons">discord</span>
@@ -259,8 +273,12 @@ export default defineComponent({
 }
 
 .version:hover span {
-    transform-origin: 0% 50%;
-    transform: scale(1.2, 1.2);
     text-shadow: 5px 0 10px var(--points), -3px 0 12px var(--points);
+}
+
+.nav a,
+.overlay-nav a {
+    color: var(--foreground);
+    text-shadow: none;
 }
 </style>
