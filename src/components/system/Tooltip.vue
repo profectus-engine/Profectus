@@ -49,7 +49,7 @@ export default defineComponent({
     },
     computed: {
         tooltipDisplay(): Component | string {
-            return coerceComponent(this.display);
+            return coerceComponent(this.display, "span", false);
         },
         shown(): boolean {
             return this.force || this.hover;

@@ -28,7 +28,7 @@
             </ul>
         </div>
         <div @click="openDialog('Info')">
-            <tooltip display="<span>Info</span>" bottom class="info">
+            <tooltip display="Info" bottom class="info">
                 <span class="material-icons">info</span>
             </tooltip>
         </div>
@@ -38,14 +38,14 @@
             </tooltip>
         </div>
         <div @click="openDialog('Options')">
-            <tooltip display="<span>Options</span>" bottom class="options" xoffset="-70px">
+            <tooltip display="Options" bottom class="options" xoffset="-70px">
                 <span class="material-icons">settings</span>
             </tooltip>
         </div>
     </div>
     <div v-else class="overlay-nav" v-bind="$attrs">
         <div @click="openDialog('Changelog')" class="version-container">
-            <tooltip display="<span>Changelog</span>" right xoffset="25%" class="version"
+            <tooltip display="Changelog" right xoffset="25%" class="version"
                 ><span>v{{ version }}</span></tooltip
             >
         </div>
@@ -55,12 +55,12 @@
             >
         </div>
         <div @click="openDialog('Options')">
-            <tooltip display="<span>Options</span>" right class="options">
+            <tooltip display="Options" right class="options">
                 <span class="material-icons">settings</span>
             </tooltip>
         </div>
         <div @click="openDialog('Info')">
-            <tooltip display="<span>Info</span>" right class="info">
+            <tooltip display="Info" right class="info">
                 <span class="material-icons">info</span>
             </tooltip>
         </div>
