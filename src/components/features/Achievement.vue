@@ -1,65 +1,40 @@
 <template>
-    <tooltip v-if="achievement.unlocked" :display="tooltip">
+    <Tooltip
+        v-if="visibility !== Visibility.None"
+        v-show="visibility === Visibility.Visible"
+        :display="tooltip"
+    >
         <div
-            :style="style"
+            :style="[{ backgroundImage: (earned && image && `url(${image})`) || '' }, style ?? []]"
             :class="{
-                [layer]: true,
                 feature: true,
                 achievement: true,
-                locked: !achievement.earned,
-                bought: achievement.earned
+                locked: !earned,
+                bought: earned,
+                ...classes
             }"
         >
-            <component v-if="display" :is="display" />
-            <branch-node :branches="achievement.branches" :id="id" featureType="achievement" />
+            <component v-if="component" :is="component" />
+            <MarkNode :mark="mark" />
+            <LinkNode :id="id" />
         </div>
-    </tooltip>
+    </Tooltip>
 </template>
 
-<script lang="ts">
-import { layers } from "@/game/layers";
-import { CoercableComponent } from "@/typings/component";
-import { Achievement } from "@/typings/features/achievement";
-import { coerceComponent, InjectLayerMixin } from "@/util/vue";
-import { Component, defineComponent } from "vue";
+<script setup lang="ts">
+import { GenericAchievement } from "@/features/achievement";
+import { FeatureComponent } from "@/features/feature";
+import { coerceComponent } from "@/util/vue";
+import { computed, toRefs } from "vue";
+import LinkNode from "../system/LinkNode.vue";
+import MarkNode from "./MarkNode.vue";
+import { Visibility } from "@/features/feature";
 
-export default defineComponent({
-    name: "achievement",
-    mixins: [InjectLayerMixin],
-    props: {
-        id: {
-            type: [Number, String],
-            required: true
-        }
-    },
-    computed: {
-        achievement(): Achievement {
-            return layers[this.layer].achievements!.data[this.id];
-        },
-        style(): Array<Partial<CSSStyleDeclaration> | undefined> {
-            return [
-                layers[this.layer].componentStyles?.achievement,
-                this.achievement.style,
-                this.achievement.image && this.achievement.earned
-                    ? {
-                          backgroundImage: `url(${this.achievement.image}`
-                      }
-                    : undefined
-            ];
-        },
-        display(): Component | string {
-            if (this.achievement.display) {
-                return coerceComponent(this.achievement.display, "h3");
-            }
-            return coerceComponent(this.achievement.name!, "h3");
-        },
-        tooltip(): CoercableComponent {
-            if (this.achievement.earned) {
-                return this.achievement.doneTooltip || this.achievement.tooltip || "You did it!";
-            }
-            return this.achievement.goalTooltip || this.achievement.tooltip || "LOCKED";
-        }
-    }
+const props = toRefs(defineProps<FeatureComponent<GenericAchievement>>());
+
+const component = computed(() => {
+    const display = props.display.value;
+    return display && coerceComponent(display);
 });
 </script>
 

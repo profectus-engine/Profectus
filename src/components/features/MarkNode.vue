@@ -5,15 +5,8 @@
     </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
-
-export default defineComponent({
-    name: "mark-node",
-    props: {
-        mark: [Boolean, String]
-    }
-});
+<script setup lang="ts">
+defineProps<{ mark: boolean | string | undefined }>();
 </script>
 
 <style scoped>

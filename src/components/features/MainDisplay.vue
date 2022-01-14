@@ -1,52 +1,39 @@
 <template>
     <div>
         <span v-if="showPrefix">You have </span>
-        <resource :amount="amount" :color="color" />
+        <ResourceVue :resource="resource" :color="color || 'white'" />
         {{ resource
         }}<!-- remove whitespace -->
-        <span v-if="effectDisplay">, <component :is="effectDisplay"/></span>
+        <span v-if="effectComponent">, <component :is="effectComponent"/></span>
         <br /><br />
     </div>
 </template>
 
-<script lang="ts">
-import { layers } from "@/game/layers";
-import player from "@/game/player";
-import { format, formatWhole } from "@/util/bignum";
-import { coerceComponent, InjectLayerMixin } from "@/util/vue";
-import { Component, defineComponent } from "vue";
+<script setup lang="ts">
+import { CoercableComponent } from "@/features/feature";
+import { Resource } from "@/features/resource";
+import Decimal from "@/util/bignum";
+import { coerceComponent } from "@/util/vue";
+import { computed, StyleValue, toRefs } from "vue";
+import ResourceVue from "../system/Resource.vue";
 
-export default defineComponent({
-    name: "main-display",
-    mixins: [InjectLayerMixin],
-    props: {
-        precision: Number
-    },
-    computed: {
-        style(): Partial<CSSStyleDeclaration> | undefined {
-            return layers[this.layer].componentStyles?.["main-display"];
-        },
-        resource(): string {
-            return layers[this.layer].resource;
-        },
-        effectDisplay(): Component | string | undefined {
-            return (
-                layers[this.layer].effectDisplay &&
-                coerceComponent(layers[this.layer].effectDisplay!)
-            );
-        },
-        showPrefix(): boolean {
-            return player.layers[this.layer].points.lt("1e1000");
-        },
-        color(): string {
-            return layers[this.layer].color;
-        },
-        amount(): string {
-            return this.precision == undefined
-                ? formatWhole(player.layers[this.layer].points)
-                : format(player.layers[this.layer].points, this.precision);
-        }
-    }
+const props = toRefs(
+    defineProps<{
+        resource: Resource;
+        color?: string;
+        classes?: Record<string, boolean>;
+        style?: StyleValue;
+        effectDisplay?: CoercableComponent;
+    }>()
+);
+
+const effectComponent = computed(() => {
+    const effectDisplay = props.effectDisplay?.value;
+    return effectDisplay && coerceComponent(effectDisplay);
+});
+
+const showPrefix = computed(() => {
+    return Decimal.lt(props.resource.value, "1e1000");
 });
 </script>
 

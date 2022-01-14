@@ -1,6 +1,3 @@
-import { DecimalSource } from "@/util/bignum";
-import Decimal from "./bignum";
-
 // Reference:
 // https://stackoverflow.com/questions/7225407/convert-camelcasetext-to-sentence-case-text
 export function camelToTitle(camel: string): string {
@@ -9,22 +6,11 @@ export function camelToTitle(camel: string): string {
     return title;
 }
 
-export function isPlainObject(object: any): boolean {
+export function isPlainObject(object: unknown): boolean {
     return Object.prototype.toString.call(object) === "[object Object]";
 }
 
-export function isFunction(func: any): boolean {
+// eslint-disable-next-line @typescript-eslint/ban-types
+export function isFunction(func: unknown): func is Function {
     return typeof func === "function";
-}
-
-export function softcap(
-    value: DecimalSource,
-    cap: DecimalSource,
-    power: DecimalSource = 0.5
-): Decimal {
-    if (Decimal.lte(value, cap)) {
-        return new Decimal(value);
-    } else {
-        return Decimal.pow(value, power).times(Decimal.pow(cap, Decimal.sub(1, power)));
-    }
 }

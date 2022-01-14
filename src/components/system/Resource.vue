@@ -4,16 +4,16 @@
     </h2>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { displayResource, Resource } from "@/features/resource";
+import { computed, toRefs } from "vue";
 
-export default defineComponent({
-    name: "resource",
-    props: {
-        color: String,
-        amount: String
-    }
-});
+const props = toRefs(
+    defineProps<{
+        resource: Resource;
+        color: string;
+    }>()
+);
+
+const amount = computed(() => displayResource(props.resource));
 </script>
-
-<style scoped></style>

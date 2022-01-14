@@ -1,64 +1,65 @@
 <template>
     <button
-        v-if="upgrade.unlocked"
+        v-if="visibility !== Visibility.None"
+        v-show="visibility === Visibility.Visible"
         :style="style"
-        @click="buy"
+        @click="purchase"
         :class="{
             feature: true,
-            [layer]: true,
             upgrade: true,
-            can: upgrade.canAfford && !upgrade.bought,
-            locked: !upgrade.canAfford && !upgrade.bought,
-            bought: upgrade.bought
+            can: canPurchase && !bought,
+            locked: !canPurchase && !bought,
+            bought,
+            ...classes
         }"
-        :disabled="!upgrade.canAfford && !upgrade.bought"
+        :disabled="!canPurchase && !bought"
     >
-        <component v-if="fullDisplay" :is="fullDisplay" />
-        <default-upgrade-display v-else :id="id" />
-        <branch-node :branches="upgrade.branches" :id="id" featureType="upgrade" />
+        <component v-if="component" :is="component" />
+        <MarkNode :mark="mark" />
+        <LinkNode :id="id" />
     </button>
 </template>
 
-<script lang="ts">
-import { layers } from "@/game/layers";
-import { Upgrade } from "@/typings/features/upgrade";
-import { coerceComponent, InjectLayerMixin } from "@/util/vue";
-import { Component, defineComponent } from "vue";
+<script setup lang="tsx">
+import { FeatureComponent, Visibility } from "@/features/feature";
+import { displayResource } from "@/features/resource";
+import { GenericUpgrade } from "@/features/upgrade";
+import { coerceComponent, isCoercableComponent } from "@/util/vue";
+import { computed, toRefs, unref } from "vue";
+import LinkNode from "../system/LinkNode.vue";
+import MarkNode from "./MarkNode.vue";
 
-export default defineComponent({
-    name: "upgrade",
-    mixins: [InjectLayerMixin],
-    props: {
-        id: {
-            type: [Number, String],
-            required: true
-        }
-    },
-    computed: {
-        upgrade(): Upgrade {
-            return layers[this.layer].upgrades!.data[this.id];
-        },
-        style(): Array<Partial<CSSStyleDeclaration> | undefined> {
-            return [
-                this.upgrade.canAfford && !this.upgrade.bought
-                    ? { backgroundColor: layers[this.layer].color }
-                    : undefined,
-                layers[this.layer].componentStyles?.upgrade,
-                this.upgrade.style
-            ];
-        },
-        fullDisplay(): Component | string | null {
-            if (this.upgrade.fullDisplay) {
-                return coerceComponent(this.upgrade.fullDisplay, "div");
-            }
-            return null;
-        }
-    },
-    methods: {
-        buy() {
-            this.upgrade.buy();
-        }
+const props = toRefs(defineProps<FeatureComponent<GenericUpgrade>>());
+
+const component = computed(() => {
+    const display = unref(props.display);
+    if (display == null) {
+        return null;
     }
+    if (isCoercableComponent(display)) {
+        return coerceComponent(display);
+    }
+    return (
+        <span>
+            <div v-if={display.title}>
+                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                <component v-is={coerceComponent(display.title!, "h2")} />
+            </div>
+            <component v-is={coerceComponent(display.description, "div")} />
+            <div v-if={display.effectDisplay}>
+                <br />
+                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                Currently: <component v-is={coerceComponent(display.effectDisplay!)} />
+            </div>
+            <template v-if={unref(props.resource) != null && unref(props.cost) != null}>
+                <br />
+                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                Cost: {displayResource(unref(props.resource)!, unref(props.cost))}{" "}
+                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                {unref(props.resource)!.displayName}
+            </template>
+        </span>
+    );
 });
 </script>
 

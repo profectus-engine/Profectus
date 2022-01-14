@@ -1,59 +1,69 @@
 <template>
-    <form @submit.prevent="$emit('submit')">
+    <form @submit.prevent="submit">
         <div class="field">
-            <span class="field-title" v-if="title">{{ title }}</span>
-            <textarea-autosize
-                v-if="textarea"
+            <span class="field-title" v-if="titleComponent"><component :is="titleComponent"/></span>
+            <VueTextareaAutosize
+                v-if="textArea"
+                v-model="value"
                 :placeholder="placeholder"
-                :value="val"
                 :maxHeight="maxHeight"
-                @input="change"
-                @blur="() => $emit('blur')"
+                @blur="submit"
                 ref="field"
             />
             <input
                 v-else
                 type="text"
-                :value="val"
-                @input="e => change(e.target.value)"
-                @blur="() => $emit('blur')"
+                v-model="value"
                 :placeholder="placeholder"
-                ref="field"
                 :class="{ fullWidth: !title }"
+                @blur="submit"
+                ref="field"
             />
         </div>
     </form>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { CoercableComponent } from "@/features/feature";
+import { coerceComponent } from "@/util/vue";
+import { computed, onMounted, ref, toRefs, unref } from "vue";
+import VueTextareaAutosize from "vue-textarea-autosize";
 
-export default defineComponent({
-    name: "TextField",
-    props: {
-        title: String,
-        value: String,
-        modelValue: String,
-        textarea: Boolean,
-        placeholder: String,
-        maxHeight: Number
+const props = toRefs(
+    defineProps<{
+        title?: CoercableComponent;
+        modelValue?: string;
+        textArea?: boolean;
+        placeholder?: string;
+        maxHeight?: number;
+    }>()
+);
+const emit = defineEmits<{
+    (e: "update:modelValue", value: string): void;
+    (e: "submit"): void;
+}>();
+
+const titleComponent = computed(
+    () => props.title?.value && coerceComponent(unref(props.title.value), "span")
+);
+
+const field = ref<HTMLElement | null>(null);
+onMounted(() => {
+    field.value?.focus();
+});
+
+const value = computed({
+    get() {
+        return unref(props.modelValue) || "";
     },
-    emits: ["change", "submit", "blur", "update:modelValue"],
-    mounted() {
-        (this.$refs.field as HTMLElement).focus();
-    },
-    computed: {
-        val() {
-            return this.modelValue || this.value || "";
-        }
-    },
-    methods: {
-        change(value: string) {
-            this.$emit("change", value);
-            this.$emit("update:modelValue", value);
-        }
+    set(value: string) {
+        emit("update:modelValue", value);
     }
 });
+
+function submit() {
+    emit("submit");
+}
 </script>
 
 <style scoped>

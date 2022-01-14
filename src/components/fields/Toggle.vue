@@ -1,31 +1,33 @@
 <template>
     <label class="field">
-        <input type="checkbox" class="toggle" :checked="value" @input="handleInput" />
-        <component :is="display" />
+        <input type="checkbox" class="toggle" v-model="value" />
+        <component :is="component" />
     </label>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import { CoercableComponent } from "@/features/feature";
 import { coerceComponent } from "@/util/vue";
-import { defineComponent } from "vue";
+import { computed, toRefs, unref } from "vue";
 
-// Reference: https://codepen.io/finnhvman/pen/pOeyjE
-export default defineComponent({
-    name: "Toggle",
-    props: {
-        title: String,
-        value: Boolean
+const props = toRefs(
+    defineProps<{
+        title?: CoercableComponent;
+        modelValue?: boolean;
+    }>()
+);
+const emit = defineEmits<{
+    (e: "update:modelValue", value: boolean): void;
+}>();
+
+const component = computed(() => coerceComponent(unref(props.title) || "", "span"));
+
+const value = computed({
+    get() {
+        return !!unref(props.modelValue);
     },
-    emits: ["change"],
-    computed: {
-        display() {
-            return coerceComponent(this.title || "", "span");
-        }
-    },
-    methods: {
-        handleInput(e: InputEvent) {
-            this.$emit("change", (e.target as HTMLInputElement).checked);
-        }
+    set(value: boolean) {
+        emit("update:modelValue", value);
     }
 });
 </script>

@@ -1,4 +1,35 @@
-import { Theme } from "@/typings/theme";
+interface ThemeVars {
+    "--foreground": string;
+    "--background": string;
+    "--feature-foreground": string;
+    "--tooltip-background": string;
+    "--raised-background": string;
+    "--points": string;
+    "--locked": string;
+    "--highlighted": string;
+    "--bought": string;
+    "--danger": string;
+    "--link": string;
+    "--outline": string;
+    "--accent1": string;
+    "--accent2": string;
+    "--accent3": string;
+    "--border-radius": string;
+    "--modal-border": string;
+    "--feature-margin": string;
+}
+
+export interface Theme {
+    variables: ThemeVars;
+    stackedInfoboxes: boolean;
+    floatingTabs: boolean;
+    showSingleTab: boolean;
+}
+
+declare module "@vue/runtime-dom" {
+    // eslint-disable-next-line @typescript-eslint/no-empty-interface
+    interface CSSProperties extends Partial<ThemeVars> {}
+}
 
 const defaultTheme: Theme = {
     variables: {

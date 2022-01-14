@@ -1,14 +1,14 @@
 <template>
     <div
         class="tooltip-container"
-        :class="{ shown }"
+        :class="{ shown: isShown }"
         @mouseenter="setHover(true)"
         @mouseleave="setHover(false)"
     >
         <slot />
         <transition name="fade">
             <div
-                v-if="shown"
+                v-if="isShown"
                 class="tooltip"
                 :class="{ top, left, right, bottom }"
                 :style="{
@@ -16,56 +16,28 @@
                     '--yoffset': yoffset || '0px'
                 }"
             >
-                <component :is="tooltipDisplay" />
+                <component :is="component" />
             </div>
         </transition>
     </div>
 </template>
 
-<script lang="ts">
-import { CoercableComponent } from "@/typings/component";
+<script setup lang="ts">
+import { FeatureComponent } from "@/features/feature";
+import { Tooltip } from "@/features/tooltip";
 import { coerceComponent } from "@/util/vue";
-import { Component, defineComponent, PropType } from "vue";
+import { computed, ref, toRefs, unref } from "vue";
 
-export default defineComponent({
-    name: "tooltip",
-    data() {
-        return {
-            hover: false
-        };
-    },
-    props: {
-        force: Boolean,
-        display: {
-            type: [String, Object] as PropType<CoercableComponent>,
-            required: true
-        },
-        top: Boolean,
-        left: Boolean,
-        right: Boolean,
-        bottom: Boolean,
-        xoffset: String,
-        yoffset: String
-    },
-    computed: {
-        tooltipDisplay(): Component | string {
-            return coerceComponent(this.display, "span", false);
-        },
-        shown(): boolean {
-            return this.force || this.hover;
-        }
-    },
-    provide: {
-        tab() {
-            return {};
-        }
-    },
-    methods: {
-        setHover(hover: boolean) {
-            this.hover = hover;
-        }
-    }
-});
+const props = toRefs(defineProps<FeatureComponent<Tooltip>>());
+
+const isHovered = ref(false);
+
+function setHover(hover: boolean) {
+    isHovered.value = hover;
+}
+
+const isShown = computed(() => unref(props.force) || isHovered.value);
+const component = computed(() => props.display.value && coerceComponent(unref(props.display)));
 </script>
 
 <style scoped>

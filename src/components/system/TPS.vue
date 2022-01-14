@@ -1,25 +1,18 @@
 <template>
-    <div class="tpsDisplay" v-if="tps !== 'NaN'">TPS: {{ tps }}</div>
+    <div class="tpsDisplay" v-if="!tps.isNan">TPS: {{ tps }}</div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import state from "@/game/state";
-import Decimal, { formatWhole } from "@/util/bignum";
-import { defineComponent } from "vue";
+import Decimal from "@/util/bignum";
+import { computed } from "vue";
 
-export default defineComponent({
-    name: "TPS",
-    computed: {
-        tps() {
-            return formatWhole(
-                Decimal.div(
-                    state.lastTenTicks.length,
-                    state.lastTenTicks.reduce((acc, curr) => acc + curr, 0)
-                )
-            );
-        }
-    }
-});
+const tps = computed(() =>
+    Decimal.div(
+        state.lastTenTicks.length,
+        state.lastTenTicks.reduce((acc, curr) => acc + curr, 0)
+    )
+);
 </script>
 
 <style scoped>

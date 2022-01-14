@@ -1,84 +1,43 @@
 <template>
-    <div class="infobox" v-if="infobox.unlocked" :style="style" :class="{ collapsed, stacked }">
-        <button class="title" :style="titleStyle" @click="toggle">
+    <div
+        class="infobox"
+        v-if="visibility !== Visibility.None"
+        v-show="visibility === Visibility.Visible"
+        :style="[{ borderColor: color }, style || []]"
+        :class="{ collapsed, stacked, ...classes }"
+    >
+        <button
+            class="title"
+            :style="[{ backgroundColor: color }, titleStyle || []]"
+            @click="collapsed = !collapsed"
+        >
             <span class="toggle">▼</span>
-            <component :is="title" />
+            <component :is="titleComponent" />
         </button>
-        <collapse-transition>
-            <div v-if="!collapsed" class="body" :style="{ backgroundColor: borderColor }">
-                <component :is="body" :style="bodyStyle" />
+        <CollapseTransition>
+            <div v-if="!collapsed" class="body" :style="{ backgroundColor: color }">
+                <component :is="bodyComponent" :style="bodyStyle" />
             </div>
-        </collapse-transition>
-        <branch-node :branches="infobox.branches" :id="id" featureType="infobox" />
+        </CollapseTransition>
+        <LinkNode :id="id" />
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import themes from "@/data/themes";
-import { layers } from "@/game/layers";
-import player from "@/game/player";
+import { FeatureComponent, Visibility } from "@/features/feature";
+import { GenericInfobox } from "@/features/infobox";
 import settings from "@/game/settings";
-import { Infobox } from "@/typings/features/infobox";
-import { coerceComponent, InjectLayerMixin } from "@/util/vue";
-import { Component, defineComponent } from "vue";
+import { coerceComponent } from "@/util/vue";
+import { computed, toRefs, unref } from "vue";
+import LinkNode from "../system/LinkNode.vue";
+import CollapseTransition from "@ivanv/vue-collapse-transition/src/CollapseTransition.vue";
 
-export default defineComponent({
-    name: "infobox",
-    mixins: [InjectLayerMixin],
-    props: {
-        id: {
-            type: [Number, String],
-            required: true
-        }
-    },
-    computed: {
-        infobox(): Infobox {
-            return layers[this.layer].infoboxes!.data[this.id];
-        },
-        borderColor(): string {
-            return this.infobox.borderColor || layers[this.layer].color;
-        },
-        style(): Array<Partial<CSSStyleDeclaration> | undefined> {
-            return [
-                { borderColor: this.borderColor },
-                layers[this.layer].componentStyles?.infobox,
-                this.infobox.style
-            ];
-        },
-        titleStyle(): Array<Partial<CSSStyleDeclaration> | undefined> {
-            return [
-                { backgroundColor: layers[this.layer].color },
-                layers[this.layer].componentStyles?.["infobox-title"],
-                this.infobox.titleStyle
-            ];
-        },
-        bodyStyle(): Array<Partial<CSSStyleDeclaration> | undefined> {
-            return [layers[this.layer].componentStyles?.["infobox-body"], this.infobox.bodyStyle];
-        },
-        title(): Component | string {
-            if (this.infobox.title) {
-                return coerceComponent(this.infobox.title);
-            }
-            return coerceComponent(layers[this.layer].name || this.layer);
-        },
-        body(): Component | string {
-            return coerceComponent(this.infobox.body);
-        },
-        collapsed(): boolean {
-            return player.layers[this.layer].infoboxes[this.id];
-        },
-        stacked(): boolean {
-            return themes[settings.theme].stackedInfoboxes;
-        }
-    },
-    methods: {
-        toggle() {
-            player.layers[this.layer].infoboxes[this.id] = !player.layers[this.layer].infoboxes[
-                this.id
-            ];
-        }
-    }
-});
+const props = toRefs(defineProps<FeatureComponent<GenericInfobox>>());
+
+const titleComponent = computed(() => coerceComponent(unref(props.title)));
+const bodyComponent = computed(() => coerceComponent(unref(props.display)));
+const stacked = computed(() => themes[settings.theme].stackedInfoboxes);
 </script>
 
 <style scoped>

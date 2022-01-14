@@ -2,14 +2,14 @@
     <div class="nav" v-if="useHeader" v-bind="$attrs">
         <img v-if="banner" :src="banner" height="100%" :alt="title" />
         <div v-else class="title">{{ title }}</div>
-        <div @click="openDialog('Changelog')" class="version-container">
-            <tooltip display="<span>Changelog</span>" bottom class="version"
-                ><span>v{{ version }}</span></tooltip
+        <div @click="changelog?.open()" class="version-container">
+            <Tooltip display="<span>Changelog</span>" bottom class="version"
+                ><span>v{{ versionNumber }}</span></Tooltip
             >
         </div>
         <div style="flex-grow: 1; cursor: unset;"></div>
         <div class="discord">
-            <span @click="openDialog('Info')" class="material-icons">discord</span>
+            <span @click="openDiscord" class="material-icons">discord</span>
             <ul class="discord-links">
                 <li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
                     <a :href="discordLink" target="_blank">{{ discordName }}</a>
@@ -29,57 +29,57 @@
         </div>
         <div>
             <a href="https://forums.moddingtree.com/" target="_blank">
-                <tooltip display="Forums" bottom yoffset="5px">
+                <Tooltip display="Forums" bottom yoffset="5px">
                     <span class="material-icons">forum</span>
-                </tooltip>
+                </Tooltip>
             </a>
         </div>
-        <div @click="openDialog('Info')">
-            <tooltip display="Info" bottom class="info">
+        <div @click="info?.open()">
+            <Tooltip display="Info" bottom class="info">
                 <span class="material-icons">info</span>
-            </tooltip>
+            </Tooltip>
         </div>
-        <div @click="openDialog('Saves')">
-            <tooltip display="Saves" bottom xoffset="-20px">
+        <div @click="savesManager?.open()">
+            <Tooltip display="Saves" bottom xoffset="-20px">
                 <span class="material-icons">library_books</span>
-            </tooltip>
+            </Tooltip>
         </div>
-        <div @click="openDialog('Options')">
-            <tooltip display="Options" bottom xoffset="-66px">
+        <div @click="options?.open()">
+            <Tooltip display="Options" bottom xoffset="-66px">
                 <span class="material-icons">settings</span>
-            </tooltip>
+            </Tooltip>
         </div>
     </div>
     <div v-else class="overlay-nav" v-bind="$attrs">
-        <div @click="openDialog('Changelog')" class="version-container">
-            <tooltip display="Changelog" right xoffset="25%" class="version">
-                <span>v{{ version }}</span>
+        <div @click="changelog?.open()" class="version-container">
+            <Tooltip display="Changelog" right xoffset="25%" class="version">
+                <span>v{{ versionNumber }}</span>
             </tooltip>
         </div>
-        <div @click="openDialog('Saves')">
-            <tooltip display="Saves" right>
+        <div @click="savesManager?.open()">
+            <Tooltip display="Saves" right>
                 <span class="material-icons">library_books</span>
-            </tooltip>
+            </Tooltip>
         </div>
-        <div @click="openDialog('Options')">
-            <tooltip display="Options" right>
+        <div @click="options?.open()">
+            <Tooltip display="Options" right>
                 <span class="material-icons">settings</span>
-            </tooltip>
+            </Tooltip>
         </div>
-        <div @click="openDialog('Info')">
-            <tooltip display="Info" right>
+        <div @click="info?.open()">
+            <Tooltip display="Info" right>
                 <span class="material-icons">info</span>
-            </tooltip>
+            </Tooltip>
         </div>
         <div>
             <a href="https://forums.moddingtree.com/" target="_blank">
-                <tooltip display="Forums" right xoffset="7px">
+                <Tooltip display="Forums" right xoffset="7px">
                     <span class="material-icons">forum</span>
-                </tooltip>
+                </Tooltip>
             </a>
         </div>
         <div class="discord">
-            <span @click="openDialog('Info')" class="material-icons">discord</span>
+            <span @click="openDiscord" class="material-icons">discord</span>
             <ul class="discord-links">
                 <li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
                     <a :href="discordLink" target="_blank">{{ discordName }}</a>
@@ -98,47 +98,33 @@
             </ul>
         </div>
     </div>
-    <Info :show="showInfo" @openDialog="openDialog" @closeDialog="closeDialog" />
-    <SavesManager :show="showSaves" @closeDialog="closeDialog" />
-    <Options :show="showOptions" @closeDialog="closeDialog" />
-    <Changelog :show="showChangelog" @closeDialog="closeDialog" />
+    <Info ref="info" :changelog="changelog" />
+    <SavesManager ref="savesManager" />
+    <Options ref="options" />
+    <Changelog ref="changelog" />
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import Changelog from "@/data/Changelog.vue";
 import modInfo from "@/data/modInfo.json";
-import { defineComponent } from "vue";
+import { ComponentPublicInstance, ref } from "vue";
+import Info from "./Info.vue";
+import Options from "./Options.vue";
+import SavesManager from "./SavesManager.vue";
+import Tooltip from "./Tooltip.vue";
 
-type modals = "Info" | "Saves" | "Options" | "Changelog";
-type showModals = "showInfo" | "showSaves" | "showOptions" | "showChangelog";
+const info = ref<typeof Info | null>(null);
+const savesManager = ref<typeof SavesManager | null>(null);
+const options = ref<typeof Options | null>(null);
+// For some reason Info won't accept the changelog unless I do this:
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const changelog = ref<ComponentPublicInstance<any> | null>(null);
 
-export default defineComponent({
-    name: "Nav",
-    data() {
-        return {
-            useHeader: modInfo.useHeader,
-            banner: modInfo.banner,
-            title: modInfo.title,
-            discordName: modInfo.discordName,
-            discordLink: modInfo.discordLink,
-            version: modInfo.versionNumber,
-            showInfo: false,
-            showSaves: false,
-            showOptions: false,
-            showChangelog: false
-        };
-    },
-    methods: {
-        openDiscord() {
-            window.open(this.discordLink, "mywindow");
-        },
-        openDialog(dialog: modals) {
-            this[`show${dialog}` as showModals] = true;
-        },
-        closeDialog(dialog: modals) {
-            this[`show${dialog}` as showModals] = false;
-        }
-    }
-});
+const { useHeader, banner, title, discordName, discordLink, versionNumber } = modInfo;
+
+function openDiscord() {
+    window.open(discordLink, "mywindow");
+}
 </script>
 
 <style scoped>

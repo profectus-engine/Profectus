@@ -1,50 +1,48 @@
 <template>
-    <span class="container" :class="{ confirming }">
-        <span v-if="confirming">Are you sure?</span>
+    <span class="container" :class="{ confirming: isConfirming }">
+        <span v-if="isConfirming">Are you sure?</span>
         <button @click.stop="click" class="button danger" :disabled="disabled">
-            <span v-if="confirming">Yes</span>
+            <span v-if="isConfirming">Yes</span>
             <slot v-else />
         </button>
-        <button v-if="confirming" class="button" @click.stop="cancel">No</button>
+        <button v-if="isConfirming" class="button" @click.stop="cancel">No</button>
     </span>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { ref, toRefs, unref, watch } from "vue";
 
-export default defineComponent({
-    name: "danger-button",
-    data() {
-        return {
-            confirming: false
-        };
-    },
-    props: {
-        disabled: Boolean,
-        skipConfirm: Boolean
-    },
-    emits: ["click", "confirmingChanged"],
-    watch: {
-        confirming(newValue) {
-            this.$emit("confirmingChanged", newValue);
-        }
-    },
-    methods: {
-        click() {
-            if (this.skipConfirm) {
-                this.$emit("click");
-                return;
-            }
-            if (this.confirming) {
-                this.$emit("click");
-            }
-            this.confirming = !this.confirming;
-        },
-        cancel() {
-            this.confirming = false;
-        }
-    }
+const props = toRefs(
+    defineProps<{
+        disabled?: boolean;
+        skipConfirm?: boolean;
+    }>()
+);
+const emit = defineEmits<{
+    (e: "click"): void;
+    (e: "confirmingChanged", value: boolean): void;
+}>();
+
+const isConfirming = ref(false);
+
+watch(isConfirming, isConfirming => {
+    emit("confirmingChanged", isConfirming);
 });
+
+function click() {
+    if (unref(props.skipConfirm)) {
+        emit("click");
+        return;
+    }
+    if (isConfirming.value) {
+        emit("click");
+    }
+    isConfirming.value = !isConfirming.value;
+}
+
+function cancel() {
+    isConfirming.value = false;
+}
 </script>
 
 <style scoped>

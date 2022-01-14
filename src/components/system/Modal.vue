@@ -7,32 +7,29 @@
         >
             <div
                 class="modal-mask"
-                v-show="show"
-                v-on:pointerdown.self="$emit('close')"
+                v-show="modelValue"
+                v-on:pointerdown.self="close"
                 v-bind="$attrs"
             >
                 <div class="modal-wrapper">
                     <div class="modal-container">
                         <div class="modal-header">
-                            <slot name="header" :shown="isVisible">
+                            <slot name="header" :shown="isOpen">
                                 default header
                             </slot>
                         </div>
                         <div class="modal-body">
                             <branches>
-                                <slot name="body" :shown="isVisible">
+                                <slot name="body" :shown="isOpen">
                                     default body
                                 </slot>
                             </branches>
                         </div>
                         <div class="modal-footer">
-                            <slot name="footer" :shown="isVisible">
+                            <slot name="footer" :shown="isOpen">
                                 <div class="modal-default-footer">
                                     <div class="modal-default-flex-grow"></div>
-                                    <button
-                                        class="button modal-default-button"
-                                        @click="$emit('close')"
-                                    >
+                                    <button class="button modal-default-button" @click="close">
                                         Close
                                     </button>
                                 </div>
@@ -45,31 +42,25 @@
     </teleport>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { computed, ref } from "vue";
 
-export default defineComponent({
-    name: "Modal",
-    data() {
-        return {
-            isAnimating: false
-        };
-    },
-    props: {
-        show: Boolean
-    },
-    emits: ["close"],
-    computed: {
-        isVisible(): boolean {
-            return this.show || this.isAnimating;
-        }
-    },
-    methods: {
-        setAnimating(isAnimating: boolean) {
-            this.isAnimating = isAnimating;
-        }
-    }
-});
+const props = defineProps<{
+    modelValue: boolean;
+}>();
+const emit = defineEmits<{
+    (e: "update:modelValue", value: boolean): void;
+}>();
+
+const isOpen = computed(() => props.modelValue || isAnimating.value);
+function close() {
+    emit("update:modelValue", false);
+}
+
+const isAnimating = ref(false);
+function setAnimating(value: boolean) {
+    isAnimating.value = value;
+}
 </script>
 
 <style scoped>

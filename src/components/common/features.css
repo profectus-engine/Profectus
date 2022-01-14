@@ -11,6 +11,7 @@
 
 .can,
 .can button {
+    background-color: var(--layer-color);
 	cursor: pointer;
 }
 

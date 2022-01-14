@@ -1,87 +1,78 @@
 <template>
     <div
-        v-if="challenge.shown"
+        v-if="visibility !== Visibility.None"
+        v-show="visibility === Visibility.Visible"
         :style="style"
         :class="{
             feature: true,
-            [layer]: true,
             challenge: true,
-            resetNotify: challenge.active,
-            notify: challenge.active && challenge.canComplete,
-            done: challenge.completed,
-            canStart: challenge.canStart,
-            maxed: challenge.maxed
+            resetNotify: active,
+            notify: active && canComplete,
+            done: completed,
+            canStart,
+            maxed,
+            ...classes
         }"
     >
-        <div v-if="title"><component :is="title" /></div>
-        <button
-            :style="{ backgroundColor: challenge.canStart ? buttonColor : null }"
-            @click="toggle"
-        >
+        <button class="toggleChallenge" @click="toggle">
             {{ buttonText }}
         </button>
-        <component v-if="fullDisplay" :is="fullDisplay" />
+        <component v-if="component" :is="component" />
         <default-challenge-display v-else :id="id" />
-        <mark-node :mark="challenge.mark" />
-        <branch-node :branches="challenge.branches" :id="id" featureType="challenge" />
+        <MarkNode :mark="mark" />
+        <LinkNode :id="id" />
     </div>
 </template>
 
-<script lang="ts">
-import { layers } from "@/game/layers";
-import { Challenge } from "@/typings/features/challenge";
-import { coerceComponent, InjectLayerMixin } from "@/util/vue";
-import { Component, defineComponent } from "vue";
+<script setup lang="tsx">
+import { GenericChallenge } from "@/features/challenge";
+import { FeatureComponent, Visibility } from "@/features/feature";
+import { coerceComponent, isCoercableComponent } from "@/util/vue";
+import { computed, toRefs } from "vue";
 
-export default defineComponent({
-    name: "challenge",
-    mixins: [InjectLayerMixin],
-    props: {
-        id: {
-            type: [Number, String],
-            required: true
-        }
-    },
-    computed: {
-        challenge(): Challenge {
-            return layers[this.layer].challenges!.data[this.id];
-        },
-        style(): Array<Partial<CSSStyleDeclaration> | undefined> {
-            return [layers[this.layer].componentStyles?.challenge, this.challenge.style];
-        },
-        title(): Component | string | null {
-            if (this.challenge.titleDisplay) {
-                return coerceComponent(this.challenge.titleDisplay, "div");
-            }
-            if (this.challenge.name) {
-                return coerceComponent(this.challenge.name, "h3");
-            }
-            return null;
-        },
-        buttonColor(): string {
-            return layers[this.layer].color;
-        },
-        buttonText(): string {
-            if (this.challenge.active) {
-                return this.challenge.canComplete ? "Finish" : "Exit Early";
-            }
-            if (this.challenge.maxed) {
-                return "Completed";
-            }
-            return "Start";
-        },
-        fullDisplay(): Component | string | null {
-            if (this.challenge.fullDisplay) {
-                return coerceComponent(this.challenge.fullDisplay, "div");
-            }
-            return null;
-        }
-    },
-    methods: {
-        toggle() {
-            this.challenge.toggle();
-        }
+const props = toRefs(defineProps<FeatureComponent<GenericChallenge>>());
+
+const buttonText = computed(() => {
+    if (props.active.value) {
+        return props.canComplete.value ? "Finish" : "Exit Early";
     }
+    if (props.maxed.value) {
+        return "Completed";
+    }
+    return "Start";
+});
+
+const component = computed(() => {
+    const display = props.display.value;
+    if (display == null) {
+        return null;
+    }
+    if (isCoercableComponent(display)) {
+        return coerceComponent(display);
+    }
+    return (
+        <span>
+            <template v-if={display.title}>
+                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                <component v-is={coerceComponent(display.title!, "h3")} />
+            </template>
+            <component v-is={coerceComponent(display.description, "div")} />
+            <div v-if={display.goal}>
+                <br />
+                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                Goal: <component v-is={coerceComponent(display.goal!)} />
+            </div>
+            <div v-if={display.reward}>
+                <br />
+                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                Reward: <component v-is={coerceComponent(display.reward!)} />
+            </div>
+            <div v-if={display.effectDisplay}>
+                Currently: {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                <component v-is={coerceComponent(display.effectDisplay!)} />
+            </div>
+        </span>
+    );
 });
 </script>
 
@@ -111,5 +102,6 @@ export default defineComponent({
 
 .challenge.canStart button {
     cursor: pointer;
+    background-color: var(--layer-color);
 }
 </style>

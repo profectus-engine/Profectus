@@ -1,40 +1,49 @@
 <template>
     <div class="field">
-        <span class="field-title" v-if="title">{{ title }}</span>
-        <vue-select
+        <span class="field-title" v-if="titleComponent"><component :is="titleComponent"/></span>
+        <VueNextSelect
             :options="options"
-            :model-value="value"
-            @update:modelValue="setSelected"
+            v-model="value"
             label-by="label"
-            :value-by="getValue"
+            :reduce="(option: SelectOption) => option.value"
             :placeholder="placeholder"
             :close-on-select="closeOnSelect"
         />
     </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { CoercableComponent } from "@/features/feature";
+import { coerceComponent } from "@/util/vue";
+import { computed, toRefs, unref } from "vue";
+import VueNextSelect from "vue-next-select";
+import "vue-next-select/dist/index.css";
 
-export default defineComponent({
-    name: "Select",
-    props: {
-        title: String,
-        options: Array, // https://vue-select.org/guide/options.html#options-prop
-        value: [String, Object],
-        default: [String, Object],
-        placeholder: String,
-        closeOnSelect: Boolean
+export type SelectOption = { label: string; value: unknown };
+
+const props = toRefs(
+    defineProps<{
+        title?: CoercableComponent;
+        modelValue?: unknown;
+        options: SelectOption[];
+        placeholder?: string;
+        closeOnSelect?: boolean;
+    }>()
+);
+const emit = defineEmits<{
+    (e: "update:modelValue", value: unknown): void;
+}>();
+
+const titleComponent = computed(
+    () => props.title?.value && coerceComponent(props.title.value, "span")
+);
+
+const value = computed({
+    get() {
+        return unref(props.modelValue);
     },
-    emits: ["change"],
-    methods: {
-        setSelected(value: any) {
-            value = value || this.default;
-            this.$emit("change", value);
-        },
-        getValue(item?: { value: any }) {
-            return item?.value;
-        }
+    set(value: unknown) {
+        emit("update:modelValue", value);
     }
 });
 </script>

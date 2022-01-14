@@ -1,111 +1,103 @@
 <template>
-    <div class="save" :class="{ active }">
+    <div class="save" :class="{ active: isActive }">
         <div class="handle material-icons">drag_handle</div>
-        <div class="actions" v-if="!editing">
-            <feedback-button
-                @click="$emit('export')"
+        <div class="actions" v-if="!isEditing">
+            <FeedbackButton
+                @click="emit('export')"
                 class="button"
                 left
-                v-if="save.error == undefined && !confirming"
+                v-if="save.error == undefined && !isConfirming"
             >
                 <span class="material-icons">content_paste</span>
-            </feedback-button>
+            </FeedbackButton>
             <button
-                @click="$emit('duplicate')"
+                @click="emit('duplicate')"
                 class="button"
-                v-if="save.error == undefined && !confirming"
+                v-if="save.error == undefined && !isConfirming"
             >
                 <span class="material-icons">content_copy</span>
             </button>
             <button
-                @click="toggleEditing"
+                @click="isEditing = !isEditing"
                 class="button"
-                v-if="save.error == undefined && !confirming"
+                v-if="save.error == undefined && !isConfirming"
             >
                 <span class="material-icons">edit</span>
             </button>
-            <danger-button
-                :disabled="active"
-                @click="$emit('delete')"
-                @confirmingChanged="confirmingChanged"
+            <DangerButton
+                :disabled="isActive"
+                @click="emit('delete')"
+                @confirmingChanged="value => (isConfirming = value)"
             >
                 <span class="material-icons" style="margin: -2px">delete</span>
-            </danger-button>
+            </DangerButton>
         </div>
         <div class="actions" v-else>
             <button @click="changeName" class="button">
                 <span class="material-icons">check</span>
             </button>
-            <button @click="toggleEditing" class="button">
+            <button @click="isEditing = !isEditing" class="button">
                 <span class="material-icons">close</span>
             </button>
         </div>
-        <div class="details" v-if="save.error == undefined && !editing">
-            <button class="button open" @click="$emit('open')">
+        <div class="details" v-if="save.error == undefined && !isEditing">
+            <button class="button open" @click="emit('open')">
                 <h3>{{ save.name }}</h3>
             </button>
             <span class="save-version">v{{ save.modVersion }}</span
             ><br />
-            <div v-if="time">Last played {{ dateFormat.format(time) }}</div>
+            <div v-if="currentTime">Last played {{ dateFormat.format(currentTime) }}</div>
         </div>
-        <div class="details" v-else-if="save.error == undefined && editing">
-            <TextField v-model="newName" class="editname" @submit="changeName" @blur="changeName" />
+        <div class="details" v-else-if="save.error == undefined && isEditing">
+            <Text v-model="newName" class="editname" @submit="changeName" />
         </div>
         <div v-else class="details error">Error: Failed to load save with id {{ save.id }}</div>
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import player from "@/game/player";
-import { PlayerData } from "@/typings/player";
-import { defineComponent, PropType } from "vue";
+import { computed, ref, toRefs, unref, watch } from "vue";
+import DangerButton from "../fields/DangerButton.vue";
+import FeedbackButton from "../fields/FeedbackButton.vue";
+import Text from "../fields/Text.vue";
+import { LoadablePlayerData } from "./SavesManager.vue";
 
-export default defineComponent({
-    name: "save",
-    props: {
-        save: {
-            type: Object as PropType<Partial<PlayerData>>,
-            required: true
-        }
-    },
-    emits: ["export", "open", "duplicate", "delete", "editSave"],
-    data() {
-        return {
-            dateFormat: new Intl.DateTimeFormat("en-US", {
-                year: "numeric",
-                month: "numeric",
-                day: "numeric",
-                hour: "numeric",
-                minute: "numeric",
-                second: "numeric"
-            }),
-            editing: false,
-            confirming: false,
-            newName: ""
-        };
-    },
-    computed: {
-        active(): boolean {
-            return this.save.id === player.id;
-        },
-        time(): number | undefined {
-            return this.active ? player.time : this.save.time;
-        }
-    },
-    methods: {
-        confirmingChanged(confirming: boolean) {
-            this.confirming = confirming;
-        },
-        toggleEditing() {
-            this.newName = this.save.name || "";
-            this.editing = !this.editing;
-        },
-        changeName() {
-            this.$emit("editSave", this.newName);
-            this.editing = false;
-        }
-    }
+const props = toRefs(
+    defineProps<{
+        save: LoadablePlayerData;
+    }>()
+);
+const emit = defineEmits<{
+    (e: "export"): void;
+    (e: "open"): void;
+    (e: "duplicate"): void;
+    (e: "delete"): void;
+    (e: "editName", name: string): void;
+}>();
+
+const dateFormat = new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric"
 });
+
+const isEditing = ref(false);
+const isConfirming = ref(false);
+const newName = ref("");
+
+watch(isEditing, () => (newName.value = ""));
+
+const isActive = computed(() => unref(props.save).id === player.id);
+const currentTime = computed(() => (isActive.value ? player.time : unref(props.save).time));
+
+function changeName() {
+    emit("editName", newName.value);
+    isEditing.value = false;
+}
 </script>
 
 <style scoped>

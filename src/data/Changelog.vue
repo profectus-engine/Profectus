@@ -1,5 +1,5 @@
 <template>
-    <Modal :show="show" @close="$emit('closeDialog', 'Changelog')">
+    <Modal v-model="isOpen">
         <template v-slot:header>
             <h2>Changelog</h2>
         </template>
@@ -18,15 +18,16 @@
     </Modal>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import Modal from "@/components/system/Modal.vue";
+import { ref } from "vue";
 
-export default defineComponent({
-    name: "Changelog",
-    props: {
-        show: Boolean
-    },
-    emits: ["closeDialog"]
+const isOpen = ref(false);
+
+defineExpose({
+    open() {
+        isOpen.value = true;
+    }
 });
 </script>
 

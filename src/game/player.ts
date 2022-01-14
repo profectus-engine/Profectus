@@ -1,12 +1,31 @@
-import { PlayerData } from "@/typings/player";
-import Decimal from "@/util/bignum";
+import Decimal, { DecimalSource } from "@/util/bignum";
 import { isPlainObject } from "@/util/common";
-import { reactive } from "vue";
+import { ProxiedWithState, ProxyPath, ProxyState } from "@/util/proxies";
+import { reactive, unref } from "vue";
 import transientState from "./state";
+
+export interface PlayerData {
+    id: string;
+    devSpeed: DecimalSource | null;
+    name: string;
+    tabs: Array<string>;
+    time: number;
+    autosave: boolean;
+    offlineProd: boolean;
+    offlineTime: Decimal | null;
+    timePlayed: Decimal;
+    keepGoing: boolean;
+    minimized: Record<string, boolean>;
+    modID: string;
+    modVersion: string;
+    layers: Record<string, Record<string, unknown>>;
+}
+
+export type Player = ProxiedWithState<PlayerData>;
 
 const state = reactive<PlayerData>({
     id: "",
-    points: new Decimal(0),
+    devSpeed: null,
     name: "",
     tabs: [],
     time: -1,
@@ -15,38 +34,47 @@ const state = reactive<PlayerData>({
     offlineTime: null,
     timePlayed: new Decimal(0),
     keepGoing: false,
-    subtabs: {},
     minimized: {},
     modID: "",
     modVersion: "",
-    justLoaded: false,
     layers: {}
 });
 
-const playerHandler: ProxyHandler<Record<string, any>> = {
-    get(target: Record<string, any>, key: string): any {
-        if (key === "__state" || key === "__path") {
+export function stringifySave(player: PlayerData): string {
+    return JSON.stringify((player as Player)[ProxyState], (key, value) => unref(value));
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const playerHandler: ProxyHandler<Record<PropertyKey, any>> = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    get(target: Record<PropertyKey, any>, key: PropertyKey): any {
+        if (key === ProxyState || key === ProxyPath) {
             return target[key];
         }
-        if (target.__state[key] == undefined) {
+        if (target[ProxyState][key] == undefined) {
             return;
         }
-        if (isPlainObject(target.__state[key]) && !(target.__state[key] instanceof Decimal)) {
-            if (target.__state[key] !== target[key]?.__state) {
-                const path = [...target.__path, key];
+        if (
+            isPlainObject(target[ProxyState][key]) &&
+            !(target[ProxyState][key] instanceof Decimal)
+        ) {
+            if (target[ProxyState][key] !== target[key]?.[ProxyState]) {
+                const path = [...target[ProxyPath], key];
                 target[key] = new Proxy(
-                    { __state: target.__state[key], __path: path },
+                    { [ProxyState]: target[ProxyState][key], [ProxyPath]: path },
                     playerHandler
                 );
             }
             return target[key];
         }
 
-        return target.__state[key];
+        return target[ProxyState][key];
     },
     set(
-        target: Record<string, any>,
-        property: string,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        target: Record<PropertyKey, any>,
+        property: PropertyKey,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         value: any,
         receiver: ProxyConstructor
     ): boolean {
@@ -56,7 +84,7 @@ const playerHandler: ProxyHandler<Record<string, any>> = {
                 (value instanceof Decimal &&
                     (isNaN(value.sign) || isNaN(value.layer) || isNaN(value.mag))))
         ) {
-            const currentValue = target.__state[property];
+            const currentValue = target[ProxyState][property];
             if (
                 !(
                     (typeof currentValue === "number" && isNaN(currentValue)) ||
@@ -68,38 +96,29 @@ const playerHandler: ProxyHandler<Record<string, any>> = {
             ) {
                 state.autosave = false;
                 transientState.hasNaN = true;
-                transientState.NaNPath = [...target.__path, property];
+                transientState.NaNPath = [...target[ProxyPath], property];
                 transientState.NaNReceiver = (receiver as unknown) as Record<string, unknown>;
                 console.error(
                     `Attempted to set NaN value`,
-                    [...target.__path, property],
-                    target.__state
+                    [...target[ProxyPath], property],
+                    target[ProxyState]
                 );
                 throw "Attempted to set NaN value. See above for details";
             }
         }
-        target.__state[property] = value;
-        if (property === "points") {
-            if (target.__state.best != undefined) {
-                target.__state.best = Decimal.max(target.__state.best, value);
-            }
-            if (target.__state.total != undefined) {
-                const diff = Decimal.sub(value, target.__state.points);
-                if (diff.gt(0)) {
-                    target.__state.total = target.__state.total.add(diff);
-                }
-            }
-        }
+        target[ProxyState][property] = value;
         return true;
     },
-    ownKeys(target: Record<string, any>) {
-        return Reflect.ownKeys(target.__state);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ownKeys(target: Record<PropertyKey, any>) {
+        return Reflect.ownKeys(target[ProxyState]);
     },
-    has(target: Record<string, any>, key: string) {
-        return Reflect.has(target.__state, key);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    has(target: Record<PropertyKey, any>, key: string) {
+        return Reflect.has(target[ProxyState], key);
     }
 };
 export default window.player = new Proxy(
-    { __state: state, __path: ["player"] },
+    { [ProxyState]: state, [ProxyPath]: ["player"] },
     playerHandler
 ) as PlayerData;

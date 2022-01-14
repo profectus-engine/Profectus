@@ -1,5 +1,5 @@
 <template>
-    <Modal :show="hasNaN" v-bind="$attrs">
+    <Modal v-model="hasNaN" v-bind="$attrs">
         <template v-slot:header>
             <div class="nan-modal-header">
                 <h2>NaN value detected!</h2>
@@ -7,9 +7,10 @@
         </template>
         <template v-slot:body>
             <div>
-                Attempted to assign "{{ path }}" to NaN (previously {{ format(previous) }}).
-                Auto-saving has been {{ autosave ? "enabled" : "disabled" }}. Check the console for
-                more details, and consider sharing it with the developers on discord.
+                Attempted to assign "{{ path }}" to NaN<span v-if="previous">
+                    {{ " " }}(previously {{ format(previous) }})</span
+                >. Auto-saving has been {{ autosave ? "enabled" : "disabled" }}. Check the console
+                for more details, and consider sharing it with the developers on discord.
             </div>
             <br />
             <div>
@@ -19,20 +20,20 @@
                 </a>
             </div>
             <br />
-            <Toggle title="Autosave" :value="autosave" @change="setAutosave" />
-            <Toggle title="Pause game" :value="paused" @change="togglePaused" />
+            <Toggle title="Autosave" v-model="autosave" />
+            <Toggle title="Pause game" v-model="isPaused" />
         </template>
         <template v-slot:footer>
             <div class="nan-footer">
-                <button @click="toggleSavesManager" class="button">
+                <button @click="savesManager?.open()" class="button">
                     Open Saves Manager
                 </button>
                 <button @click="setZero" class="button">Set to 0</button>
                 <button @click="setOne" class="button">Set to 1</button>
                 <button
-                    @click="setPrev"
+                    @click="hasNaN = false"
                     class="button"
-                    v-if="previous && previous.neq(0) && previous.neq(1)"
+                    v-if="previous && Decimal.neq(previous, 0) && Decimal.neq(previous, 1)"
                 >
                     Set to previous
                 </button>
@@ -40,75 +41,61 @@
             </div>
         </template>
     </Modal>
-    <SavesManager :show="showSaves" @closeDialog="toggleSavesManager" />
+    <SavesManager ref="savesManager" />
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import Modal from "@/components/system/Modal.vue";
 import modInfo from "@/data/modInfo.json";
 import player from "@/game/player";
 import state from "@/game/state";
-import Decimal, { format } from "@/util/bignum";
-import { mapPlayer, mapState } from "@/util/vue";
-import { defineComponent } from "vue";
+import Decimal, { DecimalSource, format } from "@/util/bignum";
+import { computed, ref, toRef } from "vue";
+import Toggle from "../fields/Toggle.vue";
+import SavesManager from "./SavesManager.vue";
 
-export default defineComponent({
-    name: "NaNScreen",
-    data() {
-        const { discordName, discordLink } = modInfo;
-        return { discordName, discordLink, format, showSaves: false };
+const { discordName, discordLink } = modInfo;
+const autosave = toRef(player, "autosave");
+const hasNaN = toRef(state, "hasNaN");
+const savesManager = ref<typeof SavesManager | null>(null);
+
+const path = computed(() => state.NaNPath?.join("."));
+const property = computed(() => state.NaNPath?.slice(-1)[0]);
+const previous = computed<DecimalSource | null>(() => {
+    if (state.NaNReceiver && property.value) {
+        return state.NaNReceiver[property.value] as DecimalSource;
+    }
+    return null;
+});
+const isPaused = computed({
+    get() {
+        return player.devSpeed === 0;
     },
-    computed: {
-        ...mapPlayer(["autosave"]),
-        ...mapState(["hasNaN"]),
-        path(): string | undefined {
-            return state.NaNPath?.join(".");
-        },
-        previous(): unknown {
-            if (state.NaNReceiver && this.property) {
-                return state.NaNReceiver[this.property];
-            }
-            return null;
-        },
-        paused() {
-            return player.devSpeed === 0;
-        },
-        property(): string | undefined {
-            return state.NaNPath?.slice(-1)[0];
-        }
-    },
-    methods: {
-        setZero() {
-            if (state.NaNReceiver && this.property) {
-                state.NaNReceiver[this.property] = new Decimal(0);
-                state.hasNaN = false;
-            }
-        },
-        setOne() {
-            if (state.NaNReceiver && this.property) {
-                state.NaNReceiver[this.property] = new Decimal(1);
-                state.hasNaN = false;
-            }
-        },
-        setPrev() {
-            state.hasNaN = false;
-        },
-        ignore() {
-            if (state.NaNReceiver && this.property) {
-                state.NaNReceiver[this.property] = new Decimal(NaN);
-                state.hasNaN = false;
-            }
-        },
-        setAutosave(autosave: boolean) {
-            player.autosave = autosave;
-        },
-        toggleSavesManager() {
-            this.showSaves = !this.showSaves;
-        },
-        togglePaused() {
-            player.devSpeed = this.paused ? 1 : 0;
-        }
+    set(value: boolean) {
+        player.devSpeed = value ? null : 0;
     }
 });
+
+function setZero() {
+    if (state.NaNReceiver && property.value) {
+        state.NaNReceiver[property.value] = new Decimal(0);
+        state.hasNaN = false;
+    }
+}
+
+function setOne() {
+    if (state.NaNReceiver && property.value) {
+        state.NaNReceiver[property.value] = new Decimal(1);
+        state.hasNaN = false;
+    }
+}
+
+function ignore() {
+    if (state.NaNReceiver && property.value) {
+        state.NaNReceiver[property.value] = new Decimal(NaN);
+        state.hasNaN = false;
+    }
+}
 </script>
 
 <style scoped>

@@ -1,16 +1,13 @@
-import { fixOldSave, getInitialLayers, getStartingData } from "@/data/mod";
+import { fixOldSave, getInitialLayers } from "@/data/mod";
 import modInfo from "@/data/modInfo.json";
-import player from "@/game/player";
+import player, { Player, PlayerData, stringifySave } from "@/game/player";
 import settings, { loadSettings } from "@/game/settings";
-import state from "@/game/state";
-import { PlayerData } from "@/typings/player";
 import Decimal from "./bignum";
 
-export function getInitialStore(playerData: Partial<PlayerData> = {}): PlayerData {
-    return applyPlayerData(
+export function setupInitialStore(player: Partial<PlayerData> = {}): asserts player is Player {
+    Object.assign(
         {
             id: `${modInfo.id}-0`,
-            points: new Decimal(0),
             name: "Default Save",
             tabs: modInfo.initialTabs.slice(),
             time: Date.now(),
@@ -19,21 +16,18 @@ export function getInitialStore(playerData: Partial<PlayerData> = {}): PlayerDat
             offlineTime: new Decimal(0),
             timePlayed: new Decimal(0),
             keepGoing: false,
-            subtabs: {},
-            minimized: {},
             modID: modInfo.id,
             modVersion: modInfo.versionNumber,
-            layers: {},
-            justLoaded: false,
-            ...getStartingData()
+            layers: {}
         },
-        playerData
-    ) as PlayerData;
+        player
+    );
 }
 
-export function save(): void {
-    state.saveToExport = btoa(unescape(encodeURIComponent(JSON.stringify(player.__state))));
-    localStorage.setItem(player.id, state.saveToExport);
+export function save(): string {
+    const stringifiedSave = btoa(unescape(encodeURIComponent(stringifySave(player))));
+    localStorage.setItem(player.id, stringifiedSave);
+    return stringifiedSave;
 }
 
 export async function load(): Promise<void> {
@@ -46,13 +40,13 @@ export async function load(): Promise<void> {
             await loadSave(newSave());
             return;
         }
-        const playerData = JSON.parse(decodeURIComponent(escape(atob(save))));
-        if (playerData.modID !== modInfo.id) {
+        const player = JSON.parse(decodeURIComponent(escape(atob(save))));
+        if (player.modID !== modInfo.id) {
             await loadSave(newSave());
             return;
         }
-        playerData.id = settings.active;
-        await loadSave(playerData);
+        player.id = settings.active;
+        await loadSave(player);
     } catch (e) {
         await loadSave(newSave());
     }
@@ -60,12 +54,13 @@ export async function load(): Promise<void> {
 
 export function newSave(): PlayerData {
     const id = getUniqueID();
-    const playerData = getInitialStore({ id });
-    localStorage.setItem(id, btoa(unescape(encodeURIComponent(JSON.stringify(playerData)))));
+    const player = { id };
+    setupInitialStore(player);
+    localStorage.setItem(id, btoa(unescape(encodeURIComponent(stringifySave(player)))));
 
     settings.saves.push(id);
 
-    return playerData;
+    return player;
 }
 
 export function getUniqueID(): string {
@@ -77,58 +72,26 @@ export function getUniqueID(): string {
     return id;
 }
 
-export async function loadSave(playerData: Partial<PlayerData>): Promise<void> {
+export async function loadSave(playerObj: Partial<PlayerData>): Promise<void> {
     const { layers, removeLayer, addLayer } = await import("../game/layers");
 
     for (const layer in layers) {
-        removeLayer(layer);
+        removeLayer(layers[layer]);
     }
-    getInitialLayers(playerData).forEach(layer => addLayer(layer, playerData));
+    getInitialLayers(playerObj).forEach(layer => addLayer(layer, playerObj));
 
-    playerData = getInitialStore(playerData);
-    if (playerData.offlineProd && playerData.time) {
-        if (playerData.offlineTime == undefined) playerData.offlineTime = new Decimal(0);
-        playerData.offlineTime = playerData.offlineTime.add((Date.now() - playerData.time) / 1000);
+    setupInitialStore(playerObj);
+    if (playerObj.offlineProd && playerObj.time) {
+        if (playerObj.offlineTime == undefined) playerObj.offlineTime = new Decimal(0);
+        playerObj.offlineTime = playerObj.offlineTime.add((Date.now() - playerObj.time) / 1000);
     }
-    playerData.time = Date.now();
-    if (playerData.modVersion !== modInfo.versionNumber) {
-        fixOldSave(playerData.modVersion, playerData);
+    playerObj.time = Date.now();
+    if (playerObj.modVersion !== modInfo.versionNumber) {
+        fixOldSave(playerObj.modVersion, playerObj);
     }
 
-    Object.assign(player, playerData);
-    for (const prop in player) {
-        if (!(prop in playerData) && !(prop in layers) && prop !== "__state" && prop !== "__path") {
-            delete player.layers[prop];
-        }
-    }
-    player.justLoaded = true;
-    settings.active = player.id;
-}
-
-export function applyPlayerData<T extends Record<string, any>>(
-    target: T,
-    source: T,
-    destructive = false
-): T {
-    for (const prop in source) {
-        if (target[prop] == null) {
-            target[prop] = source[prop];
-        } else if (target[prop as string] instanceof Decimal) {
-            target[prop as keyof T] = new Decimal(source[prop]) as any;
-        } else if (Array.isArray(target[prop]) || typeof target[prop] === "object") {
-            target[prop] = applyPlayerData(target[prop], source[prop], destructive);
-        } else {
-            target[prop] = source[prop];
-        }
-    }
-    if (destructive) {
-        for (const prop in target) {
-            if (!(prop in source)) {
-                delete target[prop];
-            }
-        }
-    }
-    return target;
+    Object.assign(player, playerObj);
+    settings.active = playerObj.id;
 }
 
 setInterval(() => {

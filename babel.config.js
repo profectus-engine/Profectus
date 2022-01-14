@@ -6,6 +6,7 @@ module.exports = {
             {
                 enabled: true
             }
-        ]
+        ],
+        "@vue/babel-plugin-jsx"
     ]
 };

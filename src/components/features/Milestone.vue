@@ -1,57 +1,45 @@
 <template>
     <div
-        v-if="milestone.shown"
+        v-if="visibility !== Visibility.None"
+        v-show="visibility === Visibility.Visible"
         :style="style"
-        :class="{ feature: true, milestone: true, done: milestone.earned }"
+        :class="{ feature: true, milestone: true, done: earned, ...classes }"
     >
-        <div v-if="requirementDisplay"><component :is="requirementDisplay" /></div>
-        <div v-if="effectDisplay"><component :is="effectDisplay" /></div>
-        <component v-if="optionsDisplay" :is="optionsDisplay" />
-        <branch-node :branches="milestone.branches" :id="id" featureType="milestone" />
+        <component v-if="component" :is="component" />
+        <LinkNode :id="id" />
     </div>
 </template>
 
-<script lang="ts">
-import { layers } from "@/game/layers";
-import { Milestone } from "@/typings/features/milestone";
-import { coerceComponent, InjectLayerMixin } from "@/util/vue";
-import { Component, defineComponent } from "vue";
+<script setup lang="tsx">
+import { FeatureComponent, Visibility } from "@/features/feature";
+import { GenericMilestone } from "@/features/milestone";
+import { coerceComponent, isCoercableComponent } from "@/util/vue";
+import { computed, toRefs } from "vue";
+import LinkNode from "../system/LinkNode.vue";
 
-export default defineComponent({
-    name: "milestone",
-    mixins: [InjectLayerMixin],
-    props: {
-        id: {
-            type: [Number, String],
-            required: true
-        }
-    },
-    computed: {
-        milestone(): Milestone {
-            return layers[this.layer].milestones!.data[this.id];
-        },
-        style(): Array<Partial<CSSStyleDeclaration> | undefined> {
-            return [layers[this.layer].componentStyles?.milestone, this.milestone.style];
-        },
-        requirementDisplay(): Component | string | null {
-            if (this.milestone.requirementDisplay) {
-                return coerceComponent(this.milestone.requirementDisplay, "h3");
-            }
-            return null;
-        },
-        effectDisplay(): Component | string | null {
-            if (this.milestone.effectDisplay) {
-                return coerceComponent(this.milestone.effectDisplay, "b");
-            }
-            return null;
-        },
-        optionsDisplay(): Component | string | null {
-            if (this.milestone.optionsDisplay && this.milestone.earned) {
-                return coerceComponent(this.milestone.optionsDisplay, "div");
-            }
-            return null;
-        }
+const props = toRefs(defineProps<FeatureComponent<GenericMilestone>>());
+
+const component = computed(() => {
+    const display = props.display.value;
+    if (display == null) {
+        return null;
     }
+    if (isCoercableComponent(display)) {
+        return coerceComponent(display);
+    }
+    return (
+        <span>
+            <component v-is={coerceComponent(display.requirement, "h3")} />
+            <div v-if={display.effectDisplay}>
+                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                <component v-is={coerceComponent(display.effectDisplay!, "b")} />
+            </div>
+            <div v-if={display.optionsDisplay}>
+                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                <component v-is={coerceComponent(display.optionsDisplay!, "span")} />
+            </div>
+        </span>
+    );
 });
 </script>
 

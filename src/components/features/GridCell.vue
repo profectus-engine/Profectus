@@ -1,9 +1,10 @@
 <template>
     <button
-        v-if="gridCell.unlocked"
+        v-if="visibility !== Visibility.None"
+        v-show="visibility === Visibility.Visible"
         :class="{ feature: true, tile: true, can: canClick, locked: !canClick }"
         :style="style"
-        @click="gridCell.click"
+        @click="onClick"
         @mousedown="start"
         @mouseleave="stop"
         @mouseup="stop"
@@ -12,80 +13,28 @@
         @touchcancel="stop"
         :disabled="!canClick"
     >
-        <div v-if="title"><component :is="title" /></div>
-        <component :is="display" style="white-space: pre-line;" />
-        <branch-node :branches="gridCell.branches" :id="id" featureType="gridCell" />
+        <div v-if="title"><component :is="titleComponent" /></div>
+        <component :is="component" style="white-space: pre-line;" />
+        <LinkNode :id="id" />
     </button>
 </template>
 
-<script lang="ts">
-import { layers } from "@/game/layers";
-import { GridCell } from "@/typings/features/grid";
-import { coerceComponent, InjectLayerMixin } from "@/util/vue";
-import { Component, defineComponent } from "vue";
+<script setup lang="ts">
+import { Visibility } from "@/features/feature";
+import { GridCell } from "@/features/grid";
+import { coerceComponent, setupHoldToClick } from "@/util/vue";
+import { computed, toRefs, unref } from "vue";
+import LinkNode from "../system/LinkNode.vue";
 
-export default defineComponent({
-    name: "grid-cell",
-    mixins: [InjectLayerMixin],
-    props: {
-        id: {
-            type: [Number, String],
-            required: true
-        },
-        cell: {
-            type: [Number, String],
-            required: true
-        },
-        size: [Number, String]
-    },
-    data() {
-        return {
-            interval: null,
-            time: 0
-        } as {
-            interval: number | null;
-            time: number;
-        };
-    },
-    computed: {
-        gridCell(): GridCell {
-            return layers[this.layer].grids!.data[this.id][this.cell] as GridCell;
-        },
-        canClick(): boolean {
-            return this.gridCell.canClick;
-        },
-        style(): Array<Partial<CSSStyleDeclaration> | undefined> {
-            return [
-                this.canClick ? { backgroundColor: layers[this.layer].color } : {},
-                layers[this.layer].componentStyles?.["grid-cell"],
-                this.gridCell.style
-            ];
-        },
-        title(): Component | string | null {
-            if (this.gridCell.title) {
-                return coerceComponent(this.gridCell.title, "h3");
-            }
-            return null;
-        },
-        display(): Component | string {
-            return coerceComponent(this.gridCell.display, "div");
-        }
-    },
-    methods: {
-        start() {
-            if (!this.interval && this.gridCell.click) {
-                this.interval = setInterval(this.gridCell.click, 250);
-            }
-        },
-        stop() {
-            if (this.interval) {
-                clearInterval(this.interval);
-                this.interval = null;
-                this.time = 0;
-            }
-        }
-    }
+const props = toRefs(defineProps<GridCell>());
+
+const { start, stop } = setupHoldToClick(props.onClick, props.onHold);
+
+const titleComponent = computed(() => {
+    const title = unref(props.title);
+    return title && coerceComponent(title);
 });
+const component = computed(() => coerceComponent(unref(props.display)));
 </script>
 
 <style scoped>
@@ -93,5 +42,6 @@ export default defineComponent({
     min-height: 80px;
     width: 80px;
     font-size: 10px;
+    background-color: var(--layer-color);
 }
 </style>

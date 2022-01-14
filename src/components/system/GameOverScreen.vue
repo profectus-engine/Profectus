@@ -1,8 +1,8 @@
 <template>
-    <Modal :show="show">
+    <Modal :model-value="isOpen">
         <template v-slot:header>
             <div class="game-over-modal-header">
-                <img class="game-over-modal-logo" v-if="logo" :src="logo" :alt="modInfo" />
+                <img class="game-over-modal-logo" v-if="logo" :src="logo" :alt="title" />
                 <div class="game-over-modal-title">
                     <h2>Congratulations!</h2>
                     <h4>You've beaten {{ title }} v{{ versionNumber }}: {{ versionTitle }}</h4>
@@ -35,43 +35,27 @@
     </Modal>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import Modal from "@/components/system/Modal.vue";
 import { hasWon } from "@/data/mod";
 import modInfo from "@/data/modInfo.json";
 import player from "@/game/player";
 import { formatTime } from "@/util/bignum";
-import { defineComponent } from "vue";
+import { loadSave, newSave } from "@/util/save";
+import { computed } from "vue";
 
-export default defineComponent({
-    name: "GameOverScreen",
-    data() {
-        const { title, logo, discordName, discordLink, versionNumber, versionTitle } = modInfo;
-        return {
-            title,
-            logo,
-            discordName,
-            discordLink,
-            versionNumber,
-            versionTitle
-        };
-    },
-    computed: {
-        timePlayed() {
-            return formatTime(player.timePlayed);
-        },
-        show() {
-            return hasWon.value && !player.keepGoing;
-        }
-    },
-    methods: {
-        keepGoing() {
-            player.keepGoing = true;
-        },
-        playAgain() {
-            console.warn("Not yet implemented!");
-        }
-    }
-});
+const { title, logo, discordName, discordLink, versionNumber, versionTitle } = modInfo;
+
+const timePlayed = computed(() => formatTime(player.timePlayed));
+const isOpen = computed(() => hasWon.value && !player.keepGoing);
+
+function keepGoing() {
+    player.keepGoing = true;
+}
+
+function playAgain() {
+    loadSave(newSave());
+}
 </script>
 
 <style scoped>

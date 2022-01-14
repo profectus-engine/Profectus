@@ -4,40 +4,34 @@
     </button>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { nextTick, ref, toRefs } from "vue";
 
-export default defineComponent({
-    name: "feedback-button",
-    data() {
-        return {
-            activated: false,
-            activatedTimeout: null
-        } as {
-            activated: boolean;
-            activatedTimeout: number | null;
-        };
-    },
-    props: {
-        left: Boolean
-    },
-    emits: ["click"],
-    methods: {
-        click() {
-            this.$emit("click");
+toRefs(
+    defineProps<{
+        left?: boolean;
+    }>()
+);
+const emit = defineEmits<{
+    (e: "click"): void;
+}>();
 
-            // Give feedback to user
-            if (this.activatedTimeout) {
-                clearTimeout(this.activatedTimeout);
-            }
-            this.activated = false;
-            this.$nextTick(() => {
-                this.activated = true;
-                this.activatedTimeout = setTimeout(() => (this.activated = false), 500);
-            });
-        }
+const activated = ref(false);
+const activatedTimeout = ref<number | null>(null);
+
+function click() {
+    emit("click");
+
+    // Give feedback to user
+    if (activatedTimeout.value) {
+        clearTimeout(activatedTimeout.value);
     }
-});
+    activated.value = false;
+    nextTick(() => {
+        activated.value = true;
+        activatedTimeout.value = setTimeout(() => (activated.value = false), 500);
+    });
+}
 </script>
 
 <style scoped>

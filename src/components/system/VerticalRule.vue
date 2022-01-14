@@ -2,15 +2,10 @@
     <div class="vr" :style="{ height }"></div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
-
-export default defineComponent({
-    name: "vr",
-    props: {
-        height: String
-    }
-});
+<script setup lang="ts">
+defineProps<{
+    height?: string;
+}>();
 </script>
 
 <style scoped>

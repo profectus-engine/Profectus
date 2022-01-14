@@ -1,107 +1,70 @@
 <template>
-    <Modal :show="show" @close="$emit('closeDialog', 'Options')">
+    <Modal v-model="isOpen">
         <template v-slot:header>
             <div class="header">
                 <h2>Options</h2>
             </div>
         </template>
         <template v-slot:body>
-            <Select
-                title="Theme"
-                :options="themes"
-                :value="theme"
-                @change="setTheme"
-                default="classic"
-            />
-            <Select
-                title="Show Milestones"
-                :options="msDisplayOptions"
-                :value="msDisplay"
-                @change="setMSDisplay"
-                default="all"
-            />
-            <Toggle title="Show TPS" :value="showTPS" @change="toggleSettingsOption('showTPS')" />
-            <Toggle
-                title="Hide Maxed Challenges"
-                :value="hideChallenges"
-                @change="toggleSettingsOption('hideChallenges')"
-            />
-            <Toggle
-                title="Unthrottled"
-                :value="unthrottled"
-                @change="toggleSettingsOption('unthrottled')"
-            />
+            <Select title="Theme" :options="themes" v-model="theme" />
+            <Select title="Show Milestones" :options="msDisplayOptions" v-model="msDisplay" />
+            <Toggle title="Show TPS" v-model="showTPS" />
+            <Toggle title="Hide Maxed Challenges" v-model="hideChallenges" />
+            <Toggle title="Unthrottled" v-model="unthrottled" />
             <Toggle
                 title="Offline Production<tooltip display='Save-specific'>*</tooltip>"
-                :value="offlineProd"
-                @change="togglePlayerOption('offlineProd')"
+                v-model="offlineProd"
             />
             <Toggle
                 title="Autosave<tooltip display='Save-specific'>*</tooltip>"
-                :value="autosave"
-                @change="togglePlayerOption('autosave')"
+                v-model="autosave"
             />
             <Toggle
                 title="Pause game<tooltip display='Save-specific'>*</tooltip>"
-                :value="paused"
-                @change="togglePaused"
+                v-model="isPaused"
             />
         </template>
     </Modal>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
-import themes, { Themes } from "@/data/themes";
-import { camelToTitle } from "@/util/common";
-import { mapPlayer, mapSettings } from "@/util/vue";
+<script setup lang="ts">
+import Modal from "@/components/system/Modal.vue";
+import rawThemes from "@/data/themes";
+import { MilestoneDisplay } from "@/features/milestone";
 import player from "@/game/player";
-import { MilestoneDisplay } from "@/game/enums";
-import { PlayerData } from "@/typings/player";
 import settings from "@/game/settings";
-import { Settings } from "@/typings/settings";
+import { camelToTitle } from "@/util/common";
+import { computed, ref, toRefs } from "vue";
+import Toggle from "../fields/Toggle.vue";
+import Select from "../fields/Select.vue";
 
-export default defineComponent({
-    name: "Options",
-    props: {
-        show: Boolean
+const isOpen = ref(false);
+
+defineExpose({
+    open() {
+        isOpen.value = true;
+    }
+});
+
+const themes = Object.keys(rawThemes).map(theme => ({
+    label: camelToTitle(theme),
+    value: theme
+}));
+
+// TODO allow features to register options
+const msDisplayOptions = Object.values(MilestoneDisplay).map(option => ({
+    label: camelToTitle(option),
+    value: option
+}));
+
+const { showTPS, hideChallenges, theme, msDisplay, unthrottled } = toRefs(settings);
+const { autosave, offlineProd, devSpeed } = toRefs(player);
+const isPaused = computed({
+    get() {
+        return devSpeed.value === 0;
     },
-    emits: ["closeDialog"],
-    data() {
-        return {
-            themes: Object.keys(themes).map(theme => ({
-                label: camelToTitle(theme),
-                value: theme
-            })),
-            msDisplayOptions: Object.values(MilestoneDisplay).map(option => ({
-                label: camelToTitle(option),
-                value: option
-            }))
-        };
-    },
-    computed: {
-        ...mapSettings(["showTPS", "hideChallenges", "theme", "msDisplay", "unthrottled"]),
-        ...mapPlayer(["autosave", "offlineProd"]),
-        paused() {
-            return player.devSpeed === 0;
-        }
-    },
-    methods: {
-        togglePlayerOption(option: keyof PlayerData) {
-            player[option] = !player[option];
-        },
-        toggleSettingsOption(option: keyof Settings) {
-            settings[option] = !settings[option];
-        },
-        setTheme(theme: Themes) {
-            settings.theme = theme;
-        },
-        setMSDisplay(msDisplay: MilestoneDisplay) {
-            settings.msDisplay = msDisplay;
-        },
-        togglePaused() {
-            player.devSpeed = this.paused ? 1 : 0;
-        }
+    set(value: boolean) {
+        devSpeed.value = value ? null : 0;
     }
 });
 </script>

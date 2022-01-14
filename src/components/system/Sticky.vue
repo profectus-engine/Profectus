@@ -1,54 +1,39 @@
 <template>
-    <div class="sticky" :style="{ top }" ref="sticky" data-v-sticky>
+    <div class="sticky" :style="{ top }" ref="element" data-v-sticky>
         <slot />
     </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { nextTick, onMounted, ref } from "vue";
 
-export default defineComponent({
-    name: "sticky",
-    data() {
-        return {
-            top: "0",
-            observer: null
-        } as {
-            top: string;
-            observer: ResizeObserver | null;
-        };
-    },
-    mounted() {
-        this.setup();
-    },
-    methods: {
-        setup() {
-            this.$nextTick(() => {
-                if (this.$refs.sticky == undefined) {
-                    this.$nextTick(this.setup);
-                } else {
-                    this.updateTop();
-                    this.observer = new ResizeObserver(this.updateTop);
-                    this.observer.observe((this.$refs.sticky as HTMLElement).parentElement!);
-                }
-            });
-        },
-        updateTop() {
-            let el = this.$refs.sticky as HTMLElement;
-            if (el == undefined) {
-                return;
-            }
+const top = ref("0");
+const observer = new ResizeObserver(updateTop);
+const element = ref<HTMLElement | null>(null);
 
-            let top = 0;
-            while (el.previousSibling) {
-                const sibling = el.previousSibling as HTMLElement;
-                if (sibling.dataset && "vSticky" in sibling.dataset) {
-                    top += sibling.offsetHeight;
-                }
-                el = sibling;
-            }
-            this.top = top + "px";
+function updateTop() {
+    let el = element.value;
+    if (el == undefined) {
+        return;
+    }
+
+    let newTop = 0;
+    while (el.previousSibling) {
+        const sibling = el.previousSibling as HTMLElement;
+        if (sibling.dataset && "vSticky" in sibling.dataset) {
+            newTop += sibling.offsetHeight;
         }
+        el = sibling;
+    }
+    top.value = newTop + "px";
+}
+
+nextTick(updateTop);
+
+onMounted(() => {
+    const el = element.value?.parentElement;
+    if (el) {
+        observer.observe(el);
     }
 });
 </script>

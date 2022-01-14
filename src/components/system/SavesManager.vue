@@ -1,17 +1,17 @@
 <template>
-    <Modal :show="show" @close="$emit('closeDialog', 'Saves')">
+    <Modal v-model="isOpen">
         <template v-slot:header>
             <h2>Saves Manager</h2>
         </template>
         <template v-slot:body>
             <div v-sortable="{ update, handle: '.handle' }">
-                <save
+                <Save
                     v-for="(save, index) in saves"
                     :key="index"
                     :save="save"
                     @open="openSave(save.id)"
                     @export="exportSave(save.id)"
-                    @editSave="name => editSave(save.id, name)"
+                    @editName="name => editSave(save.id, name)"
                     @duplicate="duplicateSave(save.id)"
                     @delete="deleteSave(save.id)"
                 />
@@ -19,10 +19,8 @@
         </template>
         <template v-slot:footer>
             <div class="modal-footer">
-                <TextField
-                    :value="saveToImport"
-                    @submit="importSave"
-                    @change="importSave"
+                <Text
+                    v-model="saveToImport"
                     title="Import Save"
                     placeholder="Paste your save here!"
                     :class="{ importingFailed }"
@@ -34,20 +32,17 @@
                         <Select
                             v-if="Object.keys(bank).length > 0"
                             :options="bank"
+                            :modelValue="[]"
+                            @update:modelValue="preset => newFromPreset(preset as string)"
                             closeOnSelect
-                            @change="newFromPreset"
                             placeholder="Select preset"
                             class="presets"
-                            :value="[]"
                         />
                     </div>
                 </div>
                 <div class="footer">
                     <div style="flex-grow: 1"></div>
-                    <button
-                        class="button modal-default-button"
-                        @click="$emit('closeDialog', 'Saves')"
-                    >
+                    <button class="button modal-default-button" @click="isOpen = false">
                         Close
                     </button>
                 </div>
@@ -56,184 +51,175 @@
     </Modal>
 </template>
 
-<script lang="ts">
-import player from "@/game/player";
+<script setup lang="ts">
+import Modal from "@/components/system/Modal.vue";
+import player, { PlayerData } from "@/game/player";
 import settings from "@/game/settings";
-import state from "@/game/state";
-import { PlayerData } from "@/typings/player";
-import { getUniqueID, loadSave, newSave, save } from "@/util/save";
-import { defineComponent } from "vue";
+import { getUniqueID, loadSave, save, newSave as createNewSave } from "@/util/save";
+import { nextTick, ref, watch } from "vue";
+import Select from "../fields/Select.vue";
+import Text from "../fields/Text.vue";
+import Save from "./Save.vue";
+import vSortable from "vue-sortable";
 
-export default defineComponent({
-    name: "SavesManager",
-    props: {
-        show: Boolean
-    },
-    emits: ["closeDialog"],
-    data() {
-        let bankContext = require.context("raw-loader!../../../saves", true, /\.txt$/);
-        let bank = bankContext
-            .keys()
-            .reduce((acc: Array<{ label: string; value: string }>, curr) => {
-                // .slice(2, -4) strips the leading ./ and the trailing .txt
-                acc.push({
-                    label: curr.slice(2, -4),
-                    value: bankContext(curr).default
-                });
-                return acc;
-            }, []);
-        return {
-            importingFailed: false,
-            saves: {}, // Gets populated when the modal is opened
-            saveToImport: "",
-            bank
-        } as {
-            importingFailed: boolean;
-            saves: Record<
-                string,
-                Omit<Partial<PlayerData>, "id"> & { id: string; error?: unknown }
-            >;
-            saveToImport: string;
-            bank: Array<{ label: string; value: string }>;
-        };
-    },
-    watch: {
-        show(newValue) {
-            if (newValue) {
-                this.loadSaveData();
-            }
-        }
-    },
-    methods: {
-        loadSaveData() {
-            this.saves = settings.saves.reduce(
-                (
-                    acc: Record<
-                        string,
-                        Omit<Partial<PlayerData>, "id"> & { id: string; error?: unknown }
-                    >,
-                    curr: string
-                ) => {
-                    try {
-                        const save = localStorage.getItem(curr);
-                        if (save == null) {
-                            acc[curr] = { error: `Save with id "${curr}" doesn't exist`, id: curr };
-                        } else {
-                            acc[curr] = JSON.parse(decodeURIComponent(escape(atob(save))));
-                            acc[curr].id = curr;
-                        }
-                    } catch (error) {
-                        console.warn(`Can't load save with id "${curr}"`, error);
-                        acc[curr] = { error, id: curr };
-                    }
-                    return acc;
-                },
-                {}
-            );
-        },
-        exportSave(id: string) {
-            let saveToExport;
-            if (player.id === id) {
-                save();
-                saveToExport = state.saveToExport;
-            } else {
-                saveToExport = btoa(unescape(encodeURIComponent(JSON.stringify(this.saves[id]))));
-            }
+export type LoadablePlayerData = Omit<Partial<PlayerData>, "id"> & { id: string; error?: unknown };
 
-            // Put on clipboard. Using the clipboard API asks for permissions and stuff
-            const el = document.createElement("textarea");
-            el.value = saveToExport;
-            document.body.appendChild(el);
-            el.select();
-            el.setSelectionRange(0, 99999);
-            document.execCommand("copy");
-            document.body.removeChild(el);
-        },
-        duplicateSave(id: string) {
-            if (player.id === id) {
-                save();
-            }
+const isOpen = ref(false);
 
-            const playerData = { ...this.saves[id], id: getUniqueID() };
-            localStorage.setItem(
-                playerData.id,
-                btoa(unescape(encodeURIComponent(JSON.stringify(playerData))))
-            );
-
-            settings.saves.push(playerData.id);
-            this.saves[playerData.id] = playerData;
-        },
-        deleteSave(id: string) {
-            settings.saves = settings.saves.filter((save: string) => save !== id);
-            localStorage.removeItem(id);
-            delete this.saves[id];
-        },
-        openSave(id: string) {
-            this.saves[player.id].time = player.time;
-            save();
-            loadSave(this.saves[id]);
-        },
-        newSave() {
-            const playerData = newSave();
-            this.saves[playerData.id] = playerData;
-        },
-        newFromPreset(preset: string) {
-            const playerData = JSON.parse(decodeURIComponent(escape(atob(preset))));
-            playerData.id = getUniqueID();
-            localStorage.setItem(
-                playerData.id,
-                btoa(unescape(encodeURIComponent(JSON.stringify(playerData))))
-            );
-
-            settings.saves.push(playerData.id);
-            this.saves[playerData.id] = playerData;
-        },
-        editSave(id: string, newName: string) {
-            this.saves[id].name = newName;
-            if (player.id === id) {
-                player.name = newName;
-                save();
-            } else {
-                localStorage.setItem(
-                    id,
-                    btoa(unescape(encodeURIComponent(JSON.stringify(this.saves[id]))))
-                );
-            }
-        },
-        importSave(text: string) {
-            this.saveToImport = text;
-            if (text) {
-                this.$nextTick(() => {
-                    try {
-                        const playerData = JSON.parse(decodeURIComponent(escape(atob(text))));
-                        if (typeof playerData !== "object") {
-                            this.importingFailed = true;
-                            return;
-                        }
-                        const id = getUniqueID();
-                        playerData.id = id;
-                        localStorage.setItem(
-                            id,
-                            btoa(unescape(encodeURIComponent(JSON.stringify(playerData))))
-                        );
-                        this.saves[id] = playerData;
-                        this.saveToImport = "";
-                        this.importingFailed = false;
-
-                        settings.saves.push(id);
-                    } catch (e) {
-                        this.importingFailed = true;
-                    }
-                });
-            } else {
-                this.importingFailed = false;
-            }
-        },
-        update(e: { newIndex: number; oldIndex: number }) {
-            settings.saves.splice(e.newIndex, 0, settings.saves.splice(e.oldIndex, 1)[0]);
-        }
+defineExpose({
+    open() {
+        isOpen.value = true;
     }
 });
+
+const importingFailed = ref(false);
+const saveToImport = ref("");
+
+watch(isOpen, isOpen => {
+    if (isOpen) {
+        loadSaveData();
+    }
+});
+
+watch(saveToImport, save => {
+    if (save) {
+        nextTick(() => {
+            try {
+                const playerData = JSON.parse(decodeURIComponent(escape(atob(save))));
+                if (typeof playerData !== "object") {
+                    importingFailed.value = true;
+                    return;
+                }
+                const id = getUniqueID();
+                playerData.id = id;
+                localStorage.setItem(
+                    id,
+                    btoa(unescape(encodeURIComponent(JSON.stringify(playerData))))
+                );
+                saves.value[id] = playerData;
+                saveToImport.value = "";
+                importingFailed.value = false;
+
+                settings.saves.push(id);
+            } catch (e) {
+                importingFailed.value = true;
+            }
+        });
+    } else {
+        importingFailed.value = false;
+    }
+});
+
+let bankContext = require.context("raw-loader!../../../saves", true, /\.txt$/);
+let bank = ref(
+    bankContext.keys().reduce((acc: Array<{ label: string; value: string }>, curr) => {
+        // .slice(2, -4) strips the leading ./ and the trailing .txt
+        acc.push({
+            label: curr.slice(2, -4),
+            value: bankContext(curr).default
+        });
+        return acc;
+    }, [])
+);
+
+const saves = ref<Record<string, LoadablePlayerData>>({});
+
+function loadSaveData() {
+    saves.value = settings.saves.reduce((acc: Record<string, LoadablePlayerData>, curr: string) => {
+        try {
+            const save = localStorage.getItem(curr);
+            if (save == null) {
+                acc[curr] = { error: `Save with id "${curr}" doesn't exist`, id: curr };
+            } else {
+                acc[curr] = JSON.parse(decodeURIComponent(escape(atob(save))));
+                acc[curr].id = curr;
+            }
+        } catch (error) {
+            console.warn(`Can't load save with id "${curr}"`, error);
+            acc[curr] = { error, id: curr };
+        }
+        return acc;
+    }, {});
+}
+
+function exportSave(id: string) {
+    let saveToExport;
+    if (player.id === id) {
+        saveToExport = save();
+    } else {
+        saveToExport = btoa(unescape(encodeURIComponent(JSON.stringify(saves.value[id]))));
+    }
+
+    // Put on clipboard. Using the clipboard API asks for permissions and stuff
+    const el = document.createElement("textarea");
+    el.value = saveToExport;
+    document.body.appendChild(el);
+    el.select();
+    el.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    document.body.removeChild(el);
+}
+
+function duplicateSave(id: string) {
+    if (player.id === id) {
+        save();
+    }
+
+    const playerData = { ...saves.value[id], id: getUniqueID() };
+    localStorage.setItem(
+        playerData.id,
+        btoa(unescape(encodeURIComponent(JSON.stringify(playerData))))
+    );
+
+    settings.saves.push(playerData.id);
+    saves.value[playerData.id] = playerData;
+}
+
+function deleteSave(id: string) {
+    settings.saves = settings.saves.filter((save: string) => save !== id);
+    localStorage.removeItem(id);
+    delete saves.value[id];
+}
+
+function openSave(id: string) {
+    saves.value[player.id].time = player.time;
+    save();
+    loadSave(saves.value[id]);
+}
+
+function newSave() {
+    const playerData = createNewSave();
+    saves.value[playerData.id] = playerData;
+}
+
+function newFromPreset(preset: string) {
+    const playerData = JSON.parse(decodeURIComponent(escape(atob(preset))));
+    playerData.id = getUniqueID();
+    localStorage.setItem(
+        playerData.id,
+        btoa(unescape(encodeURIComponent(JSON.stringify(playerData))))
+    );
+
+    settings.saves.push(playerData.id);
+    saves.value[playerData.id] = playerData;
+}
+
+function editSave(id: string, newName: string) {
+    saves.value[id].name = newName;
+    if (player.id === id) {
+        player.name = newName;
+        save();
+    } else {
+        localStorage.setItem(
+            id,
+            btoa(unescape(encodeURIComponent(JSON.stringify(saves.value[id]))))
+        );
+    }
+}
+
+function update(e: { newIndex: number; oldIndex: number }) {
+    settings.saves.splice(e.newIndex, 0, settings.saves.splice(e.oldIndex, 1)[0]);
+}
 </script>
 
 <style scoped>

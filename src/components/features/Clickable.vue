@@ -1,95 +1,61 @@
 <template>
-    <div v-if="clickable.unlocked">
+    <div v-if="visibility !== Visibility.None" v-show="visibility === Visibility.Visible">
         <button
             :style="style"
-            @click="clickable.click"
+            @click="onClick"
             @mousedown="start"
             @mouseleave="stop"
             @mouseup="stop"
             @touchstart="start"
             @touchend="stop"
             @touchcancel="stop"
-            :disabled="!clickable.canClick"
+            :disabled="!canClick"
             :class="{
                 feature: true,
-                [layer]: true,
                 clickable: true,
-                can: clickable.canClick,
-                locked: !clickable.canClick
+                can: props.canClick,
+                locked: !canClick,
+                small,
+                ...classes
             }"
         >
-            <div v-if="title">
-                <component :is="title" />
-            </div>
-            <component :is="display" style="white-space: pre-line;" />
-            <mark-node :mark="clickable.mark" />
-            <branch-node :branches="clickable.branches" :id="id" featureType="clickable" />
+            <component v-if="component" :is="component" />
+            <MarkNode :mark="mark" />
+            <LinkNode :id="id" />
         </button>
     </div>
 </template>
 
-<script lang="ts">
-import { layers } from "@/game/layers";
-import { Clickable } from "@/typings/features/clickable";
-import { coerceComponent, InjectLayerMixin } from "@/util/vue";
-import { Component, defineComponent } from "vue";
+<script setup lang="tsx">
+import { GenericClickable } from "@/features/clickable";
+import { FeatureComponent, Visibility } from "@/features/feature";
+import { coerceComponent, isCoercableComponent, setupHoldToClick } from "@/util/vue";
+import { computed, toRefs, unref } from "vue";
+import LinkNode from "../system/LinkNode.vue";
+import MarkNode from "./MarkNode.vue";
 
-export default defineComponent({
-    name: "clickable",
-    mixins: [InjectLayerMixin],
-    props: {
-        id: {
-            type: [Number, String],
-            required: true
-        },
-        size: String
-    },
-    data() {
-        return {
-            interval: null,
-            time: 0
-        } as {
-            interval: number | null;
-            time: number;
-        };
-    },
-    computed: {
-        clickable(): Clickable {
-            return layers[this.layer].clickables!.data[this.id];
-        },
-        style(): Array<Partial<CSSStyleDeclaration> | undefined> {
-            return [
-                this.clickable.canClick ? { backgroundColor: layers[this.layer].color } : undefined,
-                this.size ? { height: this.size, width: this.size } : undefined,
-                layers[this.layer].componentStyles?.clickable,
-                this.clickable.style
-            ];
-        },
-        title(): Component | string | null {
-            if (this.clickable.title) {
-                return coerceComponent(this.clickable.title, "h2");
-            }
-            return null;
-        },
-        display(): Component | string {
-            return coerceComponent(this.clickable.display, "div");
-        }
-    },
-    methods: {
-        start() {
-            if (!this.interval && this.clickable.click) {
-                this.interval = setInterval(this.clickable.click, 250);
-            }
-        },
-        stop() {
-            if (this.interval) {
-                clearInterval(this.interval);
-                this.interval = null;
-                this.time = 0;
-            }
-        }
+const props = toRefs(defineProps<FeatureComponent<GenericClickable>>());
+
+const component = computed(() => {
+    const display = unref(props.display);
+    if (display == null) {
+        return null;
     }
+    if (isCoercableComponent(display)) {
+        return coerceComponent(display);
+    }
+    return (
+        <span>
+            <div v-if={display.title}>
+                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                <component v-is={coerceComponent(display.title!, "h2")} />
+            </div>
+            <component v-is={coerceComponent(display.description, "div")} />
+        </span>
+    );
 });
+
+const { start, stop } = setupHoldToClick(props.onClick, props.onHold);
 </script>
 
 <style scoped>

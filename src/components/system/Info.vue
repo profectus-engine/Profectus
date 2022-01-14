@@ -1,5 +1,5 @@
 <template>
-    <Modal :show="show" @close="$emit('closeDialog', 'Info')">
+    <Modal v-model="isOpen">
         <template v-slot:header>
             <div class="info-modal-header">
                 <img class="info-modal-logo" v-if="logo" :src="logo" :alt="title" />
@@ -17,7 +17,7 @@
                     Aarex
                 </div>
                 <br />
-                <div class="link" @click="$emit('openDialog', 'Changelog')">
+                <div class="link" @click="openChangelog">
                     Changelog
                 </div>
                 <br />
@@ -51,60 +51,36 @@
                 </div>
                 <br />
                 <div>Time Played: {{ timePlayed }}</div>
-                <div v-if="hotkeys.length > 0">
-                    <br />
-                    <h4>Hotkeys</h4>
-                    <div v-for="key in hotkeys" :key="key.key">
-                        {{ key.key }}: {{ key.description }}
-                    </div>
-                </div>
             </div>
         </template>
     </Modal>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
+import Modal from "@/components/system/Modal.vue";
+import type Changelog from "@/data/Changelog.vue";
 import modInfo from "@/data/modInfo.json";
-import { hotkeys } from "@/game/layers";
 import player from "@/game/player";
 import { formatTime } from "@/util/bignum";
-import { defineComponent } from "vue";
+import { computed, ref, toRefs, unref } from "vue";
 
-export default defineComponent({
-    name: "Info",
-    data() {
-        const {
-            title,
-            logo,
-            author,
-            discordName,
-            discordLink,
-            versionNumber,
-            versionTitle
-        } = modInfo;
-        return {
-            title,
-            logo,
-            author,
-            discordName,
-            discordLink,
-            versionNumber,
-            versionTitle
-        };
-    },
-    props: {
-        show: Boolean
-    },
-    emits: ["closeDialog", "openDialog"],
-    computed: {
-        timePlayed() {
-            return formatTime(player.timePlayed);
-        },
-        hotkeys() {
-            return hotkeys.filter(hotkey => hotkey.unlocked);
-        }
+const { title, logo, author, discordName, discordLink, versionNumber, versionTitle } = modInfo;
+
+const props = toRefs(defineProps<{ changelog: typeof Changelog | null }>());
+
+const isOpen = ref(false);
+
+const timePlayed = computed(() => formatTime(player.timePlayed));
+
+defineExpose({
+    open() {
+        isOpen.value = true;
     }
 });
+
+function openChangelog() {
+    unref(props.changelog)?.open();
+}
 </script>
 
 <style scoped>

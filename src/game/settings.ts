@@ -1,51 +1,32 @@
 import modInfo from "@/data/modInfo.json";
 import { Themes } from "@/data/themes";
-import { Settings } from "@/typings/settings";
-import { isPlainObject } from "@/util/common";
+import { globalBus } from "@/game/events";
 import { hardReset } from "@/util/save";
-import { reactive } from "vue";
-import { MilestoneDisplay } from "./enums";
+import { reactive, watch } from "vue";
 
-const state = reactive<Settings>({
+export interface Settings {
+    active: string;
+    saves: string[];
+    showTPS: boolean;
+    theme: Themes;
+    unthrottled: boolean;
+}
+
+const state = reactive<Partial<Settings>>({
     active: "",
     saves: [],
     showTPS: true,
-    msDisplay: MilestoneDisplay.All,
-    hideChallenges: false,
     theme: Themes.Nordic,
     unthrottled: false
 });
 
-const settingsHandler: ProxyHandler<Record<string, any>> = {
-    get(target: Record<string, any>, key: string): any {
-        if (key === "__state") {
-            return target[key];
-        }
-        if (target.__state[key] == undefined) {
-            return;
-        }
-        if (isPlainObject(target.__state[key])) {
-            if (target.__state[key] !== target[key]?.__state) {
-                target[key] = new Proxy({ __state: target.__state[key] }, settingsHandler);
-            }
-            return target[key];
-        }
-
-        return target.__state[key];
-    },
-    set(target: Record<string, any>, property: string, value: any): boolean {
-        target.__state[property] = value;
-        localStorage.setItem(modInfo.id, btoa(unescape(encodeURIComponent(JSON.stringify(state)))));
-        return true;
-    },
-    ownKeys(target: Record<string, any>) {
-        return Reflect.ownKeys(target.__state);
-    },
-    has(target: Record<string, any>, key: string) {
-        return Reflect.has(target.__state, key);
-    }
-};
-export default window.settings = new Proxy({ __state: state }, settingsHandler) as Settings;
+watch(
+    () => state,
+    state =>
+        localStorage.setItem(modInfo.id, btoa(unescape(encodeURIComponent(JSON.stringify(state))))),
+    { deep: true }
+);
+export default window.settings = state as Settings;
 
 export function loadSettings(): void {
     try {
@@ -56,18 +37,19 @@ export function loadSettings(): void {
                 Object.assign(state, settings);
             }
         }
+        globalBus.emit("loadSettings", state);
         // eslint-disable-next-line no-empty
     } catch {}
 }
 
 export const hardResetSettings = (window.hardResetSettings = () => {
-    Object.assign(state, {
+    const settings = {
         active: "",
         saves: [],
         showTPS: true,
-        msDisplay: MilestoneDisplay.All,
-        hideChallenges: false,
         theme: Themes.Nordic
-    });
+    };
+    globalBus.emit("loadSettings", settings);
+    Object.assign(state, settings);
     hardReset();
 });
