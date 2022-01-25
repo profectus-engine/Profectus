@@ -3,8 +3,8 @@ import player, { Player, PlayerData, stringifySave } from "@/game/player";
 import settings, { loadSettings } from "@/game/settings";
 import Decimal from "./bignum";
 
-export function setupInitialStore(player: Partial<PlayerData> = {}): asserts player is Player {
-    Object.assign(
+export function setupInitialStore(player: Partial<PlayerData> = {}): Player {
+    return Object.assign(
         {
             id: `${modInfo.id}-0`,
             name: "Default Save",
@@ -20,7 +20,7 @@ export function setupInitialStore(player: Partial<PlayerData> = {}): asserts pla
             layers: {}
         },
         player
-    );
+    ) as Player;
 }
 
 export function save(): string {
@@ -54,8 +54,8 @@ export async function load(): Promise<void> {
 
 export function newSave(): PlayerData {
     const id = getUniqueID();
-    const player = { id };
-    setupInitialStore(player);
+    const player = setupInitialStore({ id });
+    console.log(player);
     localStorage.setItem(id, btoa(unescape(encodeURIComponent(stringifySave(player)))));
 
     settings.saves.push(id);
@@ -81,13 +81,15 @@ export async function loadSave(playerObj: Partial<PlayerData>): Promise<void> {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         removeLayer(layers[layer]!);
     }
-    console.log(getInitialLayers(playerObj))
     getInitialLayers(playerObj).forEach(layer => addLayer(layer, playerObj));
 
-    setupInitialStore(playerObj);
+    playerObj = setupInitialStore(playerObj);
     if (playerObj.offlineProd && playerObj.time) {
         if (playerObj.offlineTime == undefined) playerObj.offlineTime = new Decimal(0);
-        playerObj.offlineTime = playerObj.offlineTime.add((Date.now() - playerObj.time) / 1000);
+        playerObj.offlineTime = Decimal.add(
+            playerObj.offlineTime,
+            (Date.now() - playerObj.time) / 1000
+        );
     }
     playerObj.time = Date.now();
     if (playerObj.modVersion !== modInfo.versionNumber) {
@@ -95,7 +97,7 @@ export async function loadSave(playerObj: Partial<PlayerData>): Promise<void> {
     }
 
     Object.assign(player, playerObj);
-    settings.active = playerObj.id;
+    settings.active = player.id;
 }
 
 setInterval(() => {

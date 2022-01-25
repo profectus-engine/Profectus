@@ -5,9 +5,9 @@
             <div class="inner-tab">
                 <Layer
                     v-if="layerKeys.includes(tab)"
-                    v-bind="wrapFeature(layers[tab])"
+                    v-bind="layers[tab]!"
                     :index="index"
-                    :tab="() => ($refs[`tab-${index}`] as HTMLElement | undefined)"
+                    :tab="() => (($refs[`tab-${index}`] as HTMLElement[] | undefined)?.[0])"
                 />
                 <component :is="tab" :index="index" v-else />
             </div>
@@ -18,7 +18,6 @@
 
 <script setup lang="ts">
 import modInfo from "@/data/modInfo.json";
-import { wrapFeature } from "@/features/feature";
 import { layers } from "@/game/layers";
 import player from "@/game/player";
 import { computed, toRef } from "vue";

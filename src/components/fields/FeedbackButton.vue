@@ -5,13 +5,11 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, ref, toRefs } from "vue";
+import { nextTick, ref } from "vue";
 
-toRefs(
-    defineProps<{
-        left?: boolean;
-    }>()
-);
+defineProps<{
+    left?: boolean;
+}>();
 const emit = defineEmits<{
     (e: "click"): void;
 }>();

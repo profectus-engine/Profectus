@@ -1,7 +1,7 @@
 <template>
     <slot />
     <div ref="resizeListener" class="resize-listener" />
-    <svg v-bind="$attrs" v-if="validLinks">
+    <svg v-if="validLinks" v-bind="$attrs">
         <LinkVue
             v-for="(link, index) in validLinks"
             :key="index"
@@ -19,10 +19,11 @@ import {
     RegisterLinkNodeInjectionKey,
     UnregisterLinkNodeInjectionKey
 } from "@/features/links";
-import { computed, nextTick, onMounted, provide, ref, toRefs, unref } from "vue";
+import { computed, nextTick, onMounted, provide, ref, toRefs } from "vue";
 import LinkVue from "./Link.vue";
 
-const props = toRefs(defineProps<{ links: Link[] }>());
+const _props = defineProps<{ links: Link[] }>();
+const { links } = toRefs(_props);
 
 const observer = new MutationObserver(updateNodes);
 const resizeObserver = new ResizeObserver(updateBounds);
@@ -42,7 +43,7 @@ onMounted(() => {
 });
 
 const validLinks = computed(() =>
-    unref(props.links.value).filter(link => {
+    links.value.filter(link => {
         const n = nodes.value;
         return (
             n[link.startNode.id]?.x != undefined &&

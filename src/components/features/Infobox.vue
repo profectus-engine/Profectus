@@ -23,21 +23,57 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts">
 import themes from "@/data/themes";
-import { FeatureComponent, Visibility } from "@/features/feature";
-import { GenericInfobox } from "@/features/infobox";
+import { CoercableComponent, Visibility } from "@/features/feature";
 import settings from "@/game/settings";
 import { coerceComponent } from "@/util/vue";
-import { computed, toRefs, unref } from "vue";
-import LinkNode from "../system/LinkNode.vue";
 import CollapseTransition from "@ivanv/vue-collapse-transition/src/CollapseTransition.vue";
+import { computed, defineComponent, PropType, StyleValue, toRefs } from "vue";
+import LinkNode from "../system/LinkNode.vue";
 
-const props = toRefs(defineProps<FeatureComponent<GenericInfobox>>());
+export default defineComponent({
+    props: {
+        visibility: {
+            type: Object as PropType<Visibility>,
+            required: true
+        },
+        display: {
+            type: [Object, String] as PropType<CoercableComponent>,
+            required: true
+        },
+        title: [Object, String] as PropType<CoercableComponent>,
+        color: String,
+        collapsed: {
+            type: Boolean,
+            required: true
+        },
+        style: Object as PropType<StyleValue>,
+        titleStyle: Object as PropType<StyleValue>,
+        bodyStyle: Object as PropType<StyleValue>,
+        classes: Object as PropType<Record<string, boolean>>,
+        id: {
+            type: String,
+            required: true
+        }
+    },
+    setup(props) {
+        const { title, display } = toRefs(props);
 
-const titleComponent = computed(() => coerceComponent(unref(props.title)));
-const bodyComponent = computed(() => coerceComponent(unref(props.display)));
-const stacked = computed(() => themes[settings.theme].stackedInfoboxes);
+        const titleComponent = computed(() => title.value && coerceComponent(title.value));
+        const bodyComponent = computed(() => coerceComponent(display.value));
+        const stacked = computed(() => themes[settings.theme].stackedInfoboxes);
+
+        return {
+            titleComponent,
+            bodyComponent,
+            stacked,
+            LinkNode,
+            CollapseTransition,
+            Visibility
+        };
+    }
+});
 </script>
 
 <style scoped>

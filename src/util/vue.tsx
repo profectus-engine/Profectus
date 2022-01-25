@@ -5,7 +5,21 @@ import {
     Component as ComponentKey,
     GenericComponent
 } from "@/features/feature";
-import { Component, DefineComponent, defineComponent, h, reactive, Ref } from "vue";
+import { isArray } from "@vue/shared";
+import {
+    Component,
+    computed,
+    ComputedRef,
+    DefineComponent,
+    defineComponent,
+    h,
+    PropType,
+    ref,
+    Ref,
+    unref,
+    WritableComputedRef
+} from "vue";
+import { ProcessedComputable } from "./computed";
 
 export function coerceComponent(component: CoercableComponent, defaultWrapper = "span"): Component {
     if (typeof component === "string") {
@@ -78,24 +92,17 @@ export function setupHoldToClick(
     stop: VoidFunction;
     handleHolding: VoidFunction;
 } {
-    const state = reactive<{
-        interval: null | number;
-        time: number;
-    }>({
-        interval: null,
-        time: 0
-    });
+    const interval = ref<null | number>(null);
 
     function start() {
-        if (!state.interval) {
-            state.interval = setInterval(handleHolding, 250);
+        if (!interval.value) {
+            interval.value = setInterval(handleHolding, 250);
         }
     }
     function stop() {
-        if (state.interval) {
-            clearInterval(state.interval);
-            state.interval = null;
-            state.time = 0;
+        if (interval.value) {
+            clearInterval(interval.value);
+            interval.value = null;
         }
     }
     function handleHolding() {
@@ -107,4 +114,48 @@ export function setupHoldToClick(
     }
 
     return { start, stop, handleHolding };
+}
+
+export function computeComponent(
+    component: Ref<ProcessedComputable<CoercableComponent>>
+): ComputedRef<Component> {
+    return computed(() => {
+        return coerceComponent(unref(unref<ProcessedComputable<CoercableComponent>>(component)));
+    });
+}
+export function computeOptionalComponent(
+    component: Ref<ProcessedComputable<CoercableComponent | undefined> | undefined>
+): ComputedRef<Component | undefined> {
+    return computed(() => {
+        let currComponent = unref<ProcessedComputable<CoercableComponent | undefined> | undefined>(
+            component
+        );
+        if (currComponent == null) return;
+        currComponent = unref(currComponent);
+        return currComponent == null ? undefined : coerceComponent(currComponent);
+    });
+}
+
+export function wrapRef<T>(ref: Ref<ProcessedComputable<T>>): ComputedRef<T> {
+    return computed(() => unwrapRef(ref));
+}
+
+export function unwrapRef<T>(ref: Ref<ProcessedComputable<T>>): T {
+    return unref(unref<ProcessedComputable<T>>(ref));
+}
+
+type PropTypes =
+    | typeof Boolean
+    | typeof String
+    | typeof Number
+    | typeof Function
+    | typeof Object
+    | typeof Array;
+// TODO Unfortunately, the typescript engine gives up on typing completely when you use this method,
+// Even though it has the same typing as when doing it manually
+export function processedPropType<T>(...types: PropTypes[]): PropType<ProcessedComputable<T>> {
+    if (!types.includes(Object)) {
+        types.push(Object);
+    }
+    return types as PropType<ProcessedComputable<T>>;
 }

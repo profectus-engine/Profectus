@@ -12,13 +12,12 @@
 import { Link, LinkNode } from "@/features/links";
 import { computed, toRefs, unref } from "vue";
 
-const props = toRefs(
-    defineProps<{
-        link: Link;
-        startNode: LinkNode;
-        endNode: LinkNode;
-    }>()
-);
+const _props = defineProps<{
+    link: Link;
+    startNode: LinkNode;
+    endNode: LinkNode;
+}>();
+const props = toRefs(_props);
 
 const startPosition = computed(() => {
     const position = { x: props.startNode.value.x || 0, y: props.startNode.value.y || 0 };

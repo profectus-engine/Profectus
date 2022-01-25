@@ -57,17 +57,16 @@
 
 <script setup lang="ts">
 import player from "@/game/player";
-import { computed, ref, toRefs, unref, watch } from "vue";
+import { computed, ref, toRefs, watch } from "vue";
 import DangerButton from "../fields/DangerButton.vue";
 import FeedbackButton from "../fields/FeedbackButton.vue";
 import Text from "../fields/Text.vue";
 import { LoadablePlayerData } from "./SavesManager.vue";
 
-const props = toRefs(
-    defineProps<{
-        save: LoadablePlayerData;
-    }>()
-);
+const _props = defineProps<{
+    save: LoadablePlayerData;
+}>();
+const { save } = toRefs(_props);
 const emit = defineEmits<{
     (e: "export"): void;
     (e: "open"): void;
@@ -91,8 +90,10 @@ const newName = ref("");
 
 watch(isEditing, () => (newName.value = ""));
 
-const isActive = computed(() => unref(props.save).id === player.id);
-const currentTime = computed(() => (isActive.value ? player.time : unref(props.save).time));
+const isActive = computed(() => save.value && save.value.id === player.id);
+const currentTime = computed(() =>
+    isActive.value ? player.time : (save.value && save.value.time) || 0
+);
 
 function changeName() {
     emit("editName", newName.value);

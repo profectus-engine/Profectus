@@ -12,12 +12,11 @@
 <script setup lang="ts">
 import { ref, toRefs, unref, watch } from "vue";
 
-const props = toRefs(
-    defineProps<{
-        disabled?: boolean;
-        skipConfirm?: boolean;
-    }>()
-);
+const _props = defineProps<{
+    disabled?: boolean;
+    skipConfirm?: boolean;
+}>();
+const props = toRefs(_props);
 const emit = defineEmits<{
     (e: "click"): void;
     (e: "confirmingChanged", value: boolean): void;
@@ -63,7 +62,8 @@ function cancel() {
 </style>
 
 <style>
-.danger {
+.danger,
+.button.danger {
     position: relative;
     border: solid 2px var(--danger);
     border-right-width: 16px;

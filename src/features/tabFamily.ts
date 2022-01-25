@@ -15,6 +15,7 @@ import {
     getUniqueID,
     makePersistent,
     Persistent,
+    PersistentRef,
     PersistentState,
     Replace,
     setDefault,
@@ -85,6 +86,7 @@ export interface TabFamilyOptions {
 interface BaseTabFamily extends Persistent<string> {
     id: string;
     activeTab: Ref<GenericTab | CoercableComponent | null>;
+    selected: Ref<string>;
     type: typeof TabFamilyType;
     [Component]: typeof TabFamilyComponent;
 }
@@ -112,6 +114,7 @@ export function createTabFamily<T extends TabFamilyOptions>(
     tabFamily[Component] = TabFamilyComponent;
 
     makePersistent<string>(tabFamily, Object.keys(options.tabs)[0]);
+    tabFamily.selected = tabFamily[PersistentState];
     tabFamily.activeTab = computed(() => {
         const tabs = unref(proxy.tabs);
         if (

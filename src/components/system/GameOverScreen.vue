@@ -20,7 +20,7 @@
                 <br />
                 <div>
                     <a :href="discordLink">
-                        <img src="images/discord.png" class="game-over-modal-discord" />
+                        <span class="material-icons game-over-modal-discord">discord</span>
                         {{ discordName }}
                     </a>
                 </div>

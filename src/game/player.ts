@@ -1,7 +1,7 @@
 import Decimal, { DecimalSource } from "@/util/bignum";
 import { isPlainObject } from "@/util/common";
 import { ProxiedWithState, ProxyPath, ProxyState } from "@/util/proxies";
-import { reactive, unref } from "vue";
+import { shallowReactive, unref } from "vue";
 import transientState from "./state";
 
 export interface PlayerData {
@@ -12,8 +12,8 @@ export interface PlayerData {
     time: number;
     autosave: boolean;
     offlineProd: boolean;
-    offlineTime: Decimal | null;
-    timePlayed: Decimal;
+    offlineTime: DecimalSource | null;
+    timePlayed: DecimalSource;
     keepGoing: boolean;
     minimized: Record<string, boolean>;
     modID: string;
@@ -23,7 +23,7 @@ export interface PlayerData {
 
 export type Player = ProxiedWithState<PlayerData>;
 
-const state = reactive<PlayerData>({
+const state = shallowReactive<PlayerData>({
     id: "",
     devSpeed: null,
     name: "",
@@ -51,24 +51,17 @@ const playerHandler: ProxyHandler<Record<PropertyKey, any>> = {
         if (key === ProxyState || key === ProxyPath) {
             return target[key];
         }
-        if (target[ProxyState][key] == undefined) {
-            return;
-        }
-        if (
-            isPlainObject(target[ProxyState][key]) &&
-            !(target[ProxyState][key] instanceof Decimal)
-        ) {
-            if (target[ProxyState][key] !== target[key]?.[ProxyState]) {
+
+        const value = target[ProxyState][key];
+        if (isPlainObject(value) && !(value instanceof Decimal)) {
+            if (value !== target[key]?.[ProxyState]) {
                 const path = [...target[ProxyPath], key];
-                target[key] = new Proxy(
-                    { [ProxyState]: target[ProxyState][key], [ProxyPath]: path },
-                    playerHandler
-                );
+                target[key] = new Proxy({ [ProxyState]: value, [ProxyPath]: path }, playerHandler);
             }
             return target[key];
         }
 
-        return target[ProxyState][key];
+        return value;
     },
     set(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -4,7 +4,7 @@
             <div class="tab-buttons" :class="{ floating }">
                 <TabButton
                     v-for="(button, id) in tabs"
-                    @selectTab="selectTab(id)"
+                    @selectTab="selected = id"
                     :key="id"
                     :active="button.tab === activeTab"
                     v-bind="button"
@@ -12,48 +12,81 @@
             </div>
         </Sticky>
         <template v-if="activeTab">
-            <component :is="display" />
+            <component :is="display!" />
         </template>
     </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts">
 import themes from "@/data/themes";
-import { FeatureComponent, PersistentState } from "@/features/feature";
-import { GenericTabFamily } from "@/features/tabFamily";
+import { CoercableComponent } from "@/features/feature";
+import { GenericTab } from "@/features/tab";
+import { GenericTabButton } from "@/features/tabFamily";
 import settings from "@/game/settings";
 import { coerceComponent, isCoercableComponent } from "@/util/vue";
-import { computed, toRefs, unref } from "vue";
+import { computed, defineComponent, PropType, toRefs, unref } from "vue";
 import Sticky from "../system/Sticky.vue";
+import TabButton from "./TabButton.vue";
 
-const props = toRefs(defineProps<FeatureComponent<GenericTabFamily>>());
+export default defineComponent({
+    props: {
+        activeTab: {
+            type: Object as PropType<GenericTab | CoercableComponent | null>,
+            required: true
+        },
+        selected: {
+            type: String,
+            required: true
+        },
+        tabs: {
+            type: Object as PropType<Record<string, GenericTabButton>>,
+            required: true
+        }
+    },
+    setup(props) {
+        const { activeTab } = toRefs(props);
 
-const floating = computed(() => {
-    return themes[settings.theme].floatingTabs;
+        const floating = computed(() => {
+            return themes[settings.theme].floatingTabs;
+        });
+
+        const display = computed(() => {
+            const currActiveTab = activeTab.value;
+            return currActiveTab
+                ? coerceComponent(
+                      isCoercableComponent(currActiveTab)
+                          ? currActiveTab
+                          : unref(currActiveTab.display)
+                  )
+                : null;
+        });
+
+        const classes = computed(() => {
+            const currActiveTab = activeTab.value;
+            const tabClasses =
+                isCoercableComponent(currActiveTab) || !currActiveTab
+                    ? undefined
+                    : unref(currActiveTab.classes);
+            return tabClasses;
+        });
+
+        const style = computed(() => {
+            const currActiveTab = activeTab.value;
+            return isCoercableComponent(currActiveTab) || !currActiveTab
+                ? undefined
+                : unref(currActiveTab.style);
+        });
+
+        return {
+            floating,
+            display,
+            classes,
+            style,
+            Sticky,
+            TabButton
+        };
+    }
 });
-
-const display = computed(() => {
-    const activeTab = props.activeTab.value;
-    return activeTab
-        ? coerceComponent(isCoercableComponent(activeTab) ? activeTab : activeTab.display)
-        : null;
-});
-
-const classes = computed(() => {
-    const activeTab = props.activeTab.value;
-    const tabClasses =
-        isCoercableComponent(activeTab) || !activeTab ? undefined : unref(activeTab.classes);
-    return tabClasses;
-});
-
-const style = computed(() => {
-    const activeTab = props.activeTab.value;
-    return isCoercableComponent(activeTab) || !activeTab ? undefined : unref(activeTab.style);
-});
-
-function selectTab(tab: string) {
-    props[PersistentState].value = tab;
-}
 </script>
 
 <style scoped>

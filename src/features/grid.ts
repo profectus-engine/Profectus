@@ -21,73 +21,99 @@ import {
     ProcessedComputable
 } from "@/util/computed";
 import { createProxy, Proxied } from "@/util/proxies";
-import { unref } from "vue";
+import { computed, unref } from "vue";
 
 export const GridType = Symbol("Grid");
 
 export type CellComputable<T> = Computable<T> | ((id: string | number, state: State) => T);
 
-function createGridProxy(object: Record<string, unknown>): Record<string | number, GridCell> {
-    if (object.isProxy) {
-        console.warn(
-            "Creating a proxy out of a proxy! This may cause unintentional function calls and stack overflows."
-        );
-    }
-    return new Proxy(object, gridHandler) as Proxied<Record<string | number, GridCell>>;
+function createGridProxy(grid: GenericGrid): Record<string | number, GridCell> {
+    return new Proxy({}, getGridHandler(grid)) as Proxied<Record<string | number, GridCell>>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const gridHandler: ProxyHandler<Record<PropertyKey, any>> = {
-    get(target, key) {
-        if (key === "isProxy") {
-            return true;
+function getGridHandler(
+    grid: GenericGrid
+): ProxyHandler<Record<string | number, Proxied<GridCell>>> {
+    const keys = computed(() => {
+        const keys = [];
+        for (let row = 1; row <= grid.rows; row++) {
+            for (let col = 1; col <= grid.cols; col++) {
+                keys.push((row * 100 + col).toString());
+            }
         }
-
-        if (target[key] == null) {
-            target[key] = new Proxy(target, getCellHandler(key.toString()));
-        }
-
-        return target[key];
-    },
-    set(target, key, value) {
-        console.warn("Cannot set grid cells", target, key, value);
-        return false;
-    }
-};
-
-function getCellHandler(id: string) {
+        return keys;
+    });
     return {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        get(target: Record<string, any>, key: string, receiver: typeof Proxy): any {
+        get(target, key) {
             if (key === "isProxy") {
                 return true;
             }
 
-            let prop = target[key];
+            if (typeof key === "symbol") {
+                return (grid as never)[key];
+            }
+
+            if (target[key] == null) {
+                target[key] = new Proxy(
+                    grid,
+                    getCellHandler(key.toString())
+                ) as unknown as Proxied<GridCell>;
+            }
+
+            return target[key];
+        },
+        set(target, key, value) {
+            console.warn("Cannot set grid cells", target, key, value);
+            return false;
+        },
+        ownKeys() {
+            return keys.value;
+        },
+        has(target, key) {
+            return keys.value.includes(key.toString());
+        }
+    };
+}
+
+function getCellHandler(id: string): ProxyHandler<GenericGrid> {
+    return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        get(target, key, receiver): any {
+            if (key === "isProxy") {
+                return true;
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            let prop = (target as any)[key];
 
             if (isFunction(prop)) {
                 return () => prop.call(receiver, id, target.getState(id));
             }
-            if (prop != undefined || key.slice == undefined) {
+            if (prop != undefined || typeof key === "symbol") {
                 return prop;
             }
 
             key = key.slice(0, 1).toUpperCase() + key.slice(1);
-            prop = target[`get${key}`];
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            prop = (target as any)[`get${key}`];
             if (isFunction(prop)) {
                 return prop.call(receiver, id, target.getState(id));
             } else if (prop != undefined) {
                 return unref(prop);
             }
 
-            prop = target[`on${key}`];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            prop = (target as any)[`on${key}`];
             if (isFunction(prop)) {
                 return () => prop.call(receiver, id, target.getState(id));
             } else if (prop != undefined) {
                 return prop;
             }
 
-            return target[key];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            return (target as any)[key];
         },
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         set(target: Record<string, any>, key: string, value: any, receiver: typeof Proxy): boolean {
@@ -138,7 +164,7 @@ export interface GridOptions {
 export interface BaseGrid extends Persistent<Record<string | number, State>> {
     id: string;
     getID: (id: string | number, state: State) => string;
-    getState: (id: string | number, state: State) => State;
+    getState: (id: string | number) => State;
     setState: (id: string | number, state: State) => void;
     cells: Record<string | number, GridCell>;
     type: typeof GridType;
@@ -176,7 +202,6 @@ export function createGrid<T extends GridOptions>(options: T & ThisType<Grid<T>>
     grid.id = getUniqueID("grid-");
     grid[Component] = GridComponent;
 
-    grid.cells = createGridProxy(grid as unknown as Record<string, unknown>);
     grid.getID = function (this: GenericGrid, cell: string | number) {
         return grid.id + "-" + cell;
     };
@@ -205,5 +230,6 @@ export function createGrid<T extends GridOptions>(options: T & ThisType<Grid<T>>
     processComputable(grid as T, "getDisplay");
 
     const proxy = createProxy(grid as unknown as Grid<T>);
+    (proxy as GenericGrid).cells = createGridProxy(proxy as GenericGrid);
     return proxy;
 }

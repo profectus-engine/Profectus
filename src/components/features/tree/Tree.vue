@@ -1,12 +1,18 @@
 <template>
     <span class="row" v-for="(row, index) in nodes" :key="index">
-        <TreeNode v-for="(node, nodeIndex) in row" :key="nodeIndex" v-bind="wrapFeature(node)" />
+        <TreeNode
+            v-for="(node, nodeIndex) in row"
+            :key="nodeIndex"
+            v-bind="node"
+            :force-tooltip="node.forceTooltip"
+        />
     </span>
     <span class="left-side-nodes" v-if="leftSideNodes">
         <TreeNode
             v-for="(node, nodeIndex) in leftSideNodes"
             :key="nodeIndex"
-            v-bind="wrapFeature(node)"
+            v-bind="node"
+            :force-tooltip="node.forceTooltip"
             small
         />
     </span>
@@ -14,21 +20,30 @@
         <TreeNode
             v-for="(node, nodeIndex) in rightSideNodes"
             :key="nodeIndex"
-            v-bind="wrapFeature(node)"
+            v-bind="node"
+            :force-tooltip="node.forceTooltip"
             small
         />
     </span>
 </template>
 
 <script lang="ts">
-import { FeatureComponent, wrapFeature } from "@/features/feature";
-import { GenericTree } from "@/features/tree";
-import { defineComponent } from "vue";
+import { GenericTreeNode } from "@/features/tree";
+import { defineComponent, PropType } from "vue";
 import TreeNode from "./TreeNode.vue";
 
-// https://github.com/thepaperpilot/The-Modding-Tree-X/issues/1
-export default defineComponent(function Grid(props: FeatureComponent<GenericTree>) {
-    return { ...props, TreeNode, wrapFeature };
+export default defineComponent({
+    props: {
+        nodes: {
+            type: Array as PropType<GenericTreeNode[][]>,
+            required: true
+        },
+        leftSideNodes: Array as PropType<GenericTreeNode[]>,
+        rightSideNodes: Array as PropType<GenericTreeNode[]>
+    },
+    setup() {
+        return { TreeNode };
+    }
 });
 </script>
 

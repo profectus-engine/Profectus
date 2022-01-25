@@ -8,12 +8,11 @@
 import { displayResource, Resource } from "@/features/resource";
 import { computed, toRefs } from "vue";
 
-const props = toRefs(
-    defineProps<{
-        resource: Resource;
-        color: string;
-    }>()
-);
+const _props = defineProps<{
+    resource: Resource;
+    color: string;
+}>();
+const props = toRefs(_props);
 
 const amount = computed(() => displayResource(props.resource));
 </script>

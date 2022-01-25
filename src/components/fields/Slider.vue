@@ -11,14 +11,13 @@
 import { computed, toRefs, unref } from "vue";
 import Tooltip from "../system/Tooltip.vue";
 
-const props = toRefs(
-    defineProps<{
-        title?: string;
-        modelValue?: number;
-        min?: number;
-        max?: number;
-    }>()
-);
+const _props = defineProps<{
+    title?: string;
+    modelValue?: number;
+    min?: number;
+    max?: number;
+}>();
+const props = toRefs(_props);
 const emit = defineEmits<{
     (e: "update:modelValue", value: number): void;
 }>();

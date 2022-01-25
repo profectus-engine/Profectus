@@ -360,16 +360,6 @@ export const g = createTreeNode({
 });
 export const h = createTreeNode({
     id: "h",
-    branches: [
-        "g",
-        () => ({
-            target: "flatBoi",
-            featureType: "bar",
-            endOffset: {
-                x: -50 + 100 * flatBoi.progress.value.toNumber()
-            }
-        })
-    ],
     tooltip() {
         return `Restore your points to ${format(otherThingy.value)}`;
     },
@@ -388,7 +378,7 @@ const tree = createTree({
             [g, spook, h]
         ];
     },
-    branches: [
+    branches: () => [
         {
             startNode: fNode,
             endNode: treeNode,
@@ -415,7 +405,7 @@ const illuminatiTabs = createTabFamily({
             display: "first"
         }),
         second: createTabButton({
-            tab: fTab,
+            tab: () => fTab,
             display: "second"
         })
     },
@@ -569,7 +559,15 @@ const layer = createLayer({
     id,
     color,
     name,
-    links: tree.links,
+    links() {
+        const links = tree.links.value.slice();
+        links.push({
+            startNode: h,
+            endNode: flatBoi,
+            offsetEnd: { x: -50 + 100 * flatBoi.progress.value.toNumber(), y: 0 }
+        });
+        return links;
+    },
     points,
     beep,
     thingy,
@@ -601,7 +599,7 @@ const layer = createLayer({
     treeNode,
     resetButton,
     minWidth: 800,
-    display: tabs
+    display: render(tabs)
 });
 
 export default layer;

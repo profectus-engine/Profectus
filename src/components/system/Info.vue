@@ -64,7 +64,8 @@ import { computed, ref, toRefs, unref } from "vue";
 
 const { title, logo, author, discordName, discordLink, versionNumber, versionTitle } = modInfo;
 
-const props = toRefs(defineProps<{ changelog: typeof Changelog | null }>());
+const _props = defineProps<{ changelog: typeof Changelog | null }>();
+const props = toRefs(_props);
 
 const isOpen = ref(false);
 

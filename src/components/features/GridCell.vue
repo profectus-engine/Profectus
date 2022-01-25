@@ -19,22 +19,56 @@
     </button>
 </template>
 
-<script setup lang="ts">
-import { Visibility } from "@/features/feature";
-import { GridCell } from "@/features/grid";
+<script lang="ts">
+import { CoercableComponent, StyleValue, Visibility } from "@/features/feature";
 import { coerceComponent, setupHoldToClick } from "@/util/vue";
-import { computed, toRefs, unref } from "vue";
+import { computed, defineComponent, PropType, toRefs, unref } from "vue";
 import LinkNode from "../system/LinkNode.vue";
 
-const props = toRefs(defineProps<GridCell>());
+export default defineComponent({
+    props: {
+        visibility: {
+            type: Object as PropType<Visibility>,
+            required: true
+        },
+        onClick: Function as PropType<VoidFunction>,
+        onHold: Function as PropType<VoidFunction>,
+        display: {
+            type: [Object, String] as PropType<CoercableComponent>,
+            required: true
+        },
+        title: [Object, String] as PropType<CoercableComponent>,
+        style: Object as PropType<StyleValue>,
+        canClick: {
+            type: Boolean,
+            required: true
+        },
+        id: {
+            type: String,
+            required: true
+        }
+    },
+    setup(props) {
+        const { onClick, onHold, title, display } = toRefs(props);
 
-const { start, stop } = setupHoldToClick(props.onClick, props.onHold);
+        const { start, stop } = setupHoldToClick(onClick, onHold);
 
-const titleComponent = computed(() => {
-    const title = unref(props.title);
-    return title && coerceComponent(title);
+        const titleComponent = computed(() => {
+            const currTitle = unref(title);
+            return currTitle && coerceComponent(currTitle);
+        });
+        const component = computed(() => coerceComponent(unref(display)));
+
+        return {
+            start,
+            stop,
+            titleComponent,
+            component,
+            Visibility,
+            LinkNode
+        };
+    }
 });
-const component = computed(() => coerceComponent(unref(props.display)));
 </script>
 
 <style scoped>

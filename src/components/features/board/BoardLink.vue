@@ -14,11 +14,10 @@
 import { BoardNodeLink } from "@/features/board";
 import { computed, toRefs, unref } from "vue";
 
-const props = toRefs(
-    defineProps<{
-        link: BoardNodeLink;
-    }>()
-);
+const _props = defineProps<{
+    link: BoardNodeLink;
+}>();
+const props = toRefs(_props);
 
 const startPosition = computed(() => {
     const position = props.link.value.startNode.position;

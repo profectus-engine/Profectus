@@ -17,15 +17,14 @@ import { coerceComponent } from "@/util/vue";
 import { computed, StyleValue, toRefs } from "vue";
 import ResourceVue from "../system/Resource.vue";
 
-const props = toRefs(
-    defineProps<{
-        resource: Resource;
-        color?: string;
-        classes?: Record<string, boolean>;
-        style?: StyleValue;
-        effectDisplay?: CoercableComponent;
-    }>()
-);
+const _props = defineProps<{
+    resource: Resource;
+    color?: string;
+    classes?: Record<string, boolean>;
+    style?: StyleValue;
+    effectDisplay?: CoercableComponent;
+}>();
+const props = toRefs(_props);
 
 const effectComponent = computed(() => {
     const effectDisplay = props.effectDisplay?.value;

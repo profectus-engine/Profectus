@@ -10,12 +10,11 @@ import { CoercableComponent } from "@/features/feature";
 import { coerceComponent } from "@/util/vue";
 import { computed, toRefs, unref } from "vue";
 
-const props = toRefs(
-    defineProps<{
-        title?: CoercableComponent;
-        modelValue?: boolean;
-    }>()
-);
+const _props = defineProps<{
+    title?: CoercableComponent;
+    modelValue?: boolean;
+}>();
+const props = toRefs(_props);
 const emit = defineEmits<{
     (e: "update:modelValue", value: boolean): void;
 }>();

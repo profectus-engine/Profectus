@@ -1,4 +1,4 @@
-import { reactive } from "vue";
+import { shallowReactive } from "vue";
 
 export interface Transient {
     lastTenTicks: number[];
@@ -7,7 +7,7 @@ export interface Transient {
     NaNReceiver?: Record<string, unknown>;
 }
 
-export default window.state = reactive<Transient>({
+export default window.state = shallowReactive<Transient>({
     lastTenTicks: [],
     hasNaN: false,
     NaNPath: []

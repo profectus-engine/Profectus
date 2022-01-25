@@ -117,12 +117,16 @@ globalBus.on("addLayer", layer => {
                     achievement[PersistentState].value = true;
                     achievement.onComplete?.();
                     if (achievement.display) {
-                        const display = unref(achievement.display);
+                        const Display = coerceComponent(unref(achievement.display));
                         toast.info(
-                            <template>
-                                <h2>Milestone earned!</h2>
-                                <div>{coerceComponent(display)}</div>
-                            </template>
+                            <div>
+                                <h3>Achievement earned!</h3>
+                                <div>
+                                    {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+                                    {/* @ts-ignore */}
+                                    <Display />
+                                </div>
+                            </div>
                         );
                     }
                 }

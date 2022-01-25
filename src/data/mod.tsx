@@ -57,40 +57,39 @@ export const main = createLayer({
     id: "main",
     name: "Tree",
     links: tree.links,
-    display() {
-        return (
-            <template>
-                <div v-if={player.devSpeed === 0}>Game Paused</div>
-                <div v-else-if={player.devSpeed && player.devSpeed !== 1}>
-                    {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                    Dev Speed: {format(player.devSpeed!)}x
-                </div>
-                <div v-if={player.offlineTime != undefined}>
-                    {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                    Offline Time: {formatTime(player.offlineTime!)}
-                </div>
-                <div>
-                    <span v-if={Decimal.lt(points.value, "1e1000")}>You have </span>
-                    <h2>{format(points.value)}</h2>
-                    <span v-if={Decimal.lt(points.value, "1e1e6")}> points</span>
-                </div>
-                <div v-if={Decimal.gt(pointGain.value, 0)}>
-                    ({oomps.value === "" ? formatSmall(pointGain.value) : oomps.value}/sec)
-                </div>
-                <Spacer />
-                <Modal v-model={showModal}>
-                    <svg style="height: 80vmin; width: 80vmin;">
-                        <path d="M 32 222 Q 128 222, 128 0 Q 128 222, 224 222 L 224 224 L 32 224" />
+    display: (
+        <template>
+            <div v-show={player.devSpeed === 0}>Game Paused</div>
+            <div v-show={player.devSpeed && player.devSpeed !== 1}>
+                Dev Speed: {format(player.devSpeed || 0)}x
+            </div>
+            <div v-show={player.offlineTime != undefined}>
+                Offline Time: {formatTime(player.offlineTime || 0)}
+            </div>
+            <div>
+                <span v-show={Decimal.lt(points.value, "1e1000")}>You have </span>
+                <h2>{format(points.value)}</h2>
+                <span v-show={Decimal.lt(points.value, "1e1e6")}> points</span>
+            </div>
+            <div v-show={Decimal.gt(pointGain.value, 0)}>
+                ({oomps.value === "" ? formatSmall(pointGain.value) : oomps.value}/sec)
+            </div>
+            <Spacer />
+            <Modal
+                modelValue={showModal.value}
+                onUpdate:modelValue={value => (showModal.value = value)}
+            >
+                <svg style="height: 80vmin; width: 80vmin;">
+                    <path d="M 32 222 Q 128 222, 128 0 Q 128 222, 224 222 L 224 224 L 32 224" />
 
-                        <circle cx="64" cy="128" r="64" fill="#8da8b0" />
-                        <circle cx="128" cy="64" r="64" fill="#71368a" />
-                        <circle cx="192" cy="128" r="64" fill="#fa8508" />
-                    </svg>
-                </Modal>
-                {render(tree)}
-            </template>
-        );
-    },
+                    <circle cx="64" cy="128" r="64" fill="#8da8b0" />
+                    <circle cx="128" cy="64" r="64" fill="#71368a" />
+                    <circle cx="192" cy="128" r="64" fill="#fa8508" />
+                </svg>
+            </Modal>
+            {render(tree)}
+        </template>
+    ),
     points,
     best,
     total,

@@ -47,17 +47,17 @@ function update() {
 
     // Add offline time if any
     if (player.offlineTime != undefined) {
-        if (player.offlineTime.gt(modInfo.offlineLimit * 3600)) {
+        if (Decimal.gt(player.offlineTime, modInfo.offlineLimit * 3600)) {
             player.offlineTime = new Decimal(modInfo.offlineLimit * 3600);
         }
-        if (player.offlineTime.gt(0) && player.devSpeed !== 0) {
-            const offlineDiff = Decimal.max(player.offlineTime.div(10), diff);
-            player.offlineTime = player.offlineTime.sub(offlineDiff);
+        if (Decimal.gt(player.offlineTime, 0) && player.devSpeed !== 0) {
+            const offlineDiff = Decimal.div(player.offlineTime, 10).max(diff);
+            player.offlineTime = Decimal.sub(player.offlineTime, offlineDiff);
             diff = diff.add(offlineDiff);
         } else if (player.devSpeed === 0) {
-            player.offlineTime = player.offlineTime.add(diff);
+            player.offlineTime = Decimal.add(player.offlineTime, diff);
         }
-        if (!player.offlineProd || player.offlineTime.lt(0)) {
+        if (!player.offlineProd || Decimal.lt(player.offlineTime, 0)) {
             player.offlineTime = null;
         }
     }
@@ -74,7 +74,7 @@ function update() {
     if (diff.eq(0)) {
         return;
     }
-    player.timePlayed = player.timePlayed.add(diff);
+    player.timePlayed = Decimal.add(player.timePlayed, diff);
     globalBus.emit("update", diff, trueDiff);
 
     if (settings.unthrottled) {

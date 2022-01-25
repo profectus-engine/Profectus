@@ -1,67 +1,107 @@
 <template>
     <div class="layer-container">
         <button v-if="showGoBack" class="goBack" @click="goBack">←</button>
-        <button class="layer-tab minimized" v-if="minimized" @click="minimized = false">
-            <div>{{ name }}</div>
+        <button class="layer-tab minimized" v-if="minimized.value" @click="minimized.value = false">
+            <div>{{ unref(name) }}</div>
         </button>
-        <div class="layer-tab" :style="style" :class="classes" v-else>
-            <Links v-if="links" :links="links">
+        <div class="layer-tab" :style="unref(style)" :class="unref(classes)" v-else>
+            <Links v-if="links" :links="unref(links)">
                 <component :is="component" />
             </Links>
             <component v-else :is="component" />
         </div>
-        <button v-if="minimizable" class="minimize" @click="minimized = true">▼</button>
+        <button v-if="unref(minimizable)" class="minimize" @click="minimized.value = true">
+            ▼
+        </button>
     </div>
 </template>
 
-<script setup lang="ts">
+<script lang="ts">
 import Links from "@/components/system/Links.vue";
-import { FeatureComponent } from "@/features/feature";
-import { GenericLayer } from "@/game/layers";
-import { coerceComponent } from "@/util/vue";
-import { computed, nextTick, toRefs, unref, watch } from "vue";
 import modInfo from "@/data/modInfo.json";
+import { CoercableComponent, PersistentRef, StyleValue } from "@/features/feature";
+import { Link } from "@/features/links";
 import player from "@/game/player";
+import { ProcessedComputable } from "@/util/computed";
+import { computeComponent, wrapRef } from "@/util/vue";
+import { computed, defineComponent, nextTick, PropType, toRefs, unref, watch } from "vue";
 
-const props = toRefs(
-    defineProps<
-        FeatureComponent<GenericLayer> & {
-            index: number;
-            tab: () => HTMLElement | undefined;
+export default defineComponent({
+    components: { Links },
+    props: {
+        index: {
+            type: Number,
+            required: true
+        },
+        tab: {
+            type: Function as PropType<() => HTMLElement | undefined>,
+            required: true
+        },
+        display: {
+            type: [Object, String] as PropType<ProcessedComputable<CoercableComponent>>,
+            required: true
+        },
+        minimized: {
+            type: Object as PropType<PersistentRef<boolean>>,
+            required: true
+        },
+        minWidth: {
+            type: [Object, Number] as PropType<ProcessedComputable<number>>,
+            required: true
+        },
+        name: {
+            type: [Object, String] as PropType<ProcessedComputable<string>>,
+            required: true
+        },
+        style: Object as PropType<ProcessedComputable<StyleValue>>,
+        classes: Object as PropType<ProcessedComputable<Record<string, boolean>>>,
+        links: [Object, Array] as PropType<ProcessedComputable<Link[]>>,
+        minimizable: [Object, Boolean] as PropType<ProcessedComputable<boolean>>
+    },
+    setup(props) {
+        const { display, index, minimized, minWidth, tab } = toRefs(props);
+
+        const component = computeComponent(display);
+        const showGoBack = computed(
+            () => modInfo.allowGoBack && unref(index) > 0 && !minimized.value
+        );
+
+        function goBack() {
+            player.tabs = player.tabs.slice(0, unref(props.index));
         }
-    >()
-);
 
-const component = computed(() => coerceComponent(unref(props.display)));
-const showGoBack = computed(
-    () => modInfo.allowGoBack && unref(props.index) > 0 && !props.minimized.value
-);
+        nextTick(() => updateTab(minimized.value, unref(minWidth.value)));
+        watch([minimized, wrapRef(minWidth)], ([minimized, minWidth]) =>
+            updateTab(minimized, minWidth)
+        );
 
-function goBack() {
-    player.tabs = player.tabs.slice(0, unref(props.index));
-}
-
-nextTick(() => updateTab(props.minimized.value, props.minWidth.value));
-watch([props.minimized, props.minWidth], ([minimized, minWidth]) => updateTab(minimized, minWidth));
-
-function updateTab(minimized: boolean, minWidth: number) {
-    const tabValue = props.tab.value();
-    if (tabValue != undefined) {
-        if (minimized) {
-            tabValue.style.flexGrow = "0";
-            tabValue.style.flexShrink = "0";
-            tabValue.style.width = "60px";
-            tabValue.style.minWidth = tabValue.style.flexBasis = "";
-            tabValue.style.margin = "0";
-        } else {
-            tabValue.style.flexGrow = "";
-            tabValue.style.flexShrink = "";
-            tabValue.style.width = "";
-            tabValue.style.minWidth = tabValue.style.flexBasis = `${minWidth}px`;
-            tabValue.style.margin = "";
+        function updateTab(minimized: boolean, minWidth: number) {
+            const tabValue = tab.value();
+            if (tabValue != undefined) {
+                if (minimized) {
+                    tabValue.style.flexGrow = "0";
+                    tabValue.style.flexShrink = "0";
+                    tabValue.style.width = "60px";
+                    tabValue.style.minWidth = tabValue.style.flexBasis = "";
+                    tabValue.style.margin = "0";
+                } else {
+                    tabValue.style.flexGrow = "";
+                    tabValue.style.flexShrink = "";
+                    tabValue.style.width = "";
+                    tabValue.style.minWidth = tabValue.style.flexBasis = `${minWidth}px`;
+                    tabValue.style.margin = "";
+                }
+            }
         }
+
+        return {
+            component,
+            showGoBack,
+            unref,
+            goBack
+        };
     }
-}
+});
 </script>
 
 <style scoped>

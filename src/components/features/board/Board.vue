@@ -58,7 +58,8 @@ import panZoom from "vue-panzoom";
 import BoardLinkVue from "./BoardLink.vue";
 import BoardNodeVue from "./BoardNode.vue";
 
-const props = toRefs(defineProps<FeatureComponent<GenericBoard>>());
+const _props = defineProps<FeatureComponent<GenericBoard>>();
+const props = toRefs(_props);
 
 const lastMousePosition = ref({ x: 0, y: 0 });
 const dragged = ref({ x: 0, y: 0 });

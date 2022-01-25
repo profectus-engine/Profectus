@@ -162,7 +162,7 @@ export function createTree<T extends TreeOptions>(options: T & ThisType<Tree<T>>
         proxy.isResetting.value = false;
         proxy.resettingNode.value = null;
     };
-    tree.links = computed(() => proxy.branches as Link[]);
+    tree.links = computed(() => (proxy.branches == null ? [] : unref(proxy.branches)));
 
     processComputable(tree as T, "visibility");
     setDefault(tree, "visibility", Visibility.Visible);

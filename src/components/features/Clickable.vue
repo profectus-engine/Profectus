@@ -13,7 +13,7 @@
             :class="{
                 feature: true,
                 clickable: true,
-                can: props.canClick,
+                can: canClick,
                 locked: !canClick,
                 small,
                 ...classes
@@ -26,36 +26,73 @@
     </div>
 </template>
 
-<script setup lang="tsx">
+<script lang="tsx">
 import { GenericClickable } from "@/features/clickable";
-import { FeatureComponent, Visibility } from "@/features/feature";
+import { StyleValue, Visibility } from "@/features/feature";
 import { coerceComponent, isCoercableComponent, setupHoldToClick } from "@/util/vue";
-import { computed, toRefs, unref } from "vue";
+import { computed, defineComponent, PropType, toRefs, unref, UnwrapRef } from "vue";
 import LinkNode from "../system/LinkNode.vue";
 import MarkNode from "./MarkNode.vue";
 
-const props = toRefs(defineProps<FeatureComponent<GenericClickable>>());
+export default defineComponent({
+    props: {
+        display: {
+            type: Object as PropType<UnwrapRef<GenericClickable["display"]>>,
+            required: true
+        },
+        visibility: {
+            type: Object as PropType<Visibility>,
+            required: true
+        },
+        style: Object as PropType<StyleValue>,
+        classes: Object as PropType<Record<string, boolean>>,
+        onClick: Function as PropType<VoidFunction>,
+        onHold: Function as PropType<VoidFunction>,
+        canClick: {
+            type: Boolean,
+            required: true
+        },
+        small: Boolean,
+        mark: [Boolean, String],
+        id: {
+            type: String,
+            required: true
+        }
+    },
+    setup(props) {
+        const { display, onClick, onHold } = toRefs(props);
 
-const component = computed(() => {
-    const display = unref(props.display);
-    if (display == null) {
-        return null;
+        const component = computed(() => {
+            const currDisplay = unref(display);
+            if (currDisplay == null) {
+                return null;
+            }
+            if (isCoercableComponent(currDisplay)) {
+                return coerceComponent(currDisplay);
+            }
+            return (
+                <span>
+                    <div v-if={currDisplay.title}>
+                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                        <component v-is={coerceComponent(currDisplay.title!, "h2")} />
+                    </div>
+                    <component v-is={coerceComponent(currDisplay.description, "div")} />
+                </span>
+            );
+        });
+
+        const { start, stop } = setupHoldToClick(onClick, onHold);
+
+        return {
+            start,
+            stop,
+            component,
+            LinkNode,
+            MarkNode,
+            Visibility
+        };
     }
-    if (isCoercableComponent(display)) {
-        return coerceComponent(display);
-    }
-    return (
-        <span>
-            <div v-if={display.title}>
-                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                <component v-is={coerceComponent(display.title!, "h2")} />
-            </div>
-            <component v-is={coerceComponent(display.description, "div")} />
-        </span>
-    );
 });
-
-const { start, stop } = setupHoldToClick(props.onClick, props.onHold);
 </script>
 
 <style scoped>

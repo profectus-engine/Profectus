@@ -1,21 +1,26 @@
 <template>
-    <Modal v-model="isOpen">
+    <Modal v-model="isOpen" ref="modal">
         <template v-slot:header>
             <h2>Saves Manager</h2>
         </template>
         <template v-slot:body>
-            <div v-sortable="{ update, handle: '.handle' }">
-                <Save
-                    v-for="(save, index) in saves"
-                    :key="index"
-                    :save="save!"
-                    @open="openSave(save!.id)"
-                    @export="exportSave(save!.id)"
-                    @editName="name => editSave(save!.id, name)"
-                    @duplicate="duplicateSave(save!.id)"
-                    @delete="deleteSave(save!.id)"
-                />
-            </div>
+            <Draggable
+                :list="settings.saves"
+                handle=".handle"
+                v-if="unref(modal?.isOpen)"
+                :itemKey="(save: string) => save"
+            >
+                <template #item="{ element }">
+                    <Save
+                        :save="saves[element]"
+                        @open="openSave(element)"
+                        @export="exportSave(element)"
+                        @editName="name => editSave(element, name)"
+                        @duplicate="duplicateSave(element)"
+                        @delete="deleteSave(element)"
+                    />
+                </template>
+            </Draggable>
         </template>
         <template v-slot:footer>
             <div class="modal-footer">
@@ -55,16 +60,17 @@
 import Modal from "@/components/system/Modal.vue";
 import player, { PlayerData } from "@/game/player";
 import settings from "@/game/settings";
-import { getUniqueID, loadSave, save, newSave as createNewSave } from "@/util/save";
-import { nextTick, ref, watch } from "vue";
+import { getUniqueID, loadSave, save, newSave } from "@/util/save";
+import { ComponentPublicInstance, computed, nextTick, reactive, ref, unref, watch } from "vue";
 import Select from "../fields/Select.vue";
 import Text from "../fields/Text.vue";
 import Save from "./Save.vue";
-import vSortable from "vue-sortable";
+import Draggable from "vuedraggable";
 
 export type LoadablePlayerData = Omit<Partial<PlayerData>, "id"> & { id: string; error?: unknown };
 
 const isOpen = ref(false);
+const modal = ref<ComponentPublicInstance<typeof Modal> | null>(null);
 
 defineExpose({
     open() {
@@ -74,12 +80,6 @@ defineExpose({
 
 const importingFailed = ref(false);
 const saveToImport = ref("");
-
-watch(isOpen, isOpen => {
-    if (isOpen) {
-        loadSaveData();
-    }
-});
 
 watch(saveToImport, save => {
     if (save) {
@@ -96,7 +96,6 @@ watch(saveToImport, save => {
                     id,
                     btoa(unescape(encodeURIComponent(JSON.stringify(playerData))))
                 );
-                saves.value[id] = playerData;
                 saveToImport.value = "";
                 importingFailed.value = false;
 
@@ -122,25 +121,36 @@ let bank = ref(
     }, [])
 );
 
-const saves = ref<Record<string, LoadablePlayerData | undefined>>({});
-
-function loadSaveData() {
-    saves.value = settings.saves.reduce((acc: Record<string, LoadablePlayerData>, curr: string) => {
-        try {
-            const save = localStorage.getItem(curr);
-            if (save == null) {
-                acc[curr] = { error: `Save with id "${curr}" doesn't exist`, id: curr };
-            } else {
-                acc[curr] = JSON.parse(decodeURIComponent(escape(atob(save))));
-                acc[curr].id = curr;
+const cachedSaves = reactive<Record<string, LoadablePlayerData>>({});
+function getCachedSave(id: string) {
+    if (!(id in cachedSaves)) {
+        const save = localStorage.getItem(id);
+        if (save == null) {
+            cachedSaves[id] = { error: `Save with id "${id}" doesn't exist`, id };
+        } else {
+            try {
+                cachedSaves[id] = JSON.parse(decodeURIComponent(escape(atob(save))));
+                cachedSaves[id].id = id;
+            } catch (error) {
+                cachedSaves[id] = { error, id };
             }
-        } catch (error) {
-            console.warn(`Can't load save with id "${curr}"`, error);
-            acc[curr] = { error, id: curr };
         }
-        return acc;
-    }, {});
+    }
+    return cachedSaves[id];
 }
+// Wipe cache whenever the modal is opened
+watch(isOpen, isOpen => {
+    if (isOpen) {
+        Object.keys(cachedSaves).forEach(key => delete cachedSaves[key]);
+    }
+});
+
+const saves = computed(() =>
+    settings.saves.reduce((acc: Record<string, LoadablePlayerData>, curr: string) => {
+        acc[curr] = getCachedSave(curr);
+        return acc;
+    }, {})
+);
 
 function exportSave(id: string) {
     let saveToExport;
@@ -172,13 +182,11 @@ function duplicateSave(id: string) {
     );
 
     settings.saves.push(playerData.id);
-    saves.value[playerData.id] = playerData;
 }
 
 function deleteSave(id: string) {
     settings.saves = settings.saves.filter((save: string) => save !== id);
     localStorage.removeItem(id);
-    saves.value[id] = undefined;
 }
 
 function openSave(id: string) {
@@ -187,11 +195,6 @@ function openSave(id: string) {
     save();
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     loadSave(saves.value[id]!);
-}
-
-function newSave() {
-    const playerData = createNewSave();
-    saves.value[playerData.id] = playerData;
 }
 
 function newFromPreset(preset: string) {
@@ -203,24 +206,19 @@ function newFromPreset(preset: string) {
     );
 
     settings.saves.push(playerData.id);
-    saves.value[playerData.id] = playerData;
 }
 
 function editSave(id: string, newName: string) {
-    saves.value[id].name = newName;
-    if (player.id === id) {
-        player.name = newName;
-        save();
-    } else {
-        localStorage.setItem(
-            id,
-            btoa(unescape(encodeURIComponent(JSON.stringify(saves.value[id]))))
-        );
+    const currSave = saves.value[id];
+    if (currSave) {
+        currSave.name = newName;
+        if (player.id === id) {
+            player.name = newName;
+            save();
+        } else {
+            localStorage.setItem(id, btoa(unescape(encodeURIComponent(JSON.stringify(currSave)))));
+        }
     }
-}
-
-function update(e: { newIndex: number; oldIndex: number }) {
-    settings.saves.splice(e.newIndex, 0, settings.saves.splice(e.oldIndex, 1)[0]);
 }
 </script>
 

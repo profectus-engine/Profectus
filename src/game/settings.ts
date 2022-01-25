@@ -2,7 +2,7 @@ import modInfo from "@/data/modInfo.json";
 import { Themes } from "@/data/themes";
 import { globalBus } from "@/game/events";
 import { hardReset } from "@/util/save";
-import { reactive, watch } from "vue";
+import { shallowReactive, watch } from "vue";
 
 export interface Settings {
     active: string;
@@ -12,7 +12,7 @@ export interface Settings {
     unthrottled: boolean;
 }
 
-const state = reactive<Partial<Settings>>({
+const state = shallowReactive<Partial<Settings>>({
     active: "",
     saves: [],
     showTPS: true,

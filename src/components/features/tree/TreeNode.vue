@@ -1,25 +1,15 @@
 <template>
     <Tooltip
-        v-if="visibility !== Visibility.None"
-        v-show="visibility === Visibility.Visible"
-        v-bind="
-            typeof tooltip === 'object' && !isCoercableComponent(tooltip)
-                ? wrapFeature(tooltip)
-                : null
-        "
-        :display="
-            typeof tooltip === 'object'
-                ? isCoercableComponent(tooltip)
-                    ? unref(tooltip)
-                    : tooltip.display
-                : tooltip || ''
-        "
+        v-if="unref(visibility) !== Visibility.None"
+        v-show="unref(visibility) === Visibility.Visible"
+        v-bind="tooltipToBind"
+        :display="tooltipDisplay"
         :force="forceTooltip"
         :class="{
             treeNode: true,
-            can: canClick,
-            small,
-            ...classes
+            can: unref(canClick),
+            small: unref(small),
+            ...unref(classes)
         }"
     >
         <button
@@ -32,51 +22,113 @@
             @touchcancel="stop"
             :style="[
                 {
-                    backgroundColor: color,
-                    boxShadow: `-4px -4px 4px rgba(0, 0, 0, 0.25) inset, 0 0 20px ${glowColor}`
+                    backgroundColor: unref(color),
+                    boxShadow: `-4px -4px 4px rgba(0, 0, 0, 0.25) inset, 0 0 20px ${unref(
+                        glowColor
+                    )}`
                 },
-                style ?? []
+                unref(style) ?? []
             ]"
-            :disabled="!canClick"
+            :disabled="!unref(canClick)"
         >
             <component :is="component" />
         </button>
-        <MarkNode :mark="mark" />
-        <LinkNode :id="id" />
+        <MarkNode :mark="unref(mark)" />
+        <LinkNode :id="unref(id)" />
     </Tooltip>
 </template>
 
-<script setup lang="ts">
-import { GenericTreeNode } from "@/features/tree";
-import { coerceComponent, isCoercableComponent, setupHoldToClick } from "@/util/vue";
-import { computed, toRefs, unref } from "vue";
-import Tooltip from "@/components/system/Tooltip.vue";
-import MarkNode from "../MarkNode.vue";
-import { FeatureComponent, Visibility, wrapFeature } from "@/features/feature";
+<script lang="ts">
+import TooltipVue from "@/components/system/Tooltip.vue";
+import { CoercableComponent, StyleValue, Visibility } from "@/features/feature";
+import { Tooltip } from "@/features/tooltip";
+import { ProcessedComputable } from "@/util/computed";
+import {
+    computeOptionalComponent,
+    isCoercableComponent,
+    setupHoldToClick,
+    unwrapRef
+} from "@/util/vue";
+import { computed, defineComponent, PropType, Ref, toRefs, unref } from "vue";
 import LinkNode from "../../system/LinkNode.vue";
+import MarkNode from "../MarkNode.vue";
 
-const props = toRefs(
-    defineProps<
-        FeatureComponent<GenericTreeNode> & {
-            small?: boolean;
+export default defineComponent({
+    props: {
+        display: [Object, String] as PropType<ProcessedComputable<CoercableComponent>>,
+        visibility: {
+            type: Object as PropType<ProcessedComputable<Visibility>>,
+            required: true
+        },
+        style: Object as PropType<ProcessedComputable<StyleValue>>,
+        classes: Object as PropType<ProcessedComputable<Record<string, boolean>>>,
+        tooltip: Object as PropType<ProcessedComputable<CoercableComponent | Tooltip>>,
+        onClick: Function as PropType<VoidFunction>,
+        onHold: Function as PropType<VoidFunction>,
+        color: [Object, String] as PropType<ProcessedComputable<string>>,
+        glowColor: [Object, String] as PropType<ProcessedComputable<string>>,
+        forceTooltip: {
+            type: Object as PropType<Ref<boolean>>,
+            required: true
+        },
+        canClick: {
+            type: [Object, Boolean] as PropType<ProcessedComputable<boolean>>,
+            required: true
+        },
+        mark: [Object, Boolean, String] as PropType<ProcessedComputable<boolean | string>>,
+        id: {
+            type: [Object, String] as PropType<ProcessedComputable<string>>,
+            required: true
+        },
+        small: [Object, Boolean] as PropType<ProcessedComputable<boolean>>
+    },
+    setup(props) {
+        const { tooltip, forceTooltip, onClick, onHold, display } = toRefs(props);
+
+        function click(e: MouseEvent) {
+            if (e.shiftKey && tooltip) {
+                forceTooltip.value = !forceTooltip.value;
+            } else {
+                unref(onClick)?.();
+            }
         }
-    >()
-);
 
-function click(e: MouseEvent) {
-    if (e.shiftKey && props.tooltip) {
-        props.forceTooltip.value = !props.forceTooltip.value;
-    } else {
-        unref(props.onClick)?.();
+        const component = computeOptionalComponent(display);
+        const tooltipDisplay = computed(() => {
+            const currTooltip = unwrapRef(tooltip);
+
+            if (typeof currTooltip === "object" && !isCoercableComponent(currTooltip)) {
+                return currTooltip.display;
+            }
+            return currTooltip || "";
+        });
+        const tooltipToBind = computed(() => {
+            const currTooltip = unwrapRef(tooltip);
+
+            if (typeof currTooltip === "object" && !isCoercableComponent(currTooltip)) {
+                return currTooltip;
+            }
+            return null;
+        });
+
+        const { start, stop } = setupHoldToClick(onClick, onHold);
+
+        return {
+            click,
+            start,
+            stop,
+            component,
+            tooltipDisplay,
+            tooltipToBind,
+            Tooltip: TooltipVue,
+            MarkNode,
+            LinkNode,
+            unref,
+            Visibility,
+            isCoercableComponent
+        };
     }
-}
-
-const component = computed(() => {
-    const display = unref(props.display);
-    return display && coerceComponent(display);
 });
-
-const { start, stop } = setupHoldToClick(props.onClick, props.onHold);
 </script>
 
 <style scoped>

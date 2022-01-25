@@ -182,21 +182,20 @@ import { computed, ref, toRefs, unref, watch } from "vue";
 
 const sqrtTwo = Math.sqrt(2);
 
-const props = toRefs(
-    defineProps<{
-        node: BoardNode;
-        nodeType: GenericNodeType;
-        dragging?: BoardNode;
-        dragged?: {
-            x: number;
-            y: number;
-        };
-        hasDragged?: boolean;
-        receivingNode?: boolean;
-        selectedNode?: BoardNode | null;
-        selectedAction?: GenericBoardNodeAction | null;
-    }>()
-);
+const _props = defineProps<{
+    node: BoardNode;
+    nodeType: GenericNodeType;
+    dragging?: BoardNode;
+    dragged?: {
+        x: number;
+        y: number;
+    };
+    hasDragged?: boolean;
+    receivingNode?: boolean;
+    selectedNode?: BoardNode | null;
+    selectedAction?: GenericBoardNodeAction | null;
+}>();
+const props = toRefs(_props);
 const emit = defineEmits<{
     (e: "mouseDown", event: MouseEvent | TouchEvent, node: number, isDraggable: boolean): void;
     (e: "endDragging", node: number): void;

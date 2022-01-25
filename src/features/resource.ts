@@ -112,3 +112,14 @@ export function displayResource(resource: Resource, overrideAmount?: DecimalSour
     }
     return format(amount, resource.precision, resource.small);
 }
+
+// unref may unwrap a resource too far, so this function properly unwraps it
+export function unwrapResource<T extends State>(
+    resource: Resource<T> | Ref<Resource<T>>
+): Resource<T> {
+    console.log(resource);
+    if ("displayName" in resource) {
+        return resource;
+    }
+    return resource.value;
+}

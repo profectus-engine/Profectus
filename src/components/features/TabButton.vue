@@ -1,30 +1,50 @@
 <template>
     <button
-        @click="emits('selectTab')"
+        @click="selectTab"
         class="tabButton"
-        :style="style"
+        :style="unref(style)"
         :class="{
             active,
-            ...classes
+            ...unref(classes)
         }"
     >
         <component :is="component" />
     </button>
 </template>
 
-<script setup lang="ts">
-import { FeatureComponent } from "@/features/feature";
-import { GenericTabButton } from "@/features/tabFamily";
-import { coerceComponent } from "@/util/vue";
-import { computed, toRefs } from "vue";
+<script lang="ts">
+import { CoercableComponent, StyleValue } from "@/features/feature";
+import { ProcessedComputable } from "@/util/computed";
+import { computeComponent } from "@/util/vue";
+import { defineComponent, PropType, toRefs, unref } from "vue";
 
-const props = toRefs(defineProps<FeatureComponent<GenericTabButton> & { active: boolean }>());
+export default defineComponent({
+    props: {
+        display: {
+            type: [Object, String] as PropType<ProcessedComputable<CoercableComponent>>,
+            required: true
+        },
+        style: Object as PropType<ProcessedComputable<StyleValue>>,
+        classes: Object as PropType<ProcessedComputable<Record<string, boolean>>>,
+        active: [Object, Boolean] as PropType<ProcessedComputable<boolean>>
+    },
+    emits: ["selectTab"],
+    setup(props, { emit }) {
+        const { display } = toRefs(props);
 
-const emits = defineEmits<{
-    (e: "selectTab"): void;
-}>();
+        const component = computeComponent(display);
 
-const component = computed(() => coerceComponent(props.display.value));
+        function selectTab() {
+            emit("selectTab");
+        }
+
+        return {
+            selectTab,
+            component,
+            unref
+        };
+    }
+});
 </script>
 
 <style scoped>

@@ -13,13 +13,32 @@
 </template>
 
 <script lang="ts">
-import { FeatureComponent, Visibility } from "@/features/feature";
-import { GenericGrid } from "@/features/grid";
-import { defineComponent } from "vue";
-import GridCell from "./GridCell.vue";
+import { Visibility } from "@/features/feature";
+import { GridCell } from "@/features/grid";
+import { defineComponent, PropType } from "vue";
+import GridCellVue from "./GridCell.vue";
 
-// https://github.com/thepaperpilot/The-Modding-Tree-X/issues/1
-export default defineComponent(function Grid(props: FeatureComponent<GenericGrid>) {
-    return { ...props, GridCell, Visibility };
+export default defineComponent({
+    props: {
+        visibility: {
+            type: Object as PropType<Visibility>,
+            required: true
+        },
+        rows: {
+            type: Number,
+            required: true
+        },
+        cols: {
+            type: Number,
+            required: true
+        },
+        cells: {
+            type: Object as PropType<Record<string, GridCell>>,
+            required: true
+        }
+    },
+    setup() {
+        return { GridCell: GridCellVue, Visibility };
+    }
 });
 </script>

@@ -18,61 +18,113 @@
             {{ buttonText }}
         </button>
         <component v-if="component" :is="component" />
-        <default-challenge-display v-else :id="id" />
         <MarkNode :mark="mark" />
         <LinkNode :id="id" />
     </div>
 </template>
 
-<script setup lang="tsx">
+<script lang="tsx">
 import { GenericChallenge } from "@/features/challenge";
-import { FeatureComponent, Visibility } from "@/features/feature";
+import { StyleValue, Visibility } from "@/features/feature";
 import { coerceComponent, isCoercableComponent } from "@/util/vue";
-import { computed, toRefs } from "vue";
+import { computed, defineComponent, PropType, toRefs, UnwrapRef } from "vue";
+import LinkNode from "../system/LinkNode.vue";
+import MarkNode from "./MarkNode.vue";
 
-const props = toRefs(defineProps<FeatureComponent<GenericChallenge>>());
+export default defineComponent({
+    props: {
+        active: {
+            type: Boolean,
+            required: true
+        },
+        maxed: {
+            type: Boolean,
+            required: true
+        },
+        canComplete: {
+            type: Boolean,
+            required: true
+        },
+        display: Object as PropType<UnwrapRef<GenericChallenge["display"]>>,
+        visibility: {
+            type: Object as PropType<Visibility>,
+            required: true
+        },
+        style: Object as PropType<StyleValue>,
+        classes: Object as PropType<Record<string, boolean>>,
+        completed: {
+            type: Boolean,
+            required: true
+        },
+        canStart: {
+            type: Boolean,
+            required: true
+        },
+        mark: [Boolean, String],
+        id: {
+            type: String,
+            required: true
+        },
+        toggle: {
+            type: Function as PropType<VoidFunction>,
+            required: true
+        }
+    },
+    setup(props) {
+        const { active, maxed, canComplete, display } = toRefs(props);
 
-const buttonText = computed(() => {
-    if (props.active.value) {
-        return props.canComplete.value ? "Finish" : "Exit Early";
-    }
-    if (props.maxed.value) {
-        return "Completed";
-    }
-    return "Start";
-});
+        const buttonText = computed(() => {
+            if (active.value) {
+                return canComplete.value ? "Finish" : "Exit Early";
+            }
+            if (maxed.value) {
+                return "Completed";
+            }
+            return "Start";
+        });
 
-const component = computed(() => {
-    const display = props.display.value;
-    if (display == null) {
-        return null;
+        const component = computed(() => {
+            const currDisplay = display.value;
+            if (currDisplay == null) {
+                return null;
+            }
+            if (isCoercableComponent(currDisplay)) {
+                return coerceComponent(currDisplay);
+            }
+            return (
+                <span>
+                    <template v-if={currDisplay.title}>
+                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                        <component v-is={coerceComponent(currDisplay.title!, "h3")} />
+                    </template>
+                    <component v-is={coerceComponent(currDisplay.description, "div")} />
+                    <div v-if={currDisplay.goal}>
+                        <br />
+                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                        Goal: <component v-is={coerceComponent(currDisplay.goal!)} />
+                    </div>
+                    <div v-if={currDisplay.reward}>
+                        <br />
+                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                        Reward: <component v-is={coerceComponent(currDisplay.reward!)} />
+                    </div>
+                    <div v-if={currDisplay.effectDisplay}>
+                        Currently:{" "}
+                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                        <component v-is={coerceComponent(currDisplay.effectDisplay!)} />
+                    </div>
+                </span>
+            );
+        });
+
+        return {
+            buttonText,
+            component,
+            MarkNode,
+            LinkNode,
+            Visibility
+        };
     }
-    if (isCoercableComponent(display)) {
-        return coerceComponent(display);
-    }
-    return (
-        <span>
-            <template v-if={display.title}>
-                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                <component v-is={coerceComponent(display.title!, "h3")} />
-            </template>
-            <component v-is={coerceComponent(display.description, "div")} />
-            <div v-if={display.goal}>
-                <br />
-                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                Goal: <component v-is={coerceComponent(display.goal!)} />
-            </div>
-            <div v-if={display.reward}>
-                <br />
-                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                Reward: <component v-is={coerceComponent(display.reward!)} />
-            </div>
-            <div v-if={display.effectDisplay}>
-                Currently: {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                <component v-is={coerceComponent(display.effectDisplay!)} />
-            </div>
-        </span>
-    );
 });
 </script>
 

@@ -2,8 +2,8 @@
     <teleport to="#modal-root">
         <transition
             name="modal"
-            @before-enter="setAnimating(true)"
-            @after-leave="setAnimating(false)"
+            @before-enter="isAnimating = true"
+            @after-leave="isAnimating = false"
         >
             <div
                 class="modal-mask"
@@ -41,13 +41,14 @@
 
 <script setup lang="ts">
 import { Link } from "@/features/links";
-import { computed, ref } from "vue";
+import { computed, ref, toRefs } from "vue";
 import Links from "./Links.vue";
 
-const props = defineProps<{
+const _props = defineProps<{
     modelValue: boolean;
     links?: Link[];
 }>();
+const props = toRefs(_props);
 const emit = defineEmits<{
     (e: "update:modelValue", value: boolean): void;
 }>();
@@ -58,9 +59,8 @@ function close() {
 }
 
 const isAnimating = ref(false);
-function setAnimating(value: boolean) {
-    isAnimating.value = value;
-}
+
+defineExpose({ isOpen });
 </script>
 
 <style scoped>

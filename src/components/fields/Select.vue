@@ -21,15 +21,14 @@ import "vue-next-select/dist/index.css";
 
 export type SelectOption = { label: string; value: unknown };
 
-const props = toRefs(
-    defineProps<{
-        title?: CoercableComponent;
-        modelValue?: unknown;
-        options: SelectOption[];
-        placeholder?: string;
-        closeOnSelect?: boolean;
-    }>()
-);
+const _props = defineProps<{
+    title?: CoercableComponent;
+    modelValue?: unknown;
+    options: SelectOption[];
+    placeholder?: string;
+    closeOnSelect?: boolean;
+}>();
+const props = toRefs(_props);
 const emit = defineEmits<{
     (e: "update:modelValue", value: unknown): void;
 }>();

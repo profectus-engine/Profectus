@@ -3,10 +3,9 @@ import { GenericLayer } from "@/game/layers";
 import Decimal, { DecimalSource } from "@/util/bignum";
 import { ProcessedComputable } from "@/util/computed";
 import { isArray } from "@vue/shared";
-import { ComponentOptions, CSSProperties, DefineComponent, isRef, ref, Ref, UnwrapRef } from "vue";
+import { ComponentOptions, CSSProperties, DefineComponent, isRef, ref, Ref } from "vue";
 
 export const PersistentState = Symbol("PersistentState");
-export const SetupPersistence = Symbol("SetupPersistence");
 export const DefaultValue = Symbol("DefaultValue");
 export const Component = Symbol("Component");
 
@@ -27,30 +26,19 @@ export type StyleValue = string | CSSProperties | Array<string | CSSProperties>;
 export type Persistent<T extends State = State> = {
     [PersistentState]: Ref<T>;
     [DefaultValue]: T;
-    [SetupPersistence]: () => Ref<T>;
 };
-
-export type PersistentRef<T extends State = State> = Ref<T> & {
-    [DefaultValue]: T;
-    [SetupPersistence]: () => Ref<T>;
-};
+export type PersistentRef<T extends State = State> = Ref<T> & Persistent<T>;
 
 // TODO if importing .vue components in .tsx can become type safe,
 // this type can probably be safely removed
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type GenericComponent = DefineComponent<any, any, any>;
 
-// Example usage: `<Upgrade {...wrapComputable<GenericUpgrade>(upgrade)} />`
-export function wrapFeature<T>(component: T): UnwrapRef<T> {
-    // TODO is this okay, or do we actually need to unref each property?
-    return component as unknown as UnwrapRef<T>;
-}
-
 export type FeatureComponent<T> = Omit<
     {
         [K in keyof T]: T[K] extends ProcessedComputable<infer S> ? S : T[K];
     },
-    typeof Component | typeof DefaultValue | typeof SetupPersistence
+    typeof Component | typeof DefaultValue
 >;
 
 export type Replace<T, S> = S & Omit<T, keyof S>;
@@ -75,14 +63,13 @@ export function showIf(condition: boolean, otherwise = Visibility.None): Visibil
 }
 
 export function persistent<T extends State>(defaultValue: T | Ref<T>): PersistentRef<T> {
-    const persistent = isRef(defaultValue) ? defaultValue : (ref(defaultValue) as Ref<T>);
-    (persistent as unknown as PersistentRef<T>)[DefaultValue] = isRef(defaultValue)
-        ? defaultValue.value
-        : defaultValue;
-    (persistent as unknown as PersistentRef<T>)[SetupPersistence] = function () {
-        return persistent;
-    };
-    return persistent as unknown as PersistentRef<T>;
+    const persistent = (
+        isRef(defaultValue) ? defaultValue : (ref<T>(defaultValue) as unknown)
+    ) as PersistentRef<T>;
+
+    persistent[PersistentState] = persistent;
+    persistent[DefaultValue] = isRef(defaultValue) ? defaultValue.value : defaultValue;
+    return persistent as PersistentRef<T>;
 }
 
 export function makePersistent<T extends State>(
@@ -92,18 +79,8 @@ export function makePersistent<T extends State>(
     const persistent = obj as Partial<Persistent<T>>;
     const state = ref(defaultValue) as Ref<T>;
 
-    Object.defineProperty(persistent, PersistentState, {
-        get: () => {
-            return state.value;
-        },
-        set: (val: T) => {
-            state.value = val;
-        }
-    });
+    persistent[PersistentState] = state;
     persistent[DefaultValue] = isRef(defaultValue) ? (defaultValue.value as T) : defaultValue;
-    persistent[SetupPersistence] = function () {
-        return state;
-    };
 }
 
 export function setDefault<T, K extends keyof T>(
@@ -135,32 +112,39 @@ export function findFeatures(obj: Record<string, unknown>, type: symbol): unknow
 }
 
 globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>) => {
-    const handleObject = (
-        obj: Record<string, unknown>,
-        persistentState: Record<string, unknown>
-    ): boolean => {
+    const handleObject = (obj: Record<string, unknown>, path: string[] = []): boolean => {
         let foundPersistent = false;
         Object.keys(obj).forEach(key => {
             const value = obj[key];
             if (value && typeof value === "object") {
-                if (SetupPersistence in value) {
+                if (PersistentState in value) {
                     foundPersistent = true;
+
+                    // Construct save path if it doesn't exist
+                    const persistentState = path.reduce<Record<string, unknown>>((acc, curr) => {
+                        if (!(curr in acc)) {
+                            acc[curr] = {};
+                        }
+                        return acc[curr] as Record<string, unknown>;
+                    }, saveData);
+
+                    // Cache currently saved value
                     const savedValue = persistentState[key];
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    persistentState[key] = (value as PersistentRef | Persistent)[
-                        SetupPersistence
-                    ]();
+                    // Add ref to save data
+                    persistentState[key] = (value as Persistent)[PersistentState];
+                    // Load previously saved value
                     if (savedValue != null) {
                         (persistentState[key] as Ref<unknown>).value = savedValue;
                     }
                 } else if (!(value instanceof Decimal)) {
-                    if (typeof persistentState[key] !== "object") {
-                        persistentState[key] = {};
-                    }
-                    const foundPersistentInChild = handleObject(
-                        value as Record<string, unknown>,
-                        persistentState[key] as Record<string, unknown>
-                    );
+                    // Continue traversing
+                    const foundPersistentInChild = handleObject(value as Record<string, unknown>, [
+                        ...path,
+                        key
+                    ]);
+
+                    // Show warning for persistent values inside arrays
+                    // TODO handle arrays better
                     if (foundPersistentInChild) {
                         if (isArray(value)) {
                             console.warn(
@@ -177,5 +161,5 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
         });
         return foundPersistent;
     };
-    handleObject(layer, saveData);
+    handleObject(layer);
 });

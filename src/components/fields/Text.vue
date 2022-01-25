@@ -31,15 +31,14 @@ import { coerceComponent } from "@/util/vue";
 import { computed, onMounted, ref, toRefs, unref } from "vue";
 import VueTextareaAutosize from "vue-textarea-autosize";
 
-const props = toRefs(
-    defineProps<{
-        title?: CoercableComponent;
-        modelValue?: string;
-        textArea?: boolean;
-        placeholder?: string;
-        maxHeight?: number;
-    }>()
-);
+const _props = defineProps<{
+    title?: CoercableComponent;
+    modelValue?: string;
+    textArea?: boolean;
+    placeholder?: string;
+    maxHeight?: number;
+}>();
+const props = toRefs(_props);
 const emit = defineEmits<{
     (e: "update:modelValue", value: string): void;
     (e: "submit"): void;

@@ -113,9 +113,9 @@ import Options from "./Options.vue";
 import SavesManager from "./SavesManager.vue";
 import Tooltip from "./Tooltip.vue";
 
-const info = ref<typeof Info | null>(null);
-const savesManager = ref<typeof SavesManager | null>(null);
-const options = ref<typeof Options | null>(null);
+const info = ref<ComponentPublicInstance<typeof Info> | null>(null);
+const savesManager = ref<ComponentPublicInstance<typeof SavesManager> | null>(null);
+const options = ref<ComponentPublicInstance<typeof Options> | null>(null);
 // For some reason Info won't accept the changelog unless I do this:
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const changelog = ref<ComponentPublicInstance<any> | null>(null);
@@ -262,8 +262,8 @@ function openDiscord() {
     text-shadow: 5px 0 10px var(--points), -3px 0 12px var(--points);
 }
 
-.nav a,
-.overlay-nav a {
+.nav > div > a,
+.overlay-nav > div > a {
     color: var(--foreground);
     text-shadow: none;
 }

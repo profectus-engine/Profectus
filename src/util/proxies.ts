@@ -28,7 +28,8 @@ export function createProxy<T extends Record<string, unknown>>(object: T): T {
             "Creating a proxy out of a proxy! This may cause unintentional function calls and stack overflows."
         );
     }
-    return new Proxy(object, layerHandler) as T;
+    //return new Proxy(object, layerHandler) as T;
+    return object;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -39,6 +40,7 @@ const layerHandler: ProxyHandler<Record<PropertyKey, any>> = {
         }
 
         if (
+            target[key] == null ||
             isRef(target[key]) ||
             target[key].isProxy ||
             target[key] instanceof Decimal ||

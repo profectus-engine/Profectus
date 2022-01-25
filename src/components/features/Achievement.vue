@@ -21,20 +21,46 @@
     </Tooltip>
 </template>
 
-<script setup lang="ts">
-import { GenericAchievement } from "@/features/achievement";
-import { FeatureComponent } from "@/features/feature";
+<script lang="ts">
+import { CoercableComponent, Visibility } from "@/features/feature";
 import { coerceComponent } from "@/util/vue";
-import { computed, toRefs } from "vue";
+import { computed, defineComponent, PropType, StyleValue, toRefs } from "vue";
 import LinkNode from "../system/LinkNode.vue";
 import MarkNode from "./MarkNode.vue";
-import { Visibility } from "@/features/feature";
 
-const props = toRefs(defineProps<FeatureComponent<GenericAchievement>>());
+export default defineComponent({
+    props: {
+        visibility: {
+            type: Object as PropType<Visibility>,
+            required: true
+        },
+        display: [Object, String] as PropType<CoercableComponent>,
+        tooltip: [Object, String] as PropType<CoercableComponent>,
+        earned: {
+            type: Boolean,
+            required: true
+        },
+        image: String,
+        style: Object as PropType<StyleValue>,
+        classes: Object as PropType<Record<string, boolean>>,
+        mark: [Boolean, String],
+        id: {
+            type: String,
+            required: true
+        }
+    },
+    setup(props) {
+        const { display } = toRefs(props);
 
-const component = computed(() => {
-    const display = props.display.value;
-    return display && coerceComponent(display);
+        return {
+            component: computed(() => {
+                return display.value && coerceComponent(display.value);
+            }),
+            LinkNode,
+            MarkNode,
+            Visibility
+        };
+    }
 });
 </script>
 

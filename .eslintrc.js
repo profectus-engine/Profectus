@@ -18,7 +18,8 @@ module.exports = {
         "no-console": process.env.NODE_ENV === "production" ? "warn" : "off",
         "no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off",
         "vue/script-setup-uses-vars": "warn",
-        "vue/no-mutating-props": "off"
+        "vue/no-mutating-props": "off",
+        "vue/multi-word-component-names": "off"
     },
     globals: {
         defineProps: "readonly",

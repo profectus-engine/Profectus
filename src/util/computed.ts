@@ -20,6 +20,8 @@ type ComputableKeysOf<T> = Pick<
     }[keyof T]
 >;
 
+// TODO fix the typing of this function, such that casting isn't necessary and can be used to
+// detect if a createX function is validly written
 export function processComputable<T, S extends keyof ComputableKeysOf<T>>(
     obj: T,
     key: S

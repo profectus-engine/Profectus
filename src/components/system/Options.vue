@@ -11,32 +11,24 @@
             <Toggle title="Show TPS" v-model="showTPS" />
             <Toggle title="Hide Maxed Challenges" v-model="hideChallenges" />
             <Toggle title="Unthrottled" v-model="unthrottled" />
-            <Toggle
-                title="Offline Production<tooltip display='Save-specific'>*</tooltip>"
-                v-model="offlineProd"
-            />
-            <Toggle
-                title="Autosave<tooltip display='Save-specific'>*</tooltip>"
-                v-model="autosave"
-            />
-            <Toggle
-                title="Pause game<tooltip display='Save-specific'>*</tooltip>"
-                v-model="isPaused"
-            />
+            <Toggle :title="offlineProdTitle" v-model="offlineProd" />
+            <Toggle :title="autosaveTitle" v-model="autosave" />
+            <Toggle :title="isPausedTitle" v-model="isPaused" />
         </template>
     </Modal>
 </template>
 
-<script setup lang="ts">
+<script setup lang="tsx">
 import Modal from "@/components/system/Modal.vue";
 import rawThemes from "@/data/themes";
 import { MilestoneDisplay } from "@/features/milestone";
 import player from "@/game/player";
 import settings from "@/game/settings";
 import { camelToTitle } from "@/util/common";
-import { computed, ref, toRefs } from "vue";
+import { computed, ref, toRef, toRefs } from "vue";
 import Toggle from "../fields/Toggle.vue";
 import Select from "../fields/Select.vue";
+import Tooltip from "./Tooltip.vue";
 
 const isOpen = ref(false);
 
@@ -58,7 +50,8 @@ const msDisplayOptions = Object.values(MilestoneDisplay).map(option => ({
 }));
 
 const { showTPS, hideChallenges, theme, msDisplay, unthrottled } = toRefs(settings);
-const { autosave, offlineProd, devSpeed } = toRefs(player);
+const { autosave, offlineProd } = toRefs(player);
+const devSpeed = toRef(player, "devSpeed");
 const isPaused = computed({
     get() {
         return devSpeed.value === 0;
@@ -67,6 +60,22 @@ const isPaused = computed({
         devSpeed.value = value ? null : 0;
     }
 });
+
+const offlineProdTitle = (
+    <template>
+        Offline Production<Tooltip display="Save-specific">*</Tooltip>
+    </template>
+);
+const autosaveTitle = (
+    <template>
+        Autosave<Tooltip display="Save-specific">*</Tooltip>
+    </template>
+);
+const isPausedTitle = (
+    <template>
+        Pause game<Tooltip display="Save-specific">*</Tooltip>
+    </template>
+);
 </script>
 
 <style scoped>

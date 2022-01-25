@@ -15,7 +15,7 @@
             <br />
             <div>
                 <a :href="discordLink" class="nan-modal-discord-link">
-                    <img src="images/discord.png" class="nan-modal-discord" />
+                    <span class="material-icons nan-modal-discord">discord</span>
                     {{ discordName }}
                 </a>
             </div>
@@ -48,14 +48,14 @@ import modInfo from "@/data/modInfo.json";
 import player from "@/game/player";
 import state from "@/game/state";
 import Decimal, { DecimalSource, format } from "@/util/bignum";
-import { computed, ref, toRef } from "vue";
+import { ComponentPublicInstance, computed, ref, toRef } from "vue";
 import Toggle from "../fields/Toggle.vue";
 import SavesManager from "./SavesManager.vue";
 
 const { discordName, discordLink } = modInfo;
 const autosave = toRef(player, "autosave");
 const hasNaN = toRef(state, "hasNaN");
-const savesManager = ref<typeof SavesManager | null>(null);
+const savesManager = ref<ComponentPublicInstance<typeof SavesManager> | null>(null);
 
 const path = computed(() => state.NaNPath?.join("."));
 const property = computed(() => state.NaNPath?.slice(-1)[0]);

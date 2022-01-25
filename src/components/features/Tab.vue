@@ -7,6 +7,7 @@ import { CoercableComponent } from "@/features/feature";
 import { coerceComponent } from "@/util/vue";
 import { computed, toRefs } from "vue";
 
-const { display } = toRefs(defineProps<{ display: CoercableComponent }>());
+const _props = defineProps<{ display: CoercableComponent }>();
+const { display } = toRefs(_props);
 const component = computed(() => coerceComponent(display));
 </script>

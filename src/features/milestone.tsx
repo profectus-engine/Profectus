@@ -146,13 +146,16 @@ globalBus.on("addLayer", layer => {
                 milestone.onComplete?.();
                 if (milestone.display) {
                     const display = unref(milestone.display);
-                    toast.info(
+                    const Display = coerceComponent(
+                        isCoercableComponent(display) ? display : display.requirement
+                    );
+                    toast(
                         <template>
-                            <h2>Milestone earned!</h2>
+                            <h3>Milestone earned!</h3>
                             <div>
-                                {coerceComponent(
-                                    isCoercableComponent(display) ? display : display.requirement
-                                )}
+                                {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+                                {/* @ts-ignore */}
+                                <Display />
                             </div>
                         </template>
                     );

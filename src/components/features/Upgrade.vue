@@ -20,46 +20,96 @@
     </button>
 </template>
 
-<script setup lang="tsx">
-import { FeatureComponent, Visibility } from "@/features/feature";
-import { displayResource } from "@/features/resource";
+<script lang="tsx">
+import { StyleValue, Visibility } from "@/features/feature";
+import { displayResource, Resource } from "@/features/resource";
 import { GenericUpgrade } from "@/features/upgrade";
+import { DecimalSource } from "@/lib/break_eternity";
 import { coerceComponent, isCoercableComponent } from "@/util/vue";
-import { computed, toRefs, unref } from "vue";
+import { computed, defineComponent, PropType, Ref, toRef, toRefs, unref, UnwrapRef } from "vue";
 import LinkNode from "../system/LinkNode.vue";
 import MarkNode from "./MarkNode.vue";
 
-const props = toRefs(defineProps<FeatureComponent<GenericUpgrade>>());
+export default defineComponent({
+    props: {
+        display: {
+            type: Object as PropType<UnwrapRef<GenericUpgrade["display"]>>,
+            required: true
+        },
+        visibility: {
+            type: Object as PropType<Visibility>,
+            required: true
+        },
+        style: Object as PropType<StyleValue>,
+        classes: Object as PropType<Record<string, boolean>>,
+        resource: {
+            type: Object as PropType<Resource>,
+            required: true
+        },
+        cost: {
+            type: Object as PropType<DecimalSource>,
+            required: true
+        },
+        canPurchase: {
+            type: Boolean,
+            required: true
+        },
+        bought: {
+            type: Boolean,
+            required: true
+        },
+        mark: [Boolean, String],
+        id: {
+            type: String,
+            required: true
+        },
+        purchase: {
+            type: Function as PropType<VoidFunction>,
+            required: true
+        }
+    },
+    setup(props) {
+        const { display, cost } = toRefs(props);
+        const resource = toRef(props, "resource") as unknown as Ref<Resource>;
 
-const component = computed(() => {
-    const display = unref(props.display);
-    if (display == null) {
-        return null;
+        const component = computed(() => {
+            const currDisplay = display.value;
+            if (currDisplay == null) {
+                return null;
+            }
+            if (isCoercableComponent(currDisplay)) {
+                return coerceComponent(currDisplay);
+            }
+            return (
+                <span>
+                    <div v-if={currDisplay.title}>
+                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                        <component v-is={coerceComponent(currDisplay.title!, "h2")} />
+                    </div>
+                    <component v-is={coerceComponent(currDisplay.description, "div")} />
+                    <div v-if={currDisplay.effectDisplay}>
+                        <br />
+                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                        Currently: <component v-is={coerceComponent(currDisplay.effectDisplay!)} />
+                    </div>
+                    <template v-if={resource.value != null && cost.value != null}>
+                        <br />
+                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                        Cost: {displayResource(resource.value, cost.value)}{" "}
+                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                        {resource.value.displayName}
+                    </template>
+                </span>
+            );
+        });
+
+        return {
+            component,
+            LinkNode,
+            MarkNode,
+            Visibility
+        };
     }
-    if (isCoercableComponent(display)) {
-        return coerceComponent(display);
-    }
-    return (
-        <span>
-            <div v-if={display.title}>
-                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                <component v-is={coerceComponent(display.title!, "h2")} />
-            </div>
-            <component v-is={coerceComponent(display.description, "div")} />
-            <div v-if={display.effectDisplay}>
-                <br />
-                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                Currently: <component v-is={coerceComponent(display.effectDisplay!)} />
-            </div>
-            <template v-if={unref(props.resource) != null && unref(props.cost) != null}>
-                <br />
-                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                Cost: {displayResource(unref(props.resource)!, unref(props.cost))}{" "}
-                {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                {unref(props.resource)!.displayName}
-            </template>
-        </span>
-    );
 });
 </script>
 

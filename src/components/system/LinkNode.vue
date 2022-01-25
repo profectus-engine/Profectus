@@ -6,7 +6,8 @@
 import { RegisterLinkNodeInjectionKey, UnregisterLinkNodeInjectionKey } from "@/features/links";
 import { computed, inject, ref, toRefs, unref, watch } from "vue";
 
-const props = toRefs(defineProps<{ id: string }>());
+const _props = defineProps<{ id: string }>();
+const props = toRefs(_props);
 
 const register = inject(RegisterLinkNodeInjectionKey);
 const unregister = inject(UnregisterLinkNodeInjectionKey);

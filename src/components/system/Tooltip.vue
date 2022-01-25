@@ -2,42 +2,66 @@
     <div
         class="tooltip-container"
         :class="{ shown: isShown }"
-        @mouseenter="setHover(true)"
-        @mouseleave="setHover(false)"
+        @mouseenter="isHovered = true"
+        @mouseleave="isHovered = false"
     >
         <slot />
         <transition name="fade">
             <div
                 v-if="isShown"
                 class="tooltip"
-                :class="{ top, left, right, bottom }"
+                :class="{
+                    top: unref(top),
+                    left: unref(left),
+                    right: unref(right),
+                    bottom: unref(bottom)
+                }"
                 :style="{
-                    '--xoffset': xoffset || '0px',
-                    '--yoffset': yoffset || '0px'
+                    '--xoffset': unref(xoffset) || '0px',
+                    '--yoffset': unref(yoffset) || '0px'
                 }"
             >
-                <component :is="component" />
+                <component v-if="component" :is="component" />
             </div>
         </transition>
     </div>
 </template>
 
-<script setup lang="ts">
-import { FeatureComponent } from "@/features/feature";
-import { Tooltip } from "@/features/tooltip";
-import { coerceComponent } from "@/util/vue";
-import { computed, ref, toRefs, unref } from "vue";
+<script lang="ts">
+import { CoercableComponent } from "@/features/feature";
+import { ProcessedComputable } from "@/util/computed";
+import { computeOptionalComponent, unwrapRef } from "@/util/vue";
+import { computed, defineComponent, PropType, ref, toRefs, unref } from "vue";
 
-const props = toRefs(defineProps<FeatureComponent<Tooltip>>());
+export default defineComponent({
+    props: {
+        display: {
+            type: [Object, String] as PropType<ProcessedComputable<CoercableComponent>>,
+            required: true
+        },
+        top: Boolean as PropType<ProcessedComputable<boolean>>,
+        left: Boolean as PropType<ProcessedComputable<boolean>>,
+        right: Boolean as PropType<ProcessedComputable<boolean>>,
+        bottom: Boolean as PropType<ProcessedComputable<boolean>>,
+        xoffset: String as PropType<ProcessedComputable<string>>,
+        yoffset: String as PropType<ProcessedComputable<string>>,
+        force: Boolean as PropType<ProcessedComputable<boolean>>
+    },
+    setup(props) {
+        const { display, force } = toRefs(props);
 
-const isHovered = ref(false);
+        const isHovered = ref(false);
+        const isShown = computed(() => unwrapRef(force) || isHovered.value);
+        const component = computeOptionalComponent(display);
 
-function setHover(hover: boolean) {
-    isHovered.value = hover;
-}
-
-const isShown = computed(() => unref(props.force) || isHovered.value);
-const component = computed(() => props.display.value && coerceComponent(unref(props.display)));
+        return {
+            isHovered,
+            isShown,
+            component,
+            unref
+        };
+    }
+});
 </script>
 
 <style scoped>
