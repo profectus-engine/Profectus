@@ -108,7 +108,7 @@ const funChallenge = createChallenge({
         return showIf(Decimal.gt(best.value, 0));
     },
     goal: 20,
-    resource: mainPoints,
+    resource: () => mainPoints,
     onComplete() {
         console.log("hiii");
     },
@@ -249,10 +249,7 @@ const longBoi = createBar({
     width: 300,
     height: 30,
     progress() {
-        return Decimal.add(mainPoints.value, 1)
-            .log(10)
-            .div(10)
-            .toNumber();
+        return Decimal.add(mainPoints.value, 1).log(10).div(10).toNumber();
     },
     display() {
         return format(mainPoints.value) + " / 1e10 points";
@@ -393,16 +390,16 @@ const tree = createTree({
     },
     branches: [
         {
-            from: fNode,
-            to: treeNode,
+            startNode: fNode,
+            endNode: treeNode,
             style: {
                 strokeWidth: "25px",
                 stroke: "blue",
                 filter: "blur(5px)"
             }
         },
-        { from: treeNode, to: g },
-        { from: g, to: h }
+        { startNode: treeNode, endNode: g },
+        { startNode: g, endNode: h }
     ]
 });
 

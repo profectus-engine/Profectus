@@ -1,4 +1,3 @@
-import { fixOldSave, getInitialLayers } from "@/data/mod";
 import modInfo from "@/data/modInfo.json";
 import player, { Player, PlayerData, stringifySave } from "@/game/player";
 import settings, { loadSettings } from "@/game/settings";
@@ -48,6 +47,7 @@ export async function load(): Promise<void> {
         player.id = settings.active;
         await loadSave(player);
     } catch (e) {
+        console.error("Failed to load save. Falling back to new save.\n", e);
         await loadSave(newSave());
     }
 }
@@ -73,11 +73,15 @@ export function getUniqueID(): string {
 }
 
 export async function loadSave(playerObj: Partial<PlayerData>): Promise<void> {
-    const { layers, removeLayer, addLayer } = await import("../game/layers");
+    console.info("Loading save", playerObj);
+    const { layers, removeLayer, addLayer } = await import("@/game/layers");
+    const { fixOldSave, getInitialLayers } = await import("@/data/mod");
 
     for (const layer in layers) {
-        removeLayer(layers[layer]);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        removeLayer(layers[layer]!);
     }
+    console.log(getInitialLayers(playerObj))
     getInitialLayers(playerObj).forEach(layer => addLayer(layer, playerObj));
 
     setupInitialStore(playerObj);

@@ -25,9 +25,7 @@
         </template>
         <template v-slot:footer>
             <div class="nan-footer">
-                <button @click="savesManager?.open()" class="button">
-                    Open Saves Manager
-                </button>
+                <button @click="savesManager?.open()" class="button">Open Saves Manager</button>
                 <button @click="setZero" class="button">Set to 0</button>
                 <button @click="setOne" class="button">Set to 1</button>
                 <button

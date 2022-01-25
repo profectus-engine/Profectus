@@ -6,8 +6,8 @@
             v-for="(link, index) in validLinks"
             :key="index"
             :link="link"
-            :startNode="nodes[link.startNode.id]"
-            :endNode="nodes[link.endNode.id]"
+            :startNode="nodes[link.startNode.id]!"
+            :endNode="nodes[link.endNode.id]!"
         />
     </svg>
 </template>
@@ -24,16 +24,31 @@ import LinkVue from "./Link.vue";
 
 const props = toRefs(defineProps<{ links: Link[] }>());
 
+const observer = new MutationObserver(updateNodes);
+const resizeObserver = new ResizeObserver(updateBounds);
+
+const nodes = ref<Record<string, LinkNode | undefined>>({});
+const boundingRect = ref(new DOMRect());
+
+const resizeListener = ref<Element | null>(null);
+
+onMounted(() => {
+    // ResizeListener exists because ResizeObserver's don't work when told to observe an SVG element
+    const resListener = resizeListener.value;
+    if (resListener != null) {
+        resizeObserver.observe(resListener);
+    }
+    updateNodes();
+});
+
 const validLinks = computed(() =>
     unref(props.links.value).filter(link => {
         const n = nodes.value;
         return (
-            link.startNode.id in n &&
-            link.endNode.id in n &&
-            n[link.startNode.id].x != undefined &&
-            n[link.startNode.id].y != undefined &&
-            n[link.endNode.id].x != undefined &&
-            n[link.endNode.id].y != undefined
+            n[link.startNode.id]?.x != undefined &&
+            n[link.startNode.id]?.y != undefined &&
+            n[link.endNode.id]?.x != undefined &&
+            n[link.endNode.id]?.y != undefined
         );
     })
 );
@@ -54,7 +69,7 @@ provide(RegisterLinkNodeInjectionKey, (id, element) => {
     });
 });
 provide(UnregisterLinkNodeInjectionKey, id => {
-    delete nodes.value[id];
+    nodes.value[id] = undefined;
 });
 
 function updateNodes() {
@@ -64,12 +79,13 @@ function updateNodes() {
 }
 
 function updateNode(id: string) {
-    if (!(id in nodes.value)) {
+    const node = nodes.value[id];
+    if (!node) {
         return;
     }
-    const linkStartRect = nodes.value[id].element.getBoundingClientRect();
-    nodes.value[id].x = linkStartRect.x + linkStartRect.width / 2 - boundingRect.value.x;
-    nodes.value[id].y = linkStartRect.y + linkStartRect.height / 2 - boundingRect.value.y;
+    const linkStartRect = node.element.getBoundingClientRect();
+    node.x = linkStartRect.x + linkStartRect.width / 2 - boundingRect.value.x;
+    node.y = linkStartRect.y + linkStartRect.height / 2 - boundingRect.value.y;
 }
 
 function updateBounds() {
@@ -78,23 +94,6 @@ function updateBounds() {
         updateNodes();
     }
 }
-
-const observer = new MutationObserver(updateNodes);
-const resizeObserver = new ResizeObserver(updateBounds);
-
-const nodes = ref<Record<string, LinkNode>>({});
-const boundingRect = ref(new DOMRect());
-
-const resizeListener = ref<Element | null>(null);
-
-onMounted(() => {
-    // ResizeListener exists because ResizeObserver's don't work when told to observe an SVG element
-    const resListener = resizeListener.value;
-    if (resListener != null) {
-        resizeObserver.observe(resListener);
-    }
-    updateNodes();
-});
 </script>
 
 <style scoped>

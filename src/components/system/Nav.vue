@@ -7,7 +7,7 @@
                 ><span>v{{ versionNumber }}</span></Tooltip
             >
         </div>
-        <div style="flex-grow: 1; cursor: unset;"></div>
+        <div style="flex-grow: 1; cursor: unset"></div>
         <div class="discord">
             <span @click="openDiscord" class="material-icons">discord</span>
             <ul class="discord-links">
@@ -54,7 +54,7 @@
         <div @click="changelog?.open()" class="version-container">
             <Tooltip display="Changelog" right xoffset="25%" class="version">
                 <span>v{{ versionNumber }}</span>
-            </tooltip>
+            </Tooltip>
         </div>
         <div @click="savesManager?.open()">
             <Tooltip display="Saves" right>

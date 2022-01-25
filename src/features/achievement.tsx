@@ -6,6 +6,7 @@ import {
     getUniqueID,
     makePersistent,
     Persistent,
+    PersistentState,
     Replace,
     setDefault,
     StyleValue,
@@ -78,9 +79,9 @@ export function createAchievement<T extends AchievementOptions>(
     achievement.type = AchievementType;
     achievement[Component] = AchievementComponent;
 
-    achievement.earned = achievement.state;
-    achievement.complete = function() {
-        proxy.state.value = true;
+    achievement.earned = achievement[PersistentState];
+    achievement.complete = function () {
+        proxy[PersistentState].value = true;
     };
 
     processComputable(achievement as T, "visibility");
@@ -94,18 +95,17 @@ export function createAchievement<T extends AchievementOptions>(
     processComputable(achievement as T, "tooltip");
     setDefault(achievement, "tooltip", achievement.display);
 
-    const proxy = createProxy((achievement as unknown) as Achievement<T>);
+    const proxy = createProxy(achievement as unknown as Achievement<T>);
     return proxy;
 }
 
 const toast = useToast();
 
-const listeners: Record<string, Unsubscribe> = {};
+const listeners: Record<string, Unsubscribe | undefined> = {};
 globalBus.on("addLayer", layer => {
-    const achievements: GenericAchievement[] = (findFeatures(
-        layer,
-        AchievementType
-    ) as GenericAchievement[]).filter(ach => ach.shouldEarn != null);
+    const achievements: GenericAchievement[] = (
+        findFeatures(layer, AchievementType) as GenericAchievement[]
+    ).filter(ach => ach.shouldEarn != null);
     if (achievements.length) {
         listeners[layer.id] = layer.on("postUpdate", () => {
             achievements.forEach(achievement => {
@@ -114,7 +114,7 @@ globalBus.on("addLayer", layer => {
                     !unref(achievement.earned) &&
                     unref(achievement.shouldEarn)
                 ) {
-                    achievement.state.value = true;
+                    achievement[PersistentState].value = true;
                     achievement.onComplete?.();
                     if (achievement.display) {
                         const display = unref(achievement.display);
@@ -133,5 +133,5 @@ globalBus.on("addLayer", layer => {
 globalBus.on("removeLayer", layer => {
     // unsubscribe from postUpdate
     listeners[layer.id]?.();
-    delete listeners[layer.id];
+    listeners[layer.id] = undefined;
 });

@@ -17,6 +17,7 @@ import {
     getUniqueID,
     makePersistent,
     Persistent,
+    PersistentState,
     Replace,
     setDefault,
     StyleValue,
@@ -101,7 +102,7 @@ export function createBuyable<T extends BuyableOptions>(
     buyable.type = BuyableType;
     buyable[Component] = ClickableComponent;
 
-    buyable.amount = buyable.state;
+    buyable.amount = buyable[PersistentState];
     buyable.bought = computed(() => Decimal.gt(proxy.amount.value, 0));
     buyable.canAfford = computed(
         () =>
@@ -121,7 +122,7 @@ export function createBuyable<T extends BuyableOptions>(
     // TODO once processComputable typing works, this can be replaced
     //buyable.canClick = buyable.canPurchase;
     buyable.canClick = computed(() => unref(proxy.canPurchase));
-    buyable.onClick = buyable.purchase = function() {
+    buyable.onClick = buyable.purchase = function () {
         if (!unref(proxy.canPurchase) || proxy.cost == null || proxy.resource == null) {
             return;
         }
@@ -177,6 +178,6 @@ export function createBuyable<T extends BuyableOptions>(
     processComputable(buyable as T, "mark");
     processComputable(buyable as T, "small");
 
-    const proxy = createProxy((buyable as unknown) as Buyable<T>);
+    const proxy = createProxy(buyable as unknown as Buyable<T>);
     return proxy;
 }

@@ -1,3 +1,5 @@
+import Modal from "@/components/system/Modal.vue";
+import Spacer from "@/components/system/Spacer.vue";
 import { createResource, trackBest, trackOOMPS, trackTotal } from "@/features/resource";
 import { createTree, GenericTree } from "@/features/tree";
 import { globalBus } from "@/game/events";
@@ -5,7 +7,8 @@ import { createLayer, GenericLayer } from "@/game/layers";
 import player, { PlayerData } from "@/game/player";
 import { DecimalSource } from "@/lib/break_eternity";
 import Decimal, { format, formatSmall, formatTime } from "@/util/bignum";
-import { computed } from "vue";
+import { render } from "@/util/vue";
+import { computed, ref } from "vue";
 import a from "./layers/aca/a";
 import c, {
     generatorUpgrade,
@@ -18,6 +21,7 @@ export const points = createResource<DecimalSource>(0);
 const best = trackBest(points);
 const total = trackTotal(points);
 const oomps = trackOOMPS(points);
+const showModal = ref(false);
 
 const pointGain = computed(() => {
     if (!generatorUpgrade.bought) return new Decimal(0);
@@ -73,8 +77,8 @@ export const main = createLayer({
                 <div v-if={Decimal.gt(pointGain.value, 0)}>
                     ({oomps.value === "" ? formatSmall(pointGain.value) : oomps.value}/sec)
                 </div>
-                <spacer />
-                <modal show={false}>
+                <Spacer />
+                <Modal v-model={showModal}>
                     <svg style="height: 80vmin; width: 80vmin;">
                         <path d="M 32 222 Q 128 222, 128 0 Q 128 222, 224 222 L 224 224 L 32 224" />
 
@@ -82,8 +86,8 @@ export const main = createLayer({
                         <circle cx="128" cy="64" r="64" fill="#71368a" />
                         <circle cx="192" cy="128" r="64" fill="#fa8508" />
                     </svg>
-                </modal>
-                <tree {...tree} />
+                </Modal>
+                {render(tree)}
             </template>
         );
     },

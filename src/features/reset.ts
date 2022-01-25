@@ -42,7 +42,7 @@ export function createReset<T extends ResetOptions>(options: T & ThisType<Reset<
     reset.id = getUniqueID("reset-");
     reset.type = ResetType;
 
-    reset.reset = function() {
+    reset.reset = function () {
         const handleObject = (obj: Record<string, unknown>) => {
             Object.keys(obj).forEach(key => {
                 const value = obj[key];
@@ -51,7 +51,7 @@ export function createReset<T extends ResetOptions>(options: T & ThisType<Reset<
                         if (DefaultValue in value) {
                             (value as PersistentRef).value = (value as PersistentRef)[DefaultValue];
                         } else if (DefaultValue in obj) {
-                            (value as PersistentRef).value = ((obj as unknown) as Persistent)[
+                            (value as PersistentRef).value = (obj as unknown as Persistent)[
                                 DefaultValue
                             ];
                         }
@@ -68,7 +68,7 @@ export function createReset<T extends ResetOptions>(options: T & ThisType<Reset<
 
     processComputable(reset as T, "thingsToReset");
 
-    const proxy = createProxy((reset as unknown) as Reset<T>);
+    const proxy = createProxy(reset as unknown as Reset<T>);
     return proxy;
 }
 
@@ -85,7 +85,7 @@ export function setupAutoReset(
     });
 }
 
-const listeners: Record<string, Unsubscribe> = {};
+const listeners: Record<string, Unsubscribe | undefined> = {};
 export function trackResetTime(layer: GenericLayer, reset: GenericReset): PersistentRef<Decimal> {
     const resetTime = persistent<Decimal>(new Decimal(0));
     listeners[layer.id] = layer.on("preUpdate", (diff: Decimal) => {
@@ -101,7 +101,7 @@ export function trackResetTime(layer: GenericLayer, reset: GenericReset): Persis
 globalBus.on("removeLayer", layer => {
     // unsubscribe from preUpdate
     listeners[layer.id]?.();
-    delete listeners[layer.id];
+    listeners[layer.id] = undefined;
 });
 
 declare module "@/game/events" {

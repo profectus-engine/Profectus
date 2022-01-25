@@ -97,13 +97,13 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
         options.canClick = computed(() => Decimal.gt(unref(proxy.conversion.currentGain), 0));
     }
     const onClick = options.onClick;
-    options.onClick = function() {
+    options.onClick = function () {
         proxy.conversion.convert();
         proxy.tree.reset(proxy.treeNode);
         onClick?.();
     };
 
-    const proxy = (createClickable(options) as unknown) as ResetButton<T>;
+    const proxy = createClickable(options) as unknown as ResetButton<T>;
     return proxy;
 }
 
@@ -122,12 +122,12 @@ export type LayerTreeNode<T extends LayerTreeNodeOptions> = Replace<
 export function createLayerTreeNode<T extends LayerTreeNodeOptions>(options: T): LayerTreeNode<T> {
     processComputable(options as T, "append");
 
-    return (createTreeNode({
+    return createTreeNode({
         ...options,
         display: options.layerID,
         onClick:
             options.append != null && options.append
-                ? function() {
+                ? function () {
                       if (player.tabs.includes(options.layerID)) {
                           const index = player.tabs.lastIndexOf(options.layerID);
                           player.tabs = [
@@ -138,8 +138,8 @@ export function createLayerTreeNode<T extends LayerTreeNodeOptions>(options: T):
                           player.tabs = [...player.tabs, options.layerID];
                       }
                   }
-                : function() {
+                : function () {
                       player.tabs.splice(1, 1, options.layerID);
                   }
-    }) as unknown) as LayerTreeNode<T>;
+    }) as unknown as LayerTreeNode<T>;
 }

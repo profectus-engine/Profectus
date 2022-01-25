@@ -1,6 +1,6 @@
 <template>
     <div class="field">
-        <span class="field-title" v-if="titleComponent"><component :is="titleComponent"/></span>
+        <span class="field-title" v-if="titleComponent"><component :is="titleComponent" /></span>
         <VueNextSelect
             :options="options"
             v-model="value"

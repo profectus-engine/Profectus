@@ -7,6 +7,7 @@ import {
     StyleValue
 } from "@/features/feature";
 import { Link } from "@/features/links";
+import Decimal from "@/util/bignum";
 import {
     Computable,
     GetComputableType,
@@ -16,10 +17,19 @@ import {
 } from "@/util/computed";
 import { createProxy } from "@/util/proxies";
 import { createNanoEvents, Emitter } from "nanoevents";
-import { globalBus, LayerEvents } from "./events";
+import { globalBus } from "./events";
 import player from "./player";
 
-export const layers: Record<string, Readonly<GenericLayer>> = {};
+export interface LayerEvents {
+    // Generation
+    preUpdate: (diff: Decimal) => void;
+    // Actions (e.g. automation)
+    update: (diff: Decimal) => void;
+    // Effects (e.g. milestones)
+    postUpdate: (diff: Decimal) => void;
+}
+
+export const layers: Record<string, Readonly<GenericLayer> | undefined> = {};
 window.layers = layers;
 
 export interface Position {
@@ -75,8 +85,8 @@ export function createLayer<T extends LayerOptions>(options: T): Layer<T> {
     const layer: T & Partial<BaseLayer> = options;
 
     const emitter = (layer.emitter = createNanoEvents<LayerEvents>());
-    layer.on = emitter.on;
-    layer.emit = emitter.emit;
+    layer.on = emitter.on.bind(emitter);
+    layer.emit = emitter.emit.bind(emitter);
 
     layer.minimized = persistent(false);
 
@@ -90,7 +100,7 @@ export function createLayer<T extends LayerOptions>(options: T): Layer<T> {
     setDefault(layer, "minimizable", true);
     processComputable(layer as T, "links");
 
-    const proxy = createProxy((layer as unknown) as Layer<T>);
+    const proxy = createProxy(layer as unknown as Layer<T>);
     return proxy;
 }
 
@@ -98,7 +108,8 @@ export function addLayer(
     layer: GenericLayer,
     player: { layers?: Record<string, Record<string, unknown>> }
 ): void {
-    if (layer.id in layers) {
+    console.info("Adding layer", layer.id);
+    if (layers[layer.id]) {
         console.error(
             "Attempted to add layer with same ID as existing layer",
             layer.id,
@@ -121,9 +132,10 @@ export function getLayer<T extends GenericLayer>(layerID: string): () => T {
 }
 
 export function removeLayer(layer: GenericLayer): void {
+    console.info("Removing layer", layer.id);
     globalBus.emit("removeLayer", layer);
 
-    delete layers[layer.id];
+    layers[layer.id] = undefined;
 }
 
 export function reloadLayer(layer: GenericLayer): void {
@@ -132,3 +144,15 @@ export function reloadLayer(layer: GenericLayer): void {
     // Re-create layer
     addLayer(layer, player);
 }
+
+globalBus.on("update", function updateLayers(diff) {
+    Object.values(layers).forEach(layer => {
+        layer?.emit("preUpdate", diff);
+    });
+    Object.values(layers).forEach(layer => {
+        layer?.emit("update", diff);
+    });
+    Object.values(layers).forEach(layer => {
+        layer?.emit("postUpdate", diff);
+    });
+});

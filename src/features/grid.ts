@@ -5,6 +5,7 @@ import {
     getUniqueID,
     makePersistent,
     Persistent,
+    PersistentState,
     Replace,
     setDefault,
     State,
@@ -138,7 +139,7 @@ export interface BaseGrid extends Persistent<Record<string | number, State>> {
     id: string;
     getID: (id: string | number, state: State) => string;
     getState: (id: string | number, state: State) => State;
-    setState: (cell: string | number, state: State) => void;
+    setState: (id: string | number, state: State) => void;
     cells: Record<string | number, GridCell>;
     type: typeof GridType;
     [Component]: typeof GridComponent;
@@ -175,18 +176,18 @@ export function createGrid<T extends GridOptions>(options: T & ThisType<Grid<T>>
     grid.id = getUniqueID("grid-");
     grid[Component] = GridComponent;
 
-    grid.cells = createGridProxy((grid as unknown) as Record<string, unknown>);
-    grid.getID = function(this: GenericGrid, cell: string | number) {
+    grid.cells = createGridProxy(grid as unknown as Record<string, unknown>);
+    grid.getID = function (this: GenericGrid, cell: string | number) {
         return grid.id + "-" + cell;
     };
-    grid.getState = function(this: GenericGrid, cell: string | number) {
-        if (this.state.value[cell] != undefined) {
-            return this.state.value[cell];
+    grid.getState = function (this: GenericGrid, cell: string | number) {
+        if (this[PersistentState].value[cell] != undefined) {
+            return this[PersistentState].value[cell];
         }
         return this.cells[cell].startState;
     };
-    grid.setState = function(this: GenericGrid, cell: string | number, state: State) {
-        this.state.value[cell] = state;
+    grid.setState = function (this: GenericGrid, cell: string | number, state: State) {
+        this[PersistentState].value[cell] = state;
     };
 
     processComputable(grid as T, "visibility");
@@ -203,6 +204,6 @@ export function createGrid<T extends GridOptions>(options: T & ThisType<Grid<T>>
     processComputable(grid as T, "getTitle");
     processComputable(grid as T, "getDisplay");
 
-    const proxy = createProxy((grid as unknown) as Grid<T>);
+    const proxy = createProxy(grid as unknown as Grid<T>);
     return proxy;
 }

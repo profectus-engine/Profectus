@@ -6,6 +6,7 @@ import {
     getUniqueID,
     makePersistent,
     Persistent,
+    PersistentState,
     Replace,
     setDefault,
     StyleValue,
@@ -93,7 +94,7 @@ export function createUpgrade<T extends UpgradeOptions>(
         );
     }
 
-    upgrade.bought = upgrade.state;
+    upgrade.bought = upgrade[PersistentState];
     if (upgrade.canAfford == null) {
         upgrade.canAfford = computed(
             () =>
@@ -105,7 +106,7 @@ export function createUpgrade<T extends UpgradeOptions>(
     if (upgrade.canPurchase == null) {
         upgrade.canPurchase = computed(() => unref(proxy.canAfford) && !unref(proxy.bought));
     }
-    upgrade.purchase = function() {
+    upgrade.purchase = function () {
         if (!unref(proxy.canPurchase)) {
             return;
         }
@@ -115,7 +116,7 @@ export function createUpgrade<T extends UpgradeOptions>(
                 unref(proxy.cost)
             );
         }
-        proxy.state.value = true;
+        proxy[PersistentState].value = true;
         proxy.onPurchase?.();
     };
 
@@ -129,7 +130,7 @@ export function createUpgrade<T extends UpgradeOptions>(
     processComputable(upgrade as T, "resource");
     processComputable(upgrade as T, "canPurchase");
 
-    const proxy = createProxy((upgrade as unknown) as Upgrade<T>);
+    const proxy = createProxy(upgrade as unknown as Upgrade<T>);
     return proxy;
 }
 

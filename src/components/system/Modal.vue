@@ -14,16 +14,13 @@
                 <div class="modal-wrapper">
                     <div class="modal-container">
                         <div class="modal-header">
-                            <slot name="header" :shown="isOpen">
-                                default header
-                            </slot>
+                            <slot name="header" :shown="isOpen"> default header </slot>
                         </div>
                         <div class="modal-body">
-                            <branches>
-                                <slot name="body" :shown="isOpen">
-                                    default body
-                                </slot>
-                            </branches>
+                            <Links v-if="links" :links="links">
+                                <slot name="body" :shown="isOpen"> default body </slot>
+                            </Links>
+                            <slot name="body" v-else :shown="isOpen"> default body </slot>
                         </div>
                         <div class="modal-footer">
                             <slot name="footer" :shown="isOpen">
@@ -43,10 +40,13 @@
 </template>
 
 <script setup lang="ts">
+import { Link } from "@/features/links";
 import { computed, ref } from "vue";
+import Links from "./Links.vue";
 
 const props = defineProps<{
     modelValue: boolean;
+    links?: Link[];
 }>();
 const emit = defineEmits<{
     (e: "update:modelValue", value: boolean): void;

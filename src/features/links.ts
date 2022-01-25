@@ -14,10 +14,8 @@ export interface Link extends SVGAttributes {
     offsetEnd?: Position;
 }
 
-export const RegisterLinkNodeInjectionKey: InjectionKey<(
-    id: string,
-    element: HTMLElement
-) => void> = Symbol("RegisterLinkNode");
-export const UnregisterLinkNodeInjectionKey: InjectionKey<(id: string) => void> = Symbol(
-    "UnregisterLinkNode"
-);
+export const RegisterLinkNodeInjectionKey: InjectionKey<
+    (id: string, element: HTMLElement) => void
+> = Symbol("RegisterLinkNode");
+export const UnregisterLinkNodeInjectionKey: InjectionKey<(id: string) => void> =
+    Symbol("UnregisterLinkNode");

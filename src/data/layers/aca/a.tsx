@@ -47,7 +47,7 @@ const ach3 = createAchievement({
     display: "EIEIO",
     tooltip:
         "Get a farm point.\n\nReward: The dinosaur is now your friend (you can max Farm Points).",
-    shouldEarn: function() {
+    shouldEarn: function () {
         return Decimal.gte(fPoints.value, 1);
     },
     onComplete() {

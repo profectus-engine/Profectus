@@ -6,6 +6,7 @@ import {
     getUniqueID,
     makePersistent,
     Persistent,
+    PersistentState,
     Replace,
     setDefault,
     StyleValue,
@@ -87,7 +88,7 @@ export function createMilestone<T extends MilestoneOptions>(
     milestone.type = MilestoneType;
     milestone[Component] = MilestoneComponent;
 
-    milestone.earned = milestone.state;
+    milestone.earned = milestone[PersistentState];
     processComputable(milestone as T, "visibility");
     setDefault(milestone, "visibility", Visibility.Visible);
     const visibility = milestone.visibility as ProcessedComputable<Visibility>;
@@ -123,18 +124,17 @@ export function createMilestone<T extends MilestoneOptions>(
     processComputable(milestone as T, "classes");
     processComputable(milestone as T, "display");
 
-    const proxy = createProxy((milestone as unknown) as Milestone<T>);
+    const proxy = createProxy(milestone as unknown as Milestone<T>);
     return proxy;
 }
 
 const toast = useToast();
 
-const listeners: Record<string, Unsubscribe> = {};
+const listeners: Record<string, Unsubscribe | undefined> = {};
 globalBus.on("addLayer", layer => {
-    const milestones: GenericMilestone[] = (findFeatures(
-        layer,
-        MilestoneType
-    ) as GenericMilestone[]).filter(milestone => milestone.shouldEarn != null);
+    const milestones: GenericMilestone[] = (
+        findFeatures(layer, MilestoneType) as GenericMilestone[]
+    ).filter(milestone => milestone.shouldEarn != null);
     listeners[layer.id] = layer.on("postUpdate", () => {
         milestones.forEach(milestone => {
             if (
@@ -142,7 +142,7 @@ globalBus.on("addLayer", layer => {
                 !milestone.earned.value &&
                 unref(milestone.shouldEarn)
             ) {
-                milestone.state.value = true;
+                milestone[PersistentState].value = true;
                 milestone.onComplete?.();
                 if (milestone.display) {
                     const display = unref(milestone.display);
@@ -164,7 +164,7 @@ globalBus.on("addLayer", layer => {
 globalBus.on("removeLayer", layer => {
     // unsubscribe from postUpdate
     listeners[layer.id]?.();
-    delete listeners[layer.id];
+    listeners[layer.id] = undefined;
 });
 
 declare module "@/game/settings" {

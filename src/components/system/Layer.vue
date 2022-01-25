@@ -1,8 +1,6 @@
 <template>
     <div class="layer-container">
-        <button v-if="showGoBack" class="goBack" @click="goBack">
-            ←
-        </button>
+        <button v-if="showGoBack" class="goBack" @click="goBack">←</button>
         <button class="layer-tab minimized" v-if="minimized" @click="minimized = false">
             <div>{{ name }}</div>
         </button>
@@ -12,9 +10,7 @@
             </Links>
             <component v-else :is="component" />
         </div>
-        <button v-if="minimizable" class="minimize" @click="minimized = true">
-            ▼
-        </button>
+        <button v-if="minimizable" class="minimize" @click="minimized = true">▼</button>
     </div>
 </template>
 

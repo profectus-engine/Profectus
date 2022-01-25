@@ -5,6 +5,7 @@ import {
     getUniqueID,
     makePersistent,
     Persistent,
+    PersistentState,
     Replace,
     setDefault,
     State,
@@ -208,9 +209,11 @@ export function createBoard<T extends BoardOptions>(options: T & ThisType<Board<
     board.type = BoardType;
     board[Component] = BoardComponent;
 
-    board.nodes = computed(() => proxy.state.value.nodes);
+    board.nodes = computed(() => proxy[PersistentState].value.nodes);
     board.selectedNode = computed(
-        () => proxy.nodes.value.find(node => node.id === proxy.state.value.selectedNode) || null
+        () =>
+            proxy.nodes.value.find(node => node.id === proxy[PersistentState].value.selectedNode) ||
+            null
     );
     board.selectedAction = computed(() => {
         if (proxy.selectedNode.value == null) {
@@ -220,7 +223,11 @@ export function createBoard<T extends BoardOptions>(options: T & ThisType<Board<
         if (type.actions == null) {
             return null;
         }
-        return type.actions.find(action => action.id === proxy.state.value.selectedAction) || null;
+        return (
+            type.actions.find(
+                action => action.id === proxy[PersistentState].value.selectedAction
+            ) || null
+        );
     });
     board.links = computed(() => {
         if (proxy.selectedAction.value == null) {
@@ -263,9 +270,11 @@ export function createBoard<T extends BoardOptions>(options: T & ThisType<Board<
         processComputable(nodeType, "titleColor");
         processComputable(nodeType, "actionDistance");
         setDefault(nodeType, "actionDistance", Math.PI / 6);
-        nodeType.nodes = computed(() => proxy.state.value.nodes.filter(node => node.type === type));
-        setDefault(nodeType, "onClick", function(node: BoardNode) {
-            proxy.state.value.selectedNode = node.id;
+        nodeType.nodes = computed(() =>
+            proxy[PersistentState].value.nodes.filter(node => node.type === type)
+        );
+        setDefault(nodeType, "onClick", function (node: BoardNode) {
+            proxy[PersistentState].value.selectedNode = node.id;
         });
 
         if (nodeType.actions) {
@@ -279,10 +288,10 @@ export function createBoard<T extends BoardOptions>(options: T & ThisType<Board<
             }
         }
 
-        board.types[type] = createProxy((nodeType as unknown) as GenericNodeType);
+        board.types[type] = createProxy(nodeType as unknown as GenericNodeType);
     }
 
-    const proxy = createProxy((board as unknown) as Board<T>);
+    const proxy = createProxy(board as unknown as Board<T>);
     return proxy;
 }
 
@@ -300,7 +309,7 @@ export function getUniqueNodeID(board: GenericBoard): number {
     return id;
 }
 
-const listeners: Record<string, Unsubscribe> = {};
+const listeners: Record<string, Unsubscribe | undefined> = {};
 globalBus.on("addLayer", layer => {
     const boards: GenericBoard[] = findFeatures(layer, BoardType) as GenericBoard[];
     listeners[layer.id] = layer.on("postUpdate", (diff: Decimal) => {
@@ -313,6 +322,6 @@ globalBus.on("addLayer", layer => {
 });
 globalBus.on("removeLayer", layer => {
     // unsubscribe from postUpdate
-    listeners[layer.id]();
-    delete listeners[layer.id];
+    listeners[layer.id]?.();
+    listeners[layer.id] = undefined;
 });

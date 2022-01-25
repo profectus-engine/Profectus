@@ -13,14 +13,16 @@
                     :key="action.id"
                     class="action"
                     :class="{ selected: selectedAction?.id === action.id }"
-                    :transform="
-                        `translate(
-                            ${(-size - 30) *
-                                Math.sin(((actions.length - 1) / 2 - index) * actionDistance)},
-                            ${(size + 30) *
-                                Math.cos(((actions.length - 1) / 2 - index) * actionDistance)}
-                        )`
-                    "
+                    :transform="`translate(
+                            ${
+                                (-size - 30) *
+                                Math.sin(((actions.length - 1) / 2 - index) * actionDistance)
+                            },
+                            ${
+                                (size + 30) *
+                                Math.cos(((actions.length - 1) / 2 - index) * actionDistance)
+                            }
+                        )`"
                     @mousedown="e => performAction(e, action)"
                     @touchstart="e => performAction(e, action)"
                     @mouseup="e => actionMouseUp(e, action)"
@@ -91,9 +93,9 @@
                     class="receiver"
                     :width="size * sqrtTwo + 16"
                     :height="size * sqrtTwo + 16"
-                    :transform="
-                        `translate(${-(size * sqrtTwo + 16) / 2}, ${-(size * sqrtTwo + 16) / 2})`
-                    "
+                    :transform="`translate(${-(size * sqrtTwo + 16) / 2}, ${
+                        -(size * sqrtTwo + 16) / 2
+                    })`"
                     :fill="backgroundColor"
                     :stroke="receivingNode ? '#0F0' : '#0F03'"
                     :stroke-width="2"
@@ -114,12 +116,9 @@
                     class="progressFill"
                     :width="Math.max(size * sqrtTwo * progress - 2, 0)"
                     :height="Math.max(size * sqrtTwo * progress - 2, 0)"
-                    :transform="
-                        `translate(${-Math.max(size * sqrtTwo * progress - 2, 0) / 2}, ${-Math.max(
-                            size * sqrtTwo * progress - 2,
-                            0
-                        ) / 2})`
-                    "
+                    :transform="`translate(${-Math.max(size * sqrtTwo * progress - 2, 0) / 2}, ${
+                        -Math.max(size * sqrtTwo * progress - 2, 0) / 2
+                    })`"
                     :fill="progressColor"
                 />
                 <rect
@@ -127,9 +126,9 @@
                     class="progressDiamond"
                     :width="size * sqrtTwo + 9"
                     :height="size * sqrtTwo + 9"
-                    :transform="
-                        `translate(${-(size * sqrtTwo + 9) / 2}, ${-(size * sqrtTwo + 9) / 2})`
-                    "
+                    :transform="`translate(${-(size * sqrtTwo + 9) / 2}, ${
+                        -(size * sqrtTwo + 9) / 2
+                    })`"
                     fill="transparent"
                     :stroke-dasharray="(size * sqrtTwo + 9) * 4"
                     :stroke-width="5"

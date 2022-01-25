@@ -53,7 +53,7 @@ export function createConversion<T extends ConversionOptions>(
     const conversion: T = options;
 
     if (conversion.convert == null) {
-        conversion.convert = function() {
+        conversion.convert = function () {
             unref<Resource>(proxy.gainResource).value = Decimal.add(
                 unref<Resource>(proxy.gainResource).value,
                 proxy.modifyGainAmount
@@ -79,7 +79,7 @@ export function createConversion<T extends ConversionOptions>(
     processComputable(conversion as T, "roundUpCost");
     setDefault(conversion, "roundUpCost", true);
 
-    const proxy = createProxy((conversion as unknown) as Conversion<T>);
+    const proxy = createProxy(conversion as unknown as Conversion<T>);
     return proxy;
 }
 
@@ -166,7 +166,7 @@ export function createIndependentConversion<S extends ConversionOptions>(
                 .max(1)
         );
     }
-    setDefault(conversion, "convert", function() {
+    setDefault(conversion, "convert", function () {
         unref<Resource>(proxy.gainResource).value = proxy.modifyGainAmount
             ? proxy.modifyGainAmount(unref(proxy.currentGain))
             : unref(proxy.currentGain);

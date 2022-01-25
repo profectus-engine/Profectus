@@ -12,6 +12,6 @@ module.exports = {
         config.plugins.delete("fork-ts-checker");
     },
     devServer: {
-        disableHostCheck: true
+        allowedHosts: "all"
     }
 };

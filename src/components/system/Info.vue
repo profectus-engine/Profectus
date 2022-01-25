@@ -17,9 +17,7 @@
                     Aarex
                 </div>
                 <br />
-                <div class="link" @click="openChangelog">
-                    Changelog
-                </div>
+                <div class="link" @click="openChangelog">Changelog</div>
                 <br />
                 <div>
                     <a

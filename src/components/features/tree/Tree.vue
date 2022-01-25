@@ -20,12 +20,16 @@
     </span>
 </template>
 
-<script setup lang="ts">
+<script lang="ts">
 import { FeatureComponent, wrapFeature } from "@/features/feature";
 import { GenericTree } from "@/features/tree";
+import { defineComponent } from "vue";
 import TreeNode from "./TreeNode.vue";
 
-defineProps<FeatureComponent<GenericTree>>();
+// https://github.com/thepaperpilot/The-Modding-Tree-X/issues/1
+export default defineComponent(function Grid(props: FeatureComponent<GenericTree>) {
+    return { ...props, TreeNode, wrapFeature };
+});
 </script>
 
 <style scoped>

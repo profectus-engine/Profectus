@@ -84,10 +84,7 @@ export function trackOOMPS(resource: Resource): Ref<string> {
                 oompsMag = -1;
             } else {
                 while (
-                    Decimal.div(curr, prev)
-                        .log(10)
-                        .div(diff)
-                        .gte("100") &&
+                    Decimal.div(curr, prev).log(10).div(diff).gte("100") &&
                     oompsMag <= 5 &&
                     Decimal.gt(prev, 0)
                 ) {

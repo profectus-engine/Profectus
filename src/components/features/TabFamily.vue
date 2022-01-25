@@ -19,7 +19,7 @@
 
 <script setup lang="ts">
 import themes from "@/data/themes";
-import { FeatureComponent } from "@/features/feature";
+import { FeatureComponent, PersistentState } from "@/features/feature";
 import { GenericTabFamily } from "@/features/tabFamily";
 import settings from "@/game/settings";
 import { coerceComponent, isCoercableComponent } from "@/util/vue";
@@ -52,7 +52,7 @@ const style = computed(() => {
 });
 
 function selectTab(tab: string) {
-    props.state.value = tab;
+    props[PersistentState].value = tab;
 }
 </script>
 

@@ -4,7 +4,7 @@
         <ResourceVue :resource="resource" :color="color || 'white'" />
         {{ resource
         }}<!-- remove whitespace -->
-        <span v-if="effectComponent">, <component :is="effectComponent"/></span>
+        <span v-if="effectComponent">, <component :is="effectComponent" /></span>
         <br /><br />
     </div>
 </template>

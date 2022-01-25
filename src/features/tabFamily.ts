@@ -15,6 +15,7 @@ import {
     getUniqueID,
     makePersistent,
     Persistent,
+    PersistentState,
     Replace,
     setDefault,
     StyleValue,
@@ -73,7 +74,7 @@ export function createTabButton<T extends TabButtonOptions>(
     processComputable(tabButton as T, "style");
     processComputable(tabButton as T, "glowColor");
 
-    const proxy = createProxy((tabButton as unknown) as TabButton<T>);
+    const proxy = createProxy(tabButton as unknown as TabButton<T>);
     return proxy;
 }
 
@@ -114,10 +115,10 @@ export function createTabFamily<T extends TabFamilyOptions>(
     tabFamily.activeTab = computed(() => {
         const tabs = unref(proxy.tabs);
         if (
-            proxy.state.value in tabs &&
-            unref(tabs[proxy.state.value].visibility) === Visibility.Visible
+            proxy[PersistentState].value in tabs &&
+            unref(tabs[proxy[PersistentState].value].visibility) === Visibility.Visible
         ) {
-            return unref(tabs[proxy.state.value].tab);
+            return unref(tabs[proxy[PersistentState].value].tab);
         }
         const firstTab = Object.values(tabs).find(
             tab => unref(tab.visibility) === Visibility.Visible
@@ -128,6 +129,6 @@ export function createTabFamily<T extends TabFamilyOptions>(
         return null;
     });
 
-    const proxy = createProxy((tabFamily as unknown) as TabFamily<T>);
+    const proxy = createProxy(tabFamily as unknown as TabFamily<T>);
     return proxy;
 }

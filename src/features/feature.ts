@@ -3,8 +3,9 @@ import { GenericLayer } from "@/game/layers";
 import Decimal, { DecimalSource } from "@/util/bignum";
 import { ProcessedComputable } from "@/util/computed";
 import { isArray } from "@vue/shared";
-import { ComponentOptions, CSSProperties, DefineComponent, isRef, ref, Ref } from "vue";
+import { ComponentOptions, CSSProperties, DefineComponent, isRef, ref, Ref, UnwrapRef } from "vue";
 
+export const PersistentState = Symbol("PersistentState");
 export const SetupPersistence = Symbol("SetupPersistence");
 export const DefaultValue = Symbol("DefaultValue");
 export const Component = Symbol("Component");
@@ -21,10 +22,10 @@ export type State =
     | { [key: string]: State }
     | { [key: number]: State };
 export type CoercableComponent = string | ComponentOptions | DefineComponent | JSX.Element;
-export type StyleValue = string | CSSProperties | Array<StyleValue>;
+export type StyleValue = string | CSSProperties | Array<string | CSSProperties>;
 
 export type Persistent<T extends State = State> = {
-    state: Ref<T>;
+    [PersistentState]: Ref<T>;
     [DefaultValue]: T;
     [SetupPersistence]: () => Ref<T>;
 };
@@ -40,9 +41,9 @@ export type PersistentRef<T extends State = State> = Ref<T> & {
 export type GenericComponent = DefineComponent<any, any, any>;
 
 // Example usage: `<Upgrade {...wrapComputable<GenericUpgrade>(upgrade)} />`
-export function wrapFeature<T>(component: T): FeatureComponent<T> {
+export function wrapFeature<T>(component: T): UnwrapRef<T> {
     // TODO is this okay, or do we actually need to unref each property?
-    return (component as unknown) as FeatureComponent<T>;
+    return component as unknown as UnwrapRef<T>;
 }
 
 export type FeatureComponent<T> = Omit<
@@ -75,13 +76,13 @@ export function showIf(condition: boolean, otherwise = Visibility.None): Visibil
 
 export function persistent<T extends State>(defaultValue: T | Ref<T>): PersistentRef<T> {
     const persistent = isRef(defaultValue) ? defaultValue : (ref(defaultValue) as Ref<T>);
-    ((persistent as unknown) as PersistentRef<T>)[DefaultValue] = isRef(defaultValue)
+    (persistent as unknown as PersistentRef<T>)[DefaultValue] = isRef(defaultValue)
         ? defaultValue.value
         : defaultValue;
-    ((persistent as unknown) as PersistentRef<T>)[SetupPersistence] = function() {
+    (persistent as unknown as PersistentRef<T>)[SetupPersistence] = function () {
         return persistent;
     };
-    return (persistent as unknown) as PersistentRef<T>;
+    return persistent as unknown as PersistentRef<T>;
 }
 
 export function makePersistent<T extends State>(
@@ -91,7 +92,7 @@ export function makePersistent<T extends State>(
     const persistent = obj as Partial<Persistent<T>>;
     const state = ref(defaultValue) as Ref<T>;
 
-    Object.defineProperty(persistent, "state", {
+    Object.defineProperty(persistent, PersistentState, {
         get: () => {
             return state.value;
         },
@@ -100,7 +101,7 @@ export function makePersistent<T extends State>(
         }
     });
     persistent[DefaultValue] = isRef(defaultValue) ? (defaultValue.value as T) : defaultValue;
-    persistent[SetupPersistence] = function() {
+    persistent[SetupPersistence] = function () {
         return state;
     };
 }
@@ -136,20 +137,14 @@ export function findFeatures(obj: Record<string, unknown>, type: symbol): unknow
 globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>) => {
     const handleObject = (
         obj: Record<string, unknown>,
-        persistentState: Record<string, unknown>,
-        foundArray: boolean
-    ) => {
+        persistentState: Record<string, unknown>
+    ): boolean => {
+        let foundPersistent = false;
         Object.keys(obj).forEach(key => {
             const value = obj[key];
             if (value && typeof value === "object") {
-                const warnArray = foundArray || isArray(value);
                 if (SetupPersistence in value) {
-                    if (warnArray) {
-                        console.warn(
-                            "Found persistent property inside array when adding layer. Keep in mind changing the order of persistent objects in an array will mess with existing player saves.",
-                            layer
-                        );
-                    }
+                    foundPersistent = true;
                     const savedValue = persistentState[key];
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     persistentState[key] = (value as PersistentRef | Persistent)[
@@ -162,14 +157,25 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
                     if (typeof persistentState[key] !== "object") {
                         persistentState[key] = {};
                     }
-                    handleObject(
+                    const foundPersistentInChild = handleObject(
                         value as Record<string, unknown>,
-                        persistentState[key] as Record<string, unknown>,
-                        warnArray
+                        persistentState[key] as Record<string, unknown>
                     );
+                    if (foundPersistentInChild) {
+                        if (isArray(value)) {
+                            console.warn(
+                                "Found array that contains persistent values when adding layer. Keep in mind changing the order of elements in the array will mess with existing player saves.",
+                                obj,
+                                key
+                            );
+                        } else {
+                            foundPersistent = true;
+                        }
+                    }
                 }
             }
         });
+        return foundPersistent;
     };
-    handleObject(layer, saveData, false);
+    handleObject(layer, saveData);
 });

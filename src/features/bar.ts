@@ -97,6 +97,6 @@ export function createBar<T extends BarOptions>(options: T & ThisType<Bar<T>>): 
     processComputable(bar as T, "display");
     processComputable(bar as T, "mark");
 
-    const proxy = createProxy((bar as unknown) as Bar<T>);
+    const proxy = createProxy(bar as unknown as Bar<T>);
     return proxy;
 }

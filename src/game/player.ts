@@ -97,7 +97,7 @@ const playerHandler: ProxyHandler<Record<PropertyKey, any>> = {
                 state.autosave = false;
                 transientState.hasNaN = true;
                 transientState.NaNPath = [...target[ProxyPath], property];
-                transientState.NaNReceiver = (receiver as unknown) as Record<string, unknown>;
+                transientState.NaNReceiver = receiver as unknown as Record<string, unknown>;
                 console.error(
                     `Attempted to set NaN value`,
                     [...target[ProxyPath], property],

@@ -1,7 +1,6 @@
 import { App as VueApp, createApp } from "vue";
 import App from "./App.vue";
 import modInfo from "./data/modInfo.json";
-import { globalBus, startGameLoop } from "./game/events";
 import { GenericLayer } from "./game/layers";
 import { PlayerData } from "./game/player";
 import { Settings } from "./game/settings";
@@ -15,7 +14,7 @@ declare global {
         save: VoidFunction;
         hardReset: VoidFunction;
         hardResetSettings: VoidFunction;
-        layers: Record<string, Readonly<GenericLayer>>;
+        layers: Record<string, Readonly<GenericLayer> | undefined>;
         player: PlayerData;
         state: Transient;
         settings: Settings;
@@ -34,6 +33,7 @@ declare global {
 
 requestAnimationFrame(async () => {
     await load();
+    const { globalBus, startGameLoop } = await require("./game/events");
 
     // Create Vue
     const vue = (window.vue = createApp({

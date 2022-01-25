@@ -8,12 +8,12 @@
                 <Save
                     v-for="(save, index) in saves"
                     :key="index"
-                    :save="save"
-                    @open="openSave(save.id)"
-                    @export="exportSave(save.id)"
-                    @editName="name => editSave(save.id, name)"
-                    @duplicate="duplicateSave(save.id)"
-                    @delete="deleteSave(save.id)"
+                    :save="save!"
+                    @open="openSave(save!.id)"
+                    @export="exportSave(save!.id)"
+                    @editName="name => editSave(save!.id, name)"
+                    @duplicate="duplicateSave(save!.id)"
+                    @delete="deleteSave(save!.id)"
                 />
             </div>
         </template>
@@ -122,7 +122,7 @@ let bank = ref(
     }, [])
 );
 
-const saves = ref<Record<string, LoadablePlayerData>>({});
+const saves = ref<Record<string, LoadablePlayerData | undefined>>({});
 
 function loadSaveData() {
     saves.value = settings.saves.reduce((acc: Record<string, LoadablePlayerData>, curr: string) => {
@@ -178,13 +178,15 @@ function duplicateSave(id: string) {
 function deleteSave(id: string) {
     settings.saves = settings.saves.filter((save: string) => save !== id);
     localStorage.removeItem(id);
-    delete saves.value[id];
+    saves.value[id] = undefined;
 }
 
 function openSave(id: string) {
-    saves.value[player.id].time = player.time;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    saves.value[player.id]!.time = player.time;
     save();
-    loadSave(saves.value[id]);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    loadSave(saves.value[id]!);
 }
 
 function newSave() {

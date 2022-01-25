@@ -14,6 +14,7 @@ import { computed, toRef } from "vue";
 import Game from "./components/system/Game.vue";
 import GameOverScreen from "./components/system/GameOverScreen.vue";
 import NaNScreen from "./components/system/NaNScreen.vue";
+import Nav from "./components/system/Nav.vue";
 import TPS from "./components/system/TPS.vue";
 import modInfo from "./data/modInfo.json";
 import themes from "./data/themes";

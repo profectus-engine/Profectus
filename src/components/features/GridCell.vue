@@ -14,7 +14,7 @@
         :disabled="!canClick"
     >
         <div v-if="title"><component :is="titleComponent" /></div>
-        <component :is="component" style="white-space: pre-line;" />
+        <component :is="component" style="white-space: pre-line" />
         <LinkNode :id="id" />
     </button>
 </template>

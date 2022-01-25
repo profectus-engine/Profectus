@@ -1,9 +1,8 @@
-import { hasWon } from "@/data/mod";
 import modInfo from "@/data/modInfo.json";
 import Decimal, { DecimalSource } from "@/util/bignum";
 import { createNanoEvents } from "nanoevents";
-import { App } from "vue";
-import { GenericLayer, layers } from "./layers";
+import { App, Ref } from "vue";
+import { GenericLayer } from "./layers";
 import player from "./player";
 import settings, { Settings } from "./settings";
 import state from "./state";
@@ -16,18 +15,13 @@ export interface GlobalEvents {
     setupVue: (vue: App) => void;
 }
 
-export interface LayerEvents {
-    // Generation
-    preUpdate: (diff: Decimal) => void;
-    // Actions (e.g. automation)
-    update: (diff: Decimal) => void;
-    // Effects (e.g. milestones)
-    postUpdate: (diff: Decimal) => void;
-}
-
 export const globalBus = createNanoEvents<GlobalEvents>();
 
 let intervalID: number | null = null;
+
+// Not imported immediately due to dependency cycles
+// This gets set during startGameLoop(), and will only be used in the update function
+let hasWon: null | Ref<boolean> = null;
 
 function update() {
     const now = Date.now();
@@ -41,7 +35,7 @@ function update() {
     }
 
     // Stop here if the game is paused on the win screen
-    if (hasWon.value && !player.keepGoing) {
+    if (hasWon?.value && !player.keepGoing) {
         return;
     }
     // Stop here if the player had a NaN value
@@ -94,22 +88,11 @@ function update() {
     }
 }
 
-export function startGameLoop(): void {
+export async function startGameLoop() {
+    hasWon = (await import("@/data/mod")).hasWon;
     if (settings.unthrottled) {
         requestAnimationFrame(update);
     } else {
         intervalID = setInterval(update, 50);
     }
 }
-
-globalBus.on("update", function updateLayers(diff) {
-    Object.values(layers).forEach(layer => {
-        layer.emit("preUpdate", diff);
-    });
-    Object.values(layers).forEach(layer => {
-        layer.emit("update", diff);
-    });
-    Object.values(layers).forEach(layer => {
-        layer.emit("postUpdate", diff);
-    });
-});

@@ -5,6 +5,7 @@ import {
     getUniqueID,
     makePersistent,
     Persistent,
+    PersistentState,
     Replace,
     setDefault,
     StyleValue,
@@ -70,7 +71,7 @@ export function createInfobox<T extends InfoboxOptions>(
     infobox.type = InfoboxType;
     infobox[Component] = InfoboxComponent;
 
-    infobox.collapsed = infobox.state;
+    infobox.collapsed = infobox[PersistentState];
 
     processComputable(infobox as T, "visibility");
     setDefault(infobox, "visibility", Visibility.Visible);
@@ -82,6 +83,6 @@ export function createInfobox<T extends InfoboxOptions>(
     processComputable(infobox as T, "title");
     processComputable(infobox as T, "display");
 
-    const proxy = createProxy((infobox as unknown) as Infobox<T>);
+    const proxy = createProxy(infobox as unknown as Infobox<T>);
     return proxy;
 }

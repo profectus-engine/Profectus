@@ -99,7 +99,7 @@ export function createTreeNode<T extends TreeNodeOptions>(
     processComputable(treeNode as T, "style");
     processComputable(treeNode as T, "mark");
 
-    const proxy = createProxy((treeNode as unknown) as TreeNode<T>);
+    const proxy = createProxy(treeNode as unknown as TreeNode<T>);
     return proxy;
 }
 
@@ -155,7 +155,7 @@ export function createTree<T extends TreeOptions>(options: T & ThisType<Tree<T>>
     tree.isResetting = ref(false);
     tree.resettingNode = ref(null);
 
-    tree.reset = function(node) {
+    tree.reset = function (node) {
         proxy.isResetting.value = true;
         proxy.resettingNode.value = node;
         proxy.resetPropagation?.(proxy, node);
@@ -171,7 +171,7 @@ export function createTree<T extends TreeOptions>(options: T & ThisType<Tree<T>>
     processComputable(tree as T, "rightSideNodes");
     processComputable(tree as T, "branches");
 
-    const proxy = createProxy((tree as unknown) as Tree<T>);
+    const proxy = createProxy(tree as unknown as Tree<T>);
     return proxy;
 }
 
@@ -179,7 +179,7 @@ export type ResetPropagation = {
     (tree: GenericTree, resettingNode: GenericTreeNode): void;
 };
 
-export const defaultResetPropagation = function(
+export const defaultResetPropagation = function (
     tree: GenericTree,
     resettingNode: GenericTreeNode
 ): void {
@@ -190,7 +190,7 @@ export const defaultResetPropagation = function(
     }
 };
 
-export const invertedResetPropagation = function(
+export const invertedResetPropagation = function (
     tree: GenericTree,
     resettingNode: GenericTreeNode
 ): void {
@@ -201,7 +201,7 @@ export const invertedResetPropagation = function(
     }
 };
 
-export const branchedResetPropagation = function(
+export const branchedResetPropagation = function (
     tree: GenericTree,
     resettingNode: GenericTreeNode
 ): void {

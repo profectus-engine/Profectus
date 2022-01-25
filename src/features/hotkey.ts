@@ -12,7 +12,7 @@ import { createProxy } from "@/util/proxies";
 import { unref } from "vue";
 import { findFeatures, Replace, setDefault } from "./feature";
 
-export const hotkeys: Record<string, GenericHotkey> = {};
+export const hotkeys: Record<string, GenericHotkey | undefined> = {};
 export const HotkeyType = Symbol("Hotkey");
 
 export interface HotkeyOptions {
@@ -49,7 +49,7 @@ export function createHotkey<T extends HotkeyOptions>(options: T & ThisType<Hotk
     setDefault(hotkey, "enabled", true);
     processComputable(hotkey as T, "description");
 
-    const proxy = createProxy((hotkey as unknown) as Hotkey<T>);
+    const proxy = createProxy(hotkey as unknown as Hotkey<T>);
     return proxy;
 }
 
@@ -61,11 +61,11 @@ globalBus.on("addLayer", layer => {
 
 globalBus.on("removeLayer", layer => {
     (findFeatures(layer, HotkeyType) as GenericHotkey[]).forEach(hotkey => {
-        delete hotkeys[hotkey.key];
+        hotkeys[hotkey.key] = undefined;
     });
 });
 
-document.onkeydown = function(e) {
+document.onkeydown = function (e) {
     if ((e.target as HTMLElement | null)?.tagName === "INPUT") {
         return;
     }

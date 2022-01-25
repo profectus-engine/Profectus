@@ -34,6 +34,6 @@ export function createTab<T extends TabOptions>(options: T & ThisType<Tab<T>>): 
     tab.type = TabType;
     tab[Component] = TabComponent;
 
-    const proxy = createProxy((tab as unknown) as Tab<T>);
+    const proxy = createProxy(tab as unknown as Tab<T>);
     return proxy;
 }

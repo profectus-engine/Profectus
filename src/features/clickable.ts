@@ -79,6 +79,6 @@ export function createClickable<T extends ClickableOptions>(
     processComputable(clickable as T, "mark");
     processComputable(clickable as T, "display");
 
-    const proxy = createProxy((clickable as unknown) as Clickable<T>);
+    const proxy = createProxy(clickable as unknown as Clickable<T>);
     return proxy;
 }

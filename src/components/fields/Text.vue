@@ -1,7 +1,9 @@
 <template>
     <form @submit.prevent="submit">
         <div class="field">
-            <span class="field-title" v-if="titleComponent"><component :is="titleComponent"/></span>
+            <span class="field-title" v-if="titleComponent"
+                ><component :is="titleComponent"
+            /></span>
             <VueTextareaAutosize
                 v-if="textArea"
                 v-model="value"

@@ -2,8 +2,18 @@
     <Tooltip
         v-if="visibility !== Visibility.None"
         v-show="visibility === Visibility.Visible"
-        v-bind="typeof tooltip === 'object' ? wrapFeature(tooltip) : null"
-        :display="typeof tooltip === 'object' ? unref(tooltip.display) : tooltip || ''"
+        v-bind="
+            typeof tooltip === 'object' && !isCoercableComponent(tooltip)
+                ? wrapFeature(tooltip)
+                : null
+        "
+        :display="
+            typeof tooltip === 'object'
+                ? isCoercableComponent(tooltip)
+                    ? unref(tooltip)
+                    : tooltip.display
+                : tooltip || ''
+        "
         :force="forceTooltip"
         :class="{
             treeNode: true,
@@ -38,7 +48,7 @@
 
 <script setup lang="ts">
 import { GenericTreeNode } from "@/features/tree";
-import { coerceComponent, setupHoldToClick } from "@/util/vue";
+import { coerceComponent, isCoercableComponent, setupHoldToClick } from "@/util/vue";
 import { computed, toRefs, unref } from "vue";
 import Tooltip from "@/components/system/Tooltip.vue";
 import MarkNode from "../MarkNode.vue";

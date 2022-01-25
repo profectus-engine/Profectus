@@ -52,7 +52,7 @@
 
 <script setup lang="ts">
 import { BoardNode, GenericBoard, getNodeProperty } from "@/features/board";
-import { FeatureComponent, Visibility } from "@/features/feature";
+import { FeatureComponent, PersistentState, Visibility } from "@/features/feature";
 import { computed, ref, toRefs } from "vue";
 import panZoom from "vue-panzoom";
 import BoardLinkVue from "./BoardLink.vue";
@@ -147,8 +147,8 @@ function mouseDown(e: MouseEvent | TouchEvent, nodeID: number | null = null, dra
         }
     }
     if (nodeID != null) {
-        props.state.value.selectedNode = null;
-        props.state.value.selectedAction = null;
+        props[PersistentState].value.selectedNode = null;
+        props[PersistentState].value.selectedAction = null;
     }
 }
 
@@ -206,8 +206,8 @@ function endDragging(nodeID: number | null) {
 
         dragging.value = null;
     } else if (!hasDragged.value) {
-        props.state.value.selectedNode = null;
-        props.state.value.selectedAction = null;
+        props[PersistentState].value.selectedNode = null;
+        props[PersistentState].value.selectedAction = null;
     }
 }
 </script>

@@ -119,7 +119,7 @@ export function createChallenge<T extends ChallengeOptions>(
     challenge.maxed = computed(() =>
         Decimal.gte(proxy.completions.value, unref(proxy.completionLimit))
     );
-    challenge.toggle = function() {
+    challenge.toggle = function () {
         if (proxy.active.value) {
             if (proxy.canComplete && unref(proxy.canComplete) && !proxy.maxed.value) {
                 let completions: boolean | DecimalSource = unref(proxy.canComplete);
@@ -188,7 +188,7 @@ export function createChallenge<T extends ChallengeOptions>(
         });
     }
 
-    const proxy = createProxy((challenge as unknown) as Challenge<T>);
+    const proxy = createProxy(challenge as unknown as Challenge<T>);
     return proxy;
 }
 
