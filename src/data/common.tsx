@@ -118,6 +118,7 @@ export type LayerTreeNode<T extends LayerTreeNodeOptions> = Replace<
         append: ProcessedComputable<boolean>;
     }
 >;
+export type GenericLayerTreeNode = LayerTreeNode<LayerTreeNodeOptions>;
 
 export function createLayerTreeNode<T extends LayerTreeNodeOptions>(options: T): LayerTreeNode<T> {
     processComputable(options as T, "append");

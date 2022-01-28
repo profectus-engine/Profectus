@@ -37,7 +37,7 @@ type BuyableDisplay =
 export interface BuyableOptions {
     visibility?: Computable<Visibility>;
     cost?: Computable<DecimalSource>;
-    resource?: Computable<Resource>;
+    resource?: Resource;
     canPurchase?: Computable<boolean>;
     purchaseLimit?: Computable<DecimalSource>;
     classes?: Computable<Record<string, boolean>>;

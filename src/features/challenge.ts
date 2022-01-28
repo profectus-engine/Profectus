@@ -34,7 +34,7 @@ export interface ChallengeOptions {
     canComplete?: Computable<boolean | DecimalSource>;
     completionLimit?: Computable<DecimalSource>;
     mark?: Computable<boolean | string>;
-    resource?: Computable<Resource>;
+    resource?: Resource;
     goal?: Computable<DecimalSource>;
     classes?: Computable<Record<string, boolean>>;
     style?: Computable<StyleValue>;
@@ -72,7 +72,6 @@ export type Challenge<T extends ChallengeOptions> = Replace<
         canComplete: GetComputableTypeWithDefault<T["canComplete"], Ref<boolean>>;
         completionLimit: GetComputableTypeWithDefault<T["completionLimit"], 1>;
         mark: GetComputableTypeWithDefault<T["mark"], Ref<boolean>>;
-        resource: GetComputableType<T["resource"]>;
         goal: GetComputableType<T["goal"]>;
         classes: GetComputableType<T["classes"]>;
         style: GetComputableType<T["style"]>;
@@ -160,7 +159,7 @@ export function createChallenge<T extends ChallengeOptions>(
             if (!proxy.active.value || proxy.resource == null || proxy.goal == null) {
                 return false;
             }
-            return Decimal.gte(unref<Resource>(proxy.resource).value, unref(proxy.goal));
+            return Decimal.gte(proxy.resource.value, unref(proxy.goal));
         });
     }
     if (challenge.mark == null) {
@@ -174,7 +173,6 @@ export function createChallenge<T extends ChallengeOptions>(
     processComputable(challenge as T, "completionLimit");
     setDefault(challenge, "completionLimit", 1);
     processComputable(challenge as T, "mark");
-    processComputable(challenge as T, "resource");
     processComputable(challenge as T, "goal");
     processComputable(challenge as T, "classes");
     processComputable(challenge as T, "style");

@@ -17,6 +17,7 @@ import {
 } from "@/util/computed";
 import { createProxy } from "@/util/proxies";
 import { createNanoEvents, Emitter } from "nanoevents";
+import { customRef, Ref } from "vue";
 import { globalBus } from "./events";
 import player from "./player";
 
@@ -81,27 +82,40 @@ export type GenericLayer = Replace<
     }
 >;
 
-export function createLayer<T extends LayerOptions>(options: T): Layer<T> {
-    const layer: T & Partial<BaseLayer> = options;
+export function createLayer<T extends LayerOptions>(optionsFunc: () => T): Ref<Layer<T>> {
+    let layer: Layer<T> | null = null;
 
-    const emitter = (layer.emitter = createNanoEvents<LayerEvents>());
-    layer.on = emitter.on.bind(emitter);
-    layer.emit = emitter.emit.bind(emitter);
+    return customRef(track => {
+        return {
+            get() {
+                if (layer == undefined) {
+                    const partialLayer = optionsFunc() as T & Partial<BaseLayer>;
+                    const emitter = (partialLayer.emitter = createNanoEvents<LayerEvents>());
+                    partialLayer.on = emitter.on.bind(emitter);
+                    partialLayer.emit = emitter.emit.bind(emitter);
 
-    layer.minimized = persistent(false);
+                    partialLayer.minimized = persistent(false);
 
-    processComputable(layer as T, "color");
-    processComputable(layer as T, "display");
-    processComputable(layer as T, "name");
-    setDefault(layer, "name", options.id);
-    processComputable(layer as T, "minWidth");
-    setDefault(layer, "minWidth", 600);
-    processComputable(layer as T, "minimizable");
-    setDefault(layer, "minimizable", true);
-    processComputable(layer as T, "links");
+                    processComputable(partialLayer as T, "color");
+                    processComputable(partialLayer as T, "display");
+                    processComputable(partialLayer as T, "name");
+                    setDefault(partialLayer, "name", partialLayer.id);
+                    processComputable(partialLayer as T, "minWidth");
+                    setDefault(partialLayer, "minWidth", 600);
+                    processComputable(partialLayer as T, "minimizable");
+                    setDefault(partialLayer, "minimizable", true);
+                    processComputable(partialLayer as T, "links");
 
-    const proxy = createProxy(layer as unknown as Layer<T>);
-    return proxy;
+                    layer = createProxy(partialLayer as unknown as Layer<T>);
+                }
+                track();
+                return layer;
+            },
+            set() {
+                console.error("Layers are read-only!");
+            }
+        };
+    });
 }
 
 export function addLayer(
@@ -127,8 +141,8 @@ export function addLayer(
     globalBus.emit("addLayer", layer, player.layers[layer.id]);
 }
 
-export function getLayer<T extends GenericLayer>(layerID: string): () => T {
-    return () => layers[layerID] as T;
+export function getLayer<T extends GenericLayer>(layerID: string): T {
+    return layers[layerID] as T;
 }
 
 export function removeLayer(layer: GenericLayer): void {
