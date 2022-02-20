@@ -507,7 +507,7 @@ export default class Decimal {
     public layer: number = Number.NaN;
 
     constructor(value?: DecimalSource) {
-        if (value instanceof Decimal) {
+        if (value instanceof Decimal || (value != null && typeof value === "object" && "sign" in value && "mag" in value && "layer" in value)) {
             this.fromDecimal(value);
         } else if (typeof value === "number") {
             this.fromNumber(value);
@@ -1556,7 +1556,7 @@ export default class Decimal {
     }
 
     public fromValue(value: DecimalSource): Decimal {
-        if (value instanceof Decimal) {
+        if (value instanceof Decimal || (value != null && typeof value === "object" && "sign" in value && "mag" in value && "layer" in value)) {
             return this.fromDecimal(value);
         }
 
