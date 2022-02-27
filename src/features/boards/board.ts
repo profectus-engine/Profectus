@@ -4,16 +4,13 @@ import {
     findFeatures,
     GatherProps,
     getUniqueID,
-    makePersistent,
-    Persistent,
-    PersistentState,
     Replace,
     setDefault,
-    State,
     StyleValue,
     Visibility
 } from "@/features/feature";
 import { globalBus } from "@/game/events";
+import { State, Persistent, makePersistent, PersistentState } from "@/game/persistence";
 import Decimal, { DecimalSource } from "@/lib/break_eternity";
 import { isFunction } from "@/util/common";
 import {

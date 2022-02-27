@@ -5,9 +5,6 @@ import {
     findFeatures,
     GatherProps,
     getUniqueID,
-    makePersistent,
-    Persistent,
-    PersistentState,
     Replace,
     setDefault,
     StyleValue,
@@ -15,6 +12,7 @@ import {
 } from "@/features/feature";
 import { globalBus } from "@/game/events";
 import "@/game/notifications";
+import { Persistent, makePersistent, PersistentState } from "@/game/persistence";
 import {
     Computable,
     GetComputableType,

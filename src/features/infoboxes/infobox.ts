@@ -4,9 +4,6 @@ import {
     Component,
     GatherProps,
     getUniqueID,
-    makePersistent,
-    Persistent,
-    PersistentState,
     Replace,
     setDefault,
     StyleValue,
@@ -21,6 +18,7 @@ import {
 } from "@/util/computed";
 import { createLazyProxy } from "@/util/proxies";
 import { Ref } from "vue";
+import { Persistent, makePersistent, PersistentState } from "@/game/persistence";
 
 export const InfoboxType = Symbol("Infobox");
 

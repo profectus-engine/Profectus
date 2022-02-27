@@ -19,7 +19,7 @@ import {
     createCumulativeConversion,
     createExponentialScaling
 } from "@/features/conversion";
-import { jsx, persistent, showIf, Visibility } from "@/features/feature";
+import { jsx, showIf, Visibility } from "@/features/feature";
 import { createHotkey } from "@/features/hotkey";
 import { createInfobox } from "@/features/infoboxes/infobox";
 import { createMilestone } from "@/features/milestones/milestone";
@@ -32,6 +32,7 @@ import { createTabButton, createTabFamily } from "@/features/tabs/tabFamily";
 import { createTree, createTreeNode, GenericTreeNode, TreeBranch } from "@/features/trees/tree";
 import { createUpgrade } from "@/features/upgrades/upgrade";
 import { createLayer } from "@/game/layers";
+import { persistent } from "@/game/persistence";
 import settings from "@/game/settings";
 import { DecimalSource } from "@/lib/break_eternity";
 import Decimal, { format, formatWhole } from "@/util/bignum";

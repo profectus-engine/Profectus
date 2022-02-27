@@ -3,9 +3,6 @@ import {
     Component,
     GatherProps,
     getUniqueID,
-    makePersistent,
-    Persistent,
-    PersistentState,
     Replace,
     setDefault,
     StyleValue,
@@ -13,6 +10,7 @@ import {
 } from "@/features/feature";
 import TabButtonComponent from "@/features/tabs/TabButton.vue";
 import TabFamilyComponent from "@/features/tabs/TabFamily.vue";
+import { Persistent, makePersistent, PersistentState } from "@/game/persistence";
 import {
     Computable,
     GetComputableType,

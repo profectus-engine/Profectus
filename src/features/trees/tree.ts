@@ -3,7 +3,6 @@ import {
     Component,
     GatherProps,
     getUniqueID,
-    persistent,
     Replace,
     setDefault,
     StyleValue,
@@ -14,6 +13,7 @@ import { GenericReset } from "@/features/reset";
 import { displayResource, Resource } from "@/features/resources/resource";
 import { Tooltip } from "@/features/tooltip";
 import TreeComponent from "@/features/trees/Tree.vue";
+import { persistent } from "@/game/persistence";
 import { DecimalSource, format } from "@/util/bignum";
 import Decimal, { formatWhole } from "@/util/break_eternity";
 import {

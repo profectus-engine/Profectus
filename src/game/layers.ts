@@ -1,11 +1,4 @@
-import {
-    CoercableComponent,
-    persistent,
-    PersistentRef,
-    Replace,
-    setDefault,
-    StyleValue
-} from "@/features/feature";
+import { CoercableComponent, Replace, setDefault, StyleValue } from "@/features/feature";
 import { Link } from "@/features/links";
 import Decimal from "@/util/bignum";
 import {
@@ -18,6 +11,7 @@ import {
 import { createLazyProxy } from "@/util/proxies";
 import { createNanoEvents, Emitter } from "nanoevents";
 import { globalBus } from "./events";
+import { persistent, PersistentRef } from "./persistence";
 import player from "./player";
 
 export interface LayerEvents {

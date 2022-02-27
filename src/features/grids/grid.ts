@@ -4,12 +4,8 @@ import {
     Component,
     GatherProps,
     getUniqueID,
-    makePersistent,
-    Persistent,
-    PersistentState,
     Replace,
     setDefault,
-    State,
     StyleValue,
     Visibility
 } from "@/features/feature";
@@ -23,6 +19,7 @@ import {
 } from "@/util/computed";
 import { createLazyProxy } from "@/util/proxies";
 import { computed, Ref, unref } from "vue";
+import { State, Persistent, makePersistent, PersistentState } from "@/game/persistence";
 
 export const GridType = Symbol("Grid");
 

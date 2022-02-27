@@ -1,5 +1,6 @@
 import ClickableComponent from "@/features/clickables/Clickable.vue";
 import { Resource } from "@/features/resources/resource";
+import { Persistent, makePersistent, PersistentState } from "@/game/persistence";
 import Decimal, { DecimalSource, format, formatWhole } from "@/util/bignum";
 import {
     Computable,
@@ -17,9 +18,6 @@ import {
     GatherProps,
     getUniqueID,
     jsx,
-    makePersistent,
-    Persistent,
-    PersistentState,
     Replace,
     setDefault,
     StyleValue,

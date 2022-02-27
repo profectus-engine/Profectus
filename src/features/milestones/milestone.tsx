@@ -5,9 +5,6 @@ import {
     findFeatures,
     GatherProps,
     getUniqueID,
-    makePersistent,
-    Persistent,
-    PersistentState,
     Replace,
     setDefault,
     StyleValue,
@@ -28,6 +25,7 @@ import { coerceComponent, isCoercableComponent } from "@/util/vue";
 import { Unsubscribe } from "nanoevents";
 import { computed, Ref, unref } from "vue";
 import { useToast } from "vue-toastification";
+import { Persistent, makePersistent, PersistentState } from "@/game/persistence";
 
 export const MilestoneType = Symbol("Milestone");
 

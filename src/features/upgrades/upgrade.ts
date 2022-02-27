@@ -5,9 +5,6 @@ import {
     findFeatures,
     GatherProps,
     getUniqueID,
-    makePersistent,
-    Persistent,
-    PersistentState,
     Replace,
     setDefault,
     StyleValue,
@@ -26,6 +23,7 @@ import {
 } from "@/util/computed";
 import { createLazyProxy } from "@/util/proxies";
 import { computed, Ref, unref } from "vue";
+import { Persistent, makePersistent, PersistentState } from "@/game/persistence";
 
 export const UpgradeType = Symbol("Upgrade");
 
@@ -89,9 +87,9 @@ export function createUpgrade<T extends UpgradeOptions>(
         upgrade.type = UpgradeType;
         upgrade[Component] = UpgradeComponent;
 
-        if (upgrade.canPurchase == null && (upgrade.resource == null || upgrade.cost == null)) {
+        if (upgrade.canAfford == null && (upgrade.resource == null || upgrade.cost == null)) {
             console.warn(
-                "Error: can't create upgrade without a canPurchase property or a resource and cost property",
+                "Error: can't create upgrade without a canAfford property or a resource and cost property",
                 upgrade
             );
         }

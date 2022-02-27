@@ -1,7 +1,7 @@
-import { persistent, State } from "@/features/feature";
 import Decimal, { DecimalSource, format, formatWhole } from "@/util/bignum";
 import { computed, ComputedRef, ref, Ref, watch } from "vue";
 import { globalBus } from "@/game/events";
+import { State, persistent } from "@/game/persistence";
 
 export interface Resource<T = DecimalSource> extends Ref<T> {
     displayName: string;
