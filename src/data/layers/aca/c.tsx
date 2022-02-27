@@ -28,7 +28,7 @@ import MainDisplay from "@/features/resources/MainDisplay.vue";
 import { createResource, displayResource, trackBest } from "@/features/resources/resource";
 import Resource from "@/features/resources/Resource.vue";
 import { createTab } from "@/features/tabs/tab";
-import { createTabButton, createTabFamily } from "@/features/tabs/tabFamily";
+import { createTabFamily } from "@/features/tabs/tabFamily";
 import { createTree, createTreeNode, GenericTreeNode, TreeBranch } from "@/features/trees/tree";
 import { createUpgrade } from "@/features/upgrades/upgrade";
 import { createLayer } from "@/game/layers";
@@ -468,7 +468,7 @@ const layer = createLayer(() => {
 
     const illuminatiTabs = createTabFamily(() => ({
         tabs: {
-            first: createTabButton({
+            first: {
                 tab: jsx(() => (
                     <>
                         {renderRow(...upgrades)}
@@ -477,11 +477,11 @@ const layer = createLayer(() => {
                     </>
                 )),
                 display: "first"
-            }),
-            second: createTabButton({
+            },
+            second: {
                 tab: f.display,
                 display: "second"
-            })
+            }
         },
         style: {
             width: "660px",
@@ -495,7 +495,7 @@ const layer = createLayer(() => {
 
     const tabs = createTabFamily(() => ({
         tabs: {
-            mainTab: createTabButton({
+            mainTab: {
                 tab: createTab(() => ({
                     display: jsx(() => (
                         <>
@@ -542,8 +542,8 @@ const layer = createLayer(() => {
                     return "";
                 },
                 style: { color: "orange" }
-            }),
-            thingies: createTabButton({
+            },
+            thingies: {
                 tab: createTab(() => ({
                     style() {
                         return { backgroundColor: "#222222", "--background": "#222222" };
@@ -572,8 +572,8 @@ const layer = createLayer(() => {
                 glowColor: "white",
                 display: "thingies",
                 style: { borderColor: "orange" }
-            }),
-            jail: createTabButton({
+            },
+            jail: {
                 tab: createTab(() => ({
                     display: jsx(() => (
                         <>
@@ -600,8 +600,8 @@ const layer = createLayer(() => {
                     ))
                 })),
                 display: "jail"
-            }),
-            illuminati: createTabButton({
+            },
+            illuminati: {
                 tab: createTab(() => ({
                     display: jsx(() => (
                         // This should really just be <> and </>, however for some reason the
@@ -627,7 +627,7 @@ const layer = createLayer(() => {
                     return showIf(unlockIlluminatiUpgrade.bought.value);
                 },
                 display: "illuminati"
-            })
+            }
         }
     }));
 

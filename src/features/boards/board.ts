@@ -327,7 +327,6 @@ export function createBoard<T extends BoardOptions>(
 
         // This is necessary because board.types is different from T and Board
         const processedBoard = board as unknown as Board<T>;
-
         return processedBoard;
     });
 }
