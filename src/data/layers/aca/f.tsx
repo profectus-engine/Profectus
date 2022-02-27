@@ -1,12 +1,12 @@
-import MainDisplay from "@/components/features/MainDisplay.vue";
 import { createLayerTreeNode, createResetButton } from "@/data/common";
 import { main } from "@/data/mod";
-import { createClickable } from "@/features/clickable";
+import { createClickable } from "@/features/clickables/clickable";
 import { createExponentialScaling, createIndependentConversion } from "@/features/conversion";
 import { jsx, persistent } from "@/features/feature";
-import { createInfobox } from "@/features/infobox";
+import { createInfobox } from "@/features/infoboxes/infobox";
 import { createReset } from "@/features/reset";
-import { createResource, displayResource } from "@/features/resource";
+import MainDisplay from "@/features/resources/MainDisplay.vue";
+import { createResource, displayResource } from "@/features/resources/resource";
 import { createLayer } from "@/game/layers";
 import Decimal, { DecimalSource, formatWhole } from "@/util/bignum";
 import { render } from "@/util/vue";

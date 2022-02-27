@@ -1,11 +1,11 @@
-import Row from "@/components/system/Row.vue";
-import Tooltip from "@/components/system/Tooltip.vue";
+import Row from "@/components/layout/Row.vue";
+import Tooltip from "@/components/Tooltip.vue";
 import { main } from "@/data/mod";
-import { createAchievement } from "@/features/achievement";
+import { createAchievement } from "@/features/achievements/achievement";
 import { jsx } from "@/features/feature";
-import { createGrid } from "@/features/grid";
-import { createResource } from "@/features/resource";
-import { createTreeNode } from "@/features/tree";
+import { createGrid } from "@/features/grids/grid";
+import { createResource } from "@/features/resources/resource";
+import { createTreeNode } from "@/features/trees/tree";
 import { createLayer } from "@/game/layers";
 import { DecimalSource } from "@/lib/break_eternity";
 import Decimal from "@/util/bignum";

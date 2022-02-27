@@ -3,17 +3,17 @@ import {
     ClickableOptions,
     createClickable,
     GenericClickable
-} from "@/features/clickable";
+} from "@/features/clickables/clickable";
 import { GenericConversion } from "@/features/conversion";
 import { CoercableComponent, jsx, Replace, setDefault } from "@/features/feature";
-import { displayResource } from "@/features/resource";
+import { displayResource } from "@/features/resources/resource";
 import {
     createTreeNode,
     GenericTree,
     GenericTreeNode,
     TreeNode,
     TreeNodeOptions
-} from "@/features/tree";
+} from "@/features/trees/tree";
 import player from "@/game/player";
 import Decimal from "@/util/bignum";
 import {

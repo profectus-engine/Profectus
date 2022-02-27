@@ -1,5 +1,5 @@
-import ClickableComponent from "@/components/features/Clickable.vue";
-import { Resource } from "@/features/resource";
+import ClickableComponent from "@/features/clickables/Clickable.vue";
+import { Resource } from "@/features/resources/resource";
 import Decimal, { DecimalSource, format, formatWhole } from "@/util/bignum";
 import {
     Computable,

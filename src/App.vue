@@ -11,11 +11,11 @@
 
 <script setup lang="ts">
 import { computed, toRef, unref } from "vue";
-import Game from "./components/system/Game.vue";
-import GameOverScreen from "./components/system/GameOverScreen.vue";
-import NaNScreen from "./components/system/NaNScreen.vue";
-import Nav from "./components/system/Nav.vue";
-import TPS from "./components/system/TPS.vue";
+import Game from "./components/Game.vue";
+import GameOverScreen from "./components/GameOverScreen.vue";
+import NaNScreen from "./components/NaNScreen.vue";
+import Nav from "./components/Nav.vue";
+import TPS from "./components/TPS.vue";
 import modInfo from "./data/modInfo.json";
 import themes from "./data/themes";
 import settings from "./game/settings";

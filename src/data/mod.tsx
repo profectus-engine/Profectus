@@ -1,9 +1,9 @@
-import Modal from "@/components/system/Modal.vue";
-import Profectus from "@/components/system/Profectus.vue";
-import Spacer from "@/components/system/Spacer.vue";
+import Modal from "@/components/Modal.vue";
+import Profectus from "@/components/Profectus.vue";
+import Spacer from "@/components/layout/Spacer.vue";
 import { jsx } from "@/features/feature";
-import { createResource, trackBest, trackOOMPS, trackTotal } from "@/features/resource";
-import { branchedResetPropagation, createTree, GenericTree } from "@/features/tree";
+import { createResource, trackBest, trackOOMPS, trackTotal } from "@/features/resources/resource";
+import { branchedResetPropagation, createTree, GenericTree } from "@/features/trees/tree";
 import { globalBus } from "@/game/events";
 import { createLayer, GenericLayer } from "@/game/layers";
 import player, { PlayerData } from "@/game/player";

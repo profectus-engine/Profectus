@@ -9,7 +9,7 @@ import {
 import { createLazyProxy } from "@/util/proxies";
 import { computed, isRef, Ref, unref } from "vue";
 import { Replace, setDefault } from "./feature";
-import { Resource } from "./resource";
+import { Resource } from "./resources/resource";
 
 export interface ConversionOptions {
     scaling: ScalingFunction;

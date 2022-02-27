@@ -1,5 +1,5 @@
-import Col from "@/components/system/Column.vue";
-import Row from "@/components/system/Row.vue";
+import Col from "@/components/layout/Column.vue";
+import Row from "@/components/layout/Row.vue";
 import {
     CoercableComponent,
     Component as ComponentKey,

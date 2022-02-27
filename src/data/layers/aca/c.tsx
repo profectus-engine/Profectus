@@ -1,21 +1,19 @@
-import MainDisplay from "@/components/features/MainDisplay.vue";
 import Slider from "@/components/fields/Slider.vue";
 import Text from "@/components/fields/Text.vue";
 import Toggle from "@/components/fields/Toggle.vue";
-import Column from "@/components/system/Column.vue";
-import Modal from "@/components/system/Modal.vue";
-import Resource from "@/components/system/Resource.vue";
-import Row from "@/components/system/Row.vue";
-import Spacer from "@/components/system/Spacer.vue";
-import Sticky from "@/components/system/Sticky.vue";
-import VerticalRule from "@/components/system/VerticalRule.vue";
+import Column from "@/components/layout/Column.vue";
+import Row from "@/components/layout/Row.vue";
+import Spacer from "@/components/layout/Spacer.vue";
+import Sticky from "@/components/layout/Sticky.vue";
+import VerticalRule from "@/components/layout/VerticalRule.vue";
+import Modal from "@/components/Modal.vue";
 import { createLayerTreeNode, createResetButton } from "@/data/common";
 import { main } from "@/data/mod";
 import themes from "@/data/themes";
-import { createBar, Direction } from "@/features/bar";
+import { createBar, Direction } from "@/features/bars/bar";
 import { createBuyable } from "@/features/buyable";
-import { createChallenge } from "@/features/challenge";
-import { createClickable } from "@/features/clickable";
+import { createChallenge } from "@/features/challenges/challenge";
+import { createClickable } from "@/features/clickables/clickable";
 import {
     addSoftcap,
     createCumulativeConversion,
@@ -23,14 +21,16 @@ import {
 } from "@/features/conversion";
 import { jsx, persistent, showIf, Visibility } from "@/features/feature";
 import { createHotkey } from "@/features/hotkey";
-import { createInfobox } from "@/features/infobox";
-import { createMilestone } from "@/features/milestone";
+import { createInfobox } from "@/features/infoboxes/infobox";
+import { createMilestone } from "@/features/milestones/milestone";
 import { createReset } from "@/features/reset";
-import { createResource, displayResource, trackBest } from "@/features/resource";
-import { createTab } from "@/features/tab";
-import { createTabButton, createTabFamily } from "@/features/tabFamily";
-import { createTree, createTreeNode, GenericTreeNode, TreeBranch } from "@/features/tree";
-import { createUpgrade } from "@/features/upgrade";
+import MainDisplay from "@/features/resources/MainDisplay.vue";
+import { createResource, displayResource, trackBest } from "@/features/resources/resource";
+import Resource from "@/features/resources/Resource.vue";
+import { createTab } from "@/features/tabs/tab";
+import { createTabButton, createTabFamily } from "@/features/tabs/tabFamily";
+import { createTree, createTreeNode, GenericTreeNode, TreeBranch } from "@/features/trees/tree";
+import { createUpgrade } from "@/features/upgrades/upgrade";
 import { createLayer } from "@/game/layers";
 import settings from "@/game/settings";
 import { DecimalSource } from "@/lib/break_eternity";
@@ -121,12 +121,14 @@ const layer = createLayer(() => {
             return showIf(Decimal.gt(best.value, 0));
         },
         goal: 20,
-        reset,
         resource: main.points,
         onComplete() {
             console.log("hiii");
         },
         onEnter() {
+            main.points.value = 0;
+            main.best.value = main.points.value;
+            main.total.value = main.points.value;
             console.log("So challenging");
         },
         onExit() {
