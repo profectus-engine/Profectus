@@ -22,9 +22,6 @@
                 <li>
                     <a href="https://discord.gg/F3xveHV" target="_blank">The Modding Tree</a>
                 </li>
-                <li>
-                    <a href="http://discord.gg/wwQfgPa" target="_blank">Jacorb's Games</a>
-                </li>
             </ul>
         </div>
         <div>
@@ -91,9 +88,6 @@
                 </li>
                 <li>
                     <a href="https://discord.gg/F3xveHV" target="_blank">The Modding Tree</a>
-                </li>
-                <li>
-                    <a href="http://discord.gg/wwQfgPa" target="_blank">Jacorb's Games</a>
                 </li>
             </ul>
         </div>

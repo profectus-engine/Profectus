@@ -1,4 +1,4 @@
-# the-modding-tree-x
+# Profectus
 
 ## Project setup
 ```

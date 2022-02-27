@@ -13,8 +13,7 @@
             <div v-if="shown">
                 <div v-if="author">By {{ author }}</div>
                 <div>
-                    Made in TMT-X, by thepaperpilot with inspiration from Acameada, Jacorb, and
-                    Aarex
+                    Made in Profectus, by thepaperpilot with inspiration from Acameada and Jacorb
                 </div>
                 <br />
                 <div class="link" @click="openChangelog">Changelog</div>
@@ -41,12 +40,6 @@
                         The Modding Tree
                     </a>
                 </div>
-                <div>
-                    <a href="https://discord.gg/wwQfgPa" class="info-modal-discord-link">
-                        <span class="material-icons info-modal-discord">discord</span>
-                        Jacorb's Games
-                    </a>
-                </div>
                 <br />
                 <div>Time Played: {{ timePlayed }}</div>
             </div>
@@ -61,6 +54,7 @@ import modInfo from "@/data/modInfo.json";
 import player from "@/game/player";
 import { formatTime } from "@/util/bignum";
 import { computed, ref, toRefs, unref } from "vue";
+import Profectus from "./Profectus.vue";
 
 const { title, logo, author, discordName, discordLink, versionNumber, versionTitle } = modInfo;
 

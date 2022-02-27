@@ -1,4 +1,5 @@
 import Modal from "@/components/system/Modal.vue";
+import Profectus from "@/components/system/Profectus.vue";
 import Spacer from "@/components/system/Spacer.vue";
 import { jsx } from "@/features/feature";
 import { createResource, trackBest, trackOOMPS, trackTotal } from "@/features/resource";
@@ -89,6 +90,7 @@ export const main = createLayer(() => {
                     }}
                 />
                 {render(tree)}
+                <Profectus height="200px" style="margin: 10px auto; display: block" />
             </>
         )),
         points,

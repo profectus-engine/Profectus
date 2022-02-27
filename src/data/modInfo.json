@@ -1,6 +1,6 @@
 {
-	"title": "The Modding Tree X",
-	"id": "tmt-x",
+	"title": "Profectus",
+	"id": "profectus-demo",
 	"author": "thepaperpilot",
 	"discordName": "The Paper Pilot Community",
 	"discordLink": "https://discord.gg/WzejVAx",
@@ -13,7 +13,7 @@
 	"defaultDecimalsShown": 2,
 	"useHeader": true,
 	"banner": null,
-	"logo": null,
+	"logo": "Logo.png",
 	"initialTabs": [ "main", "c" ],
 
 	"maxTickLength": 3600,
