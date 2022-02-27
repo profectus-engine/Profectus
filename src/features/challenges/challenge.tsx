@@ -1,9 +1,11 @@
+import Toggle from "@/components/fields/Toggle.vue";
 import ChallengeComponent from "@/features/challenges/Challenge.vue";
 import {
     CoercableComponent,
     Component,
     GatherProps,
     getUniqueID,
+    jsx,
     Replace,
     setDefault,
     StyleValue,
@@ -12,8 +14,8 @@ import {
 import { GenericReset } from "@/features/reset";
 import { Resource } from "@/features/resources/resource";
 import { globalBus } from "@/game/events";
-import { PersistentRef, persistent } from "@/game/persistence";
-import settings from "@/game/settings";
+import { persistent, PersistentRef } from "@/game/persistence";
+import settings, { registerSettingField } from "@/game/settings";
 import Decimal, { DecimalSource } from "@/util/bignum";
 import {
     Computable,
@@ -258,3 +260,13 @@ declare module "@/game/settings" {
 globalBus.on("loadSettings", settings => {
     setDefault(settings, "hideChallenges", false);
 });
+
+registerSettingField(
+    jsx(() => (
+        <Toggle
+            title="Hide Maxed Challenges"
+            onUpdate:modelValue={value => (settings.hideChallenges = value)}
+            modelValue={settings.hideChallenges}
+        />
+    ))
+);

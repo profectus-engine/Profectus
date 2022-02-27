@@ -62,11 +62,11 @@ export function render(object: VueFeature | CoercableComponent): JSX.Element | D
 }
 
 export function renderRow(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
-    return <Row>{objects.map(obj => render(obj))}</Row>;
+    return <Row>{objects.map(render)}</Row>;
 }
 
 export function renderCol(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
-    return <Col>{objects.map(obj => render(obj))}</Col>;
+    return <Col>{objects.map(render)}</Col>;
 }
 
 export function isCoercableComponent(component: unknown): component is CoercableComponent {

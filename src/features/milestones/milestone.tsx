@@ -1,18 +1,22 @@
-import MilestoneComponent from "@/features/milestones/Milestone.vue";
+import Select from "@/components/fields/Select.vue";
 import {
     CoercableComponent,
     Component,
     findFeatures,
     GatherProps,
     getUniqueID,
+    jsx,
     Replace,
     setDefault,
     StyleValue,
     Visibility
 } from "@/features/feature";
+import MilestoneComponent from "@/features/milestones/Milestone.vue";
 import { globalBus } from "@/game/events";
 import "@/game/notifications";
-import settings from "@/game/settings";
+import { makePersistent, Persistent, PersistentState } from "@/game/persistence";
+import settings, { registerSettingField } from "@/game/settings";
+import { camelToTitle } from "@/util/common";
 import {
     Computable,
     GetComputableType,
@@ -25,7 +29,6 @@ import { coerceComponent, isCoercableComponent } from "@/util/vue";
 import { Unsubscribe } from "nanoevents";
 import { computed, Ref, unref } from "vue";
 import { useToast } from "vue-toastification";
-import { Persistent, makePersistent, PersistentState } from "@/game/persistence";
 
 export const MilestoneType = Symbol("Milestone");
 
@@ -186,3 +189,19 @@ declare module "@/game/settings" {
 globalBus.on("loadSettings", settings => {
     setDefault(settings, "msDisplay", MilestoneDisplay.All);
 });
+
+const msDisplayOptions = Object.values(MilestoneDisplay).map(option => ({
+    label: camelToTitle(option),
+    value: option
+}));
+
+registerSettingField(
+    jsx(() => (
+        <Select
+            title="Show Milestones"
+            options={msDisplayOptions}
+            onUpdate:modelValue={value => (settings.msDisplay = value as MilestoneDisplay)}
+            modelValue={settings.msDisplay}
+        />
+    ))
+);

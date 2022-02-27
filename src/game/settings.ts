@@ -1,5 +1,6 @@
 import modInfo from "@/data/modInfo.json";
 import { Themes } from "@/data/themes";
+import { CoercableComponent } from "@/features/feature";
 import { globalBus } from "@/game/events";
 import { hardReset } from "@/util/save";
 import { reactive, watch } from "vue";
@@ -53,3 +54,9 @@ export const hardResetSettings = (window.hardResetSettings = () => {
     Object.assign(state, settings);
     hardReset();
 });
+
+export const settingFields: CoercableComponent[] = reactive([]);
+
+export function registerSettingField(component: CoercableComponent) {
+    settingFields.push(component);
+}

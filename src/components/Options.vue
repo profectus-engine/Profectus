@@ -7,9 +7,9 @@
         </template>
         <template v-slot:body>
             <Select title="Theme" :options="themes" v-model="theme" />
-            <Select title="Show Milestones" :options="msDisplayOptions" v-model="msDisplay" />
+            <component :is="settingFieldsComponent" />
             <Toggle title="Show TPS" v-model="showTPS" />
-            <Toggle title="Hide Maxed Challenges" v-model="hideChallenges" />
+            <hr />
             <Toggle title="Unthrottled" v-model="unthrottled" />
             <Toggle :title="offlineProdTitle" v-model="offlineProd" />
             <Toggle :title="autosaveTitle" v-model="autosave" />
@@ -21,15 +21,15 @@
 <script setup lang="tsx">
 import Modal from "@/components/Modal.vue";
 import rawThemes from "@/data/themes";
-import { MilestoneDisplay } from "@/features/milestones/milestone";
 import player from "@/game/player";
-import settings from "@/game/settings";
+import settings, { settingFields } from "@/game/settings";
 import { camelToTitle } from "@/util/common";
 import { computed, ref, toRefs } from "vue";
 import Toggle from "./fields/Toggle.vue";
 import Select from "./fields/Select.vue";
 import Tooltip from "./Tooltip.vue";
 import { jsx } from "@/features/feature";
+import { coerceComponent, render } from "@/util/vue";
 
 const isOpen = ref(false);
 
@@ -44,13 +44,11 @@ const themes = Object.keys(rawThemes).map(theme => ({
     value: theme
 }));
 
-// TODO allow features to register options
-const msDisplayOptions = Object.values(MilestoneDisplay).map(option => ({
-    label: camelToTitle(option),
-    value: option
-}));
+const settingFieldsComponent = computed(() => {
+    return coerceComponent(jsx(() => <>{settingFields.map(render)}</>));
+});
 
-const { showTPS, hideChallenges, theme, msDisplay, unthrottled } = toRefs(settings);
+const { showTPS, theme, unthrottled } = toRefs(settings);
 const { autosave, offlineProd } = toRefs(player);
 const isPaused = computed({
     get() {
