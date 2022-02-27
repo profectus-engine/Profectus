@@ -108,7 +108,7 @@ export const getInitialLayers = (
 ): Array<GenericLayer> => [main, f, c, a];
 
 export const hasWon = computed(() => {
-    return false;
+    return Decimal.gt(main.points.value, 25);
 });
 
 /* eslint-disable @typescript-eslint/no-unused-vars */

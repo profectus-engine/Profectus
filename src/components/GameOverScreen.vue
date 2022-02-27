@@ -19,11 +19,12 @@
                 </div>
                 <br />
                 <div>
-                    <a :href="discordLink">
+                    <a :href="discordLink" class="game-over-modal-discord-link">
                         <span class="material-icons game-over-modal-discord">discord</span>
                         {{ discordName }}
                     </a>
                 </div>
+                <Toggle title="Autosave" v-model="autosave" />
             </div>
         </template>
         <template v-slot:footer>
@@ -42,12 +43,14 @@ import modInfo from "@/data/modInfo.json";
 import player from "@/game/player";
 import { formatTime } from "@/util/bignum";
 import { loadSave, newSave } from "@/util/save";
-import { computed } from "vue";
+import { computed, toRef } from "vue";
+import Toggle from "./fields/Toggle.vue";
 
 const { title, logo, discordName, discordLink, versionNumber, versionTitle } = modInfo;
 
 const timePlayed = computed(() => formatTime(player.timePlayed));
 const isOpen = computed(() => hasWon.value && !player.keepGoing);
+const autosave = toRef(player, "autosave");
 
 function keepGoing() {
     player.keepGoing = true;
@@ -60,9 +63,11 @@ function playAgain() {
 
 <style scoped>
 .game-over-modal-header {
+    display: flex;
     margin: -20px;
     margin-bottom: 0;
     background: var(--raised-background);
+    align-items: center;
 }
 
 .game-over-modal-header * {
@@ -75,6 +80,8 @@ function playAgain() {
 }
 
 .game-over-modal-title {
+    display: flex;
+    flex-direction: column;
     padding: 10px 0;
     margin-left: 10px;
 }
@@ -94,7 +101,6 @@ function playAgain() {
 }
 
 .game-over-modal-discord {
-    height: 2em;
     margin: 0;
     margin-right: 4px;
 }
