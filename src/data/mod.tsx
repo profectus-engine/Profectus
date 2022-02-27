@@ -1,16 +1,15 @@
-import Modal from "@/components/Modal.vue";
 import Profectus from "@/components/Profectus.vue";
 import Spacer from "@/components/layout/Spacer.vue";
 import { jsx } from "@/features/feature";
 import { createResource, trackBest, trackOOMPS, trackTotal } from "@/features/resources/resource";
 import { branchedResetPropagation, createTree, GenericTree } from "@/features/trees/tree";
 import { globalBus } from "@/game/events";
-import { createLayer, GenericLayer } from "@/game/layers";
+import { createLayer, GenericLayer, setupLayerModal } from "@/game/layers";
 import player, { PlayerData } from "@/game/player";
 import { DecimalSource } from "@/lib/break_eternity";
 import Decimal, { format, formatTime } from "@/util/bignum";
 import { render } from "@/util/vue";
-import { computed, ref, toRaw } from "vue";
+import { computed, toRaw } from "vue";
 import a from "./layers/aca/a";
 import c from "./layers/aca/c";
 import f from "./layers/aca/f";
@@ -19,7 +18,6 @@ export const main = createLayer(() => {
     const points = createResource<DecimalSource>(10);
     const best = trackBest(points);
     const total = trackTotal(points);
-    const showAchievements = ref(false);
 
     const pointGain = computed(() => {
         if (!c.generatorUpgrade.bought.value) return new Decimal(0);
@@ -32,6 +30,8 @@ export const main = createLayer(() => {
         points.value = Decimal.add(points.value, Decimal.times(pointGain.value, diff));
     });
     const oomps = trackOOMPS(points, pointGain);
+
+    const { openModal, modal } = setupLayerModal(a);
 
     // Note: Casting as generic tree to avoid recursive type definitions
     const tree = createTree(() => ({
@@ -80,15 +80,8 @@ export const main = createLayer(() => {
                 </div>
                 <div v-show={Decimal.gt(pointGain.value, 0)}>({oomps.value})</div>
                 <Spacer />
-                <button onClick={() => (showAchievements.value = true)}>open achievements</button>
-                <Modal
-                    modelValue={showAchievements.value}
-                    onUpdate:modelValue={value => (showAchievements.value = value)}
-                    v-slots={{
-                        header: () => <h2>Achievements</h2>,
-                        body: a.display
-                    }}
-                />
+                <button onClick={openModal}>open achievements</button>
+                {render(modal)}
                 {render(tree)}
                 <Profectus height="200px" style="margin: 10px auto; display: block" />
             </>
@@ -98,7 +91,7 @@ export const main = createLayer(() => {
         total,
         oomps,
         tree,
-        showAchievements
+        showAchievements: openModal
     };
 });
 

@@ -1,4 +1,12 @@
-import { CoercableComponent, Replace, setDefault, StyleValue } from "@/features/feature";
+import Modal from "@/components/Modal.vue";
+import {
+    CoercableComponent,
+    jsx,
+    JSXFunction,
+    Replace,
+    setDefault,
+    StyleValue
+} from "@/features/feature";
 import { Link } from "@/features/links";
 import Decimal from "@/util/bignum";
 import {
@@ -10,6 +18,7 @@ import {
 } from "@/util/computed";
 import { createLazyProxy } from "@/util/proxies";
 import { createNanoEvents, Emitter } from "nanoevents";
+import { ref, unref } from "vue";
 import { globalBus } from "./events";
 import { persistent, PersistentRef } from "./persistence";
 import player from "./player";
@@ -143,6 +152,26 @@ export function reloadLayer(layer: GenericLayer): void {
 
     // Re-create layer
     addLayer(layer, player);
+}
+
+export function setupLayerModal(layer: GenericLayer): {
+    openModal: VoidFunction;
+    modal: JSXFunction;
+} {
+    const showModal = ref(false);
+    return {
+        openModal: () => (showModal.value = true),
+        modal: jsx(() => (
+            <Modal
+                modelValue={showModal.value}
+                onUpdate:modelValue={value => (showModal.value = value)}
+                v-slots={{
+                    header: () => <h2>{unref(layer.name)}</h2>,
+                    body: unref(layer.display)
+                }}
+            />
+        ))
+    };
 }
 
 globalBus.on("update", function updateLayers(diff) {

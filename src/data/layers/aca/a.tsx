@@ -27,7 +27,7 @@ const layer = createLayer(() => {
             right: true
         },
         onClick() {
-            main.showAchievements.value = true;
+            main.showAchievements();
         }
     }));
 
