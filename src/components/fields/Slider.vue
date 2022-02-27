@@ -10,6 +10,7 @@
 <script setup lang="ts">
 import { computed, toRefs, unref } from "vue";
 import Tooltip from "../system/Tooltip.vue";
+import "@/components/common/fields.css";
 
 const _props = defineProps<{
     title?: string;
@@ -24,10 +25,10 @@ const emit = defineEmits<{
 
 const value = computed({
     get() {
-        return unref(props.modelValue) || 0;
+        return String(unref(props.modelValue) || 0);
     },
-    set(value: number) {
-        emit("update:modelValue", value);
+    set(value: string) {
+        emit("update:modelValue", Number(value));
     }
 });
 </script>

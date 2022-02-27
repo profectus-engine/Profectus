@@ -1,13 +1,15 @@
 import { globalBus } from "@/game/events";
 import { GenericLayer } from "@/game/layers";
 import Decimal, { DecimalSource } from "@/util/bignum";
-import { ProcessedComputable } from "@/util/computed";
+import { DoNotCache, ProcessedComputable } from "@/util/computed";
+import { ProxyState } from "@/util/proxies";
 import { isArray } from "@vue/shared";
-import { ComponentOptions, CSSProperties, DefineComponent, isRef, ref, Ref } from "vue";
+import { CSSProperties, DefineComponent, isRef, ref, Ref } from "vue";
 
 export const PersistentState = Symbol("PersistentState");
 export const DefaultValue = Symbol("DefaultValue");
 export const Component = Symbol("Component");
+export const GatherProps = Symbol("GatherProps");
 
 // Note: This is a union of things that should be safely stringifiable without needing
 // special processes for knowing what to load them in as
@@ -20,7 +22,8 @@ export type State =
     | DecimalSource
     | { [key: string]: State }
     | { [key: number]: State };
-export type CoercableComponent = string | ComponentOptions | DefineComponent | JSX.Element;
+export type JSXFunction = (() => JSX.Element) & { [DoNotCache]: true };
+export type CoercableComponent = string | DefineComponent | JSXFunction;
 export type StyleValue = string | CSSProperties | Array<string | CSSProperties>;
 
 export type Persistent<T extends State = State> = {
@@ -56,6 +59,11 @@ export enum Visibility {
     Visible,
     Hidden,
     None
+}
+
+export function jsx(func: () => JSX.Element | ""): JSXFunction {
+    (func as Partial<JSXFunction>)[DoNotCache] = true;
+    return func as JSXFunction;
 }
 
 export function showIf(condition: boolean, otherwise = Visibility.None): Visibility {
@@ -101,7 +109,7 @@ export function findFeatures(obj: Record<string, unknown>, type: symbol): unknow
             if (value && typeof value === "object") {
                 if ((value as Record<string, unknown>).type === type) {
                     objects.push(value);
-                } else {
+                } else if (!(value instanceof Decimal) && !isRef(value)) {
                     handleObject(value as Record<string, unknown>);
                 }
             }
@@ -135,8 +143,12 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
                     // Load previously saved value
                     if (savedValue != null) {
                         (persistentState[key] as Ref<unknown>).value = savedValue;
+                    } else {
+                        (persistentState[key] as Ref<unknown>).value = (value as Persistent)[
+                            DefaultValue
+                        ];
                     }
-                } else if (!(value instanceof Decimal)) {
+                } else if (!(value instanceof Decimal) && !isRef(value)) {
                     // Continue traversing
                     const foundPersistentInChild = handleObject(value as Record<string, unknown>, [
                         ...path,
@@ -146,10 +158,12 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
                     // Show warning for persistent values inside arrays
                     // TODO handle arrays better
                     if (foundPersistentInChild) {
-                        if (isArray(value)) {
+                        if (isArray(value) && !isArray(obj)) {
                             console.warn(
                                 "Found array that contains persistent values when adding layer. Keep in mind changing the order of elements in the array will mess with existing player saves.",
-                                obj,
+                                ProxyState in obj
+                                    ? (obj as Record<PropertyKey, unknown>)[ProxyState]
+                                    : obj,
                                 key
                             );
                         } else {

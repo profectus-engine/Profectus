@@ -18,3 +18,8 @@ export interface Tooltip {
     yoffset?: ProcessedComputable<string>;
     force?: ProcessedComputable<boolean>;
 }
+
+export function gatherTooltipProps(tooltip: Tooltip) {
+    const { display, top, left, right, bottom, xoffset, yoffset, force } = tooltip;
+    return { display, top, left, right, bottom, xoffset, yoffset, force };
+}

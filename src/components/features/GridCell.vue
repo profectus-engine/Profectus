@@ -1,9 +1,13 @@
 <template>
     <button
-        v-if="visibility !== Visibility.None"
-        v-show="visibility === Visibility.Visible"
-        :class="{ feature: true, tile: true, can: canClick, locked: !canClick }"
-        :style="style"
+        v-if="unref(visibility) !== Visibility.None"
+        :class="{ feature: true, tile: true, can: unref(canClick), locked: !unref(canClick) }"
+        :style="[
+            {
+                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+            },
+            unref(style) ?? {}
+        ]"
         @click="onClick"
         @mousedown="start"
         @mouseleave="stop"
@@ -11,7 +15,7 @@
         @touchstart="start"
         @touchend="stop"
         @touchcancel="stop"
-        :disabled="!canClick"
+        :disabled="!unref(canClick)"
     >
         <div v-if="title"><component :is="titleComponent" /></div>
         <component :is="component" style="white-space: pre-line" />
@@ -21,26 +25,32 @@
 
 <script lang="ts">
 import { CoercableComponent, StyleValue, Visibility } from "@/features/feature";
-import { coerceComponent, setupHoldToClick } from "@/util/vue";
-import { computed, defineComponent, PropType, toRefs, unref } from "vue";
+import {
+    computeComponent,
+    computeOptionalComponent,
+    processedPropType,
+    setupHoldToClick
+} from "@/util/vue";
+import { defineComponent, PropType, toRefs, unref } from "vue";
 import LinkNode from "../system/LinkNode.vue";
+import "@/components/common/features.css";
 
 export default defineComponent({
     props: {
         visibility: {
-            type: Object as PropType<Visibility>,
+            type: processedPropType<Visibility>(Number),
             required: true
         },
         onClick: Function as PropType<VoidFunction>,
         onHold: Function as PropType<VoidFunction>,
         display: {
-            type: [Object, String] as PropType<CoercableComponent>,
+            type: processedPropType<CoercableComponent>(Object, String, Function),
             required: true
         },
-        title: [Object, String] as PropType<CoercableComponent>,
-        style: Object as PropType<StyleValue>,
+        title: processedPropType<CoercableComponent>(Object, String, Function),
+        style: processedPropType<StyleValue>(String, Object, Array),
         canClick: {
-            type: Boolean,
+            type: processedPropType<boolean>(Boolean),
             required: true
         },
         id: {
@@ -48,16 +58,16 @@ export default defineComponent({
             required: true
         }
     },
+    components: {
+        LinkNode
+    },
     setup(props) {
         const { onClick, onHold, title, display } = toRefs(props);
 
         const { start, stop } = setupHoldToClick(onClick, onHold);
 
-        const titleComponent = computed(() => {
-            const currTitle = unref(title);
-            return currTitle && coerceComponent(currTitle);
-        });
-        const component = computed(() => coerceComponent(unref(display)));
+        const titleComponent = computeOptionalComponent(title);
+        const component = computeComponent(display);
 
         return {
             start,
@@ -65,7 +75,7 @@ export default defineComponent({
             titleComponent,
             component,
             Visibility,
-            LinkNode
+            unref
         };
     }
 });

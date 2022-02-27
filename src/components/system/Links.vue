@@ -19,11 +19,11 @@ import {
     RegisterLinkNodeInjectionKey,
     UnregisterLinkNodeInjectionKey
 } from "@/features/links";
-import { computed, nextTick, onMounted, provide, ref, toRefs } from "vue";
+import { computed, nextTick, onMounted, provide, ref, toRef } from "vue";
 import LinkVue from "./Link.vue";
 
-const _props = defineProps<{ links: Link[] }>();
-const { links } = toRefs(_props);
+const _props = defineProps<{ links?: Link[] }>();
+const links = toRef(_props, "links");
 
 const observer = new MutationObserver(updateNodes);
 const resizeObserver = new ResizeObserver(updateBounds);
@@ -42,16 +42,17 @@ onMounted(() => {
     updateNodes();
 });
 
-const validLinks = computed(() =>
-    links.value.filter(link => {
-        const n = nodes.value;
-        return (
-            n[link.startNode.id]?.x != undefined &&
-            n[link.startNode.id]?.y != undefined &&
-            n[link.endNode.id]?.x != undefined &&
-            n[link.endNode.id]?.y != undefined
-        );
-    })
+const validLinks = computed(
+    () =>
+        links.value?.filter(link => {
+            const n = nodes.value;
+            return (
+                n[link.startNode.id]?.x != undefined &&
+                n[link.startNode.id]?.y != undefined &&
+                n[link.endNode.id]?.x != undefined &&
+                n[link.endNode.id]?.y != undefined
+            );
+        }) ?? []
 );
 
 const observerOptions = {

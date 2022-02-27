@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ mark: boolean | string | undefined }>();
+defineProps<{ mark?: boolean | string }>();
 </script>
 
 <style scoped>

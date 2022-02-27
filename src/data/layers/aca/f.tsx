@@ -3,11 +3,11 @@ import { createLayerTreeNode, createResetButton } from "@/data/common";
 import { main } from "@/data/mod";
 import { createClickable } from "@/features/clickable";
 import { createExponentialScaling, createIndependentConversion } from "@/features/conversion";
-import { persistent } from "@/features/feature";
+import { jsx, persistent } from "@/features/feature";
 import { createInfobox } from "@/features/infobox";
 import { createReset } from "@/features/reset";
 import { createResource, displayResource } from "@/features/resource";
-import { createLayer, getLayer } from "@/game/layers";
+import { createLayer } from "@/game/layers";
 import Decimal, { DecimalSource, formatWhole } from "@/util/bignum";
 import { render } from "@/util/vue";
 import c from "./c";
@@ -19,20 +19,20 @@ const layer = createLayer(() => {
     const points = createResource<DecimalSource>(0, "farm points");
     const boop = persistent<boolean>(false);
 
-    const coolInfo = createInfobox({
+    const coolInfo = createInfobox(() => ({
         title: "Lore",
         titleStyle: { color: "#FE0000" },
         display: "DEEP LORE!",
         bodyStyle: { backgroundColor: "#0000EE" }
-    });
+    }));
 
     const clickableState = persistent<string>("Start");
-    const clickable = createClickable({
-        display: {
-            title: "Clicky clicky!",
-            description() {
-                return "Current state:<br>" + clickableState.value;
-            }
+    const clickable = createClickable(() => ({
+        display() {
+            return {
+                title: "Clicky clicky!",
+                description: "Current state:<br>" + clickableState.value
+            };
         },
         initialState: "Start",
         canClick() {
@@ -75,9 +75,9 @@ const layer = createLayer(() => {
                     return {};
             }
         }
-    });
+    }));
 
-    const resetClickable = createClickable({
+    const resetClickable = createClickable(() => ({
         onClick() {
             if (clickableState.value == "Borkened...") {
                 clickableState.value = "Start";
@@ -86,20 +86,20 @@ const layer = createLayer(() => {
         display() {
             return clickableState.value == "Borkened..." ? "Fix the clickable!" : "Does nothing";
         }
-    });
+    }));
 
-    const reset = createReset({
-        thingsToReset: () => [getLayer("f")]
-    });
+    const reset = createReset(() => ({
+        thingsToReset: (): Record<string, unknown>[] => [layer]
+    }));
 
-    const conversion = createIndependentConversion({
+    const conversion = createIndependentConversion(() => ({
         scaling: createExponentialScaling(10, 3, 0.5),
-        baseResource: main.value.points,
+        baseResource: main.points,
         gainResource: points,
-        modifyGainAmount: gain => Decimal.times(gain, c.value.otherThingy.value)
-    });
+        modifyGainAmount: gain => Decimal.times(gain, c.otherThingy.value)
+    }));
 
-    const treeNode = createLayerTreeNode({
+    const treeNode = createLayerTreeNode(() => ({
         layerID: id,
         color,
         reset,
@@ -108,26 +108,26 @@ const layer = createLayer(() => {
                 return `${displayResource(points)} ${points.displayName}`;
             }
             return `This weird farmer dinosaur will only see you if you have at least 10 points. You only have ${displayResource(
-                main.value.points
+                main.points
             )}`;
         },
         canClick() {
-            return Decimal.gte(main.value.points.value, 10);
+            return Decimal.gte(main.points.value, 10);
         }
-    });
+    }));
 
-    const resetButton = createResetButton({
+    const resetButton = createResetButton(() => ({
         conversion,
-        tree: main.value.tree,
+        tree: main.tree,
         treeNode,
-        display() {
-            if (this.conversion.buyMax) {
+        display: jsx(() => {
+            if (resetButton.conversion.buyMax) {
                 return (
                     <span>
                         Hi! I'm a <u>weird dinosaur</u> and I'll give you{" "}
-                        <b>{formatWhole(this.conversion.currentGain.value)}</b> Farm Points in
-                        exchange for all of your points and lollipops! (You'll get another one at{" "}
-                        {formatWhole(this.conversion.nextAt.value)} points)
+                        <b>{formatWhole(resetButton.conversion.currentGain.value)}</b> Farm Points
+                        in exchange for all of your points and lollipops! (You'll get another one at{" "}
+                        {formatWhole(resetButton.conversion.nextAt.value)} points)
                     </span>
                 );
             } else {
@@ -135,15 +135,15 @@ const layer = createLayer(() => {
                     <span>
                         Hi! I'm a <u>weird dinosaur</u> and I'll give you a Farm Point in exchange
                         for all of your points and lollipops! (At least{" "}
-                        {formatWhole(this.conversion.nextAt.value)} points)
+                        {formatWhole(resetButton.conversion.nextAt.value)} points)
                     </span>
                 );
             }
-        }
-    });
+        })
+    }));
 
-    const tab = (): JSX.Element => (
-        <template>
+    const tab = jsx(() => (
+        <>
             {render(coolInfo)}
             <MainDisplay resource={points} color={color} />
             {render(resetButton)}
@@ -154,8 +154,8 @@ const layer = createLayer(() => {
                 <div>Bork Bork!</div>
             </div>
             {render(clickable)}
-        </template>
-    );
+        </>
+    ));
 
     return {
         id,

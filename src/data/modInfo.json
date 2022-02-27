@@ -8,7 +8,7 @@
 	"versionNumber": "0.0",
 	"versionTitle": "Initial Commit",
 
-	"allowGoBack": false,
+	"allowGoBack": true,
 	"allowSmall": false,
 	"defaultDecimalsShown": 2,
 	"useHeader": true,

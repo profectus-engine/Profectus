@@ -1,7 +1,7 @@
 import Decimal, { DecimalSource } from "@/util/bignum";
 import { isPlainObject } from "@/util/common";
 import { ProxiedWithState, ProxyPath, ProxyState } from "@/util/proxies";
-import { shallowReactive, unref } from "vue";
+import { reactive, unref } from "vue";
 import transientState from "./state";
 
 export interface PlayerData {
@@ -15,7 +15,6 @@ export interface PlayerData {
     offlineTime: DecimalSource | null;
     timePlayed: DecimalSource;
     keepGoing: boolean;
-    minimized: Record<string, boolean>;
     modID: string;
     modVersion: string;
     layers: Record<string, Record<string, unknown>>;
@@ -23,7 +22,7 @@ export interface PlayerData {
 
 export type Player = ProxiedWithState<PlayerData>;
 
-const state = shallowReactive<PlayerData>({
+const state = reactive<PlayerData>({
     id: "",
     devSpeed: null,
     name: "",
@@ -34,14 +33,13 @@ const state = shallowReactive<PlayerData>({
     offlineTime: null,
     timePlayed: new Decimal(0),
     keepGoing: false,
-    minimized: {},
     modID: "",
     modVersion: "",
     layers: {}
 });
 
 export function stringifySave(player: PlayerData): string {
-    return JSON.stringify((player as Player)[ProxyState], (key, value) => unref(value));
+    return JSON.stringify(player, (key, value) => unref(value));
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -53,7 +51,7 @@ const playerHandler: ProxyHandler<Record<PropertyKey, any>> = {
         }
 
         const value = target[ProxyState][key];
-        if (isPlainObject(value) && !(value instanceof Decimal)) {
+        if (key !== "value" && isPlainObject(value) && !(value instanceof Decimal)) {
             if (value !== target[key]?.[ProxyState]) {
                 const path = [...target[ProxyPath], key];
                 target[key] = new Proxy({ [ProxyState]: value, [ProxyPath]: path }, playerHandler);
@@ -109,9 +107,12 @@ const playerHandler: ProxyHandler<Record<PropertyKey, any>> = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     has(target: Record<PropertyKey, any>, key: string) {
         return Reflect.has(target[ProxyState], key);
+    },
+    getOwnPropertyDescriptor(target, key) {
+        return Object.getOwnPropertyDescriptor(target[ProxyState], key);
     }
 };
 export default window.player = new Proxy(
     { [ProxyState]: state, [ProxyPath]: ["player"] },
     playerHandler
-) as PlayerData;
+) as Player;

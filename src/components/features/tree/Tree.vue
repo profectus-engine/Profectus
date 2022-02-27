@@ -1,26 +1,26 @@
 <template>
-    <span class="row" v-for="(row, index) in nodes" :key="index">
+    <span class="row" v-for="(row, index) in unref(nodes)" :key="index" v-bind="$attrs">
         <TreeNode
             v-for="(node, nodeIndex) in row"
             :key="nodeIndex"
-            v-bind="node"
+            v-bind="gatherNodeProps(node)"
             :force-tooltip="node.forceTooltip"
         />
     </span>
-    <span class="left-side-nodes" v-if="leftSideNodes">
+    <span class="left-side-nodes" v-if="unref(leftSideNodes)">
         <TreeNode
-            v-for="(node, nodeIndex) in leftSideNodes"
+            v-for="(node, nodeIndex) in unref(leftSideNodes)"
             :key="nodeIndex"
-            v-bind="node"
+            v-bind="gatherNodeProps(node)"
             :force-tooltip="node.forceTooltip"
             small
         />
     </span>
-    <span class="side-nodes" v-if="rightSideNodes">
+    <span class="side-nodes" v-if="unref(rightSideNodes)">
         <TreeNode
-            v-for="(node, nodeIndex) in rightSideNodes"
+            v-for="(node, nodeIndex) in unref(rightSideNodes)"
             :key="nodeIndex"
-            v-bind="node"
+            v-bind="gatherNodeProps(node)"
             :force-tooltip="node.forceTooltip"
             small
         />
@@ -28,21 +28,60 @@
 </template>
 
 <script lang="ts">
+import "@/components/common/table.css";
 import { GenericTreeNode } from "@/features/tree";
-import { defineComponent, PropType } from "vue";
+import { processedPropType } from "@/util/vue";
+import { defineComponent, unref } from "vue";
 import TreeNode from "./TreeNode.vue";
 
 export default defineComponent({
     props: {
         nodes: {
-            type: Array as PropType<GenericTreeNode[][]>,
+            type: processedPropType<GenericTreeNode[][]>(Array),
             required: true
         },
-        leftSideNodes: Array as PropType<GenericTreeNode[]>,
-        rightSideNodes: Array as PropType<GenericTreeNode[]>
+        leftSideNodes: processedPropType<GenericTreeNode[]>(Array),
+        rightSideNodes: processedPropType<GenericTreeNode[]>(Array)
     },
+    components: { TreeNode },
     setup() {
-        return { TreeNode };
+        function gatherNodeProps(node: GenericTreeNode) {
+            const {
+                display,
+                visibility,
+                style,
+                classes,
+                tooltip,
+                onClick,
+                onHold,
+                color,
+                glowColor,
+                forceTooltip,
+                canClick,
+                mark,
+                id
+            } = node;
+            return {
+                display,
+                visibility,
+                style,
+                classes,
+                tooltip,
+                onClick,
+                onHold,
+                color,
+                glowColor,
+                forceTooltip,
+                canClick,
+                mark,
+                id
+            };
+        }
+
+        return {
+            gatherNodeProps,
+            unref
+        };
     }
 });
 </script>

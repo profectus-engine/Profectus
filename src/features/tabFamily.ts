@@ -7,15 +7,15 @@ import {
     processComputable,
     ProcessedComputable
 } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
+import { createLazyProxy } from "@/util/proxies";
 import { computed, Ref, unref } from "vue";
 import {
     CoercableComponent,
     Component,
+    GatherProps,
     getUniqueID,
     makePersistent,
     Persistent,
-    PersistentRef,
     PersistentState,
     Replace,
     setDefault,
@@ -75,12 +75,14 @@ export function createTabButton<T extends TabButtonOptions>(
     processComputable(tabButton as T, "style");
     processComputable(tabButton as T, "glowColor");
 
-    const proxy = createProxy(tabButton as unknown as TabButton<T>);
-    return proxy;
+    return tabButton as unknown as TabButton<T>;
 }
 
 export interface TabFamilyOptions {
+    visibility?: Computable<Visibility>;
     tabs: Computable<Record<string, GenericTabButton>>;
+    classes?: Computable<Record<string, boolean>>;
+    style?: Computable<StyleValue>;
 }
 
 interface BaseTabFamily extends Persistent<string> {
@@ -89,49 +91,69 @@ interface BaseTabFamily extends Persistent<string> {
     selected: Ref<string>;
     type: typeof TabFamilyType;
     [Component]: typeof TabFamilyComponent;
+    [GatherProps]: () => Record<string, unknown>;
 }
 
 export type TabFamily<T extends TabFamilyOptions> = Replace<
     T & BaseTabFamily,
     {
+        visibility: GetComputableTypeWithDefault<T["visibility"], Visibility.Visible>;
         tabs: GetComputableType<T["tabs"]>;
     }
 >;
 
-export type GenericTabFamily = TabFamily<TabFamilyOptions>;
+export type GenericTabFamily = Replace<
+    TabFamily<TabFamilyOptions>,
+    {
+        visibility: ProcessedComputable<Visibility>;
+    }
+>;
 
 export function createTabFamily<T extends TabFamilyOptions>(
-    options: T & ThisType<TabFamily<T>>
+    optionsFunc: () => T & ThisType<TabFamily<T>>
 ): TabFamily<T> {
-    if (Object.keys(options.tabs).length === 0) {
-        console.warn("Cannot create tab family with 0 tabs", options);
-        throw "Cannot create tab family with 0 tabs";
-    }
+    return createLazyProxy(() => {
+        const tabFamily: T & Partial<BaseTabFamily> = optionsFunc();
 
-    const tabFamily: T & Partial<BaseTabFamily> = options;
-    tabFamily.id = getUniqueID("tabFamily-");
-    tabFamily.type = TabFamilyType;
-    tabFamily[Component] = TabFamilyComponent;
+        if (Object.keys(tabFamily.tabs).length === 0) {
+            console.warn("Cannot create tab family with 0 tabs", tabFamily);
+            throw "Cannot create tab family with 0 tabs";
+        }
 
-    makePersistent<string>(tabFamily, Object.keys(options.tabs)[0]);
-    tabFamily.selected = tabFamily[PersistentState];
-    tabFamily.activeTab = computed(() => {
-        const tabs = unref(proxy.tabs);
-        if (
-            proxy[PersistentState].value in tabs &&
-            unref(tabs[proxy[PersistentState].value].visibility) === Visibility.Visible
-        ) {
-            return unref(tabs[proxy[PersistentState].value].tab);
-        }
-        const firstTab = Object.values(tabs).find(
-            tab => unref(tab.visibility) === Visibility.Visible
-        );
-        if (firstTab) {
-            return unref(firstTab.tab);
-        }
-        return null;
+        tabFamily.id = getUniqueID("tabFamily-");
+        tabFamily.type = TabFamilyType;
+        tabFamily[Component] = TabFamilyComponent;
+
+        makePersistent<string>(tabFamily, Object.keys(tabFamily.tabs)[0]);
+        tabFamily.selected = tabFamily[PersistentState];
+        tabFamily.activeTab = computed(() => {
+            const tabs = unref((tabFamily as GenericTabFamily).tabs);
+            if (
+                tabFamily[PersistentState].value in tabs &&
+                unref(tabs[(tabFamily as GenericTabFamily)[PersistentState].value].visibility) ===
+                    Visibility.Visible
+            ) {
+                return unref(tabs[(tabFamily as GenericTabFamily)[PersistentState].value].tab);
+            }
+            const firstTab = Object.values(tabs).find(
+                tab => unref(tab.visibility) === Visibility.Visible
+            );
+            if (firstTab) {
+                return unref(firstTab.tab);
+            }
+            return null;
+        });
+
+        processComputable(tabFamily as T, "visibility");
+        setDefault(tabFamily, "visibility", Visibility.Visible);
+        processComputable(tabFamily as T, "classes");
+        processComputable(tabFamily as T, "style");
+
+        tabFamily[GatherProps] = function (this: GenericTabFamily) {
+            const { visibility, activeTab, selected, tabs, style, classes } = this;
+            return { visibility, activeTab, selected, tabs, style, classes };
+        };
+
+        return tabFamily as unknown as TabFamily<T>;
     });
-
-    const proxy = createProxy(tabFamily as unknown as TabFamily<T>);
-    return proxy;
 }

@@ -2,6 +2,7 @@ import InfoboxComponent from "@/components/features/Infobox.vue";
 import {
     CoercableComponent,
     Component,
+    GatherProps,
     getUniqueID,
     makePersistent,
     Persistent,
@@ -18,7 +19,7 @@ import {
     processComputable,
     ProcessedComputable
 } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
+import { createLazyProxy } from "@/util/proxies";
 import { Ref } from "vue";
 
 export const InfoboxType = Symbol("Infobox");
@@ -39,6 +40,7 @@ interface BaseInfobox extends Persistent<boolean> {
     collapsed: Ref<boolean>;
     type: typeof InfoboxType;
     [Component]: typeof InfoboxComponent;
+    [GatherProps]: () => Record<string, unknown>;
 }
 
 export type Infobox<T extends InfoboxOptions> = Replace<
@@ -63,26 +65,54 @@ export type GenericInfobox = Replace<
 >;
 
 export function createInfobox<T extends InfoboxOptions>(
-    options: T & ThisType<Infobox<T>>
+    optionsFunc: () => T & ThisType<Infobox<T>>
 ): Infobox<T> {
-    const infobox: T & Partial<BaseInfobox> = options;
-    makePersistent<boolean>(infobox, false);
-    infobox.id = getUniqueID("infobox-");
-    infobox.type = InfoboxType;
-    infobox[Component] = InfoboxComponent;
+    return createLazyProxy(() => {
+        const infobox: T & Partial<BaseInfobox> = optionsFunc();
+        makePersistent<boolean>(infobox, false);
+        infobox.id = getUniqueID("infobox-");
+        infobox.type = InfoboxType;
+        infobox[Component] = InfoboxComponent;
 
-    infobox.collapsed = infobox[PersistentState];
+        infobox.collapsed = infobox[PersistentState];
 
-    processComputable(infobox as T, "visibility");
-    setDefault(infobox, "visibility", Visibility.Visible);
-    processComputable(infobox as T, "color");
-    processComputable(infobox as T, "style");
-    processComputable(infobox as T, "titleStyle");
-    processComputable(infobox as T, "bodyStyle");
-    processComputable(infobox as T, "classes");
-    processComputable(infobox as T, "title");
-    processComputable(infobox as T, "display");
+        processComputable(infobox as T, "visibility");
+        setDefault(infobox, "visibility", Visibility.Visible);
+        processComputable(infobox as T, "color");
+        processComputable(infobox as T, "style");
+        processComputable(infobox as T, "titleStyle");
+        processComputable(infobox as T, "bodyStyle");
+        processComputable(infobox as T, "classes");
+        processComputable(infobox as T, "title");
+        processComputable(infobox as T, "display");
 
-    const proxy = createProxy(infobox as unknown as Infobox<T>);
-    return proxy;
+        infobox[GatherProps] = function (this: GenericInfobox) {
+            const {
+                visibility,
+                display,
+                title,
+                color,
+                collapsed,
+                style,
+                titleStyle,
+                bodyStyle,
+                classes,
+                id
+            } = this;
+            return {
+                visibility,
+                display,
+                title,
+                color,
+                collapsed,
+                style,
+                titleStyle,
+                bodyStyle,
+                classes,
+                id
+            };
+        };
+
+        return infobox as unknown as Infobox<T>;
+    });
 }

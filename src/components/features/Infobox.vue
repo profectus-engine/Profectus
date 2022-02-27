@@ -1,22 +1,27 @@
 <template>
     <div
         class="infobox"
-        v-if="visibility !== Visibility.None"
-        v-show="visibility === Visibility.Visible"
-        :style="[{ borderColor: color }, style || []]"
-        :class="{ collapsed, stacked, ...classes }"
+        v-if="unref(visibility) !== Visibility.None"
+        :style="[
+            {
+                borderColor: unref(color),
+                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+            },
+            unref(style) ?? {}
+        ]"
+        :class="{ collapsed: unref(collapsed), stacked, ...unref(classes) }"
     >
         <button
             class="title"
-            :style="[{ backgroundColor: color }, titleStyle || []]"
-            @click="collapsed = !collapsed"
+            :style="[{ backgroundColor: unref(color) }, unref(titleStyle) || []]"
+            @click="collapsed.value = !unref(collapsed)"
         >
             <span class="toggle">▼</span>
             <component :is="titleComponent" />
         </button>
         <CollapseTransition>
-            <div v-if="!collapsed" class="body" :style="{ backgroundColor: color }">
-                <component :is="bodyComponent" :style="bodyStyle" />
+            <div v-if="!unref(collapsed)" class="body" :style="{ backgroundColor: unref(color) }">
+                <component :is="bodyComponent" :style="unref(bodyStyle)" />
             </div>
         </CollapseTransition>
         <LinkNode :id="id" />
@@ -27,49 +32,55 @@
 import themes from "@/data/themes";
 import { CoercableComponent, Visibility } from "@/features/feature";
 import settings from "@/game/settings";
-import { coerceComponent } from "@/util/vue";
+import { computeComponent, processedPropType } from "@/util/vue";
 import CollapseTransition from "@ivanv/vue-collapse-transition/src/CollapseTransition.vue";
-import { computed, defineComponent, PropType, StyleValue, toRefs } from "vue";
+import { computed, defineComponent, PropType, Ref, StyleValue, toRefs, unref } from "vue";
 import LinkNode from "../system/LinkNode.vue";
 
 export default defineComponent({
     props: {
         visibility: {
-            type: Object as PropType<Visibility>,
+            type: processedPropType<Visibility>(Number),
             required: true
         },
         display: {
-            type: [Object, String] as PropType<CoercableComponent>,
+            type: processedPropType<CoercableComponent>(Object, String, Function),
             required: true
         },
-        title: [Object, String] as PropType<CoercableComponent>,
-        color: String,
+        title: {
+            type: processedPropType<CoercableComponent>(Object, String, Function),
+            required: true
+        },
+        color: processedPropType<string>(String),
         collapsed: {
-            type: Boolean,
+            type: Object as PropType<Ref<boolean>>,
             required: true
         },
-        style: Object as PropType<StyleValue>,
-        titleStyle: Object as PropType<StyleValue>,
-        bodyStyle: Object as PropType<StyleValue>,
-        classes: Object as PropType<Record<string, boolean>>,
+        style: processedPropType<StyleValue>(Object, String, Array),
+        titleStyle: processedPropType<StyleValue>(Object, String, Array),
+        bodyStyle: processedPropType<StyleValue>(Object, String, Array),
+        classes: processedPropType<Record<string, boolean>>(Object),
         id: {
             type: String,
             required: true
         }
     },
+    components: {
+        LinkNode,
+        CollapseTransition
+    },
     setup(props) {
         const { title, display } = toRefs(props);
 
-        const titleComponent = computed(() => title.value && coerceComponent(title.value));
-        const bodyComponent = computed(() => coerceComponent(display.value));
+        const titleComponent = computeComponent(title);
+        const bodyComponent = computeComponent(display);
         const stacked = computed(() => themes[settings.theme].stackedInfoboxes);
 
         return {
             titleComponent,
             bodyComponent,
             stacked,
-            LinkNode,
-            CollapseTransition,
+            unref,
             Visibility
         };
     }

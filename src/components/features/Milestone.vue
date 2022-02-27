@@ -1,36 +1,45 @@
 <template>
     <div
-        v-if="visibility !== Visibility.None"
-        v-show="visibility === Visibility.Visible"
-        :style="style"
-        :class="{ feature: true, milestone: true, done: earned, ...classes }"
+        v-if="unref(visibility) !== Visibility.None"
+        :style="[
+            {
+                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+            },
+            unref(style) ?? {}
+        ]"
+        :class="{ feature: true, milestone: true, done: unref(earned), ...unref(classes) }"
     >
-        <component v-if="component" :is="component" />
+        <component :is="unref(comp)" />
         <LinkNode :id="id" />
     </div>
 </template>
 
 <script lang="tsx">
-import { StyleValue, Visibility } from "@/features/feature";
+import { jsx, StyleValue, Visibility } from "@/features/feature";
 import { GenericMilestone } from "@/features/milestone";
-import { coerceComponent, isCoercableComponent } from "@/util/vue";
-import { computed, defineComponent, PropType, toRefs, UnwrapRef } from "vue";
+import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "@/util/vue";
+import { Component, defineComponent, shallowRef, toRefs, unref, UnwrapRef, watchEffect } from "vue";
 import LinkNode from "../system/LinkNode.vue";
+import "@/components/common/features.css";
 
 export default defineComponent({
     props: {
         visibility: {
-            type: Object as PropType<Visibility>,
+            type: processedPropType<Visibility>(Number),
             required: true
         },
         display: {
-            type: Object as PropType<UnwrapRef<GenericMilestone["display"]>>,
+            type: processedPropType<UnwrapRef<GenericMilestone["display"]>>(
+                String,
+                Object,
+                Function
+            ),
             required: true
         },
-        style: Object as PropType<StyleValue>,
-        classes: Object as PropType<Record<string, boolean>>,
+        style: processedPropType<StyleValue>(String, Object, Array),
+        classes: processedPropType<Record<string, boolean>>(Object),
         earned: {
-            type: Boolean,
+            type: processedPropType<boolean>(Boolean),
             required: true
         },
         id: {
@@ -38,35 +47,49 @@ export default defineComponent({
             required: true
         }
     },
+    components: {
+        LinkNode
+    },
     setup(props) {
         const { display } = toRefs(props);
 
-        const component = computed(() => {
-            const currDisplay = display.value;
+        const comp = shallowRef<Component | string>("");
+
+        watchEffect(() => {
+            const currDisplay = unwrapRef(display);
             if (currDisplay == null) {
-                return null;
+                comp.value = "";
+                return;
             }
             if (isCoercableComponent(currDisplay)) {
-                return coerceComponent(currDisplay);
+                comp.value = coerceComponent(currDisplay);
+                return;
             }
-            return (
-                <span>
-                    <component v-is={coerceComponent(currDisplay.requirement, "h3")} />
-                    <div v-if={currDisplay.effectDisplay}>
-                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                        <component v-is={coerceComponent(currDisplay.effectDisplay!, "b")} />
-                    </div>
-                    <div v-if={currDisplay.optionsDisplay}>
-                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                        <component v-is={coerceComponent(currDisplay.optionsDisplay!, "span")} />
-                    </div>
-                </span>
+            const Requirement = coerceComponent(currDisplay.requirement, "h3");
+            const EffectDisplay = coerceComponent(currDisplay.effectDisplay || "", "b");
+            const OptionsDisplay = coerceComponent(currDisplay.optionsDisplay || "", "span");
+            comp.value = coerceComponent(
+                jsx(() => (
+                    <span>
+                        <Requirement />
+                        {currDisplay.effectDisplay ? (
+                            <div>
+                                <EffectDisplay />
+                            </div>
+                        ) : null}
+                        {currDisplay.optionsDisplay ? (
+                            <div class="equal-spaced">
+                                <OptionsDisplay />
+                            </div>
+                        ) : null}
+                    </span>
+                ))
             );
         });
 
         return {
-            component,
-            LinkNode,
+            comp,
+            unref,
             Visibility
         };
     }
@@ -84,11 +107,21 @@ export default defineComponent({
     border-width: 4px;
     border-radius: 5px;
     color: rgba(0, 0, 0, 0.5);
-    margin: 0;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 .milestone.done {
     background-color: var(--bought);
     cursor: default;
+}
+
+.milestone >>> .equal-spaced {
+    display: flex;
+    justify-content: center;
+}
+
+.milestone >>> .equal-spaced > * {
+    margin: auto;
 }
 </style>

@@ -3,6 +3,7 @@ import Slider from "@/components/fields/Slider.vue";
 import Text from "@/components/fields/Text.vue";
 import Toggle from "@/components/fields/Toggle.vue";
 import Column from "@/components/system/Column.vue";
+import Modal from "@/components/system/Modal.vue";
 import Resource from "@/components/system/Resource.vue";
 import Row from "@/components/system/Row.vue";
 import Spacer from "@/components/system/Spacer.vue";
@@ -10,33 +11,39 @@ import Sticky from "@/components/system/Sticky.vue";
 import VerticalRule from "@/components/system/VerticalRule.vue";
 import { createLayerTreeNode, createResetButton } from "@/data/common";
 import { main } from "@/data/mod";
+import themes from "@/data/themes";
 import { createBar, Direction } from "@/features/bar";
 import { createBuyable } from "@/features/buyable";
 import { createChallenge } from "@/features/challenge";
 import { createClickable } from "@/features/clickable";
-import { createCumulativeConversion, createExponentialScaling } from "@/features/conversion";
-import { CoercableComponent, persistent, showIf } from "@/features/feature";
+import {
+    addSoftcap,
+    createCumulativeConversion,
+    createExponentialScaling
+} from "@/features/conversion";
+import { jsx, persistent, showIf, Visibility } from "@/features/feature";
 import { createHotkey } from "@/features/hotkey";
 import { createInfobox } from "@/features/infobox";
 import { createMilestone } from "@/features/milestone";
 import { createReset } from "@/features/reset";
-import { addSoftcap, createResource, displayResource, trackBest } from "@/features/resource";
+import { createResource, displayResource, trackBest } from "@/features/resource";
 import { createTab } from "@/features/tab";
 import { createTabButton, createTabFamily } from "@/features/tabFamily";
 import { createTree, createTreeNode, GenericTreeNode, TreeBranch } from "@/features/tree";
 import { createUpgrade } from "@/features/upgrade";
-import { createLayer, getLayer } from "@/game/layers";
+import { createLayer } from "@/game/layers";
+import settings from "@/game/settings";
 import { DecimalSource } from "@/lib/break_eternity";
 import Decimal, { format, formatWhole } from "@/util/bignum";
 import { render, renderCol, renderRow } from "@/util/vue";
-import { computed, Ref } from "vue";
+import { computed, ComputedRef, ref } from "vue";
 import f from "./f";
 
 const layer = createLayer(() => {
     const id = "c";
     const color = "#4BDC13";
     const name = "Candies";
-    const points = addSoftcap(createResource<DecimalSource>(0, "lollipops"), 1e100, 0.5);
+    const points = createResource<DecimalSource>(0, "lollipops");
     const best = trackBest(points);
     const beep = persistent<boolean>(false);
     const thingy = persistent<string>("pointy");
@@ -46,14 +53,15 @@ const layer = createLayer(() => {
     const waffleBoost = computed(() => Decimal.pow(points.value, 0.2));
     const icecreamCap = computed(() => Decimal.times(points.value, 10));
 
-    const coolInfo = createInfobox({
+    const coolInfo = createInfobox(() => ({
         title: "Lore",
         titleStyle: { color: "#FE0000" },
         display: "DEEP LORE!",
-        bodyStyle: { backgroundColor: "#0000EE" }
-    });
+        bodyStyle: { backgroundColor: "#0000EE" },
+        color: "rgb(75, 220, 19)"
+    }));
 
-    const lollipopMilestone3 = createMilestone({
+    const lollipopMilestone3 = createMilestone(() => ({
         shouldEarn() {
             return Decimal.gte(best.value, 3);
         },
@@ -61,8 +69,8 @@ const layer = createLayer(() => {
             requirement: "3 Lollipops",
             effectDisplay: "Unlock the next milestone"
         }
-    });
-    const lollipopMilestone4 = createMilestone({
+    }));
+    const lollipopMilestone4 = createMilestone(() => ({
         visibility() {
             return showIf(lollipopMilestone3.earned.value);
         },
@@ -72,14 +80,20 @@ const layer = createLayer(() => {
         display: {
             requirement: "4 Lollipops",
             effectDisplay: "You can toggle beep and boop (which do nothing)",
-            optionsDisplay() {
-                return (
-                    <div style="display: flex; justify-content: center">
-                        <Toggle title="beep" v-model={beep} />
-                        <Toggle title="boop" v-model={f.value.boop as Ref<boolean>} />
-                    </div>
-                );
-            }
+            optionsDisplay: jsx(() => (
+                <>
+                    <Toggle
+                        title="beep"
+                        onUpdate:modelValue={value => (beep.value = value)}
+                        modelValue={beep.value}
+                    />
+                    <Toggle
+                        title="boop"
+                        onUpdate:modelValue={value => (f.boop.value = value)}
+                        modelValue={f.boop.value}
+                    />
+                </>
+            ))
         },
         style() {
             if (this.earned) {
@@ -87,27 +101,28 @@ const layer = createLayer(() => {
             }
             return {};
         }
-    });
+    }));
     const lollipopMilestones = [lollipopMilestone3, lollipopMilestone4];
 
-    const funChallenge = createChallenge({
+    const funChallenge = createChallenge(() => ({
         title: "Fun",
         completionLimit: 3,
-        display: {
-            description() {
-                return `Makes the game 0% harder<br>${this.completions}/${this.completionLimit} completions`;
-            },
-            goal: "Have 20 points I guess",
-            reward: "Says hi",
-            effectDisplay() {
-                return format(funEffect.value) + "x";
-            }
+        display() {
+            return {
+                description: `Makes the game 0% harder<br>${formatWhole(this.completions.value)}/${
+                    this.completionLimit
+                } completions`,
+                goal: "Have 20 points I guess",
+                reward: "Says hi",
+                effectDisplay: format(funEffect.value) + "x"
+            };
         },
         visibility() {
             return showIf(Decimal.gt(best.value, 0));
         },
         goal: 20,
-        resource: main.value.points,
+        reset,
+        resource: main.points,
         onComplete() {
             console.log("hiii");
         },
@@ -120,38 +135,40 @@ const layer = createLayer(() => {
         style: {
             height: "200px"
         }
-    });
+    }));
     const funEffect = computed(() => Decimal.add(points.value, 1).tetrate(0.02));
 
-    const generatorUpgrade = createUpgrade({
-        title: "Generator of Genericness",
-        display: "Gain 1 point every second",
+    const generatorUpgrade = createUpgrade(() => ({
+        display: {
+            title: "Generator of Genericness",
+            description: "Gain 1 point every second"
+        },
         cost: 1,
         resource: points
-    });
-    const lollipopMultiplierUpgrade = createUpgrade({
-        display: () =>
-            `Point generation is faster based on your unspent Lollipops<br>Currently: ${format(
-                lollipopMultiplierEffect.value
-            )}x`,
+    }));
+    const lollipopMultiplierUpgrade = createUpgrade(() => ({
+        display: () => ({
+            description: "Point generation is faster based on your unspent Lollipops",
+            effectDisplay: `${format(lollipopMultiplierEffect.value)}x`
+        }),
         cost: 1,
         resource: points,
         visibility: () => showIf(generatorUpgrade.bought.value)
-    });
+    }));
     const lollipopMultiplierEffect = computed(() => {
         let ret = Decimal.add(points.value, 1).pow(0.5);
         if (ret.gte("1e20000000")) ret = ret.sqrt().times("1e10000000");
         return ret;
     });
-    const unlockIlluminatiUpgrade = createUpgrade({
+    const unlockIlluminatiUpgrade = createUpgrade(() => ({
         visibility() {
             return showIf(lollipopMultiplierUpgrade.bought.value);
         },
-        canPurchase() {
-            return Decimal.lt(main.value.points.value, 7);
+        canAfford() {
+            return Decimal.lt(main.points.value, 7);
         },
         onPurchase() {
-            main.value.points.value = Decimal.add(main.value.points.value, 7);
+            main.points.value = Decimal.add(main.points.value, 7);
         },
         display:
             "Only buyable with less than 7 points, and gives you 7 more. Unlocks a secret subtab.",
@@ -164,10 +181,18 @@ const layer = createLayer(() => {
             }
             return {};
         }
-    });
+    }));
+    const quasiUpgrade = createUpgrade(() => ({
+        resource: createResource(exhancers.amount, "Exhancers", 0),
+        cost: 3,
+        display: {
+            title: "This upgrade doesn't exist",
+            description: "Or does it?"
+        }
+    }));
     const upgrades = [generatorUpgrade, lollipopMultiplierUpgrade, unlockIlluminatiUpgrade];
 
-    const exhancers = createBuyable({
+    const exhancers = createBuyable(() => ({
         resource: points,
         cost() {
             let x = new Decimal(this.amount.value);
@@ -177,49 +202,51 @@ const layer = createLayer(() => {
             const cost = Decimal.pow(2, x.pow(1.5));
             return cost.floor();
         },
-        display: {
-            title: "Exhancers",
-            description() {
-                return `Adds ${format(
-                    exhancersFirstEffect.value
-                )} things and multiplies stuff by ${format(exhancersSecondEffect.value)}.`;
-            }
+        display() {
+            return {
+                title: "Exhancers",
+                description: `Adds ${format(
+                    thingEffect.value
+                )} things and multiplies stuff by ${format(stuffEffect.value)}.`
+            };
         },
         onPurchase(cost) {
             spentOnBuyables.value = Decimal.add(spentOnBuyables.value, cost);
         },
         style: { height: "222px" },
         purchaseLimit: 4
-    });
-    const exhancersFirstEffect = computed(() => {
+    }));
+    // The following need redundant ComputedRef<Decimal> type annotations because otherwise the ts
+    // interpreter thinks exhancers are cyclically referenced
+    const thingEffect: ComputedRef<Decimal> = computed(() => {
         if (Decimal.gte(exhancers.amount.value, 0)) {
             return Decimal.pow(25, Decimal.pow(exhancers.amount.value, 1.1));
         }
         return Decimal.pow(1 / 25, Decimal.times(exhancers.amount.value, -1).pow(1.1));
     });
-    const exhancersSecondEffect = computed(() => {
+    const stuffEffect: ComputedRef<Decimal> = computed(() => {
         if (Decimal.gte(exhancers.amount.value, 0)) {
             return Decimal.pow(25, Decimal.pow(exhancers.amount.value, 1.1));
         }
         return Decimal.pow(1 / 25, Decimal.times(exhancers.amount.value, -1).pow(1.1));
     });
     const confirmRespec = persistent<boolean>(false);
-    const respecBuyables = createClickable({
+    const confirming = ref(false);
+    const respecBuyables = createClickable(() => ({
         small: true,
         display: "Respec Thingies",
         onClick() {
-            if (
-                confirmRespec.value &&
-                !confirm("Are you sure? Respeccing these doesn't accomplish much.")
-            ) {
+            if (confirmRespec.value && !confirming.value) {
+                confirming.value = true;
                 return;
             }
 
             points.value = Decimal.add(points.value, spentOnBuyables.value);
-            main.value.tree.reset(treeNode);
+            exhancers.amount.value = 0;
+            main.tree.reset(treeNode);
         }
-    });
-    const sellExhancer = createClickable({
+    }));
+    const sellExhancer = createClickable(() => ({
         small: true,
         display: "Sell One",
         onClick() {
@@ -228,20 +255,53 @@ const layer = createLayer(() => {
             }
             exhancers.amount.value = Decimal.sub(exhancers.amount.value, 1);
             points.value = Decimal.add(points.value, exhancers.cost.value);
+            spentOnBuyables.value = Decimal.sub(spentOnBuyables.value, exhancers.cost.value);
         }
-    });
-    const buyablesDisplay = (
+    }));
+    const buyablesDisplay = jsx(() => (
         <Column>
             <Row>
-                <Toggle title="Confirm" v-model={confirmRespec} />
-                {render(respecBuyables)}
+                <Toggle
+                    title="Confirm"
+                    onUpdate:modelValue={value => (confirmRespec.value = value)}
+                    modelValue={confirmRespec.value}
+                />
+                {renderRow(respecBuyables)}
             </Row>
-            {render(exhancers)}
-            {render(sellExhancer)}
+            {renderRow(exhancers)}
+            {renderRow(sellExhancer)}
+            <Modal
+                modelValue={confirming.value}
+                onUpdate:modelValue={value => (confirming.value = value)}
+                v-slots={{
+                    header: () => <h2>Confirm Respec</h2>,
+                    body: () => <>Are you sure? Respeccing these doesn't accomplish much</>,
+                    footer: () => (
+                        <div class="modal-default-footer">
+                            <div class="modal-default-flex-grow"></div>
+                            <button
+                                class="button modal-default-button"
+                                onClick={() => (confirming.value = false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                class="button modal-default-button danger"
+                                onClick={() => {
+                                    respecBuyables.onClick();
+                                    confirming.value = false;
+                                }}
+                            >
+                                Respec
+                            </button>
+                        </div>
+                    )
+                }}
+            />
         </Column>
-    );
+    ));
 
-    const longBoi = createBar({
+    const longBoi = createBar(() => ({
         fillStyle: { backgroundColor: "#FFFFFF" },
         baseStyle: { backgroundColor: "#696969" },
         textStyle: { color: "#04e050" },
@@ -249,13 +309,13 @@ const layer = createLayer(() => {
         width: 300,
         height: 30,
         progress() {
-            return Decimal.add(main.value.points.value, 1).log(10).div(10).toNumber();
+            return Decimal.add(main.points.value, 1).log(10).div(10).toNumber();
         },
         display() {
-            return format(main.value.points.value) + " / 1e10 points";
+            return format(main.points.value) + " / 1e10 points";
         }
-    });
-    const tallBoi = createBar({
+    }));
+    const tallBoi = createBar(() => ({
         fillStyle: { backgroundColor: "#4BEC13" },
         baseStyle: { backgroundColor: "#000000" },
         textStyle: { textShadow: "0px 0px 2px #000000" },
@@ -264,13 +324,13 @@ const layer = createLayer(() => {
         width: 50,
         height: 200,
         progress() {
-            return Decimal.div(main.value.points.value, 100);
+            return Decimal.div(main.points.value, 100);
         },
         display() {
-            return formatWhole(Decimal.div(main.value.points.value, 1).min(100)) + "%";
+            return formatWhole(Decimal.div(main.points.value, 1).min(100)) + "%";
         }
-    });
-    const flatBoi = createBar({
+    }));
+    const flatBoi = createBar(() => ({
         fillStyle: { backgroundColor: "#FE0102" },
         baseStyle: { backgroundColor: "#222222" },
         textStyle: { textShadow: "0px 0px 2px #000000" },
@@ -280,39 +340,39 @@ const layer = createLayer(() => {
         progress() {
             return Decimal.div(points.value, 50);
         }
-    });
+    }));
 
-    const conversion = createCumulativeConversion({
-        scaling: createExponentialScaling(10, 5, 0.5),
-        baseResource: main.value.points,
+    const conversion = createCumulativeConversion(() => ({
+        scaling: addSoftcap(createExponentialScaling(10, 5, 0.5), 1e100, 0.5),
+        baseResource: main.points,
         gainResource: points,
         roundUpCost: true
-    });
+    }));
 
-    const reset = createReset({
-        thingsToReset: () => [getLayer("c")]
-    });
+    const reset = createReset(() => ({
+        thingsToReset: (): Record<string, unknown>[] => [layer]
+    }));
 
     const hotkeys = [
-        createHotkey({
+        createHotkey(() => ({
             key: "c",
             description: "reset for lollipops or whatever",
             onPress() {
-                if (resetButton.canClick) {
-                    reset.reset();
+                if (resetButton.canClick.value) {
+                    resetButton.onClick();
                 }
             }
-        }),
-        createHotkey({
+        })),
+        createHotkey(() => ({
             key: "ctrl+c",
             description: "respec things",
             onPress() {
                 respecBuyables.onClick();
             }
-        })
+        }))
     ];
 
-    const treeNode = createLayerTreeNode({
+    const treeNode = createLayerTreeNode(() => ({
         layerID: id,
         color,
         reset,
@@ -330,27 +390,27 @@ const layer = createLayer(() => {
             color: "#3325CC",
             textDecoration: "underline"
         }
-    });
+    }));
 
-    const resetButton = createResetButton({
+    const resetButton = createResetButton(() => ({
         conversion,
-        tree: main.value.tree,
+        tree: main.tree,
         treeNode,
         style: {
             color: "#AA66AA"
         },
         resetDescription: "Melt your points into "
-    });
+    }));
 
-    const g = createTreeNode({
+    const g = createTreeNode(() => ({
         display: "TH",
         color: "#6d3678",
         canClick() {
-            return Decimal.gte(points.value, 10);
+            return Decimal.gte(main.points.value, 10);
         },
         tooltip: "Thanos your points",
         onClick() {
-            points.value = Decimal.div(points.value, 2);
+            main.points.value = Decimal.div(main.points.value, 2);
             console.log("Thanos'd");
         },
         glowColor() {
@@ -359,35 +419,41 @@ const layer = createLayer(() => {
             }
             return "";
         }
-    });
-    const h = createTreeNode({
-        id: "h",
-        tooltip() {
-            return `Restore your points to ${format(otherThingy.value)}`;
+    }));
+    const h = createTreeNode(() => ({
+        display: "h",
+        color() {
+            return themes[settings.theme].variables["--locked"];
+        },
+        tooltip: {
+            display: computed(() => `Restore your points to ${format(otherThingy.value)}`),
+            right: true
         },
         canClick() {
-            return Decimal.lt(main.value.points.value, otherThingy.value);
+            return Decimal.lt(main.points.value, otherThingy.value);
         },
         onClick() {
-            main.value.points.value = otherThingy.value;
+            main.points.value = otherThingy.value;
         }
-    });
-    const spook = createTreeNode({});
-    const tree = createTree({
+    }));
+    const spook = createTreeNode(() => ({
+        visibility: Visibility.Hidden
+    }));
+    const tree = createTree(() => ({
         nodes(): GenericTreeNode[][] {
             return [
-                [f.value.treeNode, treeNode],
+                [f.treeNode, treeNode],
                 [g, spook, h]
             ];
         },
         branches(): TreeBranch[] {
             return [
                 {
-                    startNode: f.value.treeNode,
+                    startNode: f.treeNode,
                     endNode: treeNode,
+                    "stroke-width": "25px",
+                    stroke: "green",
                     style: {
-                        strokeWidth: "25px",
-                        stroke: "blue",
                         filter: "blur(5px)"
                     }
                 },
@@ -395,71 +461,71 @@ const layer = createLayer(() => {
                 { startNode: g, endNode: h }
             ];
         }
-    });
+    }));
 
-    const illuminatiTabs = createTabFamily({
+    const illuminatiTabs = createTabFamily(() => ({
         tabs: {
             first: createTabButton({
-                tab: (
-                    <template>
-                        {renderRow(upgrades)}
+                tab: jsx(() => (
+                    <>
+                        {renderRow(...upgrades)}
+                        {renderRow(quasiUpgrade)}
                         <div>confirmed</div>
-                    </template>
-                ),
+                    </>
+                )),
                 display: "first"
             }),
             second: createTabButton({
-                tab: f.value.display as CoercableComponent,
+                tab: f.display,
                 display: "second"
             })
         },
         style: {
             width: "660px",
-            height: "370px",
             backgroundColor: "brown",
             "--background": "brown",
             border: "solid white",
-            margin: "auto"
+            marginLeft: "auto",
+            marginRight: "auto"
         }
-    });
+    }));
 
-    const tabs = createTabFamily({
+    const tabs = createTabFamily(() => ({
         tabs: {
             mainTab: createTabButton({
-                tab: createTab({
-                    display() {
-                        return (
-                            <template>
-                                <MainDisplay
-                                    resource={points}
-                                    color={color}
-                                    effectDisplay={`which are boosting waffles by ${format(
-                                        waffleBoost.value
-                                    )} and increasing the Ice Cream cap by ${format(
-                                        icecreamCap.value
-                                    )}`}
-                                />
-                                <Sticky>{render(resetButton)}</Sticky>
-                                <Resource resource={points} color={color} />
-                                <Spacer height="5px" />
-                                <button onClick={() => console.log("yeet")}>'HI'</button>
-                                <div>Name your points!</div>
-                                <Text v-model={thingy} />
-                                <Sticky style="color: red; font-size: 32px; font-family: Comic Sans MS;">
-                                    I have {displayResource(main.value.points)}!
-                                </Sticky>
-                                <hr />
-                                {renderCol(lollipopMilestones)}
-                                <Spacer />
-                                {renderRow(upgrades)}
-                                {render(funChallenge)}
-                            </template>
-                        );
-                    },
-                    style: {
-                        backgroundColor: "#3325CC"
-                    }
-                }),
+                tab: createTab(() => ({
+                    display: jsx(() => (
+                        <>
+                            <MainDisplay
+                                resource={points}
+                                color={color}
+                                effectDisplay={`which are boosting waffles by ${format(
+                                    waffleBoost.value
+                                )} and increasing the Ice Cream cap by ${format(
+                                    icecreamCap.value
+                                )}`}
+                            />
+                            <Sticky>{render(resetButton)}</Sticky>
+                            <Resource resource={points} color={color} />
+                            <Spacer height="5px" />
+                            <button onClick={() => console.log("yeet")}>'HI'</button>
+                            <div>Name your points!</div>
+                            <Text
+                                modelValue={thingy.value}
+                                onUpdate:modelValue={value => (thingy.value = value)}
+                            />
+                            <Sticky style="color: red; font-size: 32px; font-family: Comic Sans MS;">
+                                I have {displayResource(main.points)} {thingy.value} points!
+                            </Sticky>
+                            <hr />
+                            {renderCol(...lollipopMilestones)}
+                            <Spacer />
+                            {renderRow(...upgrades)}
+                            {renderRow(quasiUpgrade)}
+                            {renderRow(funChallenge)}
+                        </>
+                    ))
+                })),
                 display: "main tab",
                 glowColor() {
                     if (
@@ -475,89 +541,92 @@ const layer = createLayer(() => {
                 style: { color: "orange" }
             }),
             thingies: createTabButton({
-                tab: createTab({
-                    glowColor: "white",
+                tab: createTab(() => ({
                     style() {
                         return { backgroundColor: "#222222", "--background": "#222222" };
                     },
-                    display() {
-                        return (
-                            <template>
-                                {buyablesDisplay}
+                    display: jsx(() => (
+                        <>
+                            {render(buyablesDisplay)}
+                            <Spacer />
+                            <Row style="width: 600px; height: 350px; background-color: green; border-style: solid;">
+                                <Toggle
+                                    onUpdate:modelValue={value => (beep.value = value)}
+                                    modelValue={beep.value}
+                                />
+                                <Spacer width="30px" height="10px" />
+                                <div>
+                                    <span>Beep</span>
+                                </div>
                                 <Spacer />
-                                <Row style="width: 600px; height: 350px; background-color: green; border-style: solid;">
-                                    <Toggle v-model={beep} />
-                                    <Spacer width="30px" height="10px" />
-                                    <div>Beep</div>
-                                    <Spacer />
-                                    <VerticalRule height="200px" />
-                                </Row>
-                                <Spacer />
-                                <img src="https://unsoftcapped2.github.io/The-Modding-Tree-2/discord.png" />
-                            </template>
-                        );
-                    }
-                }),
+                                <VerticalRule height="200px" />
+                            </Row>
+                            <Spacer />
+                            <img src="https://unsoftcapped2.github.io/The-Modding-Tree-2/discord.png" />
+                        </>
+                    ))
+                })),
+                glowColor: "white",
                 display: "thingies",
                 style: { borderColor: "orange" }
             }),
             jail: createTabButton({
-                tab: createTab({
-                    display() {
-                        return (
-                            <template>
-                                {render(coolInfo)}
-                                {render(longBoi)}
-                                <Spacer />
-                                <Row>
-                                    <Column style="background-color: #555555; padding: 15px">
-                                        <div style="color: teal">Sugar level:</div>
-                                        <Spacer />
-                                        {render(tallBoi)}
-                                    </Column>
+                tab: createTab(() => ({
+                    display: jsx(() => (
+                        <>
+                            {render(coolInfo)}
+                            {render(longBoi)}
+                            <Spacer />
+                            <Row>
+                                <Column style="background-color: #555555; padding: 15px">
+                                    <div style="color: teal">Sugar level:</div>
                                     <Spacer />
-                                    <Column>
-                                        <div>idk</div>
-                                        <Spacer width="0" height="50px" />
-                                        {render(flatBoi)}
-                                    </Column>
-                                </Row>
+                                    {render(tallBoi)}
+                                </Column>
                                 <Spacer />
-                                <div>It's jail because "bars"! So funny! Ha ha!</div>
-                                {render(tree)}
-                            </template>
-                        );
-                    },
-                    style: {
-                        backgroundColor: "#3325CC"
-                    }
-                }),
+                                <Column>
+                                    <div>idk</div>
+                                    <Spacer width="0" height="50px" />
+                                    {render(flatBoi)}
+                                </Column>
+                            </Row>
+                            <Spacer />
+                            <div>It's jail because "bars"! So funny! Ha ha!</div>
+                            {render(tree)}
+                        </>
+                    ))
+                })),
                 display: "jail"
             }),
             illuminati: createTabButton({
-                tab: createTab({
-                    display() {
-                        return (
-                            <template>
-                                <h1> C O N F I R M E D </h1>
-                                <Spacer />
-                                {render(illuminatiTabs)}
-                                <div>Adjust how many points H gives you!</div>
-                                <Slider v-model={otherThingy} min={1} max={30} />
-                            </template>
-                        );
-                    },
+                tab: createTab(() => ({
+                    display: jsx(() => (
+                        // This should really just be <> and </>, however for some reason the
+                        // typescript interpreter can't figure out this layer and f.tsx otherwise
+                        <div>
+                            <h1> C O N F I R M E D </h1>
+                            <Spacer />
+                            {render(illuminatiTabs)}
+                            <div>Adjust how many points H gives you!</div>
+                            <Slider
+                                onUpdate:modelValue={value => (otherThingy.value = value)}
+                                modelValue={otherThingy.value}
+                                min={1}
+                                max={30}
+                            />
+                        </div>
+                    )),
                     style: {
                         backgroundColor: "#3325CC"
                     }
-                }),
+                })),
                 visibility() {
                     return showIf(unlockIlluminatiUpgrade.bought.value);
                 },
                 display: "illuminati"
             })
         }
-    });
+    }));
 
     return {
         id,
@@ -568,11 +637,14 @@ const layer = createLayer(() => {
             links.push({
                 startNode: h,
                 endNode: flatBoi,
+                "stroke-width": "5px",
+                stroke: "red",
                 offsetEnd: { x: -50 + 100 * flatBoi.progress.value.toNumber(), y: 0 }
             });
             return links;
         },
         points,
+        best,
         beep,
         thingy,
         otherThingy,
@@ -587,9 +659,8 @@ const layer = createLayer(() => {
         lollipopMultiplierUpgrade,
         lollipopMultiplierEffect,
         unlockIlluminatiUpgrade,
+        quasiUpgrade,
         exhancers,
-        exhancersFirstEffect,
-        exhancersSecondEffect,
         respecBuyables,
         sellExhancer,
         bars: { tallBoi, longBoi, flatBoi },
@@ -602,8 +673,10 @@ const layer = createLayer(() => {
         hotkeys,
         treeNode,
         resetButton,
+        confirmRespec,
         minWidth: 800,
-        display: render(tabs)
+        tabs,
+        display: jsx(() => <>{render(tabs)}</>)
     };
 });
 

@@ -1,6 +1,6 @@
 import ClickableComponent from "@/components/features/Clickable.vue";
 import { Resource } from "@/features/resource";
-import Decimal, { DecimalSource, format } from "@/util/bignum";
+import Decimal, { DecimalSource, format, formatWhole } from "@/util/bignum";
 import {
     Computable,
     GetComputableType,
@@ -8,13 +8,15 @@ import {
     processComputable,
     ProcessedComputable
 } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
-import { isCoercableComponent } from "@/util/vue";
+import { createLazyProxy } from "@/util/proxies";
+import { coerceComponent, isCoercableComponent } from "@/util/vue";
 import { computed, Ref, unref } from "vue";
 import {
     CoercableComponent,
     Component,
+    GatherProps,
     getUniqueID,
+    jsx,
     makePersistent,
     Persistent,
     PersistentState,
@@ -51,13 +53,14 @@ export interface BuyableOptions {
 interface BaseBuyable extends Persistent<DecimalSource> {
     id: string;
     amount: Ref<DecimalSource>;
-    bought: Ref<boolean>;
+    maxed: Ref<boolean>;
     canAfford: Ref<boolean>;
     canClick: ProcessedComputable<boolean>;
     onClick: VoidFunction;
     purchase: VoidFunction;
     type: typeof BuyableType;
     [Component]: typeof ClickableComponent;
+    [GatherProps]: () => Record<string, unknown>;
 }
 
 export type Buyable<T extends BuyableOptions> = Replace<
@@ -86,98 +89,139 @@ export type GenericBuyable = Replace<
 >;
 
 export function createBuyable<T extends BuyableOptions>(
-    options: T & ThisType<Buyable<T>>
+    optionsFunc: () => T & ThisType<Buyable<T>>
 ): Buyable<T> {
-    if (options.canPurchase == null && (options.resource == null || options.cost == null)) {
-        console.warn(
-            "Cannot create buyable without a canPurchase property or a resource and cost property",
-            options
-        );
-        throw "Cannot create buyable without a canPurchase property or a resource and cost property";
-    }
+    return createLazyProxy(() => {
+        const buyable: T & Partial<BaseBuyable> = optionsFunc();
 
-    const buyable: T & Partial<BaseBuyable> = options;
-    makePersistent<DecimalSource>(buyable, 0);
-    buyable.id = getUniqueID("buyable-");
-    buyable.type = BuyableType;
-    buyable[Component] = ClickableComponent;
-
-    buyable.amount = buyable[PersistentState];
-    buyable.bought = computed(() => Decimal.gt(proxy.amount.value, 0));
-    buyable.canAfford = computed(
-        () =>
-            proxy.resource != null &&
-            proxy.cost != null &&
-            Decimal.gte(unref<Resource>(proxy.resource).value, unref(proxy.cost))
-    );
-    if (buyable.canPurchase == null) {
-        buyable.canPurchase = computed(
-            () =>
-                proxy.purchaseLimit != null &&
-                proxy.canAfford &&
-                Decimal.lt(proxy.amount.value, unref(proxy.purchaseLimit))
-        );
-    }
-    processComputable(buyable as T, "canPurchase");
-    // TODO once processComputable typing works, this can be replaced
-    //buyable.canClick = buyable.canPurchase;
-    buyable.canClick = computed(() => unref(proxy.canPurchase));
-    buyable.onClick = buyable.purchase = function () {
-        if (!unref(proxy.canPurchase) || proxy.cost == null || proxy.resource == null) {
-            return;
+        if (buyable.canPurchase == null && (buyable.resource == null || buyable.cost == null)) {
+            console.warn(
+                "Cannot create buyable without a canPurchase property or a resource and cost property",
+                buyable
+            );
+            throw "Cannot create buyable without a canPurchase property or a resource and cost property";
         }
-        const cost = unref(proxy.cost);
-        unref<Resource>(proxy.resource).value = Decimal.sub(
-            unref<Resource>(proxy.resource).value,
-            cost
-        );
-        proxy.amount.value = Decimal.add(proxy.amount.value, 1);
-        this.onPurchase?.(cost);
-    };
-    processComputable(buyable as T, "display");
-    const display = buyable.display;
-    buyable.display = computed(() => {
-        // TODO once processComputable types correctly, remove this "as X"
-        const currDisplay = unref(display) as BuyableDisplay;
-        if (
-            currDisplay != null &&
-            !isCoercableComponent(currDisplay) &&
-            proxy.cost != null &&
-            proxy.resource != null
-        ) {
+
+        makePersistent<DecimalSource>(buyable, 0);
+        buyable.id = getUniqueID("buyable-");
+        buyable.type = BuyableType;
+        buyable[Component] = ClickableComponent;
+
+        buyable.amount = buyable[PersistentState];
+        buyable.canAfford = computed(() => {
+            const genericBuyable = buyable as GenericBuyable;
+            const cost = unref(genericBuyable.cost);
             return (
-                <span>
-                    <div v-if={currDisplay.title}>
-                        <component v-is={currDisplay.title} />
-                    </div>
-                    <component v-is={currDisplay.description} />
-                    <div>
-                        <br />
-                        Amount: {format(proxy.amount.value)} / {format(unref(proxy.purchaseLimit))}
-                    </div>
-                    <div v-if={currDisplay.effectDisplay}>
-                        <br />
-                        Currently: <component v-is={currDisplay.effectDisplay} />
-                    </div>
-                    <br />
-                    Cost: {format(unref(proxy.cost))} {unref<Resource>(proxy.resource).displayName}
-                </span>
+                genericBuyable.resource != null &&
+                cost != null &&
+                Decimal.gte(genericBuyable.resource.value, cost)
+            );
+        });
+        if (buyable.canPurchase == null) {
+            buyable.canPurchase = computed(
+                () =>
+                    unref((buyable as GenericBuyable).visibility) === Visibility.Visible &&
+                    unref((buyable as GenericBuyable).canAfford) &&
+                    Decimal.lt(
+                        (buyable as GenericBuyable).amount.value,
+                        unref((buyable as GenericBuyable).purchaseLimit)
+                    )
             );
         }
-        return null;
+        buyable.maxed = computed(() =>
+            Decimal.gte(
+                (buyable as GenericBuyable).amount.value,
+                unref((buyable as GenericBuyable).purchaseLimit)
+            )
+        );
+        processComputable(buyable as T, "classes");
+        const classes = buyable.classes as ProcessedComputable<Record<string, boolean>> | undefined;
+        buyable.classes = computed(() => {
+            const currClasses = unref(classes) || {};
+            if ((buyable as GenericBuyable).maxed.value) {
+                currClasses.bought = true;
+            }
+            return currClasses;
+        });
+        processComputable(buyable as T, "canPurchase");
+        buyable.canClick = buyable.canPurchase as ProcessedComputable<boolean>;
+        buyable.onClick = buyable.purchase = function () {
+            const genericBuyable = buyable as GenericBuyable;
+            if (
+                !unref(genericBuyable.canPurchase) ||
+                genericBuyable.cost == null ||
+                genericBuyable.resource == null
+            ) {
+                return;
+            }
+            const cost = unref(genericBuyable.cost);
+            genericBuyable.resource.value = Decimal.sub(genericBuyable.resource.value, cost);
+            genericBuyable.amount.value = Decimal.add(genericBuyable.amount.value, 1);
+            this.onPurchase?.(cost);
+        };
+        processComputable(buyable as T, "display");
+        const display = buyable.display;
+        buyable.display = jsx(() => {
+            // TODO once processComputable types correctly, remove this "as X"
+            const currDisplay = unref(display) as BuyableDisplay;
+            if (
+                currDisplay != null &&
+                !isCoercableComponent(currDisplay) &&
+                buyable.cost != null &&
+                buyable.resource != null
+            ) {
+                const genericBuyable = buyable as GenericBuyable;
+                const Title = coerceComponent(currDisplay.title || "", "h3");
+                const Description = coerceComponent(currDisplay.description);
+                const EffectDisplay = coerceComponent(currDisplay.effectDisplay || "");
+                return (
+                    <span>
+                        {currDisplay.title ? (
+                            <div>
+                                <Title />
+                            </div>
+                        ) : null}
+                        <Description />
+                        <div>
+                            <br />
+                            Amount: {formatWhole(genericBuyable.amount.value)} /{" "}
+                            {formatWhole(unref(genericBuyable.purchaseLimit))}
+                        </div>
+                        {currDisplay.effectDisplay ? (
+                            <div>
+                                <br />
+                                Currently: <EffectDisplay />
+                            </div>
+                        ) : null}
+                        {genericBuyable.cost && !genericBuyable.maxed.value ? (
+                            <div>
+                                <br />
+                                Cost: {format(unref(genericBuyable.cost) || 0)}{" "}
+                                {buyable.resource.displayName}
+                            </div>
+                        ) : null}
+                    </span>
+                );
+            }
+            return "";
+        });
+
+        processComputable(buyable as T, "visibility");
+        setDefault(buyable, "visibility", Visibility.Visible);
+        processComputable(buyable as T, "cost");
+        processComputable(buyable as T, "resource");
+        processComputable(buyable as T, "purchaseLimit");
+        setDefault(buyable, "purchaseLimit", 1);
+        processComputable(buyable as T, "style");
+        processComputable(buyable as T, "mark");
+        processComputable(buyable as T, "small");
+
+        buyable[GatherProps] = function (this: GenericBuyable) {
+            const { display, visibility, style, classes, onClick, canClick, small, mark, id } =
+                this;
+            return { display, visibility, style, classes, onClick, canClick, small, mark, id };
+        };
+
+        return buyable as unknown as Buyable<T>;
     });
-
-    processComputable(buyable as T, "visibility");
-    setDefault(buyable, "visibility", Visibility.Visible);
-    processComputable(buyable as T, "cost");
-    processComputable(buyable as T, "resource");
-    processComputable(buyable as T, "purchaseLimit");
-    setDefault(buyable, "purchaseLimit", 1);
-    processComputable(buyable as T, "classes");
-    processComputable(buyable as T, "style");
-    processComputable(buyable as T, "mark");
-    processComputable(buyable as T, "small");
-
-    const proxy = createProxy(buyable as unknown as Buyable<T>);
-    return proxy;
 }

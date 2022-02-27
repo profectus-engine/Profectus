@@ -28,10 +28,16 @@ declare global {
         toPlaces: (x: DecimalSource, precision: number, maxAccepted: DecimalSource) => string;
         formatSmall: (x: DecimalSource, precision?: number) => string;
         invertOOM: (x: DecimalSource) => Decimal;
+        modInfo: typeof modInfo;
     }
 }
 
 requestAnimationFrame(async () => {
+    console.log(
+        "%cMade in TMT-X%c\nLearn more at www.moddingtree.com",
+        "font-weight: bold; font-size: 24px; color: #A3BE8C; background: #2E3440; padding: 4px 8px; border-radius: 8px;",
+        "padding: 4px;"
+    );
     await load();
     const { globalBus, startGameLoop } = await require("./game/events");
 
@@ -45,3 +51,5 @@ requestAnimationFrame(async () => {
 
     startGameLoop();
 });
+
+window.modInfo = modInfo;

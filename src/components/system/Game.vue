@@ -5,7 +5,7 @@
             <div class="inner-tab">
                 <Layer
                     v-if="layerKeys.includes(tab)"
-                    v-bind="layers[tab]!"
+                    v-bind="gatherLayerProps(layers[tab]!)"
                     :index="index"
                     :tab="() => (($refs[`tab-${index}`] as HTMLElement[] | undefined)?.[0])"
                 />
@@ -18,7 +18,7 @@
 
 <script setup lang="ts">
 import modInfo from "@/data/modInfo.json";
-import { layers } from "@/game/layers";
+import { GenericLayer, layers } from "@/game/layers";
 import player from "@/game/player";
 import { computed, toRef } from "vue";
 import Layer from "./Layer.vue";
@@ -27,6 +27,11 @@ import Nav from "./Nav.vue";
 const tabs = toRef(player, "tabs");
 const layerKeys = computed(() => Object.keys(layers));
 const useHeader = modInfo.useHeader;
+
+function gatherLayerProps(layer: GenericLayer) {
+    const { display, minimized, minWidth, name, color, style, classes, links, minimizable } = layer;
+    return { display, minimized, minWidth, name, color, style, classes, links, minimizable };
+}
 </script>
 
 <style scoped>
@@ -58,10 +63,10 @@ const useHeader = modInfo.useHeader;
 
 .separator {
     position: absolute;
-    right: -3px;
+    right: -4px;
     top: 0;
     bottom: 0;
-    width: 6px;
+    width: 8px;
     background: var(--outline);
     z-index: 1;
 }
@@ -72,7 +77,7 @@ const useHeader = modInfo.useHeader;
     height: 4px;
     border: none;
     background: var(--outline);
-    margin: 7px -10px;
+    margin: var(--feature-margin) -10px;
 }
 
 .tab .modal-body hr {

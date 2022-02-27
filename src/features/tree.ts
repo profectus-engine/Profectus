@@ -2,6 +2,7 @@ import TreeComponent from "@/components/features/tree/Tree.vue";
 import {
     CoercableComponent,
     Component,
+    GatherProps,
     getUniqueID,
     persistent,
     Replace,
@@ -20,7 +21,7 @@ import {
     processComputable,
     ProcessedComputable
 } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
+import { createLazyProxy } from "@/util/proxies";
 import { computed, ref, Ref, unref } from "vue";
 import { Link } from "./links";
 import { GenericReset } from "./reset";
@@ -74,33 +75,34 @@ export type GenericTreeNode = Replace<
 >;
 
 export function createTreeNode<T extends TreeNodeOptions>(
-    options: T & ThisType<TreeNode<T>>
+    optionsFunc: () => T & ThisType<TreeNode<T>>
 ): TreeNode<T> {
-    const treeNode: T & Partial<BaseTreeNode> = options;
-    treeNode.id = getUniqueID("treeNode-");
-    treeNode.type = TreeNodeType;
+    return createLazyProxy(() => {
+        const treeNode: T & Partial<BaseTreeNode> = optionsFunc();
+        treeNode.id = getUniqueID("treeNode-");
+        treeNode.type = TreeNodeType;
 
-    if (treeNode.tooltip) {
-        treeNode.forceTooltip = persistent(false);
-    } else {
-        // If we don't have a tooltip, no point in making this persistent
-        treeNode.forceTooltip = ref(false);
-    }
+        if (treeNode.tooltip) {
+            treeNode.forceTooltip = persistent(false);
+        } else {
+            // If we don't have a tooltip, no point in making this persistent
+            treeNode.forceTooltip = ref(false);
+        }
 
-    processComputable(treeNode as T, "visibility");
-    setDefault(treeNode, "visibility", Visibility.Visible);
-    processComputable(treeNode as T, "canClick");
-    setDefault(treeNode, "canClick", true);
-    processComputable(treeNode as T, "color");
-    processComputable(treeNode as T, "display");
-    processComputable(treeNode as T, "tooltip");
-    processComputable(treeNode as T, "glowColor");
-    processComputable(treeNode as T, "classes");
-    processComputable(treeNode as T, "style");
-    processComputable(treeNode as T, "mark");
+        processComputable(treeNode as T, "visibility");
+        setDefault(treeNode, "visibility", Visibility.Visible);
+        processComputable(treeNode as T, "canClick");
+        setDefault(treeNode, "canClick", true);
+        processComputable(treeNode as T, "color");
+        processComputable(treeNode as T, "display");
+        processComputable(treeNode as T, "tooltip");
+        processComputable(treeNode as T, "glowColor");
+        processComputable(treeNode as T, "classes");
+        processComputable(treeNode as T, "style");
+        processComputable(treeNode as T, "mark");
 
-    const proxy = createProxy(treeNode as unknown as TreeNode<T>);
-    return proxy;
+        return treeNode as unknown as TreeNode<T>;
+    });
 }
 
 export interface TreeBranch extends Omit<Link, "startNode" | "endNode"> {
@@ -126,6 +128,7 @@ interface BaseTree {
     resettingNode: Ref<GenericTreeNode | null>;
     type: typeof TreeType;
     [Component]: typeof TreeComponent;
+    [GatherProps]: () => Record<string, unknown>;
 }
 
 export type Tree<T extends TreeOptions> = Replace<
@@ -146,33 +149,46 @@ export type GenericTree = Replace<
     }
 >;
 
-export function createTree<T extends TreeOptions>(options: T & ThisType<Tree<T>>): Tree<T> {
-    const tree: T & Partial<BaseTree> = options;
-    tree.id = getUniqueID("tree-");
-    tree.type = TreeType;
-    tree[Component] = TreeComponent;
+export function createTree<T extends TreeOptions>(
+    optionsFunc: () => T & ThisType<Tree<T>>
+): Tree<T> {
+    return createLazyProxy(() => {
+        const tree: T & Partial<BaseTree> = optionsFunc();
+        tree.id = getUniqueID("tree-");
+        tree.type = TreeType;
+        tree[Component] = TreeComponent;
 
-    tree.isResetting = ref(false);
-    tree.resettingNode = ref(null);
+        tree.isResetting = ref(false);
+        tree.resettingNode = ref(null);
 
-    tree.reset = function (node) {
-        proxy.isResetting.value = true;
-        proxy.resettingNode.value = node;
-        proxy.resetPropagation?.(proxy, node);
-        proxy.isResetting.value = false;
-        proxy.resettingNode.value = null;
-    };
-    tree.links = computed(() => (proxy.branches == null ? [] : unref(proxy.branches)));
+        tree.reset = function (node) {
+            const genericTree = tree as GenericTree;
+            genericTree.isResetting.value = true;
+            genericTree.resettingNode.value = node;
+            genericTree.resetPropagation?.(genericTree, node);
+            genericTree.onReset?.(node);
+            genericTree.isResetting.value = false;
+            genericTree.resettingNode.value = null;
+        };
+        tree.links = computed(() => {
+            const genericTree = tree as GenericTree;
+            return unref(genericTree.branches) ?? [];
+        });
 
-    processComputable(tree as T, "visibility");
-    setDefault(tree, "visibility", Visibility.Visible);
-    processComputable(tree as T, "nodes");
-    processComputable(tree as T, "leftSideNodes");
-    processComputable(tree as T, "rightSideNodes");
-    processComputable(tree as T, "branches");
+        processComputable(tree as T, "visibility");
+        setDefault(tree, "visibility", Visibility.Visible);
+        processComputable(tree as T, "nodes");
+        processComputable(tree as T, "leftSideNodes");
+        processComputable(tree as T, "rightSideNodes");
+        processComputable(tree as T, "branches");
 
-    const proxy = createProxy(tree as unknown as Tree<T>);
-    return proxy;
+        tree[GatherProps] = function (this: GenericTree) {
+            const { nodes, leftSideNodes, rightSideNodes } = this;
+            return { nodes, leftSideNodes, rightSideNodes };
+        };
+
+        return tree as unknown as Tree<T>;
+    });
 }
 
 export type ResetPropagation = {
@@ -213,17 +229,25 @@ export const branchedResetPropagation = function (
             const nextNodes: GenericTreeNode[] = [];
             currentNodes.forEach(node => {
                 branches
-                    .filter(
-                        branch =>
-                            branch.startNode === node &&
-                            !visitedNodes.includes(unref(branch.endNode))
-                    )
-                    .forEach(branch => {
-                        visitedNodes.push(branch.startNode);
-                        nextNodes.push(branch.endNode);
+                    .filter(branch => branch.startNode === node || branch.endNode === node)
+                    .map(branch => {
+                        if (branch.startNode === node) {
+                            return branch.endNode;
+                        }
+                        return branch.startNode;
+                    })
+                    .filter(node => !visitedNodes.includes(node))
+                    .forEach(node => {
+                        // Check here instead of in the filter because this check's results may
+                        // change as we go through each node
+                        if (!nextNodes.includes(node)) {
+                            nextNodes.push(node);
+                            node.reset?.reset();
+                        }
                     });
             });
             currentNodes = nextNodes;
+            visitedNodes.push(...currentNodes);
         }
     }
 };

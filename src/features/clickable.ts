@@ -2,6 +2,7 @@ import ClickableComponent from "@/components/features/Clickable.vue";
 import {
     CoercableComponent,
     Component,
+    GatherProps,
     getUniqueID,
     Replace,
     setDefault,
@@ -15,7 +16,7 @@ import {
     processComputable,
     ProcessedComputable
 } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
+import { createLazyProxy } from "@/util/proxies";
 
 export const ClickableType = Symbol("Clickable");
 
@@ -41,6 +42,7 @@ interface BaseClickable {
     id: string;
     type: typeof ClickableType;
     [Component]: typeof ClickableComponent;
+    [GatherProps]: () => Record<string, unknown>;
 }
 
 export type Clickable<T extends ClickableOptions> = Replace<
@@ -64,21 +66,50 @@ export type GenericClickable = Replace<
 >;
 
 export function createClickable<T extends ClickableOptions>(
-    options: T & ThisType<Clickable<T>>
+    optionsFunc: () => T & ThisType<Clickable<T>>
 ): Clickable<T> {
-    const clickable: T & Partial<BaseClickable> = options;
-    clickable.id = getUniqueID("clickable-");
-    clickable.type = ClickableType;
-    clickable[Component] = ClickableComponent;
+    return createLazyProxy(() => {
+        const clickable: T & Partial<BaseClickable> = optionsFunc();
+        clickable.id = getUniqueID("clickable-");
+        clickable.type = ClickableType;
+        clickable[Component] = ClickableComponent;
 
-    processComputable(clickable as T, "visibility");
-    setDefault(clickable, "visibility", Visibility.Visible);
-    processComputable(clickable as T, "canClick");
-    processComputable(clickable as T, "classes");
-    processComputable(clickable as T, "style");
-    processComputable(clickable as T, "mark");
-    processComputable(clickable as T, "display");
+        processComputable(clickable as T, "visibility");
+        setDefault(clickable, "visibility", Visibility.Visible);
+        processComputable(clickable as T, "canClick");
+        setDefault(clickable, "canClick", true);
+        processComputable(clickable as T, "classes");
+        processComputable(clickable as T, "style");
+        processComputable(clickable as T, "mark");
+        processComputable(clickable as T, "display");
 
-    const proxy = createProxy(clickable as unknown as Clickable<T>);
-    return proxy;
+        clickable[GatherProps] = function (this: GenericClickable) {
+            const {
+                display,
+                visibility,
+                style,
+                classes,
+                onClick,
+                onHold,
+                canClick,
+                small,
+                mark,
+                id
+            } = this;
+            return {
+                display,
+                visibility,
+                style,
+                classes,
+                onClick,
+                onHold,
+                canClick,
+                small,
+                mark,
+                id
+            };
+        };
+
+        return clickable as unknown as Clickable<T>;
+    });
 }

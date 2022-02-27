@@ -1,8 +1,15 @@
 <template>
     <button
+        v-if="unref(visibility) !== Visibility.None"
         @click="selectTab"
         class="tabButton"
-        :style="unref(style)"
+        :style="[
+            {
+                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+            },
+            glowColorStyle,
+            unref(style) ?? {}
+        ]"
         :class="{
             active,
             ...unref(classes)
@@ -13,26 +20,43 @@
 </template>
 
 <script lang="ts">
-import { CoercableComponent, StyleValue } from "@/features/feature";
-import { ProcessedComputable } from "@/util/computed";
-import { computeComponent } from "@/util/vue";
-import { defineComponent, PropType, toRefs, unref } from "vue";
+import { CoercableComponent, StyleValue, Visibility } from "@/features/feature";
+import { getNotifyStyle } from "@/game/notifications";
+import { computeComponent, processedPropType, unwrapRef } from "@/util/vue";
+import { computed, defineComponent, toRefs, unref } from "vue";
 
 export default defineComponent({
     props: {
-        display: {
-            type: [Object, String] as PropType<ProcessedComputable<CoercableComponent>>,
+        visibility: {
+            type: processedPropType<Visibility>(Number),
             required: true
         },
-        style: Object as PropType<ProcessedComputable<StyleValue>>,
-        classes: Object as PropType<ProcessedComputable<Record<string, boolean>>>,
-        active: [Object, Boolean] as PropType<ProcessedComputable<boolean>>
+        display: {
+            type: processedPropType<CoercableComponent>(Object, String, Function),
+            required: true
+        },
+        style: processedPropType<StyleValue>(String, Object, Array),
+        classes: processedPropType<Record<string, boolean>>(Object),
+        glowColor: processedPropType<string>(String),
+        active: Boolean,
+        floating: Boolean
     },
     emits: ["selectTab"],
     setup(props, { emit }) {
-        const { display } = toRefs(props);
+        const { display, glowColor, floating } = toRefs(props);
 
         const component = computeComponent(display);
+
+        const glowColorStyle = computed(() => {
+            const color = unwrapRef(glowColor);
+            if (!color) {
+                return {};
+            }
+            if (unref(floating)) {
+                return getNotifyStyle(color);
+            }
+            return { boxShadow: `0px 9px 5px -6px ${color}` };
+        });
 
         function selectTab() {
             emit("selectTab");
@@ -41,7 +65,9 @@ export default defineComponent({
         return {
             selectTab,
             component,
-            unref
+            glowColorStyle,
+            unref,
+            Visibility
         };
     }
 });
@@ -58,6 +84,7 @@ export default defineComponent({
     border-radius: 5px;
     border: 2px solid;
     flex-shrink: 0;
+    border-color: var(--layer-color);
 }
 
 .tabButton:hover {

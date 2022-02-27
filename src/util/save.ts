@@ -2,6 +2,7 @@ import modInfo from "@/data/modInfo.json";
 import player, { Player, PlayerData, stringifySave } from "@/game/player";
 import settings, { loadSettings } from "@/game/settings";
 import Decimal from "./bignum";
+import { ProxyState } from "./proxies";
 
 export function setupInitialStore(player: Partial<PlayerData> = {}): Player {
     return Object.assign(
@@ -24,7 +25,7 @@ export function setupInitialStore(player: Partial<PlayerData> = {}): Player {
 }
 
 export function save(): string {
-    const stringifiedSave = btoa(unescape(encodeURIComponent(stringifySave(player))));
+    const stringifiedSave = btoa(unescape(encodeURIComponent(stringifySave(player[ProxyState]))));
     localStorage.setItem(player.id, stringifiedSave);
     return stringifiedSave;
 }
@@ -55,7 +56,6 @@ export async function load(): Promise<void> {
 export function newSave(): PlayerData {
     const id = getUniqueID();
     const player = setupInitialStore({ id });
-    console.log(player);
     localStorage.setItem(id, btoa(unescape(encodeURIComponent(stringifySave(player)))));
 
     settings.saves.push(id);

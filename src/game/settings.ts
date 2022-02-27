@@ -2,7 +2,7 @@ import modInfo from "@/data/modInfo.json";
 import { Themes } from "@/data/themes";
 import { globalBus } from "@/game/events";
 import { hardReset } from "@/util/save";
-import { shallowReactive, watch } from "vue";
+import { reactive, watch } from "vue";
 
 export interface Settings {
     active: string;
@@ -12,7 +12,7 @@ export interface Settings {
     unthrottled: boolean;
 }
 
-const state = shallowReactive<Partial<Settings>>({
+const state = reactive<Partial<Settings>>({
     active: "",
     saves: [],
     showTPS: true,
@@ -21,7 +21,7 @@ const state = shallowReactive<Partial<Settings>>({
 });
 
 watch(
-    () => state,
+    state,
     state =>
         localStorage.setItem(modInfo.id, btoa(unescape(encodeURIComponent(JSON.stringify(state))))),
     { deep: true }

@@ -1,9 +1,13 @@
 import { computed, Ref } from "vue";
 import { isFunction } from "./common";
 
+export const DoNotCache = Symbol("DoNotCache");
+
 export type Computable<T> = T | Ref<T> | (() => T);
 export type ProcessedComputable<T> = T | Ref<T>;
-export type GetComputableType<T> = T extends () => infer S
+export type GetComputableType<T> = T extends { [DoNotCache]: true }
+    ? T
+    : T extends () => infer S
     ? Ref<S>
     : undefined extends T
     ? undefined
@@ -27,7 +31,8 @@ export function processComputable<T, S extends keyof ComputableKeysOf<T>>(
     key: S
 ): asserts obj is T & { [K in S]: ProcessedComputable<UnwrapComputableType<T[S]>> } {
     const computable = obj[key];
-    if (isFunction(computable) && computable.length === 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (isFunction(computable) && computable.length === 0 && !(computable as any)[DoNotCache]) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         obj[key] = computed(computable.bind(obj));
@@ -35,8 +40,11 @@ export function processComputable<T, S extends keyof ComputableKeysOf<T>>(
 }
 
 export function convertComputable<T>(obj: Computable<T>): ProcessedComputable<T> {
-    if (isFunction(obj)) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (isFunction(obj) && !(obj as any)[DoNotCache]) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         obj = computed(obj);
     }
-    return obj;
+    return obj as ProcessedComputable<T>;
 }

@@ -63,7 +63,7 @@ const isAnimating = ref(false);
 defineExpose({ isOpen });
 </script>
 
-<style scoped>
+<style>
 .modal-mask {
     position: fixed;
     z-index: 9998;

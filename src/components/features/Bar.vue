@@ -1,31 +1,45 @@
 <template>
     <div
-        v-if="visibility !== Visibility.None"
-        v-show="visibility === Visibility.Visible"
-        :style="[{ width: width + 'px', height: height + 'px' }, style ?? {}]"
+        v-if="unref(visibility) !== Visibility.None"
+        :style="[
+            {
+                width: unref(width) + 'px',
+                height: unref(height) + 'px',
+                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+            },
+            unref(style) ?? {}
+        ]"
         :class="{
             bar: true,
-            ...classes
+            ...unref(classes)
         }"
     >
         <div
             class="overlayTextContainer border"
-            :style="[{ width: width + 'px', height: height + 'px' }, borderStyle ?? {}]"
+            :style="[
+                { width: unref(width) + 'px', height: unref(height) + 'px' },
+                unref(borderStyle) ?? {}
+            ]"
         >
-            <component v-if="component" class="overlayText" :style="textStyle" :is="component" />
+            <component
+                v-if="component"
+                class="overlayText"
+                :style="unref(textStyle)"
+                :is="component"
+            />
         </div>
         <div
             class="border"
             :style="[
-                { width: width + 'px', height: height + 'px' },
-                style ?? {},
-                baseStyle ?? {},
-                borderStyle ?? {}
+                { width: unref(width) + 'px', height: unref(height) + 'px' },
+                unref(style) ?? {},
+                unref(baseStyle) ?? {},
+                unref(borderStyle) ?? {}
             ]"
         >
-            <div class="fill" :style="[barStyle, style ?? {}, fillStyle ?? {}]" />
+            <div class="fill" :style="[barStyle, unref(style) ?? {}, unref(fillStyle) ?? {}]" />
         </div>
-        <MarkNode :mark="mark" />
+        <MarkNode :mark="unref(mark)" />
         <LinkNode :id="id" />
     </div>
 </template>
@@ -34,45 +48,49 @@
 import { Direction } from "@/features/bar";
 import { CoercableComponent, Visibility } from "@/features/feature";
 import Decimal, { DecimalSource } from "@/util/bignum";
-import { coerceComponent } from "@/util/vue";
-import { computed, CSSProperties, defineComponent, PropType, StyleValue, toRefs, unref } from "vue";
+import { computeOptionalComponent, processedPropType, unwrapRef } from "@/util/vue";
+import { computed, CSSProperties, defineComponent, StyleValue, toRefs, unref } from "vue";
 import LinkNode from "../system/LinkNode.vue";
 import MarkNode from "./MarkNode.vue";
 
 export default defineComponent({
     props: {
         progress: {
-            type: Object as PropType<DecimalSource>,
+            type: processedPropType<DecimalSource>(String, Object, Number),
             required: true
         },
         width: {
-            type: Number,
+            type: processedPropType<number>(Number),
             required: true
         },
         height: {
-            type: Number,
+            type: processedPropType<number>(Number),
             required: true
         },
         direction: {
-            type: Object as PropType<Direction>,
+            type: processedPropType<Direction>(String),
             required: true
         },
-        display: [Object, String] as PropType<CoercableComponent>,
+        display: processedPropType<CoercableComponent>(Object, String, Function),
         visibility: {
-            type: Object as PropType<Visibility>,
+            type: processedPropType<Visibility>(Number),
             required: true
         },
-        style: Object as PropType<StyleValue>,
-        classes: Object as PropType<Record<string, boolean>>,
-        borderStyle: Object as PropType<StyleValue>,
-        textStyle: Object as PropType<StyleValue>,
-        baseStyle: Object as PropType<StyleValue>,
-        fillStyle: Object as PropType<StyleValue>,
-        mark: [Boolean, String],
+        style: processedPropType<StyleValue>(Object, String, Array),
+        classes: processedPropType<Record<string, boolean>>(Object),
+        borderStyle: processedPropType<StyleValue>(Object, String, Array),
+        textStyle: processedPropType<StyleValue>(Object, String, Array),
+        baseStyle: processedPropType<StyleValue>(Object, String, Array),
+        fillStyle: processedPropType<StyleValue>(Object, String, Array),
+        mark: processedPropType<boolean | string>(Boolean, String),
         id: {
             type: String,
             required: true
         }
+    },
+    components: {
+        MarkNode,
+        LinkNode
     },
     setup(props) {
         const { progress, width, height, direction, display } = toRefs(props);
@@ -87,17 +105,17 @@ export default defineComponent({
 
         const barStyle = computed(() => {
             const barStyle: Partial<CSSProperties> = {
-                width: unref(width) + 0.5 + "px",
-                height: unref(height) + 0.5 + "px"
+                width: unwrapRef(width) + 0.5 + "px",
+                height: unwrapRef(height) + 0.5 + "px"
             };
             switch (unref(direction)) {
                 case Direction.Up:
                     barStyle.clipPath = `inset(${normalizedProgress.value}% 0% 0% 0%)`;
-                    barStyle.width = unref(width) + 1 + "px";
+                    barStyle.width = unwrapRef(width) + 1 + "px";
                     break;
                 case Direction.Down:
                     barStyle.clipPath = `inset(0% 0% ${normalizedProgress.value}% 0%)`;
-                    barStyle.width = unref(width) + 1 + "px";
+                    barStyle.width = unwrapRef(width) + 1 + "px";
                     break;
                 case Direction.Right:
                     barStyle.clipPath = `inset(0% ${normalizedProgress.value}% 0% 0%)`;
@@ -112,17 +130,13 @@ export default defineComponent({
             return barStyle;
         });
 
-        const component = computed(() => {
-            const currDisplay = unref(display);
-            return currDisplay && coerceComponent(unref(currDisplay));
-        });
+        const component = computeOptionalComponent(display);
 
         return {
             normalizedProgress,
             barStyle,
             component,
-            MarkNode,
-            LinkNode,
+            unref,
             Visibility
         };
     }

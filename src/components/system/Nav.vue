@@ -3,7 +3,7 @@
         <img v-if="banner" :src="banner" height="100%" :alt="title" />
         <div v-else class="title">{{ title }}</div>
         <div @click="changelog?.open()" class="version-container">
-            <Tooltip display="<span>Changelog</span>" bottom class="version"
+            <Tooltip display="Changelog" bottom class="version"
                 ><span>v{{ versionNumber }}</span></Tooltip
             >
         </div>

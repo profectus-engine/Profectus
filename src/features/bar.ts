@@ -2,6 +2,7 @@ import BarComponent from "@/components/features/Bar.vue";
 import {
     CoercableComponent,
     Component,
+    GatherProps,
     getUniqueID,
     Replace,
     setDefault,
@@ -16,7 +17,7 @@ import {
     processComputable,
     ProcessedComputable
 } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
+import { createLazyProxy } from "@/util/proxies";
 
 export const BarType = Symbol("Bar");
 
@@ -48,6 +49,7 @@ interface BaseBar {
     id: string;
     type: typeof BarType;
     [Component]: typeof BarComponent;
+    [GatherProps]: () => Record<string, unknown>;
 }
 
 export type Bar<T extends BarOptions> = Replace<
@@ -76,27 +78,63 @@ export type GenericBar = Replace<
     }
 >;
 
-export function createBar<T extends BarOptions>(options: T & ThisType<Bar<T>>): Bar<T> {
-    const bar: T & Partial<BaseBar> = options;
-    bar.id = getUniqueID("bar-");
-    bar.type = BarType;
-    bar[Component] = BarComponent;
+export function createBar<T extends BarOptions>(optionsFunc: () => T & ThisType<Bar<T>>): Bar<T> {
+    return createLazyProxy(() => {
+        const bar: T & Partial<BaseBar> = optionsFunc();
+        bar.id = getUniqueID("bar-");
+        bar.type = BarType;
+        bar[Component] = BarComponent;
 
-    processComputable(bar as T, "visibility");
-    setDefault(bar, "visibility", Visibility.Visible);
-    processComputable(bar as T, "width");
-    processComputable(bar as T, "height");
-    processComputable(bar as T, "direction");
-    processComputable(bar as T, "style");
-    processComputable(bar as T, "classes");
-    processComputable(bar as T, "borderStyle");
-    processComputable(bar as T, "baseStyle");
-    processComputable(bar as T, "textStyle");
-    processComputable(bar as T, "fillStyle");
-    processComputable(bar as T, "progress");
-    processComputable(bar as T, "display");
-    processComputable(bar as T, "mark");
+        processComputable(bar as T, "visibility");
+        setDefault(bar, "visibility", Visibility.Visible);
+        processComputable(bar as T, "width");
+        processComputable(bar as T, "height");
+        processComputable(bar as T, "direction");
+        processComputable(bar as T, "style");
+        processComputable(bar as T, "classes");
+        processComputable(bar as T, "borderStyle");
+        processComputable(bar as T, "baseStyle");
+        processComputable(bar as T, "textStyle");
+        processComputable(bar as T, "fillStyle");
+        processComputable(bar as T, "progress");
+        processComputable(bar as T, "display");
+        processComputable(bar as T, "mark");
 
-    const proxy = createProxy(bar as unknown as Bar<T>);
-    return proxy;
+        bar[GatherProps] = function (this: GenericBar) {
+            const {
+                progress,
+                width,
+                height,
+                direction,
+                display,
+                visibility,
+                style,
+                classes,
+                borderStyle,
+                textStyle,
+                baseStyle,
+                fillStyle,
+                mark,
+                id
+            } = this;
+            return {
+                progress,
+                width,
+                height,
+                direction,
+                display,
+                visibility,
+                style,
+                classes,
+                borderStyle,
+                textStyle,
+                baseStyle,
+                fillStyle,
+                mark,
+                id
+            };
+        };
+
+        return bar as unknown as Bar<T>;
+    });
 }

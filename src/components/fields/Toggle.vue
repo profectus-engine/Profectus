@@ -8,22 +8,22 @@
 <script setup lang="ts">
 import { CoercableComponent } from "@/features/feature";
 import { coerceComponent } from "@/util/vue";
-import { computed, toRefs, unref } from "vue";
+import { computed, unref } from "vue";
+import "@/components/common/fields.css";
 
-const _props = defineProps<{
+const props = defineProps<{
     title?: CoercableComponent;
     modelValue?: boolean;
 }>();
-const props = toRefs(_props);
 const emit = defineEmits<{
     (e: "update:modelValue", value: boolean): void;
 }>();
 
-const component = computed(() => coerceComponent(unref(props.title) || "", "span"));
+const component = computed(() => coerceComponent(unref(props.title) || "<span></span>", "span"));
 
 const value = computed({
     get() {
-        return !!unref(props.modelValue);
+        return !!props.modelValue;
     },
     set(value: boolean) {
         emit("update:modelValue", value);

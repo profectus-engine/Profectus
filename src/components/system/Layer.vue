@@ -1,14 +1,18 @@
 <template>
-    <div class="layer-container">
+    <div class="layer-container" :style="{ '--layer-color': unref(color) }">
         <button v-if="showGoBack" class="goBack" @click="goBack">←</button>
         <button class="layer-tab minimized" v-if="minimized.value" @click="minimized.value = false">
             <div>{{ unref(name) }}</div>
         </button>
-        <div class="layer-tab" :style="unref(style)" :class="unref(classes)" v-else>
-            <Links v-if="links" :links="unref(links)">
+        <div
+            class="layer-tab"
+            :style="unref(style)"
+            :class="[{ showGoBack }, unref(classes)]"
+            v-else
+        >
+            <Links :links="unref(links)">
                 <component :is="component" />
             </Links>
-            <component v-else :is="component" />
         </div>
         <button v-if="unref(minimizable)" class="minimize" @click="minimized.value = true">
             ▼
@@ -22,8 +26,7 @@ import modInfo from "@/data/modInfo.json";
 import { CoercableComponent, PersistentRef, StyleValue } from "@/features/feature";
 import { Link } from "@/features/links";
 import player from "@/game/player";
-import { ProcessedComputable } from "@/util/computed";
-import { computeComponent, wrapRef } from "@/util/vue";
+import { computeComponent, processedPropType, wrapRef } from "@/util/vue";
 import { computed, defineComponent, nextTick, PropType, toRefs, unref, watch } from "vue";
 
 export default defineComponent({
@@ -38,7 +41,7 @@ export default defineComponent({
             required: true
         },
         display: {
-            type: [Object, String] as PropType<ProcessedComputable<CoercableComponent>>,
+            type: processedPropType<CoercableComponent>(Object, String, Function),
             required: true
         },
         minimized: {
@@ -46,28 +49,29 @@ export default defineComponent({
             required: true
         },
         minWidth: {
-            type: [Object, Number] as PropType<ProcessedComputable<number>>,
+            type: processedPropType<number>(Number),
             required: true
         },
         name: {
-            type: [Object, String] as PropType<ProcessedComputable<string>>,
+            type: processedPropType<string>(String),
             required: true
         },
-        style: Object as PropType<ProcessedComputable<StyleValue>>,
-        classes: Object as PropType<ProcessedComputable<Record<string, boolean>>>,
-        links: [Object, Array] as PropType<ProcessedComputable<Link[]>>,
-        minimizable: [Object, Boolean] as PropType<ProcessedComputable<boolean>>
+        color: processedPropType<string>(String),
+        style: processedPropType<StyleValue>(String, Object, Array),
+        classes: processedPropType<Record<string, boolean>>(Object),
+        links: processedPropType<Link[]>(Array),
+        minimizable: processedPropType<boolean>(Boolean)
     },
     setup(props) {
         const { display, index, minimized, minWidth, tab } = toRefs(props);
 
         const component = computeComponent(display);
         const showGoBack = computed(
-            () => modInfo.allowGoBack && unref(index) > 0 && !minimized.value
+            () => modInfo.allowGoBack && index.value > 0 && !minimized.value
         );
 
         function goBack() {
-            player.tabs = player.tabs.slice(0, unref(props.index));
+            player.tabs.splice(unref(props.index), Infinity);
         }
 
         nextTick(() => updateTab(minimized.value, unref(minWidth.value)));
@@ -187,6 +191,7 @@ export default defineComponent({
     transform: rotate(-90deg);
     top: 10px;
     right: 18px;
+    pointer-events: none;
 }
 
 .goBack {

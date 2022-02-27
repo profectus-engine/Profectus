@@ -15,9 +15,8 @@ import {
     processComputable,
     ProcessedComputable
 } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
+import { createLazyProxy } from "@/util/proxies";
 import { createNanoEvents, Emitter } from "nanoevents";
-import { customRef, Ref } from "vue";
 import { globalBus } from "./events";
 import player from "./player";
 
@@ -32,6 +31,12 @@ export interface LayerEvents {
 
 export const layers: Record<string, Readonly<GenericLayer> | undefined> = {};
 window.layers = layers;
+
+declare module "@vue/runtime-dom" {
+    interface CSSProperties {
+        "--layer-color"?: string;
+    }
+}
 
 export interface Position {
     x: number;
@@ -82,39 +87,26 @@ export type GenericLayer = Replace<
     }
 >;
 
-export function createLayer<T extends LayerOptions>(optionsFunc: () => T): Ref<Layer<T>> {
-    let layer: Layer<T> | null = null;
+export function createLayer<T extends LayerOptions>(optionsFunc: () => T): Layer<T> {
+    return createLazyProxy(() => {
+        const layer = optionsFunc() as T & Partial<BaseLayer>;
+        const emitter = (layer.emitter = createNanoEvents<LayerEvents>());
+        layer.on = emitter.on.bind(emitter);
+        layer.emit = emitter.emit.bind(emitter);
 
-    return customRef(track => {
-        return {
-            get() {
-                if (layer == undefined) {
-                    const partialLayer = optionsFunc() as T & Partial<BaseLayer>;
-                    const emitter = (partialLayer.emitter = createNanoEvents<LayerEvents>());
-                    partialLayer.on = emitter.on.bind(emitter);
-                    partialLayer.emit = emitter.emit.bind(emitter);
+        layer.minimized = persistent(false);
 
-                    partialLayer.minimized = persistent(false);
+        processComputable(layer as T, "color");
+        processComputable(layer as T, "display");
+        processComputable(layer as T, "name");
+        setDefault(layer, "name", layer.id);
+        processComputable(layer as T, "minWidth");
+        setDefault(layer, "minWidth", 600);
+        processComputable(layer as T, "minimizable");
+        setDefault(layer, "minimizable", true);
+        processComputable(layer as T, "links");
 
-                    processComputable(partialLayer as T, "color");
-                    processComputable(partialLayer as T, "display");
-                    processComputable(partialLayer as T, "name");
-                    setDefault(partialLayer, "name", partialLayer.id);
-                    processComputable(partialLayer as T, "minWidth");
-                    setDefault(partialLayer, "minWidth", 600);
-                    processComputable(partialLayer as T, "minimizable");
-                    setDefault(partialLayer, "minimizable", true);
-                    processComputable(partialLayer as T, "links");
-
-                    layer = createProxy(partialLayer as unknown as Layer<T>);
-                }
-                track();
-                return layer;
-            },
-            set() {
-                console.error("Layers are read-only!");
-            }
-        };
+        return layer as unknown as Layer<T>;
     });
 }
 

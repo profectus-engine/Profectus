@@ -2,6 +2,7 @@ import ChallengeComponent from "@/components/features/Challenge.vue";
 import {
     CoercableComponent,
     Component,
+    GatherProps,
     getUniqueID,
     persistent,
     PersistentRef,
@@ -21,7 +22,7 @@ import {
     processComputable,
     ProcessedComputable
 } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
+import { createLazyProxy } from "@/util/proxies";
 import { computed, Ref, unref } from "vue";
 import { GenericReset } from "./reset";
 
@@ -62,6 +63,7 @@ interface BaseChallenge {
     toggle: VoidFunction;
     type: typeof ChallengeType;
     [Component]: typeof ChallengeComponent;
+    [GatherProps]: () => Record<string, unknown>;
 }
 
 export type Challenge<T extends ChallengeOptions> = Replace<
@@ -97,97 +99,155 @@ export function createActiveChallenge(
 }
 
 export function createChallenge<T extends ChallengeOptions>(
-    options: T & ThisType<Challenge<T>>
+    optionsFunc: () => T & ThisType<Challenge<T>>
 ): Challenge<T> {
-    if (options.canComplete == null && (options.resource == null || options.goal == null)) {
-        console.warn(
-            "Cannot create challenge without a canComplete property or a resource and goal property",
-            options
+    return createLazyProxy(() => {
+        const challenge: T & Partial<BaseChallenge> = optionsFunc();
+
+        if (
+            challenge.canComplete == null &&
+            (challenge.resource == null || challenge.goal == null)
+        ) {
+            console.warn(
+                "Cannot create challenge without a canComplete property or a resource and goal property",
+                challenge
+            );
+            throw "Cannot create challenge without a canComplete property or a resource and goal property";
+        }
+
+        challenge.id = getUniqueID("challenge-");
+        challenge.type = ChallengeType;
+        challenge[Component] = ChallengeComponent;
+
+        challenge.completions = persistent(0);
+        challenge.active = persistent(false);
+        challenge.completed = computed(() =>
+            Decimal.gt((challenge as GenericChallenge).completions.value, 0)
         );
-        throw "Cannot create challenge without a canComplete property or a resource and goal property";
-    }
-
-    const challenge: T & Partial<BaseChallenge> = options;
-    challenge.id = getUniqueID("challenge-");
-    challenge.type = ChallengeType;
-    challenge[Component] = ChallengeComponent;
-
-    challenge.completions = persistent(0);
-    challenge.active = persistent(false);
-    challenge.completed = computed(() => Decimal.gt(proxy.completions.value, 0));
-    challenge.maxed = computed(() =>
-        Decimal.gte(proxy.completions.value, unref(proxy.completionLimit))
-    );
-    challenge.toggle = function () {
-        if (proxy.active.value) {
-            if (proxy.canComplete && unref(proxy.canComplete) && !proxy.maxed.value) {
-                let completions: boolean | DecimalSource = unref(proxy.canComplete);
-                if (typeof completions === "boolean") {
-                    completions = 1;
+        challenge.maxed = computed(() =>
+            Decimal.gte(
+                (challenge as GenericChallenge).completions.value,
+                unref((challenge as GenericChallenge).completionLimit)
+            )
+        );
+        challenge.toggle = function () {
+            const genericChallenge = challenge as GenericChallenge;
+            if (genericChallenge.active.value) {
+                if (
+                    genericChallenge.canComplete &&
+                    unref(genericChallenge.canComplete) &&
+                    !genericChallenge.maxed.value
+                ) {
+                    let completions: boolean | DecimalSource = unref(genericChallenge.canComplete);
+                    if (typeof completions === "boolean") {
+                        completions = 1;
+                    }
+                    genericChallenge.completions.value = Decimal.min(
+                        Decimal.add(genericChallenge.completions.value, completions),
+                        unref(genericChallenge.completionLimit)
+                    );
+                    genericChallenge.onComplete?.();
                 }
-                proxy.completions.value = Decimal.min(
-                    Decimal.add(proxy.completions.value, completions),
-                    unref(proxy.completionLimit)
-                );
-                proxy.onComplete?.();
+                genericChallenge.active.value = false;
+                genericChallenge.onExit?.();
+                genericChallenge.reset?.reset();
+            } else if (unref(genericChallenge.canStart)) {
+                genericChallenge.reset?.reset();
+                genericChallenge.active.value = true;
+                genericChallenge.onEnter?.();
             }
-            proxy.active.value = false;
-            proxy.onExit?.();
-            proxy.reset?.reset();
-        } else if (unref(proxy.canStart)) {
-            proxy.reset?.reset();
-            proxy.active.value = true;
-            proxy.onEnter?.();
+        };
+        processComputable(challenge as T, "visibility");
+        setDefault(challenge, "visibility", Visibility.Visible);
+        const visibility = challenge.visibility as ProcessedComputable<Visibility>;
+        challenge.visibility = computed(() => {
+            if (settings.hideChallenges === true && unref(challenge.maxed)) {
+                return Visibility.None;
+            }
+            return unref(visibility);
+        });
+        if (challenge.canStart == null) {
+            challenge.canStart = computed(
+                () =>
+                    unref((challenge as GenericChallenge).visibility) === Visibility.Visible &&
+                    Decimal.lt(
+                        (challenge as GenericChallenge).completions.value,
+                        unref((challenge as GenericChallenge).completionLimit)
+                    )
+            );
         }
-    };
-    processComputable(challenge as T, "visibility");
-    setDefault(challenge, "visibility", Visibility.Visible);
-    const visibility = challenge.visibility as ProcessedComputable<Visibility>;
-    challenge.visibility = computed(() => {
-        if (settings.hideChallenges === true && unref(proxy.maxed)) {
-            return Visibility.None;
+        if (challenge.canComplete == null) {
+            challenge.canComplete = computed(() => {
+                const genericChallenge = challenge as GenericChallenge;
+                if (
+                    !genericChallenge.active.value ||
+                    genericChallenge.resource == null ||
+                    genericChallenge.goal == null
+                ) {
+                    return false;
+                }
+                return Decimal.gte(genericChallenge.resource.value, unref(genericChallenge.goal));
+            });
         }
-        return unref(visibility);
+        if (challenge.mark == null) {
+            challenge.mark = computed(
+                () =>
+                    Decimal.gt(unref((challenge as GenericChallenge).completionLimit), 1) &&
+                    !!unref(challenge.maxed)
+            );
+        }
+
+        processComputable(challenge as T, "canStart");
+        processComputable(challenge as T, "canComplete");
+        processComputable(challenge as T, "completionLimit");
+        setDefault(challenge, "completionLimit", 1);
+        processComputable(challenge as T, "mark");
+        processComputable(challenge as T, "goal");
+        processComputable(challenge as T, "classes");
+        processComputable(challenge as T, "style");
+        processComputable(challenge as T, "display");
+
+        if (challenge.reset != null) {
+            globalBus.on("reset", currentReset => {
+                if (currentReset === challenge.reset && (challenge.active as Ref<boolean>).value) {
+                    (challenge.toggle as VoidFunction)();
+                }
+            });
+        }
+
+        challenge[GatherProps] = function (this: GenericChallenge) {
+            const {
+                active,
+                maxed,
+                canComplete,
+                display,
+                visibility,
+                style,
+                classes,
+                completed,
+                canStart,
+                mark,
+                id,
+                toggle
+            } = this;
+            return {
+                active,
+                maxed,
+                canComplete,
+                display,
+                visibility,
+                style,
+                classes,
+                completed,
+                canStart,
+                mark,
+                id,
+                toggle
+            };
+        };
+
+        return challenge as unknown as Challenge<T>;
     });
-    if (challenge.canStart == null) {
-        challenge.canStart = computed(() =>
-            Decimal.lt(proxy.completions.value, unref(proxy.completionLimit))
-        );
-    }
-    if (challenge.canComplete == null) {
-        challenge.canComplete = computed(() => {
-            if (!proxy.active.value || proxy.resource == null || proxy.goal == null) {
-                return false;
-            }
-            return Decimal.gte(proxy.resource.value, unref(proxy.goal));
-        });
-    }
-    if (challenge.mark == null) {
-        challenge.mark = computed(
-            () => Decimal.gt(unref(proxy.completionLimit), 1) && unref(proxy.maxed)
-        );
-    }
-
-    processComputable(challenge as T, "canStart");
-    processComputable(challenge as T, "canComplete");
-    processComputable(challenge as T, "completionLimit");
-    setDefault(challenge, "completionLimit", 1);
-    processComputable(challenge as T, "mark");
-    processComputable(challenge as T, "goal");
-    processComputable(challenge as T, "classes");
-    processComputable(challenge as T, "style");
-    processComputable(challenge as T, "display");
-
-    if (challenge.reset != null) {
-        globalBus.on("reset", currentReset => {
-            if (currentReset === challenge.reset && (challenge.active as Ref<boolean>).value) {
-                (challenge.toggle as VoidFunction)();
-            }
-        });
-    }
-
-    const proxy = createProxy(challenge as unknown as Challenge<T>);
-    return proxy;
 }
 
 declare module "@/game/settings" {

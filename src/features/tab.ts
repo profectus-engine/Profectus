@@ -1,7 +1,14 @@
 import TabComponent from "@/components/features/Tab.vue";
 import { Computable, GetComputableType } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
-import { CoercableComponent, Component, getUniqueID, Replace, StyleValue } from "./feature";
+import { createLazyProxy } from "@/util/proxies";
+import {
+    CoercableComponent,
+    Component,
+    GatherProps,
+    getUniqueID,
+    Replace,
+    StyleValue
+} from "./feature";
 
 export const TabType = Symbol("Tab");
 
@@ -15,6 +22,7 @@ interface BaseTab {
     id: string;
     type: typeof TabType;
     [Component]: typeof TabComponent;
+    [GatherProps]: () => Record<string, unknown>;
 }
 
 export type Tab<T extends TabOptions> = Replace<
@@ -28,12 +36,18 @@ export type Tab<T extends TabOptions> = Replace<
 
 export type GenericTab = Tab<TabOptions>;
 
-export function createTab<T extends TabOptions>(options: T & ThisType<Tab<T>>): Tab<T> {
-    const tab: T & Partial<BaseTab> = options;
-    tab.id = getUniqueID("tab-");
-    tab.type = TabType;
-    tab[Component] = TabComponent;
+export function createTab<T extends TabOptions>(optionsFunc: () => T & ThisType<Tab<T>>): Tab<T> {
+    return createLazyProxy(() => {
+        const tab: T & Partial<BaseTab> = optionsFunc();
+        tab.id = getUniqueID("tab-");
+        tab.type = TabType;
+        tab[Component] = TabComponent;
 
-    const proxy = createProxy(tab as unknown as Tab<T>);
-    return proxy;
+        tab[GatherProps] = function (this: GenericTab) {
+            const { display } = this;
+            return { display };
+        };
+
+        return tab as unknown as Tab<T>;
+    });
 }

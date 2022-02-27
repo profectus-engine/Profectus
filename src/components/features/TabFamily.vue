@@ -1,47 +1,79 @@
 <template>
-    <div class="tab-family-container" :class="classes" :style="style">
+    <div
+        v-if="unref(visibility) !== Visibility.None"
+        class="tab-family-container"
+        :class="{ ...unref(classes), ...tabClasses }"
+        :style="[
+            {
+                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+            },
+            unref(style) ?? [],
+            tabStyle ?? []
+        ]"
+    >
         <Sticky class="tab-buttons-container">
             <div class="tab-buttons" :class="{ floating }">
                 <TabButton
-                    v-for="(button, id) in tabs"
-                    @selectTab="selected = id"
+                    v-for="(button, id) in unref(tabs)"
+                    @selectTab="selected.value = id"
+                    :floating="floating"
                     :key="id"
-                    :active="button.tab === activeTab"
-                    v-bind="button"
+                    :active="unref(button.tab) === unref(activeTab)"
+                    v-bind="gatherButtonProps(button)"
                 />
             </div>
         </Sticky>
-        <template v-if="activeTab">
-            <component :is="display!" />
+        <template v-if="unref(activeTab)">
+            <component :is="unref(component)" />
         </template>
     </div>
 </template>
 
 <script lang="ts">
 import themes from "@/data/themes";
-import { CoercableComponent } from "@/features/feature";
+import { CoercableComponent, StyleValue, Visibility } from "@/features/feature";
 import { GenericTab } from "@/features/tab";
 import { GenericTabButton } from "@/features/tabFamily";
 import settings from "@/game/settings";
-import { coerceComponent, isCoercableComponent } from "@/util/vue";
-import { computed, defineComponent, PropType, toRefs, unref } from "vue";
+import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "@/util/vue";
+import {
+    Component,
+    computed,
+    defineComponent,
+    PropType,
+    Ref,
+    shallowRef,
+    toRefs,
+    unref,
+    watchEffect
+} from "vue";
 import Sticky from "../system/Sticky.vue";
 import TabButton from "./TabButton.vue";
 
 export default defineComponent({
     props: {
+        visibility: {
+            type: processedPropType<Visibility>(Number),
+            required: true
+        },
         activeTab: {
-            type: Object as PropType<GenericTab | CoercableComponent | null>,
+            type: processedPropType<GenericTab | CoercableComponent | null>(Object),
             required: true
         },
         selected: {
-            type: String,
+            type: Object as PropType<Ref<string>>,
             required: true
         },
         tabs: {
-            type: Object as PropType<Record<string, GenericTabButton>>,
+            type: processedPropType<Record<string, GenericTabButton>>(Object),
             required: true
-        }
+        },
+        style: processedPropType<StyleValue>(String, Object, Array),
+        classes: processedPropType<Record<string, boolean>>(Object)
+    },
+    components: {
+        Sticky,
+        TabButton
     },
     setup(props) {
         const { activeTab } = toRefs(props);
@@ -50,19 +82,23 @@ export default defineComponent({
             return themes[settings.theme].floatingTabs;
         });
 
-        const display = computed(() => {
-            const currActiveTab = activeTab.value;
-            return currActiveTab
-                ? coerceComponent(
-                      isCoercableComponent(currActiveTab)
-                          ? currActiveTab
-                          : unref(currActiveTab.display)
-                  )
-                : null;
+        const component = shallowRef<Component | string>("");
+
+        watchEffect(() => {
+            const currActiveTab = unwrapRef(activeTab);
+            if (currActiveTab == null) {
+                component.value = "";
+                return;
+            }
+            if (isCoercableComponent(currActiveTab)) {
+                component.value = coerceComponent(currActiveTab);
+                return;
+            }
+            component.value = coerceComponent(unref(currActiveTab.display));
         });
 
-        const classes = computed(() => {
-            const currActiveTab = activeTab.value;
+        const tabClasses = computed(() => {
+            const currActiveTab = unwrapRef(activeTab);
             const tabClasses =
                 isCoercableComponent(currActiveTab) || !currActiveTab
                     ? undefined
@@ -70,20 +106,26 @@ export default defineComponent({
             return tabClasses;
         });
 
-        const style = computed(() => {
-            const currActiveTab = activeTab.value;
+        const tabStyle = computed(() => {
+            const currActiveTab = unwrapRef(activeTab);
             return isCoercableComponent(currActiveTab) || !currActiveTab
                 ? undefined
                 : unref(currActiveTab.style);
         });
 
+        function gatherButtonProps(button: GenericTabButton) {
+            const { display, style, classes, glowColor, visibility } = button;
+            return { display, style, classes, glowColor, visibility };
+        }
+
         return {
             floating,
-            display,
-            classes,
-            style,
-            Sticky,
-            TabButton
+            tabClasses,
+            tabStyle,
+            Visibility,
+            component,
+            gatherButtonProps,
+            unref
         };
     }
 });
@@ -91,35 +133,44 @@ export default defineComponent({
 
 <style scoped>
 .tab-family-container {
-    margin: var(--feature-margin) -11px;
+    margin: calc(50px + var(--feature-margin)) 20px var(--feature-margin) 20px;
     position: relative;
-    border: solid 4px var(--outline);
+    border: solid 4px;
+    border-color: var(--outline);
 }
 
-.tab-buttons:not(.floating) {
-    text-align: left;
-    border-bottom: inherit;
-    border-width: 4px;
-    box-sizing: border-box;
-    height: 50px;
+.layer-tab > .tab-family-container:first-child {
+    margin: -4px -11px var(--feature-margin) -11px;
+}
+
+.layer-tab > .tab-family-container:first-child:nth-last-child(3) {
+    border-bottom-style: none;
+    border-left-style: none;
+    border-right-style: none;
+    height: calc(100% + 50px);
+}
+
+.tab-family-container > :nth-child(2) {
+    margin-top: 20px;
+}
+
+.tab-family-container[data-v-f18896fc] > :last-child {
+    margin-bottom: 20px;
 }
 
 .tab-family-container .sticky {
-    margin-left: unset !important;
-    margin-right: unset !important;
+    margin-left: -3px !important;
+    margin-right: -3px !important;
 }
 
-.tab-buttons {
-    margin-bottom: 24px;
-    display: flex;
-    flex-flow: wrap;
-    padding-right: 60px;
-    z-index: 4;
+.tab-buttons-container {
+    width: calc(100% - 14px);
 }
 
 .tab-buttons-container:not(.floating) {
-    border-top: solid 4px var(--outline);
-    border-bottom: solid 4px var(--outline);
+    border-top: solid 4px;
+    border-bottom: solid 4px;
+    border-color: inherit;
 }
 
 .tab-buttons-container:not(.floating) .tab-buttons {
@@ -137,6 +188,28 @@ export default defineComponent({
     margin-top: -25px;
 }
 
+.tab-buttons {
+    margin-bottom: 24px;
+    display: flex;
+    flex-flow: wrap;
+    z-index: 4;
+}
+
+.layer-tab
+    > .tab-family-container:first-child:nth-last-child(3)
+    > .tab-buttons-container
+    > .tab-buttons {
+    padding-right: 60px;
+}
+
+.tab-buttons:not(.floating) {
+    text-align: left;
+    border-bottom: inherit;
+    border-width: 4px;
+    box-sizing: border-box;
+    height: 50px;
+}
+
 .modal-body .tab-buttons {
     width: 100%;
     margin-left: 0;
@@ -144,9 +217,18 @@ export default defineComponent({
     padding-left: 0;
 }
 
-.showGoBack > .tab-buttons-container:not(.floating) .subtabs {
-    padding-left: 0;
-    padding-right: 0;
+.showGoBack
+    > .tab-family-container
+    > .tab-buttons-container:not(.floating):first-child
+    .tab-buttons {
+    padding-left: 70px;
+}
+
+:not(.showGoBack)
+    > .tab-family-container
+    > .tab-buttons-container:not(.floating):first-child
+    .tab-buttons {
+    padding-left: 2px;
 }
 
 .tab-buttons-container:not(.floating):first-child {
@@ -159,10 +241,6 @@ export default defineComponent({
 
 .tab-buttons-container:not(.floating):first-child .tab-buttons {
     margin-top: -50px;
-}
-
-:not(.showGoBack) > .tab-buttons-container:not(.floating) .tab-buttons {
-    padding-left: 70px;
 }
 
 .tab-buttons-container + * {

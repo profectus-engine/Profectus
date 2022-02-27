@@ -33,3 +33,59 @@
 	height: 100%;
 	margin: 10px 0;
 }
+
+.row.mergeAdjacent > .feature,
+.row.mergeAdjacent > .tooltip-container > .feature {
+    margin-left: 0;
+    margin-right: 0;
+    border-radius: 0;
+}
+
+.row.mergeAdjacent > .feature:first-child,
+.row.mergeAdjacent > .tooltip-container:first-child > .feature {
+    border-radius: var(--border-radius) 0 0 var(--border-radius);
+}
+
+.row.mergeAdjacent > .feature:last-child,
+.row.mergeAdjacent > .tooltip-container:last-child > .feature {
+    border-radius: 0 var(--border-radius) var(--border-radius) 0;
+}
+
+.row.mergeAdjacent > .feature:first-child:last-child,
+.row.mergeAdjacent > .tooltip-container:first-child:last-child > .feature {
+    border-radius: var(--border-radius);
+}
+
+/*
+TODO how to implement mergeAdjacent for grids?
+.row.mergeAdjacent + .row.mergeAdjacent > .feature {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+*/
+
+.col.mergeAdjacent .feature {
+    margin-top: 0;
+    margin-bottom: 0;
+    border-radius: 0;
+}
+
+.col.mergeAdjacent .feature:first-child {
+    border-radius: var(--border-radius) var(--border-radius) 0 0;
+}
+
+.col.mergeAdjacent .feature:last-child {
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+}
+
+.col.mergeAdjacent .feature:first-child:last-child {
+    border-radius: var(--border-radius);
+}
+
+/*
+TODO how to implement mergeAdjacent for grids?
+.col.mergeAdjacent + .col.mergeAdjacent > .feature {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+*/

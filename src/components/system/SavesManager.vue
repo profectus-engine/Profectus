@@ -37,7 +37,7 @@
                         <Select
                             v-if="Object.keys(bank).length > 0"
                             :options="bank"
-                            :modelValue="[]"
+                            :modelValue="undefined"
                             @update:modelValue="preset => newFromPreset(preset as string)"
                             closeOnSelect
                             placeholder="Select preset"
@@ -61,7 +61,15 @@ import Modal from "@/components/system/Modal.vue";
 import player, { PlayerData } from "@/game/player";
 import settings from "@/game/settings";
 import { getUniqueID, loadSave, save, newSave } from "@/util/save";
-import { ComponentPublicInstance, computed, nextTick, reactive, ref, unref, watch } from "vue";
+import {
+    ComponentPublicInstance,
+    computed,
+    nextTick,
+    ref,
+    shallowReactive,
+    unref,
+    watch
+} from "vue";
 import Select from "../fields/Select.vue";
 import Text from "../fields/Text.vue";
 import Save from "./Save.vue";
@@ -121,22 +129,27 @@ let bank = ref(
     }, [])
 );
 
-const cachedSaves = reactive<Record<string, LoadablePlayerData>>({});
+const cachedSaves = shallowReactive<Record<string, LoadablePlayerData | undefined>>({});
 function getCachedSave(id: string) {
-    if (!(id in cachedSaves)) {
+    if (cachedSaves[id] == null) {
         const save = localStorage.getItem(id);
         if (save == null) {
-            cachedSaves[id] = { error: `Save with id "${id}" doesn't exist`, id };
+            cachedSaves[id] = { error: `Save doesn't exist in localStorage`, id };
+        } else if (save === "dW5kZWZpbmVk") {
+            cachedSaves[id] = { error: `Save is undefined`, id };
         } else {
             try {
-                cachedSaves[id] = JSON.parse(decodeURIComponent(escape(atob(save))));
-                cachedSaves[id].id = id;
+                cachedSaves[id] = { ...JSON.parse(decodeURIComponent(escape(atob(save)))), id };
             } catch (error) {
                 cachedSaves[id] = { error, id };
+                console.warn(
+                    `SavesManager: Failed to load info about save with id ${id}:\n${error}\n${save}`
+                );
             }
         }
     }
-    return cachedSaves[id];
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return cachedSaves[id]!;
 }
 // Wipe cache whenever the modal is opened
 watch(isOpen, isOpen => {
@@ -187,6 +200,7 @@ function duplicateSave(id: string) {
 function deleteSave(id: string) {
     settings.saves = settings.saves.filter((save: string) => save !== id);
     localStorage.removeItem(id);
+    cachedSaves[id] = undefined;
 }
 
 function openSave(id: string) {
@@ -195,6 +209,8 @@ function openSave(id: string) {
     save();
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     loadSave(saves.value[id]!);
+    // Delete cached version in case of opening it again
+    cachedSaves[id] = undefined;
 }
 
 function newFromPreset(preset: string) {
@@ -217,6 +233,7 @@ function editSave(id: string, newName: string) {
             save();
         } else {
             localStorage.setItem(id, btoa(unescape(encodeURIComponent(JSON.stringify(currSave)))));
+            cachedSaves[id] = undefined;
         }
     }
 }

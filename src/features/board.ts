@@ -2,6 +2,7 @@ import BoardComponent from "@/components/features/board/Board.vue";
 import {
     Component,
     findFeatures,
+    GatherProps,
     getUniqueID,
     makePersistent,
     Persistent,
@@ -22,7 +23,7 @@ import {
     processComputable,
     ProcessedComputable
 } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
+import { createLazyProxy } from "@/util/proxies";
 import { Unsubscribe } from "nanoevents";
 import { computed, Ref, unref } from "vue";
 import { Link } from "./links";
@@ -177,6 +178,7 @@ interface BaseBoard extends Persistent<BoardData> {
     selectedAction: Ref<GenericBoardNodeAction | null>;
     type: typeof BoardType;
     [Component]: typeof BoardComponent;
+    [GatherProps]: () => Record<string, unknown>;
 }
 
 export type Board<T extends BoardOptions> = Replace<
@@ -198,101 +200,139 @@ export type GenericBoard = Replace<
     }
 >;
 
-export function createBoard<T extends BoardOptions>(options: T & ThisType<Board<T>>): Board<T> {
-    const board: T & Partial<BaseBoard> = options;
-    makePersistent<BoardData>(board, {
-        nodes: [],
-        selectedNode: null,
-        selectedAction: null
-    });
-    board.id = getUniqueID("board-");
-    board.type = BoardType;
-    board[Component] = BoardComponent;
-
-    board.nodes = computed(() => proxy[PersistentState].value.nodes);
-    board.selectedNode = computed(
-        () =>
-            proxy.nodes.value.find(node => node.id === proxy[PersistentState].value.selectedNode) ||
-            null
-    );
-    board.selectedAction = computed(() => {
-        if (proxy.selectedNode.value == null) {
-            return null;
-        }
-        const type = proxy.types[proxy.selectedNode.value.type];
-        if (type.actions == null) {
-            return null;
-        }
-        return (
-            type.actions.find(
-                action => action.id === proxy[PersistentState].value.selectedAction
-            ) || null
-        );
-    });
-    board.links = computed(() => {
-        if (proxy.selectedAction.value == null) {
-            return null;
-        }
-        if (proxy.selectedAction.value.links && proxy.selectedNode.value) {
-            return getNodeProperty(proxy.selectedAction.value.links, proxy.selectedNode.value);
-        }
-        return null;
-    });
-    processComputable(board as T, "visibility");
-    setDefault(board, "visibility", Visibility.Visible);
-    processComputable(board as T, "width");
-    setDefault(board, "width", "100%");
-    processComputable(board as T, "height");
-    setDefault(board, "height", "400px");
-    processComputable(board as T, "classes");
-    processComputable(board as T, "style");
-
-    for (const type in board.types) {
-        const nodeType: NodeTypeOptions & Partial<BaseNodeType> = board.types[type];
-
-        processComputable(nodeType, "title");
-        processComputable(nodeType, "label");
-        processComputable(nodeType, "size");
-        setDefault(nodeType, "size", 50);
-        processComputable(nodeType, "draggable");
-        setDefault(nodeType, "draggable", false);
-        processComputable(nodeType, "shape");
-        setDefault(nodeType, "shape", Shape.Circle);
-        processComputable(nodeType, "canAccept");
-        setDefault(nodeType, "canAccept", false);
-        processComputable(nodeType, "progress");
-        processComputable(nodeType, "progressDisplay");
-        setDefault(nodeType, "progressDisplay", ProgressDisplay.Fill);
-        processComputable(nodeType, "progressColor");
-        setDefault(nodeType, "progressColor", "none");
-        processComputable(nodeType, "fillColor");
-        processComputable(nodeType, "outlineColor");
-        processComputable(nodeType, "titleColor");
-        processComputable(nodeType, "actionDistance");
-        setDefault(nodeType, "actionDistance", Math.PI / 6);
-        nodeType.nodes = computed(() =>
-            proxy[PersistentState].value.nodes.filter(node => node.type === type)
-        );
-        setDefault(nodeType, "onClick", function (node: BoardNode) {
-            proxy[PersistentState].value.selectedNode = node.id;
+export function createBoard<T extends BoardOptions>(
+    optionsFunc: () => T & ThisType<Board<T>>
+): Board<T> {
+    return createLazyProxy(() => {
+        const board: T & Partial<BaseBoard> = optionsFunc();
+        makePersistent<BoardData>(board, {
+            nodes: [],
+            selectedNode: null,
+            selectedAction: null
         });
+        board.id = getUniqueID("board-");
+        board.type = BoardType;
+        board[Component] = BoardComponent;
 
-        if (nodeType.actions) {
-            for (const action of nodeType.actions) {
-                processComputable(action, "visibility");
-                setDefault(action, "visibility", Visibility.Visible);
-                processComputable(action, "icon");
-                processComputable(action, "fillColor");
-                processComputable(action, "tooltip");
-                processComputable(action, "links");
+        board.nodes = computed(() => processedBoard[PersistentState].value.nodes);
+        board.selectedNode = computed(
+            () =>
+                processedBoard.nodes.value.find(
+                    node => node.id === board[PersistentState].value.selectedNode
+                ) || null
+        );
+        board.selectedAction = computed(() => {
+            const selectedNode = processedBoard.selectedNode.value;
+            if (selectedNode == null) {
+                return null;
+            }
+            const type = processedBoard.types[selectedNode.type];
+            if (type.actions == null) {
+                return null;
+            }
+            return (
+                type.actions.find(
+                    action => action.id === processedBoard[PersistentState].value.selectedAction
+                ) || null
+            );
+        });
+        board.links = computed(() => {
+            if (processedBoard.selectedAction.value == null) {
+                return null;
+            }
+            if (processedBoard.selectedAction.value.links && processedBoard.selectedNode.value) {
+                return getNodeProperty(
+                    processedBoard.selectedAction.value.links,
+                    processedBoard.selectedNode.value
+                );
+            }
+            return null;
+        });
+        processComputable(board as T, "visibility");
+        setDefault(board, "visibility", Visibility.Visible);
+        processComputable(board as T, "width");
+        setDefault(board, "width", "100%");
+        processComputable(board as T, "height");
+        setDefault(board, "height", "400px");
+        processComputable(board as T, "classes");
+        processComputable(board as T, "style");
+
+        for (const type in board.types) {
+            const nodeType: NodeTypeOptions & Partial<BaseNodeType> = board.types[type];
+
+            processComputable(nodeType as NodeTypeOptions, "title");
+            processComputable(nodeType as NodeTypeOptions, "label");
+            processComputable(nodeType as NodeTypeOptions, "size");
+            setDefault(nodeType, "size", 50);
+            processComputable(nodeType as NodeTypeOptions, "draggable");
+            setDefault(nodeType, "draggable", false);
+            processComputable(nodeType as NodeTypeOptions, "shape");
+            setDefault(nodeType, "shape", Shape.Circle);
+            processComputable(nodeType as NodeTypeOptions, "canAccept");
+            setDefault(nodeType, "canAccept", false);
+            processComputable(nodeType as NodeTypeOptions, "progress");
+            processComputable(nodeType as NodeTypeOptions, "progressDisplay");
+            setDefault(nodeType, "progressDisplay", ProgressDisplay.Fill);
+            processComputable(nodeType as NodeTypeOptions, "progressColor");
+            setDefault(nodeType, "progressColor", "none");
+            processComputable(nodeType as NodeTypeOptions, "fillColor");
+            processComputable(nodeType as NodeTypeOptions, "outlineColor");
+            processComputable(nodeType as NodeTypeOptions, "titleColor");
+            processComputable(nodeType as NodeTypeOptions, "actionDistance");
+            setDefault(nodeType, "actionDistance", Math.PI / 6);
+            nodeType.nodes = computed(() =>
+                board[PersistentState].value.nodes.filter(node => node.type === type)
+            );
+            setDefault(nodeType, "onClick", function (node: BoardNode) {
+                board[PersistentState].value.selectedNode = node.id;
+            });
+
+            if (nodeType.actions) {
+                for (const action of nodeType.actions) {
+                    processComputable(action, "visibility");
+                    setDefault(action, "visibility", Visibility.Visible);
+                    processComputable(action, "icon");
+                    processComputable(action, "fillColor");
+                    processComputable(action, "tooltip");
+                    processComputable(action, "links");
+                }
             }
         }
 
-        board.types[type] = createProxy(nodeType as unknown as GenericNodeType);
-    }
+        board[GatherProps] = function (this: GenericBoard) {
+            const {
+                nodes,
+                types,
+                [PersistentState]: state,
+                visibility,
+                width,
+                height,
+                style,
+                classes,
+                links,
+                selectedAction,
+                selectedNode
+            } = this;
+            return {
+                nodes,
+                types,
+                [PersistentState]: state,
+                visibility,
+                width,
+                height,
+                style,
+                classes,
+                links,
+                selectedAction,
+                selectedNode
+            };
+        };
 
-    const proxy = createProxy(board as unknown as Board<T>);
-    return proxy;
+        // This is necessary because board.types is different from T and Board
+        const processedBoard = board as unknown as Board<T>;
+
+        return processedBoard;
+    });
 }
 
 export function getNodeProperty<T>(property: NodeComputable<T>, node: BoardNode): T {

@@ -3,6 +3,7 @@ import {
     CoercableComponent,
     Component,
     findFeatures,
+    GatherProps,
     getUniqueID,
     makePersistent,
     Persistent,
@@ -21,7 +22,7 @@ import {
     processComputable,
     ProcessedComputable
 } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
+import { createLazyProxy } from "@/util/proxies";
 import { coerceComponent } from "@/util/vue";
 import { Unsubscribe } from "nanoevents";
 import { Ref, unref } from "vue";
@@ -37,7 +38,6 @@ export interface AchievementOptions {
     image?: Computable<string>;
     style?: Computable<StyleValue>;
     classes?: Computable<Record<string, boolean>>;
-    tooltip?: Computable<CoercableComponent>;
     onComplete?: VoidFunction;
 }
 
@@ -47,6 +47,7 @@ interface BaseAchievement extends Persistent<boolean> {
     complete: VoidFunction;
     type: typeof AchievementType;
     [Component]: typeof AchievementComponent;
+    [GatherProps]: () => Record<string, unknown>;
 }
 
 export type Achievement<T extends AchievementOptions> = Replace<
@@ -59,7 +60,6 @@ export type Achievement<T extends AchievementOptions> = Replace<
         image: GetComputableType<T["image"]>;
         style: GetComputableType<T["style"]>;
         classes: GetComputableType<T["classes"]>;
-        tooltip: GetComputableTypeWithDefault<T["tooltip"], GetComputableType<T["display"]>>;
     }
 >;
 
@@ -71,32 +71,36 @@ export type GenericAchievement = Replace<
 >;
 
 export function createAchievement<T extends AchievementOptions>(
-    options: T & ThisType<Achievement<T>>
+    optionsFunc: () => T & ThisType<Achievement<T>>
 ): Achievement<T> {
-    const achievement: T & Partial<BaseAchievement> = options;
-    makePersistent<boolean>(achievement, false);
-    achievement.id = getUniqueID("achievement-");
-    achievement.type = AchievementType;
-    achievement[Component] = AchievementComponent;
+    return createLazyProxy(() => {
+        const achievement: T & Partial<BaseAchievement> = optionsFunc();
+        makePersistent<boolean>(achievement, false);
+        achievement.id = getUniqueID("achievement-");
+        achievement.type = AchievementType;
+        achievement[Component] = AchievementComponent;
 
-    achievement.earned = achievement[PersistentState];
-    achievement.complete = function () {
-        proxy[PersistentState].value = true;
-    };
+        achievement.earned = achievement[PersistentState];
+        achievement.complete = function () {
+            achievement[PersistentState].value = true;
+        };
 
-    processComputable(achievement as T, "visibility");
-    setDefault(achievement, "visibility", Visibility.Visible);
-    processComputable(achievement as T, "shouldEarn");
-    processComputable(achievement as T, "display");
-    processComputable(achievement as T, "mark");
-    processComputable(achievement as T, "image");
-    processComputable(achievement as T, "style");
-    processComputable(achievement as T, "classes");
-    processComputable(achievement as T, "tooltip");
-    setDefault(achievement, "tooltip", achievement.display);
+        processComputable(achievement as T, "visibility");
+        setDefault(achievement, "visibility", Visibility.Visible);
+        processComputable(achievement as T, "shouldEarn");
+        processComputable(achievement as T, "display");
+        processComputable(achievement as T, "mark");
+        processComputable(achievement as T, "image");
+        processComputable(achievement as T, "style");
+        processComputable(achievement as T, "classes");
 
-    const proxy = createProxy(achievement as unknown as Achievement<T>);
-    return proxy;
+        achievement[GatherProps] = function (this: GenericAchievement) {
+            const { visibility, display, earned, image, style, classes, mark, id } = this;
+            return { visibility, display, earned, image, style, classes, mark, id };
+        };
+
+        return achievement as unknown as Achievement<T>;
+    });
 }
 
 const toast = useToast();

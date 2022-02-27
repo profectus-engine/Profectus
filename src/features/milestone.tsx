@@ -3,6 +3,7 @@ import {
     CoercableComponent,
     Component,
     findFeatures,
+    GatherProps,
     getUniqueID,
     makePersistent,
     Persistent,
@@ -22,7 +23,7 @@ import {
     processComputable,
     ProcessedComputable
 } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
+import { createLazyProxy } from "@/util/proxies";
 import { coerceComponent, isCoercableComponent } from "@/util/vue";
 import { Unsubscribe } from "nanoevents";
 import { computed, Ref, unref } from "vue";
@@ -59,6 +60,7 @@ interface BaseMilestone extends Persistent<boolean> {
     earned: Ref<boolean>;
     type: typeof MilestoneType;
     [Component]: typeof MilestoneComponent;
+    [GatherProps]: () => Record<string, unknown>;
 }
 
 export type Milestone<T extends MilestoneOptions> = Replace<
@@ -80,52 +82,59 @@ export type GenericMilestone = Replace<
 >;
 
 export function createMilestone<T extends MilestoneOptions>(
-    options: T & ThisType<Milestone<T>>
+    optionsFunc: () => T & ThisType<Milestone<T>>
 ): Milestone<T> {
-    const milestone: T & Partial<BaseMilestone> = options;
-    makePersistent<boolean>(milestone, false);
-    milestone.id = getUniqueID("milestone-");
-    milestone.type = MilestoneType;
-    milestone[Component] = MilestoneComponent;
+    return createLazyProxy(() => {
+        const milestone: T & Partial<BaseMilestone> = optionsFunc();
+        makePersistent<boolean>(milestone, false);
+        milestone.id = getUniqueID("milestone-");
+        milestone.type = MilestoneType;
+        milestone[Component] = MilestoneComponent;
 
-    milestone.earned = milestone[PersistentState];
-    processComputable(milestone as T, "visibility");
-    setDefault(milestone, "visibility", Visibility.Visible);
-    const visibility = milestone.visibility as ProcessedComputable<Visibility>;
-    milestone.visibility = computed(() => {
-        switch (settings.msDisplay) {
-            default:
-            case MilestoneDisplay.All:
-                return unref(visibility);
-            case MilestoneDisplay.Configurable:
-                if (
-                    unref(proxy.earned) &&
-                    !(
-                        proxy.display != null &&
-                        typeof unref(proxy.display) == "object" &&
-                        "optionsDisplay" in (unref(proxy.display) as Record<string, unknown>)
-                    )
-                ) {
+        milestone.earned = milestone[PersistentState];
+        processComputable(milestone as T, "visibility");
+        setDefault(milestone, "visibility", Visibility.Visible);
+        const visibility = milestone.visibility as ProcessedComputable<Visibility>;
+        milestone.visibility = computed(() => {
+            const display = unref((milestone as GenericMilestone).display);
+            switch (settings.msDisplay) {
+                default:
+                case MilestoneDisplay.All:
+                    return unref(visibility);
+                case MilestoneDisplay.Configurable:
+                    if (
+                        unref(milestone.earned) &&
+                        !(
+                            display != null &&
+                            typeof display == "object" &&
+                            "optionsDisplay" in (display as Record<string, unknown>)
+                        )
+                    ) {
+                        return Visibility.None;
+                    }
+                    return unref(visibility);
+                case MilestoneDisplay.Incomplete:
+                    if (unref(milestone.earned)) {
+                        return Visibility.None;
+                    }
+                    return unref(visibility);
+                case MilestoneDisplay.None:
                     return Visibility.None;
-                }
-                return unref(visibility);
-            case MilestoneDisplay.Incomplete:
-                if (unref(proxy.earned)) {
-                    return Visibility.None;
-                }
-                return unref(visibility);
-            case MilestoneDisplay.None:
-                return Visibility.None;
-        }
+            }
+        });
+
+        processComputable(milestone as T, "shouldEarn");
+        processComputable(milestone as T, "style");
+        processComputable(milestone as T, "classes");
+        processComputable(milestone as T, "display");
+
+        milestone[GatherProps] = function (this: GenericMilestone) {
+            const { visibility, display, style, classes, earned, id } = this;
+            return { visibility, display, style, classes, earned, id };
+        };
+
+        return milestone as unknown as Milestone<T>;
     });
-
-    processComputable(milestone as T, "shouldEarn");
-    processComputable(milestone as T, "style");
-    processComputable(milestone as T, "classes");
-    processComputable(milestone as T, "display");
-
-    const proxy = createProxy(milestone as unknown as Milestone<T>);
-    return proxy;
 }
 
 const toast = useToast();
@@ -150,14 +159,14 @@ globalBus.on("addLayer", layer => {
                         isCoercableComponent(display) ? display : display.requirement
                     );
                     toast(
-                        <template>
+                        <>
                             <h3>Milestone earned!</h3>
                             <div>
                                 {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
                                 {/* @ts-ignore */}
                                 <Display />
                             </div>
-                        </template>
+                        </>
                     );
                 }
             }

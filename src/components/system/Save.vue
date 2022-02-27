@@ -51,7 +51,7 @@
         <div class="details" v-else-if="save.error == undefined && isEditing">
             <Text v-model="newName" class="editname" @submit="changeName" />
         </div>
-        <div v-else class="details error">Error: Failed to load save with id {{ save.id }}</div>
+        <div v-else class="details error">Error: Failed to load save with id {{ save.id }}<br/>{{ save.error }}</div>
     </div>
 </template>
 
@@ -88,7 +88,7 @@ const isEditing = ref(false);
 const isConfirming = ref(false);
 const newName = ref("");
 
-watch(isEditing, () => (newName.value = ""));
+watch(isEditing, () => (newName.value = save.value.name || ""));
 
 const isActive = computed(() => save.value && save.value.id === player.id);
 const currentTime = computed(() =>

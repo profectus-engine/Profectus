@@ -1,10 +1,10 @@
 <template>
     <Tooltip
         v-if="unref(visibility) !== Visibility.None"
-        v-show="unref(visibility) === Visibility.Visible"
-        v-bind="tooltipToBind"
+        v-bind="tooltipToBind && gatherTooltipProps(tooltipToBind)"
         :display="tooltipDisplay"
         :force="forceTooltip"
+        :style="{ visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined }"
         :class="{
             treeNode: true,
             can: unref(canClick),
@@ -31,56 +31,71 @@
             ]"
             :disabled="!unref(canClick)"
         >
-            <component :is="component" />
+            <component :is="unref(comp)" />
         </button>
         <MarkNode :mark="unref(mark)" />
-        <LinkNode :id="unref(id)" />
+        <LinkNode :id="id" />
     </Tooltip>
 </template>
 
 <script lang="ts">
 import TooltipVue from "@/components/system/Tooltip.vue";
 import { CoercableComponent, StyleValue, Visibility } from "@/features/feature";
-import { Tooltip } from "@/features/tooltip";
+import { gatherTooltipProps, Tooltip } from "@/features/tooltip";
 import { ProcessedComputable } from "@/util/computed";
 import {
     computeOptionalComponent,
     isCoercableComponent,
+    processedPropType,
     setupHoldToClick,
     unwrapRef
 } from "@/util/vue";
-import { computed, defineComponent, PropType, Ref, toRefs, unref } from "vue";
+import {
+    computed,
+    defineComponent,
+    PropType,
+    Ref,
+    shallowRef,
+    toRefs,
+    unref,
+    watchEffect
+} from "vue";
 import LinkNode from "../../system/LinkNode.vue";
 import MarkNode from "../MarkNode.vue";
 
 export default defineComponent({
     props: {
-        display: [Object, String] as PropType<ProcessedComputable<CoercableComponent>>,
+        display: processedPropType<CoercableComponent>(Object, String, Function),
         visibility: {
-            type: Object as PropType<ProcessedComputable<Visibility>>,
+            type: processedPropType<Visibility>(Number),
             required: true
         },
-        style: Object as PropType<ProcessedComputable<StyleValue>>,
-        classes: Object as PropType<ProcessedComputable<Record<string, boolean>>>,
-        tooltip: Object as PropType<ProcessedComputable<CoercableComponent | Tooltip>>,
+        style: processedPropType<StyleValue>(String, Object, Array),
+        classes: processedPropType<Record<string, boolean>>(Object),
+        tooltip: processedPropType<CoercableComponent | Tooltip>(Object, String, Function),
         onClick: Function as PropType<VoidFunction>,
         onHold: Function as PropType<VoidFunction>,
-        color: [Object, String] as PropType<ProcessedComputable<string>>,
-        glowColor: [Object, String] as PropType<ProcessedComputable<string>>,
+        color: processedPropType<string>(String),
+        glowColor: processedPropType<string>(String),
         forceTooltip: {
             type: Object as PropType<Ref<boolean>>,
             required: true
         },
         canClick: {
-            type: [Object, Boolean] as PropType<ProcessedComputable<boolean>>,
+            type: processedPropType<boolean>(Boolean),
             required: true
         },
-        mark: [Object, Boolean, String] as PropType<ProcessedComputable<boolean | string>>,
+        mark: processedPropType<boolean | string>(Boolean, String),
         id: {
-            type: [Object, String] as PropType<ProcessedComputable<string>>,
+            type: String,
             required: true
         },
-        small: [Object, Boolean] as PropType<ProcessedComputable<boolean>>
+        small: processedPropType<boolean>(Boolean)
+    },
+    components: {
+        Tooltip: TooltipVue,
+        MarkNode,
+        LinkNode
     },
     setup(props) {
         const { tooltip, forceTooltip, onClick, onHold, display } = toRefs(props);
@@ -93,14 +108,18 @@ export default defineComponent({
             }
         }
 
-        const component = computeOptionalComponent(display);
-        const tooltipDisplay = computed(() => {
+        const comp = computeOptionalComponent(display);
+        const tooltipDisplay = shallowRef<ProcessedComputable<CoercableComponent> | undefined>(
+            undefined
+        );
+        watchEffect(() => {
             const currTooltip = unwrapRef(tooltip);
 
             if (typeof currTooltip === "object" && !isCoercableComponent(currTooltip)) {
-                return currTooltip.display;
+                tooltipDisplay.value = currTooltip.display;
+                return;
             }
-            return currTooltip || "";
+            tooltipDisplay.value = currTooltip;
         });
         const tooltipToBind = computed(() => {
             const currTooltip = unwrapRef(tooltip);
@@ -117,14 +136,12 @@ export default defineComponent({
             click,
             start,
             stop,
-            component,
+            comp,
             tooltipDisplay,
             tooltipToBind,
-            Tooltip: TooltipVue,
-            MarkNode,
-            LinkNode,
             unref,
             Visibility,
+            gatherTooltipProps,
             isCoercableComponent
         };
     }

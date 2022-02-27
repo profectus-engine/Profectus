@@ -4,14 +4,14 @@ import {
     Persistent,
     persistent,
     PersistentRef,
-    Replace,
-    SetupPersistence
+    PersistentState,
+    Replace
 } from "@/features/feature";
 import { globalBus } from "@/game/events";
 import { GenericLayer } from "@/game/layers";
 import Decimal from "@/lib/break_eternity";
 import { Computable, GetComputableType, processComputable } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
+import { createLazyProxy } from "@/util/proxies";
 import { Unsubscribe } from "nanoevents";
 import { computed, isRef, unref } from "vue";
 
@@ -37,48 +37,46 @@ export type Reset<T extends ResetOptions> = Replace<
 
 export type GenericReset = Reset<ResetOptions>;
 
-export function createReset<T extends ResetOptions>(options: T & ThisType<Reset<T>>): Reset<T> {
-    const reset: T & Partial<BaseReset> = options;
-    reset.id = getUniqueID("reset-");
-    reset.type = ResetType;
+export function createReset<T extends ResetOptions>(
+    optionsFunc: () => T & ThisType<Reset<T>>
+): Reset<T> {
+    return createLazyProxy(() => {
+        const reset: T & Partial<BaseReset> = optionsFunc();
+        reset.id = getUniqueID("reset-");
+        reset.type = ResetType;
 
-    reset.reset = function () {
-        const handleObject = (obj: Record<string, unknown>) => {
-            Object.keys(obj).forEach(key => {
-                const value = obj[key];
-                if (value && typeof value === "object") {
-                    if (SetupPersistence in value && isRef(value)) {
-                        if (DefaultValue in value) {
-                            (value as PersistentRef).value = (value as PersistentRef)[DefaultValue];
-                        } else if (DefaultValue in obj) {
-                            (value as PersistentRef).value = (obj as unknown as Persistent)[
-                                DefaultValue
-                            ];
-                        }
-                    } else {
-                        handleObject(value as Record<string, unknown>);
+        reset.reset = function () {
+            const handleObject = (obj: unknown) => {
+                if (obj && typeof obj === "object") {
+                    if (PersistentState in obj) {
+                        (obj as Persistent)[PersistentState].value = (obj as Persistent)[
+                            DefaultValue
+                        ];
+                    } else if (!(obj instanceof Decimal) && !isRef(obj)) {
+                        Object.values(obj).forEach(obj =>
+                            handleObject(obj as Record<string, unknown>)
+                        );
                     }
                 }
-            });
+            };
+            unref((reset as GenericReset).thingsToReset).forEach(handleObject);
+            globalBus.emit("reset", reset as GenericReset);
+            reset.onReset?.();
         };
-        unref(proxy.thingsToReset).forEach(handleObject);
-        globalBus.emit("reset", proxy);
-        proxy.onReset?.();
-    };
 
-    processComputable(reset as T, "thingsToReset");
+        processComputable(reset as T, "thingsToReset");
 
-    const proxy = createProxy(reset as unknown as Reset<T>);
-    return proxy;
+        return reset as unknown as Reset<T>;
+    });
 }
 
 export function setupAutoReset(
     layer: GenericLayer,
     reset: GenericReset,
     autoActive: Computable<boolean> = true
-): void {
+): Unsubscribe {
     const isActive = typeof autoActive === "function" ? computed(autoActive) : autoActive;
-    layer.on("update", () => {
+    return layer.on("update", () => {
         if (unref(isActive)) {
             reset.reset();
         }

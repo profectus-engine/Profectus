@@ -2,7 +2,7 @@
     <div>
         <span v-if="showPrefix">You have </span>
         <ResourceVue :resource="resource" :color="color || 'white'" />
-        {{ resource
+        {{ resource.displayName
         }}<!-- remove whitespace -->
         <span v-if="effectComponent">, <component :is="effectComponent" /></span>
         <br /><br />
@@ -13,8 +13,8 @@
 import { CoercableComponent } from "@/features/feature";
 import { Resource } from "@/features/resource";
 import Decimal from "@/util/bignum";
-import { coerceComponent } from "@/util/vue";
-import { computed, StyleValue, toRefs } from "vue";
+import { computeOptionalComponent } from "@/util/vue";
+import { computed, Ref, StyleValue, toRefs } from "vue";
 import ResourceVue from "../system/Resource.vue";
 
 const _props = defineProps<{
@@ -26,10 +26,9 @@ const _props = defineProps<{
 }>();
 const props = toRefs(_props);
 
-const effectComponent = computed(() => {
-    const effectDisplay = props.effectDisplay?.value;
-    return effectDisplay && coerceComponent(effectDisplay);
-});
+const effectComponent = computeOptionalComponent(
+    props.effectDisplay as Ref<CoercableComponent | undefined>
+);
 
 const showPrefix = computed(() => {
     return Decimal.lt(props.resource.value, "1e1000");

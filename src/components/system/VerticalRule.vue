@@ -13,6 +13,6 @@ defineProps<{
     width: 4px;
     background: var(--outline);
     height: 100%;
-    margin: auto 7px;
+    margin: auto var(--feature-margin);
 }
 </style>

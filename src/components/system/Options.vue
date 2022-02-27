@@ -25,10 +25,11 @@ import { MilestoneDisplay } from "@/features/milestone";
 import player from "@/game/player";
 import settings from "@/game/settings";
 import { camelToTitle } from "@/util/common";
-import { computed, ref, toRef, toRefs } from "vue";
+import { computed, ref, toRefs } from "vue";
 import Toggle from "../fields/Toggle.vue";
 import Select from "../fields/Select.vue";
 import Tooltip from "./Tooltip.vue";
+import { jsx } from "@/features/feature";
 
 const isOpen = ref(false);
 
@@ -51,31 +52,30 @@ const msDisplayOptions = Object.values(MilestoneDisplay).map(option => ({
 
 const { showTPS, hideChallenges, theme, msDisplay, unthrottled } = toRefs(settings);
 const { autosave, offlineProd } = toRefs(player);
-const devSpeed = toRef(player, "devSpeed");
 const isPaused = computed({
     get() {
-        return devSpeed.value === 0;
+        return player.devSpeed === 0;
     },
     set(value: boolean) {
-        devSpeed.value = value ? null : 0;
+        player.devSpeed = value ? 0 : null;
     }
 });
 
-const offlineProdTitle = (
-    <template>
+const offlineProdTitle = jsx(() => (
+    <span>
         Offline Production<Tooltip display="Save-specific">*</Tooltip>
-    </template>
-);
-const autosaveTitle = (
-    <template>
+    </span>
+));
+const autosaveTitle = jsx(() => (
+    <span>
         Autosave<Tooltip display="Save-specific">*</Tooltip>
-    </template>
-);
-const isPausedTitle = (
-    <template>
+    </span>
+));
+const isPausedTitle = jsx(() => (
+    <span>
         Pause game<Tooltip display="Save-specific">*</Tooltip>
-    </template>
-);
+    </span>
+));
 </script>
 
 <style scoped>

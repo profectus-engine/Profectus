@@ -1,64 +1,72 @@
 <template>
     <button
-        v-if="visibility !== Visibility.None"
-        v-show="visibility === Visibility.Visible"
-        :style="style"
+        v-if="unref(visibility) !== Visibility.None"
+        :style="[
+            {
+                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+            },
+            unref(style) ?? {}
+        ]"
         @click="purchase"
         :class="{
             feature: true,
             upgrade: true,
-            can: canPurchase && !bought,
-            locked: !canPurchase && !bought,
-            bought,
-            ...classes
+            can: unref(canPurchase),
+            locked: !unref(canPurchase),
+            bought: unref(bought),
+            ...unref(classes)
         }"
-        :disabled="!canPurchase && !bought"
+        :disabled="!unref(canPurchase)"
     >
-        <component v-if="component" :is="component" />
-        <MarkNode :mark="mark" />
+        <component v-if="unref(component)" :is="unref(component)" />
+        <MarkNode :mark="unref(mark)" />
         <LinkNode :id="id" />
     </button>
 </template>
 
 <script lang="tsx">
-import { StyleValue, Visibility } from "@/features/feature";
+import { jsx, StyleValue, Visibility } from "@/features/feature";
 import { displayResource, Resource } from "@/features/resource";
 import { GenericUpgrade } from "@/features/upgrade";
 import { DecimalSource } from "@/lib/break_eternity";
-import { coerceComponent, isCoercableComponent } from "@/util/vue";
-import { computed, defineComponent, PropType, Ref, toRef, toRefs, unref, UnwrapRef } from "vue";
+import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "@/util/vue";
+import {
+    Component,
+    defineComponent,
+    PropType,
+    shallowRef,
+    toRefs,
+    unref,
+    UnwrapRef,
+    watchEffect
+} from "vue";
 import LinkNode from "../system/LinkNode.vue";
 import MarkNode from "./MarkNode.vue";
+import "@/components/common/features.css";
 
 export default defineComponent({
     props: {
         display: {
-            type: Object as PropType<UnwrapRef<GenericUpgrade["display"]>>,
+            type: processedPropType<UnwrapRef<GenericUpgrade["display"]>>(String, Object, Function),
             required: true
         },
         visibility: {
-            type: Object as PropType<Visibility>,
+            type: processedPropType<Visibility>(Number),
             required: true
         },
-        style: Object as PropType<StyleValue>,
-        classes: Object as PropType<Record<string, boolean>>,
-        resource: {
-            type: Object as PropType<Resource>,
-            required: true
-        },
-        cost: {
-            type: Object as PropType<DecimalSource>,
-            required: true
-        },
+        style: processedPropType<StyleValue>(String, Object, Array),
+        classes: processedPropType<Record<string, boolean>>(Object),
+        resource: Object as PropType<Resource>,
+        cost: processedPropType<DecimalSource>(String, Object, Number),
         canPurchase: {
-            type: Boolean,
+            type: processedPropType<boolean>(Boolean),
             required: true
         },
         bought: {
-            type: Boolean,
+            type: processedPropType<boolean>(Boolean),
             required: true
         },
-        mark: [Boolean, String],
+        mark: processedPropType<boolean | string>(Boolean, String),
         id: {
             type: String,
             required: true
@@ -68,45 +76,59 @@ export default defineComponent({
             required: true
         }
     },
+    components: {
+        LinkNode,
+        MarkNode
+    },
     setup(props) {
         const { display, cost } = toRefs(props);
-        const resource = toRef(props, "resource") as unknown as Ref<Resource>;
 
-        const component = computed(() => {
-            const currDisplay = display.value;
+        const component = shallowRef<Component | string>("");
+
+        watchEffect(() => {
+            const currDisplay = unwrapRef(display);
             if (currDisplay == null) {
-                return null;
+                component.value = "";
+                return;
             }
             if (isCoercableComponent(currDisplay)) {
-                return coerceComponent(currDisplay);
+                component.value = coerceComponent(currDisplay);
+                return;
             }
-            return (
-                <span>
-                    <div v-if={currDisplay.title}>
-                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                        <component v-is={coerceComponent(currDisplay.title!, "h2")} />
-                    </div>
-                    <component v-is={coerceComponent(currDisplay.description, "div")} />
-                    <div v-if={currDisplay.effectDisplay}>
-                        <br />
-                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                        Currently: <component v-is={coerceComponent(currDisplay.effectDisplay!)} />
-                    </div>
-                    <template v-if={resource.value != null && cost.value != null}>
-                        <br />
-                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                        Cost: {displayResource(resource.value, cost.value)}{" "}
-                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                        {resource.value.displayName}
-                    </template>
-                </span>
+            const currCost = unwrapRef(cost);
+            const Title = coerceComponent(currDisplay.title || "", "h3");
+            const Description = coerceComponent(currDisplay.description, "div");
+            const EffectDisplay = coerceComponent(currDisplay.effectDisplay || "");
+            component.value = coerceComponent(
+                jsx(() => (
+                    <span>
+                        {currDisplay.title ? (
+                            <div>
+                                <Title />
+                            </div>
+                        ) : null}
+                        <Description />
+                        {currDisplay.effectDisplay ? (
+                            <div>
+                                Currently: <EffectDisplay />
+                            </div>
+                        ) : null}
+                        {props.resource != null ? (
+                            <>
+                                <br />
+                                Cost: {props.resource &&
+                                    displayResource(props.resource, currCost)}{" "}
+                                {props.resource?.displayName}
+                            </>
+                        ) : null}
+                    </span>
+                ))
             );
         });
 
         return {
             component,
-            LinkNode,
-            MarkNode,
+            unref,
             Visibility
         };
     }

@@ -8,7 +8,7 @@ import {
     ProcessedComputable,
     processComputable
 } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
+import { createLazyProxy } from "@/util/proxies";
 import { unref } from "vue";
 import { findFeatures, Replace, setDefault } from "./feature";
 
@@ -41,16 +41,19 @@ export type GenericHotkey = Replace<
     }
 >;
 
-export function createHotkey<T extends HotkeyOptions>(options: T & ThisType<Hotkey<T>>): Hotkey<T> {
-    const hotkey: T & Partial<BaseHotkey> = options;
-    hotkey.type = HotkeyType;
+export function createHotkey<T extends HotkeyOptions>(
+    optionsFunc: () => T & ThisType<Hotkey<T>>
+): Hotkey<T> {
+    return createLazyProxy(() => {
+        const hotkey: T & Partial<BaseHotkey> = optionsFunc();
+        hotkey.type = HotkeyType;
 
-    processComputable(hotkey as T, "enabled");
-    setDefault(hotkey, "enabled", true);
-    processComputable(hotkey as T, "description");
+        processComputable(hotkey as T, "enabled");
+        setDefault(hotkey, "enabled", true);
+        processComputable(hotkey as T, "description");
 
-    const proxy = createProxy(hotkey as unknown as Hotkey<T>);
-    return proxy;
+        return hotkey as unknown as Hotkey<T>;
+    });
 }
 
 globalBus.on("addLayer", layer => {

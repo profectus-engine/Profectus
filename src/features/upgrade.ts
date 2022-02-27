@@ -3,6 +3,7 @@ import {
     CoercableComponent,
     Component,
     findFeatures,
+    GatherProps,
     getUniqueID,
     makePersistent,
     Persistent,
@@ -23,7 +24,7 @@ import {
     processComputable,
     ProcessedComputable
 } from "@/util/computed";
-import { createProxy } from "@/util/proxies";
+import { createLazyProxy } from "@/util/proxies";
 import { computed, Ref, unref } from "vue";
 
 export const UpgradeType = Symbol("Upgrade");
@@ -42,18 +43,19 @@ export interface UpgradeOptions {
     >;
     mark?: Computable<boolean | string>;
     cost?: Computable<DecimalSource>;
-    resource?: Computable<Resource>;
-    canPurchase?: Computable<boolean>;
+    resource?: Resource;
+    canAfford?: Computable<boolean>;
     onPurchase?: VoidFunction;
 }
 
 interface BaseUpgrade extends Persistent<boolean> {
     id: string;
     bought: Ref<boolean>;
-    canAfford: Ref<boolean>;
+    canPurchase: Ref<boolean>;
     purchase: VoidFunction;
     type: typeof UpgradeType;
     [Component]: typeof UpgradeComponent;
+    [GatherProps]: () => Record<string, unknown>;
 }
 
 export type Upgrade<T extends UpgradeOptions> = Replace<
@@ -65,8 +67,7 @@ export type Upgrade<T extends UpgradeOptions> = Replace<
         display: GetComputableType<T["display"]>;
         mark: GetComputableType<T["mark"]>;
         cost: GetComputableType<T["cost"]>;
-        resource: GetComputableType<T["resource"]>;
-        canPurchase: GetComputableTypeWithDefault<T["canPurchase"], Ref<boolean>>;
+        canAfford: GetComputableTypeWithDefault<T["canAfford"], Ref<boolean>>;
     }
 >;
 
@@ -79,59 +80,96 @@ export type GenericUpgrade = Replace<
 >;
 
 export function createUpgrade<T extends UpgradeOptions>(
-    options: T & ThisType<Upgrade<T>>
+    optionsFunc: () => T & ThisType<Upgrade<T>>
 ): Upgrade<T> {
-    const upgrade: T & Partial<BaseUpgrade> = options;
-    makePersistent<boolean>(upgrade, false);
-    upgrade.id = getUniqueID("upgrade-");
-    upgrade.type = UpgradeType;
-    upgrade[Component] = UpgradeComponent;
+    return createLazyProxy(() => {
+        const upgrade: T & Partial<BaseUpgrade> = optionsFunc();
+        makePersistent<boolean>(upgrade, false);
+        upgrade.id = getUniqueID("upgrade-");
+        upgrade.type = UpgradeType;
+        upgrade[Component] = UpgradeComponent;
 
-    if (upgrade.canPurchase == null && (upgrade.resource == null || upgrade.cost == null)) {
-        console.warn(
-            "Error: can't create upgrade without a canPurchase property or a resource and cost property",
-            upgrade
-        );
-    }
-
-    upgrade.bought = upgrade[PersistentState];
-    if (upgrade.canAfford == null) {
-        upgrade.canAfford = computed(
-            () =>
-                proxy.resource != null &&
-                proxy.cost != null &&
-                Decimal.gte(unref<Resource>(proxy.resource).value, unref(proxy.cost))
-        );
-    }
-    if (upgrade.canPurchase == null) {
-        upgrade.canPurchase = computed(() => unref(proxy.canAfford) && !unref(proxy.bought));
-    }
-    upgrade.purchase = function () {
-        if (!unref(proxy.canPurchase)) {
-            return;
-        }
-        if (proxy.resource != null && proxy.cost != null) {
-            proxy.resource.value = Decimal.sub(
-                unref<Resource>(proxy.resource).value,
-                unref(proxy.cost)
+        if (upgrade.canPurchase == null && (upgrade.resource == null || upgrade.cost == null)) {
+            console.warn(
+                "Error: can't create upgrade without a canPurchase property or a resource and cost property",
+                upgrade
             );
         }
-        proxy[PersistentState].value = true;
-        proxy.onPurchase?.();
-    };
 
-    processComputable(upgrade as T, "visibility");
-    setDefault(upgrade, "visibility", Visibility.Visible);
-    processComputable(upgrade as T, "classes");
-    processComputable(upgrade as T, "style");
-    processComputable(upgrade as T, "display");
-    processComputable(upgrade as T, "mark");
-    processComputable(upgrade as T, "cost");
-    processComputable(upgrade as T, "resource");
-    processComputable(upgrade as T, "canPurchase");
+        upgrade.bought = upgrade[PersistentState];
+        if (upgrade.canAfford == null) {
+            upgrade.canAfford = computed(() => {
+                const genericUpgrade = upgrade as GenericUpgrade;
+                return (
+                    genericUpgrade.resource != null &&
+                    genericUpgrade.cost != null &&
+                    Decimal.gte(genericUpgrade.resource.value, unref(genericUpgrade.cost))
+                );
+            });
+        } else {
+            processComputable(upgrade as T, "canAfford");
+        }
+        upgrade.canPurchase = computed(
+            () =>
+                unref((upgrade as GenericUpgrade).visibility) === Visibility.Visible &&
+                unref((upgrade as GenericUpgrade).canAfford) &&
+                !unref(upgrade.bought)
+        );
+        upgrade.purchase = function () {
+            const genericUpgrade = upgrade as GenericUpgrade;
+            if (!unref(genericUpgrade.canPurchase)) {
+                return;
+            }
+            if (genericUpgrade.resource != null && genericUpgrade.cost != null) {
+                genericUpgrade.resource.value = Decimal.sub(
+                    genericUpgrade.resource.value,
+                    unref(genericUpgrade.cost)
+                );
+            }
+            genericUpgrade[PersistentState].value = true;
+            genericUpgrade.onPurchase?.();
+        };
 
-    const proxy = createProxy(upgrade as unknown as Upgrade<T>);
-    return proxy;
+        processComputable(upgrade as T, "visibility");
+        setDefault(upgrade, "visibility", Visibility.Visible);
+        processComputable(upgrade as T, "classes");
+        processComputable(upgrade as T, "style");
+        processComputable(upgrade as T, "display");
+        processComputable(upgrade as T, "mark");
+        processComputable(upgrade as T, "cost");
+        processComputable(upgrade as T, "resource");
+
+        upgrade[GatherProps] = function (this: GenericUpgrade) {
+            const {
+                display,
+                visibility,
+                style,
+                classes,
+                resource,
+                cost,
+                canPurchase,
+                bought,
+                mark,
+                id,
+                purchase
+            } = this;
+            return {
+                display,
+                visibility,
+                style,
+                classes,
+                resource,
+                cost,
+                canPurchase,
+                bought,
+                mark,
+                id,
+                purchase
+            };
+        };
+
+        return upgrade as unknown as Upgrade<T>;
+    });
 }
 
 export function setupAutoPurchase(

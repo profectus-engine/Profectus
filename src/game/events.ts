@@ -45,6 +45,10 @@ function update() {
 
     diff = new Decimal(diff).max(0);
 
+    if (player.devSpeed === 0) {
+        return;
+    }
+
     // Add offline time if any
     if (player.offlineTime != undefined) {
         if (Decimal.gt(player.offlineTime, modInfo.offlineLimit * 3600)) {

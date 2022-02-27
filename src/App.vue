@@ -3,14 +3,14 @@
     <div class="app" @mousemove="updateMouse" :style="theme" :class="{ useHeader }">
         <Nav v-if="useHeader" />
         <Game />
-        <TPS v-if="showTPS" />
+        <TPS v-if="unref(showTPS)" />
         <GameOverScreen />
         <NaNScreen />
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, toRef } from "vue";
+import { computed, toRef, unref } from "vue";
 import Game from "./components/system/Game.vue";
 import GameOverScreen from "./components/system/GameOverScreen.vue";
 import NaNScreen from "./components/system/NaNScreen.vue";

@@ -21,7 +21,7 @@
                     '--yoffset': unref(yoffset) || '0px'
                 }"
             >
-                <component v-if="component" :is="component" />
+                <component v-if="comp" :is="comp" />
             </div>
         </transition>
     </div>
@@ -29,35 +29,31 @@
 
 <script lang="ts">
 import { CoercableComponent } from "@/features/feature";
-import { ProcessedComputable } from "@/util/computed";
-import { computeOptionalComponent, unwrapRef } from "@/util/vue";
-import { computed, defineComponent, PropType, ref, toRefs, unref } from "vue";
+import { computeOptionalComponent, processedPropType, unwrapRef } from "@/util/vue";
+import { computed, defineComponent, ref, toRefs, unref } from "vue";
 
 export default defineComponent({
     props: {
-        display: {
-            type: [Object, String] as PropType<ProcessedComputable<CoercableComponent>>,
-            required: true
-        },
-        top: Boolean as PropType<ProcessedComputable<boolean>>,
-        left: Boolean as PropType<ProcessedComputable<boolean>>,
-        right: Boolean as PropType<ProcessedComputable<boolean>>,
-        bottom: Boolean as PropType<ProcessedComputable<boolean>>,
-        xoffset: String as PropType<ProcessedComputable<string>>,
-        yoffset: String as PropType<ProcessedComputable<string>>,
-        force: Boolean as PropType<ProcessedComputable<boolean>>
+        display: processedPropType<CoercableComponent>(Object, String, Function),
+        top: processedPropType<boolean>(Boolean),
+        left: processedPropType<boolean>(Boolean),
+        right: processedPropType<boolean>(Boolean),
+        bottom: processedPropType<boolean>(Boolean),
+        xoffset: processedPropType<string>(String),
+        yoffset: processedPropType<string>(String),
+        force: processedPropType<boolean>(Boolean)
     },
     setup(props) {
         const { display, force } = toRefs(props);
 
         const isHovered = ref(false);
-        const isShown = computed(() => unwrapRef(force) || isHovered.value);
-        const component = computeOptionalComponent(display);
+        const isShown = computed(() => (unwrapRef(force) || isHovered.value) && comp.value);
+        const comp = computeOptionalComponent(display);
 
         return {
             isHovered,
             isShown,
-            component,
+            comp,
             unref
         };
     }

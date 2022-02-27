@@ -1,63 +1,67 @@
 <template>
-    <Tooltip
-        v-if="visibility !== Visibility.None"
-        v-show="visibility === Visibility.Visible"
-        :display="tooltip"
+    <div
+        v-if="unref(visibility) !== Visibility.None"
+        :style="[
+            {
+                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined,
+                backgroundImage: (earned && image && `url(${image})`) || ''
+            },
+            unref(style) ?? []
+        ]"
+        :class="{
+            feature: true,
+            achievement: true,
+            locked: !unref(earned),
+            bought: unref(earned),
+            ...unref(classes)
+        }"
     >
-        <div
-            :style="[{ backgroundImage: (earned && image && `url(${image})`) || '' }, style ?? []]"
-            :class="{
-                feature: true,
-                achievement: true,
-                locked: !earned,
-                bought: earned,
-                ...classes
-            }"
-        >
-            <component v-if="component" :is="component" />
-            <MarkNode :mark="mark" />
-            <LinkNode :id="id" />
-        </div>
-    </Tooltip>
+        <component v-if="component" :is="component" />
+        <MarkNode :mark="unref(mark)" />
+        <LinkNode :id="id" />
+    </div>
 </template>
 
 <script lang="ts">
 import { CoercableComponent, Visibility } from "@/features/feature";
-import { coerceComponent } from "@/util/vue";
-import { computed, defineComponent, PropType, StyleValue, toRefs } from "vue";
+import { computeOptionalComponent, processedPropType } from "@/util/vue";
+import { defineComponent, StyleValue, toRefs, unref } from "vue";
+import Tooltip from "@/components/system/Tooltip.vue";
 import LinkNode from "../system/LinkNode.vue";
 import MarkNode from "./MarkNode.vue";
+import "@/components/common/features.css";
 
 export default defineComponent({
     props: {
         visibility: {
-            type: Object as PropType<Visibility>,
+            type: processedPropType<Visibility>(Number),
             required: true
         },
-        display: [Object, String] as PropType<CoercableComponent>,
-        tooltip: [Object, String] as PropType<CoercableComponent>,
+        display: processedPropType<CoercableComponent>(Object, String, Function),
         earned: {
-            type: Boolean,
+            type: processedPropType<boolean>(Boolean),
             required: true
         },
-        image: String,
-        style: Object as PropType<StyleValue>,
-        classes: Object as PropType<Record<string, boolean>>,
-        mark: [Boolean, String],
+        image: processedPropType<string>(String),
+        style: processedPropType<StyleValue>(String, Object, Array),
+        classes: processedPropType<Record<string, boolean>>(Object),
+        mark: processedPropType<boolean | string>(Boolean, String),
         id: {
             type: String,
             required: true
         }
     },
+    components: {
+        LinkNode,
+        MarkNode,
+        Tooltip
+    },
     setup(props) {
         const { display } = toRefs(props);
 
         return {
-            component: computed(() => {
-                return display.value && coerceComponent(display.value);
-            }),
-            LinkNode,
-            MarkNode,
+            component: computeOptionalComponent(display),
+            unref,
             Visibility
         };
     }

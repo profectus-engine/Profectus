@@ -24,6 +24,7 @@ export interface Theme {
     stackedInfoboxes: boolean;
     floatingTabs: boolean;
     showSingleTab: boolean;
+    mergeAdjacent: boolean;
 }
 
 declare module "@vue/runtime-dom" {
@@ -55,7 +56,8 @@ const defaultTheme: Theme = {
     },
     stackedInfoboxes: false,
     floatingTabs: true,
-    showSingleTab: false
+    showSingleTab: false,
+    mergeAdjacent: true
 };
 
 export enum Themes {

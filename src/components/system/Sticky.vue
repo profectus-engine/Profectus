@@ -46,6 +46,7 @@ onMounted(() => {
     margin-right: -10px;
     padding-left: 10px;
     padding-right: 10px;
+    width: 100%;
     z-index: 3;
 }
 

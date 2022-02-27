@@ -3,73 +3,70 @@ import Row from "@/components/system/Row.vue";
 import {
     CoercableComponent,
     Component as ComponentKey,
-    GenericComponent
+    GatherProps,
+    GenericComponent,
+    JSXFunction
 } from "@/features/feature";
-import { isArray } from "@vue/shared";
 import {
     Component,
     computed,
     ComputedRef,
     DefineComponent,
     defineComponent,
-    h,
+    isRef,
     PropType,
     ref,
     Ref,
+    ShallowRef,
+    shallowRef,
     unref,
-    WritableComputedRef
+    watchEffect
 } from "vue";
-import { ProcessedComputable } from "./computed";
+import { DoNotCache, ProcessedComputable } from "./computed";
 
-export function coerceComponent(component: CoercableComponent, defaultWrapper = "span"): Component {
+export function coerceComponent(
+    component: CoercableComponent,
+    defaultWrapper = "span"
+): DefineComponent {
+    if (typeof component === "function") {
+        return defineComponent({ render: component });
+    }
     if (typeof component === "string") {
-        component = component.trim();
-        if (component.charAt(0) !== "<") {
-            component = `<${defaultWrapper}>${component}</${defaultWrapper}>`;
-        }
+        if (component.length > 0) {
+            component = component.trim();
+            if (component.charAt(0) !== "<") {
+                component = `<${defaultWrapper}>${component}</${defaultWrapper}>`;
+            }
 
-        return defineComponent({ template: component });
+            return defineComponent({ template: component });
+        }
+        return defineComponent({ render: () => ({}) });
     }
     return component;
 }
 
-export function render(object: { [ComponentKey]: GenericComponent }): DefineComponent {
-    return defineComponent({
-        render() {
-            const component = object[ComponentKey];
-            return h(component, object);
+export type VueFeature = {
+    [ComponentKey]: GenericComponent;
+    [GatherProps]: () => Record<string, unknown>;
+};
+
+export function render(object: VueFeature | CoercableComponent): JSX.Element | DefineComponent {
+    if (isCoercableComponent(object)) {
+        if (typeof object === "function") {
+            return (object as JSXFunction)();
         }
-    });
+        return coerceComponent(object);
+    }
+    const Component = object[ComponentKey];
+    return <Component {...object[GatherProps]()} />;
 }
 
-export function renderRow(
-    objects: { [ComponentKey]: GenericComponent }[],
-    props: Record<string, unknown> | null = null
-): DefineComponent {
-    return defineComponent({
-        render() {
-            return h(
-                Row as DefineComponent,
-                props,
-                objects.map(obj => h(obj[ComponentKey], obj))
-            );
-        }
-    });
+export function renderRow(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
+    return <Row>{objects.map(obj => render(obj))}</Row>;
 }
 
-export function renderCol(
-    objects: { [ComponentKey]: GenericComponent }[],
-    props: Record<string, unknown> | null = null
-): DefineComponent {
-    return defineComponent({
-        render() {
-            return h(
-                Col as DefineComponent,
-                props,
-                objects.map(obj => h(obj[ComponentKey], obj))
-            );
-        }
-    });
+export function renderCol(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
+    return <Col>{objects.map(obj => render(obj))}</Col>;
 }
 
 export function isCoercableComponent(component: unknown): component is CoercableComponent {
@@ -80,6 +77,9 @@ export function isCoercableComponent(component: unknown): component is Coercable
             return false;
         }
         return "render" in component || "component" in component;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } else if (typeof component === "function" && (component as any)[DoNotCache] === true) {
+        return true;
     }
     return false;
 }
@@ -117,23 +117,25 @@ export function setupHoldToClick(
 }
 
 export function computeComponent(
-    component: Ref<ProcessedComputable<CoercableComponent>>
-): ComputedRef<Component> {
-    return computed(() => {
-        return coerceComponent(unref(unref<ProcessedComputable<CoercableComponent>>(component)));
+    component: Ref<ProcessedComputable<CoercableComponent>>,
+    defaultWrapper = "div"
+): ShallowRef<Component | JSXFunction | ""> {
+    const comp = shallowRef<Component | JSXFunction | "">();
+    watchEffect(() => {
+        comp.value = coerceComponent(unwrapRef(component), defaultWrapper);
     });
+    return comp as ShallowRef<Component | JSXFunction | "">;
 }
 export function computeOptionalComponent(
-    component: Ref<ProcessedComputable<CoercableComponent | undefined> | undefined>
-): ComputedRef<Component | undefined> {
-    return computed(() => {
-        let currComponent = unref<ProcessedComputable<CoercableComponent | undefined> | undefined>(
-            component
-        );
-        if (currComponent == null) return;
-        currComponent = unref(currComponent);
-        return currComponent == null ? undefined : coerceComponent(currComponent);
+    component: Ref<ProcessedComputable<CoercableComponent | undefined> | undefined>,
+    defaultWrapper = "div"
+): ShallowRef<Component | JSXFunction | "" | null> {
+    const comp = shallowRef<Component | JSXFunction | "" | null>(null);
+    watchEffect(() => {
+        const currComponent = unwrapRef(component);
+        comp.value = currComponent == null ? null : coerceComponent(currComponent, defaultWrapper);
     });
+    return comp;
 }
 
 export function wrapRef<T>(ref: Ref<ProcessedComputable<T>>): ComputedRef<T> {
@@ -141,7 +143,15 @@ export function wrapRef<T>(ref: Ref<ProcessedComputable<T>>): ComputedRef<T> {
 }
 
 export function unwrapRef<T>(ref: Ref<ProcessedComputable<T>>): T {
-    return unref(unref<ProcessedComputable<T>>(ref));
+    return unref<T>(unref(ref));
+}
+
+export function setRefValue<T>(ref: Ref<T | Ref<T>>, value: T) {
+    if (isRef(ref.value)) {
+        ref.value.value = value;
+    } else {
+        ref.value = value;
+    }
 }
 
 type PropTypes =

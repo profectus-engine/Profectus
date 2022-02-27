@@ -1,66 +1,85 @@
 <template>
     <div
-        v-if="visibility !== Visibility.None"
-        v-show="visibility === Visibility.Visible"
-        :style="style"
+        v-if="unref(visibility) !== Visibility.None"
+        :style="[
+            {
+                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+            },
+            notifyStyle,
+            unref(style) ?? {}
+        ]"
         :class="{
             feature: true,
             challenge: true,
-            resetNotify: active,
-            notify: active && canComplete,
-            done: completed,
-            canStart,
-            maxed,
-            ...classes
+            done: unref(completed),
+            canStart: unref(canStart),
+            maxed: unref(maxed),
+            ...unref(classes)
         }"
     >
         <button class="toggleChallenge" @click="toggle">
             {{ buttonText }}
         </button>
-        <component v-if="component" :is="component" />
-        <MarkNode :mark="mark" />
+        <component v-if="unref(comp)" :is="unref(comp)" />
+        <MarkNode :mark="unref(mark)" />
         <LinkNode :id="id" />
     </div>
 </template>
 
 <script lang="tsx">
+import "@/components/common/features.css";
 import { GenericChallenge } from "@/features/challenge";
-import { StyleValue, Visibility } from "@/features/feature";
-import { coerceComponent, isCoercableComponent } from "@/util/vue";
-import { computed, defineComponent, PropType, toRefs, UnwrapRef } from "vue";
+import { jsx, StyleValue, Visibility } from "@/features/feature";
+import { getHighNotifyStyle, getNotifyStyle } from "@/game/notifications";
+import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "@/util/vue";
+import {
+    Component,
+    computed,
+    defineComponent,
+    PropType,
+    shallowRef,
+    toRefs,
+    unref,
+    UnwrapRef,
+    watchEffect
+} from "vue";
 import LinkNode from "../system/LinkNode.vue";
 import MarkNode from "./MarkNode.vue";
 
 export default defineComponent({
     props: {
         active: {
-            type: Boolean,
+            type: processedPropType<boolean>(Boolean),
             required: true
         },
         maxed: {
-            type: Boolean,
+            type: processedPropType<boolean>(Boolean),
             required: true
         },
         canComplete: {
-            type: Boolean,
+            type: processedPropType<boolean>(Boolean),
             required: true
         },
-        display: Object as PropType<UnwrapRef<GenericChallenge["display"]>>,
+        display: processedPropType<UnwrapRef<GenericChallenge["display"]>>(
+            String,
+            Object,
+            Function
+        ),
         visibility: {
-            type: Object as PropType<Visibility>,
+            type: processedPropType<Visibility>(Number),
             required: true
         },
-        style: Object as PropType<StyleValue>,
-        classes: Object as PropType<Record<string, boolean>>,
+        style: processedPropType<StyleValue>(String, Object, Array),
+        classes: processedPropType<Record<string, boolean>>(Object),
         completed: {
-            type: Boolean,
+            type: processedPropType<boolean>(Boolean),
             required: true
         },
         canStart: {
-            type: Boolean,
+            type: processedPropType<boolean>(Boolean),
             required: true
         },
-        mark: [Boolean, String],
+        mark: processedPropType<boolean | string>(Boolean, String),
         id: {
             type: String,
             required: true
@@ -69,6 +88,10 @@ export default defineComponent({
             type: Function as PropType<VoidFunction>,
             required: true
         }
+    },
+    components: {
+        MarkNode,
+        LinkNode
     },
     setup(props) {
         const { active, maxed, canComplete, display } = toRefs(props);
@@ -83,46 +106,72 @@ export default defineComponent({
             return "Start";
         });
 
-        const component = computed(() => {
-            const currDisplay = display.value;
+        const comp = shallowRef<Component | string>("");
+
+        const notifyStyle = computed(() => {
+            const currActive = unwrapRef(active);
+            const currCanComplete = unwrapRef(canComplete);
+            if (currActive) {
+                if (currCanComplete) {
+                    return getHighNotifyStyle();
+                }
+                return getNotifyStyle();
+            }
+            return {};
+        });
+
+        watchEffect(() => {
+            const currDisplay = unwrapRef(display);
             if (currDisplay == null) {
-                return null;
+                comp.value = "";
+                return;
             }
             if (isCoercableComponent(currDisplay)) {
-                return coerceComponent(currDisplay);
+                comp.value = coerceComponent(currDisplay);
+                return;
             }
-            return (
-                <span>
-                    <template v-if={currDisplay.title}>
-                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                        <component v-is={coerceComponent(currDisplay.title!, "h3")} />
-                    </template>
-                    <component v-is={coerceComponent(currDisplay.description, "div")} />
-                    <div v-if={currDisplay.goal}>
-                        <br />
-                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                        Goal: <component v-is={coerceComponent(currDisplay.goal!)} />
-                    </div>
-                    <div v-if={currDisplay.reward}>
-                        <br />
-                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                        Reward: <component v-is={coerceComponent(currDisplay.reward!)} />
-                    </div>
-                    <div v-if={currDisplay.effectDisplay}>
-                        Currently:{" "}
-                        {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                        <component v-is={coerceComponent(currDisplay.effectDisplay!)} />
-                    </div>
-                </span>
+            const Title = coerceComponent(currDisplay.title || "", "h3");
+            const Description = coerceComponent(currDisplay.description, "div");
+            const Goal = coerceComponent(currDisplay.goal || "");
+            const Reward = coerceComponent(currDisplay.reward || "");
+            const EffectDisplay = coerceComponent(currDisplay.effectDisplay || "");
+            comp.value = coerceComponent(
+                jsx(() => (
+                    <span>
+                        {currDisplay.title ? (
+                            <div>
+                                <Title />
+                            </div>
+                        ) : null}
+                        <Description />
+                        {currDisplay.goal ? (
+                            <div>
+                                <br />
+                                Goal: <Goal />
+                            </div>
+                        ) : null}
+                        {currDisplay.reward ? (
+                            <div>
+                                <br />
+                                Reward: <Reward />
+                            </div>
+                        ) : null}
+                        {currDisplay.effectDisplay ? (
+                            <div>
+                                Currently: <EffectDisplay />
+                            </div>
+                        ) : null}
+                    </span>
+                ))
             );
         });
 
         return {
             buttonText,
-            component,
-            MarkNode,
-            LinkNode,
-            Visibility
+            notifyStyle,
+            comp,
+            Visibility,
+            unref
         };
     }
 });

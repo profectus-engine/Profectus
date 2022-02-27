@@ -4,7 +4,7 @@
 
 <script setup lang="ts">
 import { RegisterLinkNodeInjectionKey, UnregisterLinkNodeInjectionKey } from "@/features/links";
-import { computed, inject, ref, toRefs, unref, watch } from "vue";
+import { computed, inject, onUnmounted, ref, toRefs, unref, watch } from "vue";
 
 const _props = defineProps<{ id: string }>();
 const props = toRefs(_props);
@@ -24,6 +24,8 @@ if (register && unregister) {
             register(newID, newNode);
         }
     });
+
+    onUnmounted(() => unregister(unref(props.id)));
 }
 </script>
 

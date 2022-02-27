@@ -1,13 +1,17 @@
 <template>
     <div
-        v-if="visibility !== Visibility.None"
-        v-show="visibility === Visibility.Visible"
+        v-if="unref(visibility) !== Visibility.None"
+        :style="{
+            visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+        }"
         class="table"
     >
-        <div v-for="row in rows" class="row" :key="row">
-            <div v-for="col in cols" :key="col">
-                <GridCell v-bind="cells[row * 100 + col]" />
-            </div>
+        <div v-for="row in unref(rows)" class="row" :class="{ mergeAdjacent }" :key="row">
+            <GridCell
+                v-for="col in unref(cols)"
+                :key="col"
+                v-bind="gatherCellProps(unref(cells)[row * 100 + col])"
+            />
         </div>
     </div>
 </template>
@@ -15,30 +19,42 @@
 <script lang="ts">
 import { Visibility } from "@/features/feature";
 import { GridCell } from "@/features/grid";
-import { defineComponent, PropType } from "vue";
+import { processedPropType } from "@/util/vue";
+import { computed, defineComponent, unref } from "vue";
 import GridCellVue from "./GridCell.vue";
+import "@/components/common/table.css";
+import settings from "@/game/settings";
+import themes from "@/data/themes";
 
 export default defineComponent({
     props: {
         visibility: {
-            type: Object as PropType<Visibility>,
+            type: processedPropType<Visibility>(Number),
             required: true
         },
         rows: {
-            type: Number,
+            type: processedPropType<number>(Number),
             required: true
         },
         cols: {
-            type: Number,
+            type: processedPropType<number>(Number),
             required: true
         },
         cells: {
-            type: Object as PropType<Record<string, GridCell>>,
+            type: processedPropType<Record<string, GridCell>>(Object),
             required: true
         }
     },
+    components: { GridCell: GridCellVue },
     setup() {
-        return { GridCell: GridCellVue, Visibility };
+        const mergeAdjacent = computed(() => themes[settings.theme].mergeAdjacent);
+
+        function gatherCellProps(cell: GridCell) {
+            const { visibility, onClick, onHold, display, title, style, canClick, id } = cell;
+            return { visibility, onClick, onHold, display, title, style, canClick, id };
+        }
+
+        return { unref, gatherCellProps, Visibility, mergeAdjacent };
     }
 });
 </script>

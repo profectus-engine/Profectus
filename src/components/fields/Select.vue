@@ -4,8 +4,9 @@
         <VueNextSelect
             :options="options"
             v-model="value"
+            @update:model-value="onUpdate"
+            :min="1"
             label-by="label"
-            :reduce="(option: SelectOption) => option.value"
             :placeholder="placeholder"
             :close-on-select="closeOnSelect"
         />
@@ -13,38 +14,40 @@
 </template>
 
 <script setup lang="ts">
+import "@/components/common/fields.css";
 import { CoercableComponent } from "@/features/feature";
-import { coerceComponent } from "@/util/vue";
-import { computed, toRefs, unref } from "vue";
+import { computeOptionalComponent } from "@/util/vue";
+import { ref, toRef, watch } from "vue";
 import VueNextSelect from "vue-next-select";
 import "vue-next-select/dist/index.css";
 
 export type SelectOption = { label: string; value: unknown };
 
-const _props = defineProps<{
+const props = defineProps<{
     title?: CoercableComponent;
     modelValue?: unknown;
     options: SelectOption[];
     placeholder?: string;
     closeOnSelect?: boolean;
 }>();
-const props = toRefs(_props);
 const emit = defineEmits<{
     (e: "update:modelValue", value: unknown): void;
 }>();
 
-const titleComponent = computed(
-    () => props.title?.value && coerceComponent(props.title.value, "span")
-);
+const titleComponent = computeOptionalComponent(toRef(props, "title"), "span");
 
-const value = computed({
-    get() {
-        return unref(props.modelValue);
-    },
-    set(value: unknown) {
-        emit("update:modelValue", value);
+const value = ref<SelectOption | undefined>(
+    props.options.find(option => option.value === props.modelValue)
+);
+watch(toRef(props, "modelValue"), modelValue => {
+    if (value.value?.value !== modelValue) {
+        value.value = props.options.find(option => option.value === modelValue);
     }
 });
+
+function onUpdate(value: SelectOption) {
+    emit("update:modelValue", value.value);
+}
 </script>
 
 <style>

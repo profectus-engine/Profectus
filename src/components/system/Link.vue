@@ -1,5 +1,7 @@
 <template>
     <line
+        stroke-width="15px"
+        stroke="white"
         v-bind="link"
         :x1="startPosition.x"
         :y1="startPosition.y"
