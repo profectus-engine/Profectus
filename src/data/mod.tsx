@@ -17,6 +17,7 @@ export const main = createLayer(() => {
     const total = trackTotal(points);
 
     const pointGain = computed(() => {
+        // eslint-disable-next-line prefer-const
         let gain = new Decimal(1);
         return gain;
     });
