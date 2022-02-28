@@ -46,8 +46,7 @@ export const main = createLayer(() => {
                 style: {
                     filter: "blur(5px)"
                 }
-            },
-            { startNode: c.treeNode, endNode: c.g }
+            }
         ],
         onReset() {
             points.value = toRaw(this.resettingNode.value) === toRaw(c.treeNode) ? 0 : 10;

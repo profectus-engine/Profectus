@@ -48,6 +48,7 @@ export function makePersistent<T extends State>(
 }
 
 globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>) => {
+    const features: { type: typeof Symbol }[] = [];
     const handleObject = (obj: Record<string, unknown>, path: string[] = []): boolean => {
         let foundPersistent = false;
         Object.keys(obj).forEach(key => {
@@ -76,7 +77,16 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
                             DefaultValue
                         ];
                     }
-                } else if (!(value instanceof Decimal) && !isRef(value)) {
+                } else if (
+                    !(value instanceof Decimal) &&
+                    !isRef(value) &&
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    !features.includes(value as { type: typeof Symbol })
+                ) {
+                    if (typeof (value as { type: typeof Symbol }).type === "symbol") {
+                        features.push(value as { type: typeof Symbol });
+                    }
+
                     // Continue traversing
                     const foundPersistentInChild = handleObject(value as Record<string, unknown>, [
                         ...path,
