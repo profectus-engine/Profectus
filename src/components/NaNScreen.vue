@@ -117,7 +117,6 @@ function ignore() {
 }
 
 .nan-modal-discord {
-    height: 2em;
     margin: 0;
     margin-right: 4px;
 }
