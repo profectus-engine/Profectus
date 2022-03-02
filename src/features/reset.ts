@@ -1,14 +1,13 @@
+import { getUniqueID, Replace } from "@/features/feature";
+import { globalBus } from "@/game/events";
+import { GenericLayer } from "@/game/layers";
 import {
     DefaultValue,
-    getUniqueID,
     Persistent,
     persistent,
     PersistentRef,
-    PersistentState,
-    Replace
-} from "@/features/feature";
-import { globalBus } from "@/game/events";
-import { GenericLayer } from "@/game/layers";
+    PersistentState
+} from "@/game/persistence";
 import Decimal from "@/lib/break_eternity";
 import { Computable, GetComputableType, processComputable } from "@/util/computed";
 import { createLazyProxy } from "@/util/proxies";

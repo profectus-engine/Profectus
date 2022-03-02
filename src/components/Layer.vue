@@ -23,8 +23,9 @@
 <script lang="ts">
 import Links from "@/components/links/Links.vue";
 import modInfo from "@/data/modInfo.json";
-import { CoercableComponent, PersistentRef, StyleValue } from "@/features/feature";
+import { CoercableComponent, StyleValue } from "@/features/feature";
 import { Link } from "@/features/links";
+import { PersistentRef } from "@/game/persistence";
 import player from "@/game/player";
 import { computeComponent, processedPropType, wrapRef } from "@/util/vue";
 import { computed, defineComponent, nextTick, PropType, toRefs, unref, watch } from "vue";

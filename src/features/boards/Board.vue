@@ -52,7 +52,8 @@
 
 <script setup lang="ts">
 import { BoardNode, GenericBoard, getNodeProperty } from "@/features/boards/board";
-import { FeatureComponent, PersistentState, Visibility } from "@/features/feature";
+import { FeatureComponent, Visibility } from "@/features/feature";
+import { PersistentState } from "@/game/persistence";
 import { computed, ref, toRefs } from "vue";
 import panZoom from "vue-panzoom";
 import BoardLinkVue from "./BoardLink.vue";
