@@ -26,10 +26,9 @@ const _props = defineProps<{ links?: Link[] }>();
 const links = toRef(_props, "links");
 
 const observer = new MutationObserver(updateNodes);
-const resizeObserver = new ResizeObserver(updateBounds);
+const resizeObserver = new ResizeObserver(updateNodes);
 
 const nodes = ref<Record<string, LinkNode | undefined>>({});
-const boundingRect = ref(new DOMRect());
 
 const resizeListener = ref<Element | null>(null);
 
@@ -39,7 +38,6 @@ onMounted(() => {
     if (resListener != null) {
         resizeObserver.observe(resListener);
     }
-    updateNodes();
 });
 
 const validLinks = computed(
@@ -58,7 +56,7 @@ const validLinks = computed(
 const observerOptions = {
     attributes: true,
     childList: true,
-    subtree: true
+    subtree: false
 };
 
 provide(RegisterLinkNodeInjectionKey, (id, element) => {
@@ -74,27 +72,28 @@ provide(UnregisterLinkNodeInjectionKey, id => {
     nodes.value[id] = undefined;
 });
 
+let isDirty = true;
+let boundingRect = resizeListener.value?.getBoundingClientRect();
 function updateNodes() {
-    if (resizeListener.value != null) {
-        Object.keys(nodes.value).forEach(id => updateNode(id));
+    if (resizeListener.value != null && isDirty) {
+        isDirty = false;
+        nextTick(() => {
+            boundingRect = resizeListener.value?.getBoundingClientRect();
+            Object.keys(nodes.value).forEach(id => updateNode(id));
+            isDirty = true
+        });
     }
 }
 
 function updateNode(id: string) {
     const node = nodes.value[id];
-    if (!node) {
+    if (!node || boundingRect == null) {
         return;
     }
     const linkStartRect = node.element.getBoundingClientRect();
-    node.x = linkStartRect.x + linkStartRect.width / 2 - boundingRect.value.x;
-    node.y = linkStartRect.y + linkStartRect.height / 2 - boundingRect.value.y;
-}
 
-function updateBounds() {
-    if (resizeListener.value != null) {
-        boundingRect.value = resizeListener.value.getBoundingClientRect();
-        updateNodes();
-    }
+    node.x = linkStartRect.x + linkStartRect.width / 2 - boundingRect.x;
+    node.y = linkStartRect.y + linkStartRect.height / 2 - boundingRect.y;
 }
 </script>
 

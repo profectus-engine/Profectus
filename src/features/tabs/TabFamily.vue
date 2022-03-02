@@ -165,6 +165,7 @@ export default defineComponent({
 
 .tab-buttons-container {
     width: calc(100% - 14px);
+    z-index: 4;
 }
 
 .tab-buttons-container:not(.floating) {
