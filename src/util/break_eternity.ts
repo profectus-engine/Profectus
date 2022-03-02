@@ -53,6 +53,15 @@ export function regularFormat(num: DecimalSource, precision: number): string {
     return num.toStringWithDecimalPlaces(precision);
 }
 
+const eeee1000 = new Decimal("eeee1000");
+const e100000 = new Decimal("e100000");
+const e1000 = new Decimal("e1000");
+const e9 = new Decimal(1e9);
+const e6 = new Decimal(1e6);
+const e3 = new Decimal(1e3);
+const nearOne = new Decimal(0.98);
+const thousandth = new Decimal(0.001);
+const zero = new Decimal(0);
 export function format(num: DecimalSource, precision?: number, small?: boolean): string {
     if (precision == null) precision = modInfo.defaultDecimalsShown;
     small = small || modInfo.allowSmall;
@@ -66,9 +75,9 @@ export function format(num: DecimalSource, precision?: number, small?: boolean):
     if (num.mag === Number.POSITIVE_INFINITY) {
         return "Infinity";
     }
-    if (num.gte("eeee1000")) {
+    if (num.gte(eeee1000)) {
         const slog = num.slog();
-        if (slog.gte(1e6)) {
+        if (slog.gte(e6)) {
             return "F" + format(slog.floor());
         } else {
             return (
@@ -77,22 +86,22 @@ export function format(num: DecimalSource, precision?: number, small?: boolean):
                 commaFormat(slog.floor(), 0)
             );
         }
-    } else if (num.gte("1e100000")) {
+    } else if (num.gte(e100000)) {
         return exponentialFormat(num, 0, false);
-    } else if (num.gte("1e1000")) {
+    } else if (num.gte(e1000)) {
         return exponentialFormat(num, 0);
-    } else if (num.gte(1e9)) {
+    } else if (num.gte(e9)) {
         return exponentialFormat(num, precision);
-    } else if (num.gte(1e3)) {
+    } else if (num.gte(e3)) {
         return commaFormat(num, 0);
-    } else if (num.gte(0.001) || !small) {
+    } else if (num.gte(thousandth) || !small) {
         return regularFormat(num, precision);
-    } else if (num.eq(0)) {
+    } else if (num.eq(zero)) {
         return (0).toFixed(precision);
     }
 
     num = invertOOM(num);
-    if (num.lt("1e1000")) {
+    if (num.lt(e1000)) {
         const val = exponentialFormat(num, precision);
         return val.replace(/([^(?:e|F)]*)$/, "-$1");
     } else {
@@ -105,10 +114,10 @@ export function formatWhole(num: DecimalSource): string {
     if (num.sign < 0) {
         return "-" + formatWhole(num.neg());
     }
-    if (num.gte(1e9)) {
+    if (num.gte(e9)) {
         return format(num);
     }
-    if (num.lte(0.98) && !num.eq(0)) {
+    if (num.lte(nearOne) && !num.eq(zero)) {
         return format(num);
     }
     return format(num, 0);
