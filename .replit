@@ -1,2 +1,13 @@
+run = "npm install; npm run serve"
+
+[packager]
 language = "nodejs"
-run = "npm run serve"
+  [packager.features]
+  packageSearch = true
+  guessImports = false
+
+[languages.javascript]
+pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
+
+  [languages.javascript.languageServer]
+  start = [ "typescript-language-server", "--stdio" ]
