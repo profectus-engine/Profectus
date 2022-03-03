@@ -5,7 +5,9 @@
                 <img class="info-modal-logo" v-if="logo" :src="logo" :alt="title" />
                 <div class="info-modal-title">
                     <h2>{{ title }}</h2>
-                    <h4>v{{ versionNumber }}: {{ versionTitle }}</h4>
+                    <h4>
+                        v{{ versionNumber }}<span v-if="versionTitle">: {{ versionTitle }}</span>
+                    </h4>
                 </div>
             </div>
         </template>
