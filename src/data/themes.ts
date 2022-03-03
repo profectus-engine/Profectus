@@ -21,9 +21,7 @@ interface ThemeVars {
 
 export interface Theme {
     variables: ThemeVars;
-    stackedInfoboxes: boolean;
     floatingTabs: boolean;
-    showSingleTab: boolean;
     mergeAdjacent: boolean;
 }
 
@@ -54,9 +52,7 @@ const defaultTheme: Theme = {
         "--modal-border": "solid 2px var(--color)",
         "--feature-margin": "0px"
     },
-    stackedInfoboxes: false,
     floatingTabs: true,
-    showSingleTab: false,
     mergeAdjacent: true
 };
 
@@ -83,7 +79,6 @@ export default {
             "--modal-border": "",
             "--feature-margin": "5px"
         },
-        stackedInfoboxes: true,
         floatingTabs: false
     } as Theme,
     // Based on https://www.nordtheme.com
@@ -109,7 +104,6 @@ export default {
             "--modal-border": "solid 2px #3B4252",
             "--feature-margin": "5px"
         },
-        stackedInfoboxes: true,
         floatingTabs: false
     } as Theme,
     aqua: {

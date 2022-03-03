@@ -74,7 +74,7 @@ export default defineComponent({
 
         const titleComponent = computeComponent(title);
         const bodyComponent = computeComponent(display);
-        const stacked = computed(() => themes[settings.theme].stackedInfoboxes);
+        const stacked = computed(() => themes[settings.theme].mergeAdjacent);
 
         return {
             titleComponent,
