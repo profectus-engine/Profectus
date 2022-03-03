@@ -1,4 +1,4 @@
-import { hasWon } from "@/data/mod";
+import { hasWon } from "@/data/projEntry";
 import { globalBus } from "@/game/events";
 import player from "@/game/player";
 import {
