@@ -29,7 +29,6 @@
                 },
                 unref(style) ?? []
             ]"
-            :disabled="!unref(canClick)"
         >
             <component :is="unref(comp)" />
         </button>

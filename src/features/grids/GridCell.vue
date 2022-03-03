@@ -15,7 +15,6 @@
         @touchstart="start"
         @touchend="stop"
         @touchcancel="stop"
-        :disabled="!unref(canClick)"
     >
         <div v-if="title"><component :is="titleComponent" /></div>
         <component :is="component" style="white-space: pre-line" />

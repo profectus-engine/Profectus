@@ -12,7 +12,6 @@
             @touchstart="start"
             @touchend="stop"
             @touchcancel="stop"
-            :disabled="!unref(canClick)"
             :class="{
                 feature: true,
                 clickable: true,

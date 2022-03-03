@@ -278,6 +278,23 @@ export function createGrid<T extends GridOptions>(
         processComputable(grid as T, "getTitle");
         processComputable(grid as T, "getDisplay");
 
+        if (grid.onClick) {
+            const onClick = grid.onClick;
+            grid.onClick = function (id, state) {
+                if (unref((grid as GenericGrid).cells[id].canClick)) {
+                    onClick(id, state);
+                }
+            };
+        }
+        if (grid.onHold) {
+            const onHold = grid.onHold;
+            grid.onHold = function (id, state) {
+                if (unref((grid as GenericGrid).cells[id].canClick)) {
+                    onHold(id, state);
+                }
+            };
+        }
+
         grid[GatherProps] = function (this: GenericGrid) {
             const { visibility, rows, cols, cells, id } = this;
             return { visibility, rows, cols, cells, id };

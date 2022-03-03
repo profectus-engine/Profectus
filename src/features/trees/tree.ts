@@ -101,6 +101,23 @@ export function createTreeNode<T extends TreeNodeOptions>(
         processComputable(treeNode as T, "style");
         processComputable(treeNode as T, "mark");
 
+        if (treeNode.onClick) {
+            const onClick = treeNode.onClick;
+            treeNode.onClick = function () {
+                if (unref(treeNode.canClick)) {
+                    onClick();
+                }
+            };
+        }
+        if (treeNode.onHold) {
+            const onHold = treeNode.onHold;
+            treeNode.onHold = function () {
+                if (unref(treeNode.canClick)) {
+                    onHold();
+                }
+            };
+        }
+
         return treeNode as unknown as TreeNode<T>;
     });
 }
