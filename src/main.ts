@@ -8,6 +8,10 @@ import { Transient } from "./game/state";
 import Decimal, { DecimalSource } from "./lib/break_eternity";
 import { load } from "./util/save";
 
+if (projInfo.id === "") {
+    throw "Project ID is empty! Please select a unique ID for this project in /src/data/projInfo.json";
+}
+
 declare global {
     interface Window {
         vue: VueApp;
