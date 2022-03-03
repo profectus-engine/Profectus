@@ -9,7 +9,7 @@
 	"versionTitle": "Initial Commit",
 
 	"allowGoBack": true,
-	"allowSmall": false,
+	"defaultShowSmall": false,
 	"defaultDecimalsShown": 2,
 	"useHeader": true,
 	"banner": null,

@@ -64,7 +64,7 @@ const thousandth = new Decimal(0.001);
 const zero = new Decimal(0);
 export function format(num: DecimalSource, precision?: number, small?: boolean): string {
     if (precision == null) precision = projInfo.defaultDecimalsShown;
-    small = small || projInfo.allowSmall;
+    small = small ?? projInfo.defaultShowSmall;
     num = new Decimal(num);
     if (isNaN(num.sign) || isNaN(num.layer) || isNaN(num.mag)) {
         return "NaN";
