@@ -1,4 +1,4 @@
-import modInfo from "@/data/modInfo.json";
+import projInfo from "@/data/projInfo.json";
 import Decimal, { DecimalSource } from "@/util/bignum";
 import { createNanoEvents } from "nanoevents";
 import { App, Ref } from "vue";
@@ -51,8 +51,8 @@ function update() {
 
     // Add offline time if any
     if (player.offlineTime != undefined) {
-        if (Decimal.gt(player.offlineTime, modInfo.offlineLimit * 3600)) {
-            player.offlineTime = new Decimal(modInfo.offlineLimit * 3600);
+        if (Decimal.gt(player.offlineTime, projInfo.offlineLimit * 3600)) {
+            player.offlineTime = new Decimal(projInfo.offlineLimit * 3600);
         }
         if (Decimal.gt(player.offlineTime, 0) && player.devSpeed !== 0) {
             const offlineDiff = Decimal.div(player.offlineTime, 10).max(diff);
@@ -67,7 +67,7 @@ function update() {
     }
 
     // Cap at max tick length
-    diff = Decimal.min(diff, modInfo.maxTickLength);
+    diff = Decimal.min(diff, projInfo.maxTickLength);
 
     // Apply dev speed
     if (player.devSpeed != undefined) {
@@ -93,7 +93,7 @@ function update() {
 }
 
 export async function startGameLoop() {
-    hasWon = (await import("@/data/mod")).hasWon;
+    hasWon = (await import("@/data/projEntry")).hasWon;
     if (settings.unthrottled) {
         requestAnimationFrame(update);
     } else {

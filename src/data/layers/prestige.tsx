@@ -1,4 +1,4 @@
-import { main } from "@/data/mod";
+import { main } from "@/data/projEntry";
 import { createCumulativeConversion, createExponentialScaling } from "@/features/conversion";
 import { jsx } from "@/features/feature";
 import { createReset } from "@/features/reset";

@@ -1,4 +1,4 @@
-import modInfo from "@/data/modInfo.json";
+import projInfo from "@/data/projInfo.json";
 import player, { Player, PlayerData, stringifySave } from "@/game/player";
 import settings, { loadSettings } from "@/game/settings";
 import Decimal from "./bignum";
@@ -7,17 +7,17 @@ import { ProxyState } from "./proxies";
 export function setupInitialStore(player: Partial<PlayerData> = {}): Player {
     return Object.assign(
         {
-            id: `${modInfo.id}-0`,
+            id: `${projInfo.id}-0`,
             name: "Default Save",
-            tabs: modInfo.initialTabs.slice(),
+            tabs: projInfo.initialTabs.slice(),
             time: Date.now(),
             autosave: true,
             offlineProd: true,
             offlineTime: new Decimal(0),
             timePlayed: new Decimal(0),
             keepGoing: false,
-            modID: modInfo.id,
-            modVersion: modInfo.versionNumber,
+            modID: projInfo.id,
+            modVersion: projInfo.versionNumber,
             layers: {}
         },
         player
@@ -41,7 +41,7 @@ export async function load(): Promise<void> {
             return;
         }
         const player = JSON.parse(decodeURIComponent(escape(atob(save))));
-        if (player.modID !== modInfo.id) {
+        if (player.modID !== projInfo.id) {
             await loadSave(newSave());
             return;
         }
@@ -67,7 +67,7 @@ export function getUniqueID(): string {
     let id,
         i = 0;
     do {
-        id = `${modInfo.id}-${i++}`;
+        id = `${projInfo.id}-${i++}`;
     } while (localStorage.getItem(id));
     return id;
 }
@@ -75,7 +75,7 @@ export function getUniqueID(): string {
 export async function loadSave(playerObj: Partial<PlayerData>): Promise<void> {
     console.info("Loading save", playerObj);
     const { layers, removeLayer, addLayer } = await import("@/game/layers");
-    const { fixOldSave, getInitialLayers } = await import("@/data/mod");
+    const { fixOldSave, getInitialLayers } = await import("@/data/projEntry");
 
     for (const layer in layers) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -92,7 +92,7 @@ export async function loadSave(playerObj: Partial<PlayerData>): Promise<void> {
         );
     }
     playerObj.time = Date.now();
-    if (playerObj.modVersion !== modInfo.versionNumber) {
+    if (playerObj.modVersion !== projInfo.versionNumber) {
         fixOldSave(playerObj.modVersion, playerObj);
     }
 

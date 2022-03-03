@@ -38,15 +38,15 @@
 
 <script setup lang="ts">
 import Modal from "@/components/Modal.vue";
-import { hasWon } from "@/data/mod";
-import modInfo from "@/data/modInfo.json";
+import { hasWon } from "@/data/projEntry";
+import projInfo from "@/data/projInfo.json";
 import player from "@/game/player";
 import { formatTime } from "@/util/bignum";
 import { loadSave, newSave } from "@/util/save";
 import { computed, toRef } from "vue";
 import Toggle from "./fields/Toggle.vue";
 
-const { title, logo, discordName, discordLink, versionNumber, versionTitle } = modInfo;
+const { title, logo, discordName, discordLink, versionNumber, versionTitle } = projInfo;
 
 const timePlayed = computed(() => formatTime(player.timePlayed));
 const isOpen = computed(() => hasWon.value && !player.keepGoing);

@@ -100,7 +100,7 @@
 
 <script setup lang="ts">
 import Changelog from "@/data/Changelog.vue";
-import modInfo from "@/data/modInfo.json";
+import projInfo from "@/data/projInfo.json";
 import { ComponentPublicInstance, ref } from "vue";
 import Info from "./Info.vue";
 import Options from "./Options.vue";
@@ -114,7 +114,7 @@ const options = ref<ComponentPublicInstance<typeof Options> | null>(null);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const changelog = ref<ComponentPublicInstance<any> | null>(null);
 
-const { useHeader, banner, title, discordName, discordLink, versionNumber } = modInfo;
+const { useHeader, banner, title, discordName, discordLink, versionNumber } = projInfo;
 
 function openDiscord() {
     window.open(discordLink, "mywindow");

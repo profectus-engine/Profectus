@@ -16,7 +16,7 @@ import GameOverScreen from "./components/GameOverScreen.vue";
 import NaNScreen from "./components/NaNScreen.vue";
 import Nav from "./components/Nav.vue";
 import TPS from "./components/TPS.vue";
-import modInfo from "./data/modInfo.json";
+import projInfo from "./data/projInfo.json";
 import themes from "./data/themes";
 import settings from "./game/settings";
 import "./main.css";
@@ -25,7 +25,7 @@ function updateMouse(/* event */) {
     // TODO use event to update mouse position for particles
 }
 
-const useHeader = modInfo.useHeader;
+const useHeader = projInfo.useHeader;
 const theme = computed(() => themes[settings.theme].variables);
 const showTPS = toRef(settings, "showTPS");
 </script>

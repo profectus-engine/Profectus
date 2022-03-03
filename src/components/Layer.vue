@@ -22,7 +22,7 @@
 
 <script lang="ts">
 import Links from "@/components/links/Links.vue";
-import modInfo from "@/data/modInfo.json";
+import projInfo from "@/data/projInfo.json";
 import { CoercableComponent, StyleValue } from "@/features/feature";
 import { Link } from "@/features/links";
 import { PersistentRef } from "@/game/persistence";
@@ -68,7 +68,7 @@ export default defineComponent({
 
         const component = computeComponent(display);
         const showGoBack = computed(
-            () => modInfo.allowGoBack && index.value > 0 && !minimized.value
+            () => projInfo.allowGoBack && index.value > 0 && !minimized.value
         );
 
         function goBack() {

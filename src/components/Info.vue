@@ -50,12 +50,12 @@
 <script setup lang="ts">
 import Modal from "@/components/Modal.vue";
 import type Changelog from "@/data/Changelog.vue";
-import modInfo from "@/data/modInfo.json";
+import projInfo from "@/data/projInfo.json";
 import player from "@/game/player";
 import { formatTime } from "@/util/bignum";
 import { computed, ref, toRefs, unref } from "vue";
 
-const { title, logo, author, discordName, discordLink, versionNumber, versionTitle } = modInfo;
+const { title, logo, author, discordName, discordLink, versionNumber, versionTitle } = projInfo;
 
 const _props = defineProps<{ changelog: typeof Changelog | null }>();
 const props = toRefs(_props);

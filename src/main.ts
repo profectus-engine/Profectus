@@ -1,6 +1,6 @@
 import { App as VueApp, createApp } from "vue";
 import App from "./App.vue";
-import modInfo from "./data/modInfo.json";
+import projInfo from "./data/projInfo.json";
 import { GenericLayer } from "./game/layers";
 import { PlayerData } from "./game/player";
 import { Settings } from "./game/settings";
@@ -28,7 +28,7 @@ declare global {
         toPlaces: (x: DecimalSource, precision: number, maxAccepted: DecimalSource) => string;
         formatSmall: (x: DecimalSource, precision?: number) => string;
         invertOOM: (x: DecimalSource) => Decimal;
-        modInfo: typeof modInfo;
+        projInfo: typeof projInfo;
     }
 }
 
@@ -47,9 +47,9 @@ requestAnimationFrame(async () => {
     }));
     globalBus.emit("setupVue", vue);
     vue.mount("#app");
-    document.title = modInfo.title;
+    document.title = projInfo.title;
 
     startGameLoop();
 });
 
-window.modInfo = modInfo;
+window.projInfo = projInfo;

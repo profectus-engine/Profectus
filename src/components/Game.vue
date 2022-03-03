@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import modInfo from "@/data/modInfo.json";
+import projInfo from "@/data/projInfo.json";
 import { GenericLayer, layers } from "@/game/layers";
 import player from "@/game/player";
 import { computed, toRef } from "vue";
@@ -26,7 +26,7 @@ import Nav from "./Nav.vue";
 
 const tabs = toRef(player, "tabs");
 const layerKeys = computed(() => Object.keys(layers));
-const useHeader = modInfo.useHeader;
+const useHeader = projInfo.useHeader;
 
 function gatherLayerProps(layer: GenericLayer) {
     const { display, minimized, minWidth, name, color, style, classes, links, minimizable } = layer;
