@@ -104,6 +104,9 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
 
         const onClick = resetButton.onClick;
         resetButton.onClick = function () {
+            if (!unref(resetButton.canClick)) {
+                return;
+            }
             resetButton.conversion.convert();
             resetButton.tree.reset(resetButton.treeNode);
             onClick?.();
