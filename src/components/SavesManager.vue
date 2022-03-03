@@ -3,11 +3,11 @@
         <template v-slot:header>
             <h2>Saves Manager</h2>
         </template>
-        <template v-slot:body>
+        <template #body="{ shown }">
             <Draggable
                 :list="settings.saves"
                 handle=".handle"
-                v-if="unref(modal?.isOpen)"
+                v-if="shown"
                 :itemKey="(save: string) => save"
             >
                 <template #item="{ element }">
