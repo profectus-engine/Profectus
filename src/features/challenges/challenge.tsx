@@ -251,7 +251,7 @@ export function createChallenge<T extends ChallengeOptions>(
     });
 }
 
-declare module "@/game/settings" {
+declare module "game/settings" {
     interface Settings {
         hideChallenges: boolean;
     }

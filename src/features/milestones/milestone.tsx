@@ -180,7 +180,7 @@ globalBus.on("removeLayer", layer => {
     listeners[layer.id] = undefined;
 });
 
-declare module "@/game/settings" {
+declare module "game/settings" {
     interface Settings {
         msDisplay: MilestoneDisplay;
     }

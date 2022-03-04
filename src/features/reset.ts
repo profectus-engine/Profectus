@@ -101,7 +101,7 @@ globalBus.on("removeLayer", layer => {
     listeners[layer.id] = undefined;
 });
 
-declare module "@/game/events" {
+declare module "game/events" {
     interface GlobalEvents {
         reset: (reset: GenericReset) => void;
     }
