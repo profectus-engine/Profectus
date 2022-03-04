@@ -167,7 +167,7 @@
 </template>
 
 <script setup lang="ts">
-import themes from "@/data/themes";
+import themes from "data/themes";
 import {
     BoardNode,
     GenericBoardNodeAction,
@@ -175,9 +175,9 @@ import {
     getNodeProperty,
     ProgressDisplay,
     Shape
-} from "@/features/boards/board";
-import { Visibility } from "@/features/feature";
-import settings from "@/game/settings";
+} from "features/boards/board";
+import { Visibility } from "features/feature";
+import settings from "game/settings";
 import { computed, ref, toRefs, unref, watch } from "vue";
 
 const sqrtTwo = Math.sqrt(2);

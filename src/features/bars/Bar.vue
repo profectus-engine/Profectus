@@ -46,12 +46,12 @@
 
 <script lang="ts">
 import { Direction } from "./bar";
-import { CoercableComponent, Visibility } from "@/features/feature";
-import Decimal, { DecimalSource } from "@/util/bignum";
-import { computeOptionalComponent, processedPropType, unwrapRef } from "@/util/vue";
+import { CoercableComponent, Visibility } from "features/feature";
+import Decimal, { DecimalSource } from "util/bignum";
+import { computeOptionalComponent, processedPropType, unwrapRef } from "util/vue";
 import { computed, CSSProperties, defineComponent, StyleValue, toRefs, unref } from "vue";
-import LinkNode from "@/components/links/LinkNode.vue";
-import MarkNode from "@/components/MarkNode.vue";
+import LinkNode from "components/links/LinkNode.vue";
+import MarkNode from "components/MarkNode.vue";
 
 export default defineComponent({
     props: {

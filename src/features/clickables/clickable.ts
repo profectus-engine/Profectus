@@ -1,4 +1,4 @@
-import ClickableComponent from "@/features/clickables/Clickable.vue";
+import ClickableComponent from "features/clickables/Clickable.vue";
 import {
     CoercableComponent,
     Component,
@@ -8,15 +8,15 @@ import {
     setDefault,
     StyleValue,
     Visibility
-} from "@/features/feature";
+} from "features/feature";
 import {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
     processComputable,
     ProcessedComputable
-} from "@/util/computed";
-import { createLazyProxy } from "@/util/proxies";
+} from "util/computed";
+import { createLazyProxy } from "util/proxies";
 import { unref } from "vue";
 
 export const ClickableType = Symbol("Clickable");

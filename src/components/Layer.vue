@@ -21,13 +21,13 @@
 </template>
 
 <script lang="ts">
-import Links from "@/components/links/Links.vue";
-import projInfo from "@/data/projInfo.json";
-import { CoercableComponent, StyleValue } from "@/features/feature";
-import { Link } from "@/features/links";
-import { PersistentRef } from "@/game/persistence";
-import player from "@/game/player";
-import { computeComponent, processedPropType, wrapRef } from "@/util/vue";
+import Links from "components/links/Links.vue";
+import projInfo from "data/projInfo.json";
+import { CoercableComponent, StyleValue } from "features/feature";
+import { Link } from "features/links";
+import { PersistentRef } from "game/persistence";
+import player from "game/player";
+import { computeComponent, processedPropType, wrapRef } from "util/vue";
 import { computed, defineComponent, nextTick, PropType, toRefs, unref, watch } from "vue";
 
 export default defineComponent({

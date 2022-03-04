@@ -30,14 +30,14 @@
 </template>
 
 <script lang="ts">
-import Sticky from "@/components/layout/Sticky.vue";
-import themes from "@/data/themes";
-import { CoercableComponent, StyleValue, Visibility } from "@/features/feature";
-import { GenericTab } from "@/features/tabs/tab";
-import TabButton from "@/features/tabs/TabButton.vue";
-import { GenericTabButton } from "@/features/tabs/tabFamily";
-import settings from "@/game/settings";
-import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "@/util/vue";
+import Sticky from "components/layout/Sticky.vue";
+import themes from "data/themes";
+import { CoercableComponent, StyleValue, Visibility } from "features/feature";
+import { GenericTab } from "features/tabs/tab";
+import TabButton from "features/tabs/TabButton.vue";
+import { GenericTabButton } from "features/tabs/tabFamily";
+import settings from "game/settings";
+import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "util/vue";
 import {
     Component,
     computed,

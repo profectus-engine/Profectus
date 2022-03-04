@@ -15,10 +15,10 @@
 </template>
 
 <script lang="tsx">
-import "@/components/common/features.css";
-import { jsx, StyleValue, Visibility } from "@/features/feature";
-import { GenericMilestone } from "@/features/milestones/milestone";
-import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "@/util/vue";
+import "components/common/features.css";
+import { jsx, StyleValue, Visibility } from "features/feature";
+import { GenericMilestone } from "features/milestones/milestone";
+import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "util/vue";
 import { Component, defineComponent, shallowRef, toRefs, unref, UnwrapRef, watchEffect } from "vue";
 import LinkNode from "../../components/links/LinkNode.vue";
 

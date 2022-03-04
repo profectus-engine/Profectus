@@ -1,12 +1,12 @@
-import Col from "@/components/layout/Column.vue";
-import Row from "@/components/layout/Row.vue";
+import Col from "components/layout/Column.vue";
+import Row from "components/layout/Row.vue";
 import {
     CoercableComponent,
     Component as ComponentKey,
     GatherProps,
     GenericComponent,
     JSXFunction
-} from "@/features/feature";
+} from "features/feature";
 import {
     Component,
     computed,

@@ -1,12 +1,12 @@
-import { main } from "@/data/projEntry";
-import { createCumulativeConversion, createExponentialScaling } from "@/features/conversion";
-import { jsx } from "@/features/feature";
-import { createReset } from "@/features/reset";
-import MainDisplay from "@/features/resources/MainDisplay.vue";
-import { createResource } from "@/features/resources/resource";
-import { createLayer } from "@/game/layers";
-import { DecimalSource } from "@/lib/break_eternity";
-import { render } from "@/util/vue";
+import { main } from "data/projEntry";
+import { createCumulativeConversion, createExponentialScaling } from "features/conversion";
+import { jsx } from "features/feature";
+import { createReset } from "features/reset";
+import MainDisplay from "features/resources/MainDisplay.vue";
+import { createResource } from "features/resources/resource";
+import { createLayer } from "game/layers";
+import { DecimalSource } from "lib/break_eternity";
+import { render } from "util/vue";
 import { createLayerTreeNode, createResetButton } from "../common";
 
 const layer = createLayer(() => {

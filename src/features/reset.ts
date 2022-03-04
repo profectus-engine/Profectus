@@ -1,16 +1,16 @@
-import { getUniqueID, Replace } from "@/features/feature";
-import { globalBus } from "@/game/events";
-import { GenericLayer } from "@/game/layers";
+import { getUniqueID, Replace } from "features/feature";
+import { globalBus } from "game/events";
+import { GenericLayer } from "game/layers";
 import {
     DefaultValue,
     Persistent,
     persistent,
     PersistentRef,
     PersistentState
-} from "@/game/persistence";
-import Decimal from "@/lib/break_eternity";
-import { Computable, GetComputableType, processComputable } from "@/util/computed";
-import { createLazyProxy } from "@/util/proxies";
+} from "game/persistence";
+import Decimal from "lib/break_eternity";
+import { Computable, GetComputableType, processComputable } from "util/computed";
+import { createLazyProxy } from "util/proxies";
 import { Unsubscribe } from "nanoevents";
 import { computed, isRef, unref } from "vue";
 

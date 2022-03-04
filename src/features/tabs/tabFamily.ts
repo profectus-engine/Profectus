@@ -7,18 +7,18 @@ import {
     setDefault,
     StyleValue,
     Visibility
-} from "@/features/feature";
-import TabButtonComponent from "@/features/tabs/TabButton.vue";
-import TabFamilyComponent from "@/features/tabs/TabFamily.vue";
-import { Persistent, makePersistent, PersistentState } from "@/game/persistence";
+} from "features/feature";
+import TabButtonComponent from "features/tabs/TabButton.vue";
+import TabFamilyComponent from "features/tabs/TabFamily.vue";
+import { Persistent, makePersistent, PersistentState } from "game/persistence";
 import {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
     processComputable,
     ProcessedComputable
-} from "@/util/computed";
-import { createLazyProxy } from "@/util/proxies";
+} from "util/computed";
+import { createLazyProxy } from "util/proxies";
 import { computed, Ref, unref } from "vue";
 import { GenericTab } from "./tab";
 

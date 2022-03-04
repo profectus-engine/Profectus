@@ -1,6 +1,6 @@
-import projInfo from "@/data/projInfo.json";
-import player, { Player, PlayerData, stringifySave } from "@/game/player";
-import settings, { loadSettings } from "@/game/settings";
+import projInfo from "data/projInfo.json";
+import player, { Player, PlayerData, stringifySave } from "game/player";
+import settings, { loadSettings } from "game/settings";
 import Decimal from "./bignum";
 import { ProxyState } from "./proxies";
 
@@ -74,8 +74,8 @@ export function getUniqueID(): string {
 
 export async function loadSave(playerObj: Partial<PlayerData>): Promise<void> {
     console.info("Loading save", playerObj);
-    const { layers, removeLayer, addLayer } = await import("@/game/layers");
-    const { fixOldSave, getInitialLayers } = await import("@/data/projEntry");
+    const { layers, removeLayer, addLayer } = await import("game/layers");
+    const { fixOldSave, getInitialLayers } = await import("data/projEntry");
 
     for (const layer in layers) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion

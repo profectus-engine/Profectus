@@ -8,8 +8,8 @@
 </template>
 
 <script setup lang="ts">
-import state from "@/game/state";
-import Decimal, { DecimalSource, formatWhole } from "@/util/bignum";
+import state from "game/state";
+import Decimal, { DecimalSource, formatWhole } from "util/bignum";
 import { computed, ref, watchEffect } from "vue";
 
 const tps = computed(() =>

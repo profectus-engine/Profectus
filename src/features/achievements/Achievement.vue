@@ -23,13 +23,13 @@
 </template>
 
 <script lang="ts">
-import { CoercableComponent, Visibility } from "@/features/feature";
-import { computeOptionalComponent, processedPropType } from "@/util/vue";
+import { CoercableComponent, Visibility } from "features/feature";
+import { computeOptionalComponent, processedPropType } from "util/vue";
 import { defineComponent, StyleValue, toRefs, unref } from "vue";
-import Tooltip from "@/components/Tooltip.vue";
-import LinkNode from "@/components/links/LinkNode.vue";
-import MarkNode from "@/components/MarkNode.vue";
-import "@/components/common/features.css";
+import Tooltip from "components/Tooltip.vue";
+import LinkNode from "components/links/LinkNode.vue";
+import MarkNode from "components/MarkNode.vue";
+import "components/common/features.css";
 
 export default defineComponent({
     props: {

@@ -1,14 +1,14 @@
-import { hasWon } from "@/data/projEntry";
-import { globalBus } from "@/game/events";
-import player from "@/game/player";
+import { hasWon } from "data/projEntry";
+import { globalBus } from "game/events";
+import player from "game/player";
 import {
     Computable,
     GetComputableTypeWithDefault,
     GetComputableType,
     ProcessedComputable,
     processComputable
-} from "@/util/computed";
-import { createLazyProxy } from "@/util/proxies";
+} from "util/computed";
+import { createLazyProxy } from "util/proxies";
 import { unref } from "vue";
 import { findFeatures, Replace, setDefault } from "./feature";
 

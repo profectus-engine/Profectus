@@ -1,6 +1,6 @@
-import { globalBus } from "@/game/events";
-import Decimal, { DecimalSource } from "@/util/bignum";
-import { ProxyState } from "@/util/proxies";
+import { globalBus } from "game/events";
+import Decimal, { DecimalSource } from "util/bignum";
+import { ProxyState } from "util/proxies";
 import { isArray } from "@vue/shared";
 import { isRef, Ref, ref } from "vue";
 import { GenericLayer } from "./layers";

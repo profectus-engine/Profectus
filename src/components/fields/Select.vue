@@ -14,9 +14,9 @@
 </template>
 
 <script setup lang="ts">
-import "@/components/common/fields.css";
-import { CoercableComponent } from "@/features/feature";
-import { computeOptionalComponent } from "@/util/vue";
+import "components/common/fields.css";
+import { CoercableComponent } from "features/feature";
+import { computeOptionalComponent } from "util/vue";
 import { ref, toRef, watch } from "vue";
 import VueNextSelect from "vue-next-select";
 import "vue-next-select/dist/index.css";

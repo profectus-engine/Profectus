@@ -18,7 +18,7 @@ import {
     LinkNode,
     RegisterLinkNodeInjectionKey,
     UnregisterLinkNodeInjectionKey
-} from "@/features/links";
+} from "features/links";
 import { computed, nextTick, onMounted, provide, ref, toRef } from "vue";
 import LinkVue from "./Link.vue";
 

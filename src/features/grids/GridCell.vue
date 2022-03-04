@@ -23,15 +23,15 @@
 </template>
 
 <script lang="ts">
-import "@/components/common/features.css";
-import LinkNode from "@/components/links/LinkNode.vue";
-import { CoercableComponent, StyleValue, Visibility } from "@/features/feature";
+import "components/common/features.css";
+import LinkNode from "components/links/LinkNode.vue";
+import { CoercableComponent, StyleValue, Visibility } from "features/feature";
 import {
     computeComponent,
     computeOptionalComponent,
     processedPropType,
     setupHoldToClick
-} from "@/util/vue";
+} from "util/vue";
 import { defineComponent, PropType, toRefs, unref } from "vue";
 
 export default defineComponent({

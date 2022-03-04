@@ -1,4 +1,4 @@
-import Modal from "@/components/Modal.vue";
+import Modal from "components/Modal.vue";
 import {
     CoercableComponent,
     jsx,
@@ -6,17 +6,17 @@ import {
     Replace,
     setDefault,
     StyleValue
-} from "@/features/feature";
-import { Link } from "@/features/links";
-import Decimal from "@/util/bignum";
+} from "features/feature";
+import { Link } from "features/links";
+import Decimal from "util/bignum";
 import {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
     processComputable,
     ProcessedComputable
-} from "@/util/computed";
-import { createLazyProxy } from "@/util/proxies";
+} from "util/computed";
+import { createLazyProxy } from "util/proxies";
 import { createNanoEvents, Emitter } from "nanoevents";
 import { ref, unref } from "vue";
 import { globalBus } from "./events";

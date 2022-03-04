@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { displayResource, Resource } from "@/features/resources/resource";
+import { displayResource, Resource } from "features/resources/resource";
 import { computed } from "vue";
 
 const props = defineProps<{

@@ -1,4 +1,4 @@
-import UpgradeComponent from "@/features/upgrades/Upgrade.vue";
+import UpgradeComponent from "features/upgrades/Upgrade.vue";
 import {
     CoercableComponent,
     Component,
@@ -9,21 +9,21 @@ import {
     setDefault,
     StyleValue,
     Visibility
-} from "@/features/feature";
-import { Resource } from "@/features/resources/resource";
-import { GenericLayer } from "@/game/layers";
-import Decimal, { DecimalSource } from "@/util/bignum";
-import { isFunction } from "@/util/common";
+} from "features/feature";
+import { Resource } from "features/resources/resource";
+import { GenericLayer } from "game/layers";
+import Decimal, { DecimalSource } from "util/bignum";
+import { isFunction } from "util/common";
 import {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
     processComputable,
     ProcessedComputable
-} from "@/util/computed";
-import { createLazyProxy } from "@/util/proxies";
+} from "util/computed";
+import { createLazyProxy } from "util/proxies";
 import { computed, Ref, unref } from "vue";
-import { Persistent, makePersistent, PersistentState } from "@/game/persistence";
+import { Persistent, makePersistent, PersistentState } from "game/persistence";
 
 export const UpgradeType = Symbol("Upgrade");
 

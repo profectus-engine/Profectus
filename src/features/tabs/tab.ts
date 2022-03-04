@@ -5,10 +5,10 @@ import {
     getUniqueID,
     Replace,
     StyleValue
-} from "@/features/feature";
-import TabComponent from "@/features/tabs/Tab.vue";
-import { Computable, GetComputableType } from "@/util/computed";
-import { createLazyProxy } from "@/util/proxies";
+} from "features/feature";
+import TabComponent from "features/tabs/Tab.vue";
+import { Computable, GetComputableType } from "util/computed";
+import { createLazyProxy } from "util/proxies";
 
 export const TabType = Symbol("Tab");
 

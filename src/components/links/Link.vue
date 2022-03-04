@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { Link, LinkNode } from "@/features/links";
+import { Link, LinkNode } from "features/links";
 import { computed, toRefs, unref } from "vue";
 
 const _props = defineProps<{

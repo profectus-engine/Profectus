@@ -1,4 +1,4 @@
-import { Position } from "@/game/layers";
+import { Position } from "game/layers";
 import { InjectionKey, SVGAttributes } from "vue";
 
 export interface LinkNode {

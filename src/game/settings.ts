@@ -1,8 +1,8 @@
-import projInfo from "@/data/projInfo.json";
-import { Themes } from "@/data/themes";
-import { CoercableComponent } from "@/features/feature";
-import { globalBus } from "@/game/events";
-import { hardReset } from "@/util/save";
+import projInfo from "data/projInfo.json";
+import { Themes } from "data/themes";
+import { CoercableComponent } from "features/feature";
+import { globalBus } from "game/events";
+import { hardReset } from "util/save";
 import { reactive, watch } from "vue";
 
 export interface Settings {

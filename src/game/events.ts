@@ -1,5 +1,5 @@
-import projInfo from "@/data/projInfo.json";
-import Decimal, { DecimalSource } from "@/util/bignum";
+import projInfo from "data/projInfo.json";
+import Decimal, { DecimalSource } from "util/bignum";
 import { createNanoEvents } from "nanoevents";
 import { App, Ref } from "vue";
 import { GenericLayer } from "./layers";
@@ -93,7 +93,7 @@ function update() {
 }
 
 export async function startGameLoop() {
-    hasWon = (await import("@/data/projEntry")).hasWon;
+    hasWon = (await import("data/projEntry")).hasWon;
     if (settings.unthrottled) {
         requestAnimationFrame(update);
     } else {

@@ -43,11 +43,11 @@
 </template>
 
 <script setup lang="ts">
-import Modal from "@/components/Modal.vue";
-import projInfo from "@/data/projInfo.json";
-import player from "@/game/player";
-import state from "@/game/state";
-import Decimal, { DecimalSource, format } from "@/util/bignum";
+import Modal from "components/Modal.vue";
+import projInfo from "data/projInfo.json";
+import player from "game/player";
+import state from "game/state";
+import Decimal, { DecimalSource, format } from "util/bignum";
 import { ComponentPublicInstance, computed, ref, toRef } from "vue";
 import Toggle from "./fields/Toggle.vue";
 import SavesManager from "./SavesManager.vue";

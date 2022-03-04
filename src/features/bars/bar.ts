@@ -1,4 +1,4 @@
-import BarComponent from "@/features/bars/Bar.vue";
+import BarComponent from "features/bars/Bar.vue";
 import {
     CoercableComponent,
     Component,
@@ -8,16 +8,16 @@ import {
     setDefault,
     StyleValue,
     Visibility
-} from "@/features/feature";
-import { DecimalSource } from "@/lib/break_eternity";
+} from "features/feature";
+import { DecimalSource } from "lib/break_eternity";
 import {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
     processComputable,
     ProcessedComputable
-} from "@/util/computed";
-import { createLazyProxy } from "@/util/proxies";
+} from "util/computed";
+import { createLazyProxy } from "util/proxies";
 
 export const BarType = Symbol("Bar");
 

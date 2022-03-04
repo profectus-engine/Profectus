@@ -3,7 +3,7 @@
 </template>
 
 <script setup lang="ts">
-import { RegisterLinkNodeInjectionKey, UnregisterLinkNodeInjectionKey } from "@/features/links";
+import { RegisterLinkNodeInjectionKey, UnregisterLinkNodeInjectionKey } from "features/links";
 import { computed, inject, onUnmounted, ref, toRefs, unref, watch } from "vue";
 
 const _props = defineProps<{ id: string }>();

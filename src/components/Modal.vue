@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { Link } from "@/features/links";
+import { Link } from "features/links";
 import { computed, ref, toRefs } from "vue";
 import Links from "./links/Links.vue";
 

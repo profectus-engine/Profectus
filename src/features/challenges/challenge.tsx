@@ -1,5 +1,5 @@
-import Toggle from "@/components/fields/Toggle.vue";
-import ChallengeComponent from "@/features/challenges/Challenge.vue";
+import Toggle from "components/fields/Toggle.vue";
+import ChallengeComponent from "features/challenges/Challenge.vue";
 import {
     CoercableComponent,
     Component,
@@ -10,21 +10,21 @@ import {
     setDefault,
     StyleValue,
     Visibility
-} from "@/features/feature";
-import { GenericReset } from "@/features/reset";
-import { Resource } from "@/features/resources/resource";
-import { globalBus } from "@/game/events";
-import { persistent, PersistentRef } from "@/game/persistence";
-import settings, { registerSettingField } from "@/game/settings";
-import Decimal, { DecimalSource } from "@/util/bignum";
+} from "features/feature";
+import { GenericReset } from "features/reset";
+import { Resource } from "features/resources/resource";
+import { globalBus } from "game/events";
+import { persistent, PersistentRef } from "game/persistence";
+import settings, { registerSettingField } from "game/settings";
+import Decimal, { DecimalSource } from "util/bignum";
 import {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
     processComputable,
     ProcessedComputable
-} from "@/util/computed";
-import { createLazyProxy } from "@/util/proxies";
+} from "util/computed";
+import { createLazyProxy } from "util/proxies";
 import { computed, Ref, unref } from "vue";
 
 export const ChallengeType = Symbol("ChallengeType");

@@ -17,12 +17,12 @@
 </template>
 
 <script lang="ts">
-import "@/components/common/table.css";
-import themes from "@/data/themes";
-import { Visibility } from "@/features/feature";
-import { GridCell } from "@/features/grids/grid";
-import settings from "@/game/settings";
-import { processedPropType } from "@/util/vue";
+import "components/common/table.css";
+import themes from "data/themes";
+import { Visibility } from "features/feature";
+import { GridCell } from "features/grids/grid";
+import settings from "game/settings";
+import { processedPropType } from "util/vue";
 import { computed, defineComponent, unref } from "vue";
 import GridCellVue from "./GridCell.vue";
 

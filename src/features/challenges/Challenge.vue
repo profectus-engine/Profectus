@@ -27,11 +27,11 @@
 </template>
 
 <script lang="tsx">
-import "@/components/common/features.css";
-import { GenericChallenge } from "@/features/challenges/challenge";
-import { jsx, StyleValue, Visibility } from "@/features/feature";
-import { getHighNotifyStyle, getNotifyStyle } from "@/game/notifications";
-import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "@/util/vue";
+import "components/common/features.css";
+import { GenericChallenge } from "features/challenges/challenge";
+import { jsx, StyleValue, Visibility } from "features/feature";
+import { getHighNotifyStyle, getNotifyStyle } from "game/notifications";
+import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "util/vue";
 import {
     Component,
     computed,
@@ -43,8 +43,8 @@ import {
     UnwrapRef,
     watchEffect
 } from "vue";
-import LinkNode from "@/components/links/LinkNode.vue";
-import MarkNode from "@/components/MarkNode.vue";
+import LinkNode from "components/links/LinkNode.vue";
+import MarkNode from "components/MarkNode.vue";
 
 export default defineComponent({
     props: {

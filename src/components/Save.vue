@@ -58,7 +58,7 @@
 </template>
 
 <script setup lang="ts">
-import player from "@/game/player";
+import player from "game/player";
 import { computed, ref, toRefs, watch } from "vue";
 import DangerButton from "./fields/DangerButton.vue";
 import FeedbackButton from "./fields/FeedbackButton.vue";

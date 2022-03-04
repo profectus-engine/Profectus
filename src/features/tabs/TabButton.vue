@@ -20,9 +20,9 @@
 </template>
 
 <script lang="ts">
-import { CoercableComponent, StyleValue, Visibility } from "@/features/feature";
-import { getNotifyStyle } from "@/game/notifications";
-import { computeComponent, processedPropType, unwrapRef } from "@/util/vue";
+import { CoercableComponent, StyleValue, Visibility } from "features/feature";
+import { getNotifyStyle } from "game/notifications";
+import { computeComponent, processedPropType, unwrapRef } from "util/vue";
 import { computed, defineComponent, toRefs, unref } from "vue";
 
 export default defineComponent({

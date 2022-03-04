@@ -1,6 +1,6 @@
-import { DefaultValue } from "@/game/persistence";
-import Decimal from "@/util/bignum";
-import { DoNotCache, ProcessedComputable } from "@/util/computed";
+import { DefaultValue } from "game/persistence";
+import Decimal from "util/bignum";
+import { DoNotCache, ProcessedComputable } from "util/computed";
 import { CSSProperties, DefineComponent, isRef } from "vue";
 
 export const Component = Symbol("Component");

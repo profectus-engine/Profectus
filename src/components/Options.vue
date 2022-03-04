@@ -19,17 +19,17 @@
 </template>
 
 <script setup lang="tsx">
-import Modal from "@/components/Modal.vue";
-import rawThemes from "@/data/themes";
-import player from "@/game/player";
-import settings, { settingFields } from "@/game/settings";
-import { camelToTitle } from "@/util/common";
+import Modal from "components/Modal.vue";
+import rawThemes from "data/themes";
+import player from "game/player";
+import settings, { settingFields } from "game/settings";
+import { camelToTitle } from "util/common";
 import { computed, ref, toRefs } from "vue";
 import Toggle from "./fields/Toggle.vue";
 import Select from "./fields/Select.vue";
 import Tooltip from "./Tooltip.vue";
-import { jsx } from "@/features/feature";
-import { coerceComponent, render } from "@/util/vue";
+import { jsx } from "features/feature";
+import { coerceComponent, render } from "util/vue";
 
 const isOpen = ref(false);
 

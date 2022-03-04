@@ -10,12 +10,12 @@
 </template>
 
 <script setup lang="ts">
-import { CoercableComponent } from "@/features/feature";
-import { Resource } from "@/features/resources/resource";
-import Decimal from "@/util/bignum";
-import { computeOptionalComponent } from "@/util/vue";
+import { CoercableComponent } from "features/feature";
+import { Resource } from "features/resources/resource";
+import Decimal from "util/bignum";
+import { computeOptionalComponent } from "util/vue";
 import { computed, Ref, StyleValue, toRefs } from "vue";
-import ResourceVue from "@/features/resources/Resource.vue";
+import ResourceVue from "features/resources/Resource.vue";
 
 const _props = defineProps<{
     resource: Resource;

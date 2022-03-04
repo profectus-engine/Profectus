@@ -6,10 +6,10 @@
 </template>
 
 <script setup lang="ts">
-import { CoercableComponent } from "@/features/feature";
-import { coerceComponent } from "@/util/vue";
+import { CoercableComponent } from "features/feature";
+import { coerceComponent } from "util/vue";
 import { computed, unref } from "vue";
-import "@/components/common/fields.css";
+import "components/common/fields.css";
 
 const props = defineProps<{
     title?: CoercableComponent;

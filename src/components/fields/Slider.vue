@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import { computed, toRefs, unref } from "vue";
 import Tooltip from "../Tooltip.vue";
-import "@/components/common/fields.css";
+import "components/common/fields.css";
 
 const _props = defineProps<{
     title?: string;

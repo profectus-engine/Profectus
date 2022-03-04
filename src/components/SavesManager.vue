@@ -57,10 +57,10 @@
 </template>
 
 <script setup lang="ts">
-import Modal from "@/components/Modal.vue";
-import player, { PlayerData } from "@/game/player";
-import settings from "@/game/settings";
-import { getUniqueID, loadSave, save, newSave } from "@/util/save";
+import Modal from "components/Modal.vue";
+import player, { PlayerData } from "game/player";
+import settings from "game/settings";
+import { getUniqueID, loadSave, save, newSave } from "util/save";
 import {
     ComponentPublicInstance,
     computed,

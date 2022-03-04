@@ -1,16 +1,16 @@
-import ClickableComponent from "@/features/clickables/Clickable.vue";
-import { Resource } from "@/features/resources/resource";
-import { Persistent, makePersistent, PersistentState } from "@/game/persistence";
-import Decimal, { DecimalSource, format, formatWhole } from "@/util/bignum";
+import ClickableComponent from "features/clickables/Clickable.vue";
+import { Resource } from "features/resources/resource";
+import { Persistent, makePersistent, PersistentState } from "game/persistence";
+import Decimal, { DecimalSource, format, formatWhole } from "util/bignum";
 import {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
     processComputable,
     ProcessedComputable
-} from "@/util/computed";
-import { createLazyProxy } from "@/util/proxies";
-import { coerceComponent, isCoercableComponent } from "@/util/vue";
+} from "util/computed";
+import { createLazyProxy } from "util/proxies";
+import { coerceComponent, isCoercableComponent } from "util/vue";
 import { computed, Ref, unref } from "vue";
 import {
     CoercableComponent,

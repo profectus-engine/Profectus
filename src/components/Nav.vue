@@ -99,8 +99,8 @@
 </template>
 
 <script setup lang="ts">
-import Changelog from "@/data/Changelog.vue";
-import projInfo from "@/data/projInfo.json";
+import Changelog from "data/Changelog.vue";
+import projInfo from "data/projInfo.json";
 import { ComponentPublicInstance, ref } from "vue";
 import Info from "./Info.vue";
 import Options from "./Options.vue";

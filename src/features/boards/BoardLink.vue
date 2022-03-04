@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { BoardNodeLink } from "@/features/boards/board";
+import { BoardNodeLink } from "features/boards/board";
 import { computed, toRefs, unref } from "vue";
 
 const _props = defineProps<{

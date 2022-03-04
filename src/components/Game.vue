@@ -17,9 +17,9 @@
 </template>
 
 <script setup lang="ts">
-import projInfo from "@/data/projInfo.json";
-import { GenericLayer, layers } from "@/game/layers";
-import player from "@/game/player";
+import projInfo from "data/projInfo.json";
+import { GenericLayer, layers } from "game/layers";
+import player from "game/player";
 import { computed, toRef } from "vue";
 import Layer from "./Layer.vue";
 import Nav from "./Nav.vue";

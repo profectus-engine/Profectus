@@ -28,9 +28,9 @@
 </template>
 
 <script lang="ts">
-import "@/components/common/table.css";
-import { GenericTreeNode } from "@/features/trees/tree";
-import { processedPropType } from "@/util/vue";
+import "components/common/table.css";
+import { GenericTreeNode } from "features/trees/tree";
+import { processedPropType } from "util/vue";
 import { defineComponent, unref } from "vue";
 import TreeNode from "./TreeNode.vue";
 

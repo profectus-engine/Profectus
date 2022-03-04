@@ -28,8 +28,8 @@
 </template>
 
 <script lang="ts">
-import { CoercableComponent } from "@/features/feature";
-import { computeOptionalComponent, processedPropType, unwrapRef } from "@/util/vue";
+import { CoercableComponent } from "features/feature";
+import { computeOptionalComponent, processedPropType, unwrapRef } from "util/vue";
 import { computed, defineComponent, ref, toRefs, unref } from "vue";
 
 export default defineComponent({

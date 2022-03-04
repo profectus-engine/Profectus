@@ -29,11 +29,11 @@
 </template>
 
 <script lang="ts">
-import LinkNode from "@/components/links/LinkNode.vue";
-import themes from "@/data/themes";
-import { CoercableComponent, Visibility } from "@/features/feature";
-import settings from "@/game/settings";
-import { computeComponent, processedPropType } from "@/util/vue";
+import LinkNode from "components/links/LinkNode.vue";
+import themes from "data/themes";
+import { CoercableComponent, Visibility } from "features/feature";
+import settings from "game/settings";
+import { computeComponent, processedPropType } from "util/vue";
 import CollapseTransition from "@ivanv/vue-collapse-transition/src/CollapseTransition.vue";
 import { computed, defineComponent, PropType, Ref, StyleValue, toRefs, unref } from "vue";
 

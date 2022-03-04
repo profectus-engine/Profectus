@@ -1,5 +1,5 @@
-import { CoercableComponent } from "@/features/feature";
-import { ProcessedComputable } from "@/util/computed";
+import { CoercableComponent } from "features/feature";
+import { ProcessedComputable } from "util/computed";
 
 declare module "@vue/runtime-dom" {
     interface CSSProperties {

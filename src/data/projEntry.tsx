@@ -1,13 +1,13 @@
-import Spacer from "@/components/layout/Spacer.vue";
-import { jsx } from "@/features/feature";
-import { createResource, trackBest, trackOOMPS, trackTotal } from "@/features/resources/resource";
-import { branchedResetPropagation, createTree, GenericTree } from "@/features/trees/tree";
-import { globalBus } from "@/game/events";
-import { createLayer, GenericLayer } from "@/game/layers";
-import player, { PlayerData } from "@/game/player";
-import { DecimalSource } from "@/lib/break_eternity";
-import Decimal, { format, formatTime } from "@/util/bignum";
-import { render } from "@/util/vue";
+import Spacer from "components/layout/Spacer.vue";
+import { jsx } from "features/feature";
+import { createResource, trackBest, trackOOMPS, trackTotal } from "features/resources/resource";
+import { branchedResetPropagation, createTree, GenericTree } from "features/trees/tree";
+import { globalBus } from "game/events";
+import { createLayer, GenericLayer } from "game/layers";
+import player, { PlayerData } from "game/player";
+import { DecimalSource } from "lib/break_eternity";
+import Decimal, { format, formatTime } from "util/bignum";
+import { render } from "util/vue";
 import { computed, toRaw } from "vue";
 import prestige from "./layers/prestige";
 

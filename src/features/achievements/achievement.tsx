@@ -1,4 +1,4 @@
-import AchievementComponent from "@/features/achievements/Achievement.vue";
+import AchievementComponent from "features/achievements/Achievement.vue";
 import {
     CoercableComponent,
     Component,
@@ -9,19 +9,19 @@ import {
     setDefault,
     StyleValue,
     Visibility
-} from "@/features/feature";
-import { globalBus } from "@/game/events";
-import "@/game/notifications";
-import { Persistent, makePersistent, PersistentState } from "@/game/persistence";
+} from "features/feature";
+import { globalBus } from "game/events";
+import "game/notifications";
+import { Persistent, makePersistent, PersistentState } from "game/persistence";
 import {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
     processComputable,
     ProcessedComputable
-} from "@/util/computed";
-import { createLazyProxy } from "@/util/proxies";
-import { coerceComponent } from "@/util/vue";
+} from "util/computed";
+import { createLazyProxy } from "util/proxies";
+import { coerceComponent } from "util/vue";
 import { Unsubscribe } from "nanoevents";
 import { Ref, unref } from "vue";
 import { useToast } from "vue-toastification";

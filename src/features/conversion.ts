@@ -1,12 +1,12 @@
-import { GenericLayer } from "@/game/layers";
-import Decimal, { DecimalSource } from "@/util/bignum";
+import { GenericLayer } from "game/layers";
+import Decimal, { DecimalSource } from "util/bignum";
 import {
     Computable,
     GetComputableTypeWithDefault,
     processComputable,
     ProcessedComputable
-} from "@/util/computed";
-import { createLazyProxy } from "@/util/proxies";
+} from "util/computed";
+import { createLazyProxy } from "util/proxies";
 import { computed, isRef, Ref, unref } from "vue";
 import { Replace, setDefault } from "./feature";
 import { Resource } from "./resources/resource";

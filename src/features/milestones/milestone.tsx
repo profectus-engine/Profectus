@@ -1,4 +1,4 @@
-import Select from "@/components/fields/Select.vue";
+import Select from "components/fields/Select.vue";
 import {
     CoercableComponent,
     Component,
@@ -10,22 +10,22 @@ import {
     setDefault,
     StyleValue,
     Visibility
-} from "@/features/feature";
-import MilestoneComponent from "@/features/milestones/Milestone.vue";
-import { globalBus } from "@/game/events";
-import "@/game/notifications";
-import { makePersistent, Persistent, PersistentState } from "@/game/persistence";
-import settings, { registerSettingField } from "@/game/settings";
-import { camelToTitle } from "@/util/common";
+} from "features/feature";
+import MilestoneComponent from "features/milestones/Milestone.vue";
+import { globalBus } from "game/events";
+import "game/notifications";
+import { makePersistent, Persistent, PersistentState } from "game/persistence";
+import settings, { registerSettingField } from "game/settings";
+import { camelToTitle } from "util/common";
 import {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
     processComputable,
     ProcessedComputable
-} from "@/util/computed";
-import { createLazyProxy } from "@/util/proxies";
-import { coerceComponent, isCoercableComponent } from "@/util/vue";
+} from "util/computed";
+import { createLazyProxy } from "util/proxies";
+import { coerceComponent, isCoercableComponent } from "util/vue";
 import { Unsubscribe } from "nanoevents";
 import { computed, Ref, unref } from "vue";
 import { useToast } from "vue-toastification";
