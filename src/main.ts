@@ -47,9 +47,7 @@ requestAnimationFrame(async () => {
     const { globalBus, startGameLoop } = await require("./game/events");
 
     // Create Vue
-    const vue = (window.vue = createApp({
-        ...App
-    }));
+    const vue = (window.vue = createApp(App));
     globalBus.emit("setupVue", vue);
     vue.mount("#app");
 
