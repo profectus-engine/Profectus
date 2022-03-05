@@ -16,7 +16,7 @@ const layer = createLayer(() => {
     const points = createResource<DecimalSource>(0, "prestige points");
 
     const conversion = createCumulativeConversion(() => ({
-        scaling: createExponentialScaling(10, 5, 0.5),
+        scaling: createExponentialScaling(10, 0.5),
         baseResource: main.points,
         gainResource: points,
         roundUpCost: true
