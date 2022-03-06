@@ -132,7 +132,7 @@ export function createLinearScaling(
 
 // Gain formula is (baseResource / base) ^ exponent
 // e.g. if exponent is 0.5 and base is 10, then having 10 points makes gain 1, and 40 points is 2
-export function createExponentialScaling(
+export function createPolynomialScaling(
     base: DecimalSource | Ref<DecimalSource>,
     exponent: DecimalSource | Ref<DecimalSource>
 ): ScalingFunction {
