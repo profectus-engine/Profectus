@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2022-03-05
+### Changed
+- **BREAKING** Removed "@" path alias, and used baseUrl instead
+- **BREAKING** Renamed createExponentialScaling to createPolynomialScaling and removed coefficient parameter
+- Changed options passed into createLayerTreeNode; now allows overriding display
+- App component is no longer cloned before being passed to `createApp`
+- Changed TS version from ^4.5.4 to ~4.5.5
+### Fixed
+- Document title is set as soon as possible now
+
 ## [0.1.1] - 2022-03-02
 ### Added
 - Configuration for Glitch projects
