@@ -1,6 +1,6 @@
 <template>
     <div class="nav" v-if="useHeader" v-bind="$attrs">
-        <img v-if="banner" :src="banner" height="100%" :alt="title" />
+        <img v-if="banner" :src="banner" class="banner" :alt="title" />
         <div v-else class="title">{{ title }}</div>
         <div @click="changelog?.open()" class="version-container">
             <Tooltip display="Changelog" bottom class="version"
@@ -139,6 +139,11 @@ function openDiscord() {
     display: flex;
     cursor: pointer;
     flex-shrink: 0;
+}
+
+.nav > .banner {
+    height: 100%;
+    width: unset;
 }
 
 .overlay-nav {
