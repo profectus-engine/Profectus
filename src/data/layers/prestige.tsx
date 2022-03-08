@@ -1,3 +1,7 @@
+/**
+ * @module
+ * @hidden
+ */
 import { main } from "data/projEntry";
 import { createCumulativeConversion, createPolynomialScaling } from "features/conversion";
 import { jsx } from "features/feature";

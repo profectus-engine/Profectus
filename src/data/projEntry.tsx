@@ -11,6 +11,9 @@ import { render } from "util/vue";
 import { computed, toRaw } from "vue";
 import prestige from "./layers/prestige";
 
+/**
+ * @hidden
+ */
 export const main = createLayer(() => {
     const points = createResource<DecimalSource>(10);
     const best = trackBest(points);
