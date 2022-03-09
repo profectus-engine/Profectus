@@ -18,7 +18,7 @@ export interface TabOptions {
     display: Computable<CoercableComponent>;
 }
 
-interface BaseTab {
+export interface BaseTab {
     id: string;
     type: typeof TabType;
     [Component]: typeof TabComponent;

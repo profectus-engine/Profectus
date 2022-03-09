@@ -15,9 +15,9 @@ export type GetComputableType<T> = T extends { [DoNotCache]: true }
 export type GetComputableTypeWithDefault<T, S> = undefined extends T
     ? S
     : GetComputableType<NonNullable<T>>;
-type UnwrapComputableType<T> = T extends Ref<infer S> ? S : T extends () => infer S ? S : T;
+export type UnwrapComputableType<T> = T extends Ref<infer S> ? S : T extends () => infer S ? S : T;
 
-type ComputableKeysOf<T> = Pick<
+export type ComputableKeysOf<T> = Pick<
     T,
     {
         [K in keyof T]: T[K] extends Computable<unknown> ? K : never;

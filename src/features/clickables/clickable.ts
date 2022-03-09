@@ -39,7 +39,7 @@ export interface ClickableOptions {
     onHold?: VoidFunction;
 }
 
-interface BaseClickable {
+export interface BaseClickable {
     id: string;
     type: typeof ClickableType;
     [Component]: typeof ClickableComponent;

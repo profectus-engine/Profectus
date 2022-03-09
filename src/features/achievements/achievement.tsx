@@ -39,7 +39,7 @@ export interface AchievementOptions {
     onComplete?: VoidFunction;
 }
 
-interface BaseAchievement extends Persistent<boolean> {
+export interface BaseAchievement extends Persistent<boolean> {
     id: string;
     earned: Ref<boolean>;
     complete: VoidFunction;

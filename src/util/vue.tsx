@@ -154,7 +154,7 @@ export function setRefValue<T>(ref: Ref<T | Ref<T>>, value: T) {
     }
 }
 
-type PropTypes =
+export type PropTypes =
     | typeof Boolean
     | typeof String
     | typeof Number

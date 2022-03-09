@@ -167,7 +167,7 @@ export interface BoardOptions {
     types: Record<string, NodeTypeOptions>;
 }
 
-interface BaseBoard extends Persistent<BoardData> {
+export interface BaseBoard extends Persistent<BoardData> {
     id: string;
     links: Ref<BoardNodeLink[] | null>;
     nodes: Ref<BoardNode[]>;

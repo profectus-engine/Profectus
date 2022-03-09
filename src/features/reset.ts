@@ -21,7 +21,7 @@ export interface ResetOptions {
     onReset?: VoidFunction;
 }
 
-interface BaseReset {
+export interface BaseReset {
     id: string;
     reset: VoidFunction;
     type: typeof ResetType;

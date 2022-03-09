@@ -34,7 +34,7 @@ export interface TabButtonOptions {
     glowColor?: Computable<string>;
 }
 
-interface BaseTabButton {
+export interface BaseTabButton {
     type: typeof TabButtonType;
     [Component]: typeof TabButtonComponent;
 }
@@ -65,7 +65,7 @@ export interface TabFamilyOptions {
     style?: Computable<StyleValue>;
 }
 
-interface BaseTabFamily extends Persistent<string> {
+export interface BaseTabFamily extends Persistent<string> {
     id: string;
     activeTab: Ref<GenericTab | CoercableComponent | null>;
     selected: Ref<string>;

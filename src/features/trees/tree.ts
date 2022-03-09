@@ -137,7 +137,7 @@ export interface TreeOptions {
     onReset?: (node: GenericTreeNode) => void;
 }
 
-interface BaseTree {
+export interface BaseTree {
     id: string;
     links: Ref<Link[]>;
     reset: (node: GenericTreeNode) => void;

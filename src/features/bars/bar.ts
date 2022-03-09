@@ -45,7 +45,7 @@ export interface BarOptions {
     mark?: Computable<boolean | string>;
 }
 
-interface BaseBar {
+export interface BaseBar {
     id: string;
     type: typeof BarType;
     [Component]: typeof BarComponent;

@@ -23,7 +23,7 @@ export interface ConversionOptions {
     modifyGainAmount?: (gain: DecimalSource) => DecimalSource;
 }
 
-interface BaseConversion {
+export interface BaseConversion {
     convert: VoidFunction;
 }
 

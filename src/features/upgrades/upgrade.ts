@@ -46,7 +46,7 @@ export interface UpgradeOptions {
     onPurchase?: VoidFunction;
 }
 
-interface BaseUpgrade extends Persistent<boolean> {
+export interface BaseUpgrade extends Persistent<boolean> {
     id: string;
     bought: Ref<boolean>;
     canPurchase: Ref<boolean>;

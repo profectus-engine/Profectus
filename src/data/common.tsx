@@ -35,7 +35,7 @@ export interface ResetButtonOptions extends ClickableOptions {
     canClick?: Computable<boolean>;
 }
 
-type ResetButton<T extends ResetButtonOptions> = Replace<
+export type ResetButton<T extends ResetButtonOptions> = Replace<
     Clickable<T>,
     {
         resetDescription: GetComputableTypeWithDefault<T["resetDescription"], Ref<string>>;

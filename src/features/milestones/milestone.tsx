@@ -56,7 +56,7 @@ export interface MilestoneOptions {
     onComplete?: VoidFunction;
 }
 
-interface BaseMilestone extends Persistent<boolean> {
+export interface BaseMilestone extends Persistent<boolean> {
     id: string;
     earned: Ref<boolean>;
     type: typeof MilestoneType;

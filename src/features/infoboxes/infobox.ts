@@ -33,7 +33,7 @@ export interface InfoboxOptions {
     display: Computable<CoercableComponent>;
 }
 
-interface BaseInfobox extends Persistent<boolean> {
+export interface BaseInfobox extends Persistent<boolean> {
     id: string;
     collapsed: Ref<boolean>;
     type: typeof InfoboxType;

@@ -26,7 +26,7 @@ import {
 
 export const BuyableType = Symbol("Buyable");
 
-type BuyableDisplay =
+export type BuyableDisplay =
     | CoercableComponent
     | {
           title?: CoercableComponent;
@@ -48,7 +48,7 @@ export interface BuyableOptions {
     onPurchase?: (cost: DecimalSource) => void;
 }
 
-interface BaseBuyable extends Persistent<DecimalSource> {
+export interface BaseBuyable extends Persistent<DecimalSource> {
     id: string;
     amount: Ref<DecimalSource>;
     maxed: Ref<boolean>;

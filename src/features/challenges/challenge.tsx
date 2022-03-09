@@ -55,7 +55,7 @@ export interface ChallengeOptions {
     onEnter?: VoidFunction;
 }
 
-interface BaseChallenge {
+export interface BaseChallenge {
     id: string;
     completions: PersistentRef<DecimalSource>;
     completed: Ref<boolean>;

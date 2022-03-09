@@ -22,7 +22,7 @@ export interface HotkeyOptions {
     onPress: VoidFunction;
 }
 
-interface BaseHotkey {
+export interface BaseHotkey {
     type: typeof HotkeyType;
 }
 

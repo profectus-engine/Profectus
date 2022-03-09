@@ -1,4 +1,4 @@
-interface ThemeVars {
+export interface ThemeVars {
     "--foreground": string;
     "--background": string;
     "--feature-foreground": string;
