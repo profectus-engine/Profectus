@@ -12,7 +12,7 @@ import Decimal from "lib/break_eternity";
 import { Computable, GetComputableType, processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { Unsubscribe } from "nanoevents";
-import { computed, isRef, unref } from "vue";
+import { isRef, unref } from "vue";
 
 export const ResetType = Symbol("Reset");
 
@@ -66,19 +66,6 @@ export function createReset<T extends ResetOptions>(
         processComputable(reset as T, "thingsToReset");
 
         return reset as unknown as Reset<T>;
-    });
-}
-
-export function setupAutoReset(
-    layer: GenericLayer,
-    reset: GenericReset,
-    autoActive: Computable<boolean> = true
-): Unsubscribe {
-    const isActive = typeof autoActive === "function" ? computed(autoActive) : autoActive;
-    return layer.on("update", () => {
-        if (unref(isActive)) {
-            reset.reset();
-        }
     });
 }
 
