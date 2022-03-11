@@ -42,6 +42,8 @@ export function trackTotal(resource: Resource): Ref<DecimalSource> {
     return total;
 }
 
+const tetra8 = new Decimal("10^^8");
+const e100 = new Decimal("1e100");
 export function trackOOMPS(
     resource: Resource,
     pointGain?: ComputedRef<DecimalSource>
@@ -52,7 +54,7 @@ export function trackOOMPS(
 
     globalBus.on("update", diff => {
         oompsMag.value = 0;
-        if (Decimal.lte(resource.value, 1e100)) {
+        if (Decimal.lte(resource.value, e100)) {
             lastPoints.value = resource.value;
             return;
         }
@@ -61,7 +63,7 @@ export function trackOOMPS(
         let prev = lastPoints.value;
         lastPoints.value = curr;
         if (Decimal.gt(curr, prev)) {
-            if (Decimal.gte(curr, "10^^8")) {
+            if (Decimal.gte(curr, tetra8)) {
                 curr = Decimal.slog(curr, 1e10);
                 prev = Decimal.slog(prev, 1e10);
                 oomps.value = curr.sub(prev).div(diff);
