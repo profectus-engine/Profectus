@@ -25,7 +25,7 @@ import {
     ProcessedComputable
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { computed, Ref, unref } from "vue";
+import { computed, Ref, unref, watch, WatchStopHandle } from "vue";
 
 export const ChallengeType = Symbol("ChallengeType");
 
@@ -62,6 +62,7 @@ export interface BaseChallenge {
     maxed: Ref<boolean>;
     active: PersistentRef<boolean>;
     toggle: VoidFunction;
+    complete: (remainInChallenge?: boolean) => void;
     type: typeof ChallengeType;
     [Component]: typeof ChallengeComponent;
     [GatherProps]: () => Record<string, unknown>;
@@ -87,7 +88,7 @@ export type GenericChallenge = Replace<
     {
         visibility: ProcessedComputable<Visibility>;
         canStart: ProcessedComputable<boolean>;
-        canComplete: ProcessedComputable<boolean>;
+        canComplete: ProcessedComputable<boolean | DecimalSource>;
         completionLimit: ProcessedComputable<DecimalSource>;
         mark: ProcessedComputable<boolean>;
     }
@@ -134,11 +135,7 @@ export function createChallenge<T extends ChallengeOptions>(
         challenge.toggle = function () {
             const genericChallenge = challenge as GenericChallenge;
             if (genericChallenge.active.value) {
-                if (
-                    genericChallenge.canComplete &&
-                    unref(genericChallenge.canComplete) &&
-                    !genericChallenge.maxed.value
-                ) {
+                if (unref(genericChallenge.canComplete) && !genericChallenge.maxed.value) {
                     let completions: boolean | DecimalSource = unref(genericChallenge.canComplete);
                     if (typeof completions === "boolean") {
                         completions = 1;
@@ -156,6 +153,30 @@ export function createChallenge<T extends ChallengeOptions>(
                 genericChallenge.reset?.reset();
                 genericChallenge.active.value = true;
                 genericChallenge.onEnter?.();
+            }
+        };
+        challenge.complete = function (remainInChallenge?: boolean) {
+            const genericChallenge = challenge as GenericChallenge;
+            let completions: boolean | DecimalSource = unref(genericChallenge.canComplete);
+            if (
+                genericChallenge.active.value &&
+                completions !== false &&
+                (completions === true || Decimal.neq(0, completions)) &&
+                !genericChallenge.maxed.value
+            ) {
+                if (typeof completions === "boolean") {
+                    completions = 1;
+                }
+                genericChallenge.completions.value = Decimal.min(
+                    Decimal.add(genericChallenge.completions.value, completions),
+                    unref(genericChallenge.completionLimit)
+                );
+                genericChallenge.onComplete?.();
+                if (remainInChallenge !== true) {
+                    genericChallenge.active.value = false;
+                    genericChallenge.onExit?.();
+                    genericChallenge.reset?.reset();
+                }
             }
         };
         processComputable(challenge as T, "visibility");
