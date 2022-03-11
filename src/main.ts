@@ -5,7 +5,7 @@ import { GenericLayer } from "./game/layers";
 import { PlayerData } from "./game/player";
 import { Settings } from "./game/settings";
 import { Transient } from "./game/state";
-import Decimal, { DecimalSource } from "./lib/break_eternity";
+import Decimal, { DecimalSource } from "./util/bignum";
 import { load } from "./util/save";
 
 document.title = projInfo.title;

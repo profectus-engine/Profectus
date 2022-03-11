@@ -206,7 +206,7 @@ export function setupPassiveGeneration(
     conversion: GenericConversion,
     rate: ProcessedComputable<DecimalSource> = 1
 ): void {
-    layer.on("preUpdate", (diff: Decimal) => {
+    layer.on("preUpdate", diff => {
         const currRate = isRef(rate) ? rate.value : rate;
         if (Decimal.neq(currRate, 0)) {
             conversion.gainResource.value = Decimal.add(

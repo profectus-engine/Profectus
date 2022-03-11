@@ -1,7 +1,6 @@
 import projInfo from "data/projInfo.json";
 import player, { Player, PlayerData, stringifySave } from "game/player";
 import settings, { loadSettings } from "game/settings";
-import Decimal from "./bignum";
 import { ProxyState } from "./proxies";
 
 export function setupInitialStore(player: Partial<PlayerData> = {}): Player {
@@ -13,8 +12,8 @@ export function setupInitialStore(player: Partial<PlayerData> = {}): Player {
             time: Date.now(),
             autosave: true,
             offlineProd: true,
-            offlineTime: new Decimal(0),
-            timePlayed: new Decimal(0),
+            offlineTime: 0,
+            timePlayed: 0,
             keepGoing: false,
             modID: projInfo.id,
             modVersion: projInfo.versionNumber,
@@ -85,11 +84,8 @@ export async function loadSave(playerObj: Partial<PlayerData>): Promise<void> {
 
     playerObj = setupInitialStore(playerObj);
     if (playerObj.offlineProd && playerObj.time) {
-        if (playerObj.offlineTime == undefined) playerObj.offlineTime = new Decimal(0);
-        playerObj.offlineTime = Decimal.add(
-            playerObj.offlineTime,
-            (Date.now() - playerObj.time) / 1000
-        );
+        if (playerObj.offlineTime == undefined) playerObj.offlineTime = 0;
+        playerObj.offlineTime += (Date.now() - playerObj.time) / 1000;
     }
     playerObj.time = Date.now();
     if (playerObj.modVersion !== projInfo.versionNumber) {

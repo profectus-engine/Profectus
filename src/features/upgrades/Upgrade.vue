@@ -31,7 +31,7 @@ import MarkNode from "components/MarkNode.vue";
 import { jsx, StyleValue, Visibility } from "features/feature";
 import { displayResource, Resource } from "features/resources/resource";
 import { GenericUpgrade } from "features/upgrades/upgrade";
-import { DecimalSource } from "lib/break_eternity";
+import { DecimalSource } from "util/bignum";
 import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "util/vue";
 import {
     Component,

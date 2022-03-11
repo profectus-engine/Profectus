@@ -1,4 +1,4 @@
-import Decimal, { DecimalSource } from "util/bignum";
+import Decimal from "util/bignum";
 import { isPlainObject } from "util/common";
 import { ProxiedWithState, ProxyPath, ProxyState } from "util/proxies";
 import { reactive, unref } from "vue";
@@ -6,14 +6,14 @@ import transientState from "./state";
 
 export interface PlayerData {
     id: string;
-    devSpeed: DecimalSource | null;
+    devSpeed: number | null;
     name: string;
     tabs: Array<string>;
     time: number;
     autosave: boolean;
     offlineProd: boolean;
-    offlineTime: DecimalSource | null;
-    timePlayed: DecimalSource;
+    offlineTime: number | null;
+    timePlayed: number;
     keepGoing: boolean;
     modID: string;
     modVersion: string;
@@ -31,7 +31,7 @@ const state = reactive<PlayerData>({
     autosave: true,
     offlineProd: true,
     offlineTime: null,
-    timePlayed: new Decimal(0),
+    timePlayed: 0,
     keepGoing: false,
     modID: "",
     modVersion: "",

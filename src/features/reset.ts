@@ -8,7 +8,7 @@ import {
     PersistentRef,
     PersistentState
 } from "game/persistence";
-import Decimal from "lib/break_eternity";
+import Decimal from "util/bignum";
 import { Computable, GetComputableType, processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { Unsubscribe } from "nanoevents";
@@ -72,7 +72,7 @@ export function createReset<T extends ResetOptions>(
 const listeners: Record<string, Unsubscribe | undefined> = {};
 export function trackResetTime(layer: GenericLayer, reset: GenericReset): PersistentRef<Decimal> {
     const resetTime = persistent<Decimal>(new Decimal(0));
-    listeners[layer.id] = layer.on("preUpdate", (diff: Decimal) => {
+    listeners[layer.id] = layer.on("preUpdate", diff => {
         resetTime.value = Decimal.add(resetTime.value, diff);
     });
     globalBus.on("reset", currentReset => {

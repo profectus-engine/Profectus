@@ -11,7 +11,6 @@ import {
 } from "features/feature";
 import { globalBus } from "game/events";
 import { State, Persistent, makePersistent, PersistentState } from "game/persistence";
-import Decimal, { DecimalSource } from "lib/break_eternity";
 import { isFunction } from "util/common";
 import {
     Computable,
@@ -85,7 +84,7 @@ export interface NodeTypeOptions {
     actionDistance?: NodeComputable<number>;
     onClick?: (node: BoardNode) => void;
     onDrop?: (node: BoardNode, otherNode: BoardNode) => void;
-    update?: (node: BoardNode, diff: DecimalSource) => void;
+    update?: (node: BoardNode, diff: number) => void;
 }
 
 export interface BaseNodeType {
@@ -348,7 +347,7 @@ export function getUniqueNodeID(board: GenericBoard): number {
 const listeners: Record<string, Unsubscribe | undefined> = {};
 globalBus.on("addLayer", layer => {
     const boards: GenericBoard[] = findFeatures(layer, BoardType) as GenericBoard[];
-    listeners[layer.id] = layer.on("postUpdate", (diff: Decimal) => {
+    listeners[layer.id] = layer.on("postUpdate", diff => {
         boards.forEach(board => {
             Object.values(board.types).forEach(type =>
                 type.nodes.value.forEach(node => type.update?.(node, diff))

@@ -14,8 +14,7 @@ import { displayResource, Resource } from "features/resources/resource";
 import { Tooltip } from "features/tooltip";
 import TreeComponent from "features/trees/Tree.vue";
 import { persistent } from "game/persistence";
-import { DecimalSource, format } from "util/bignum";
-import Decimal, { formatWhole } from "util/break_eternity";
+import Decimal, { DecimalSource, format, formatWhole } from "util/bignum";
 import {
     Computable,
     convertComputable,

@@ -8,7 +8,6 @@ import {
     StyleValue
 } from "features/feature";
 import { Link } from "features/links";
-import Decimal from "util/bignum";
 import {
     Computable,
     GetComputableType,
@@ -25,11 +24,11 @@ import player from "./player";
 
 export interface LayerEvents {
     // Generation
-    preUpdate: (diff: Decimal) => void;
+    preUpdate: (diff: number) => void;
     // Actions (e.g. automation)
-    update: (diff: Decimal) => void;
+    update: (diff: number) => void;
     // Effects (e.g. milestones)
-    postUpdate: (diff: Decimal) => void;
+    postUpdate: (diff: number) => void;
 }
 
 export const layers: Record<string, Readonly<GenericLayer> | undefined> = {};

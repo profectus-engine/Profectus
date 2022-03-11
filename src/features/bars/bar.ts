@@ -9,7 +9,7 @@ import {
     StyleValue,
     Visibility
 } from "features/feature";
-import { DecimalSource } from "lib/break_eternity";
+import { DecimalSource } from "util/bignum";
 import {
     Computable,
     GetComputableType,
