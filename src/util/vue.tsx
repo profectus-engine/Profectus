@@ -14,6 +14,7 @@ import {
     DefineComponent,
     defineComponent,
     isRef,
+    onUnmounted,
     PropType,
     ref,
     Ref,
@@ -112,6 +113,8 @@ export function setupHoldToClick(
             onClick.value();
         }
     }
+
+    onUnmounted(stop);
 
     return { start, stop, handleHolding };
 }
