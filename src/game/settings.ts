@@ -24,7 +24,10 @@ const state = reactive<Partial<Settings>>({
 watch(
     state,
     state =>
-        localStorage.setItem(projInfo.id, btoa(unescape(encodeURIComponent(JSON.stringify(state))))),
+        localStorage.setItem(
+            projInfo.id,
+            btoa(unescape(encodeURIComponent(JSON.stringify(state))))
+        ),
     { deep: true }
 );
 export default window.settings = state as Settings;
@@ -56,7 +59,11 @@ export const hardResetSettings = (window.hardResetSettings = () => {
 });
 
 export const settingFields: CoercableComponent[] = reactive([]);
-
 export function registerSettingField(component: CoercableComponent) {
     settingFields.push(component);
+}
+
+export const infoComponents: CoercableComponent[] = reactive([]);
+export function registerInfoComponent(component: CoercableComponent) {
+    infoComponents.push(component);
 }

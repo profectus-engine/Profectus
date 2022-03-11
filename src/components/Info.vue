@@ -44,17 +44,21 @@
                 </div>
                 <br />
                 <div>Time Played: {{ timePlayed }}</div>
+                <component :is="infoComponent" />
             </div>
         </template>
     </Modal>
 </template>
 
-<script setup lang="ts">
+<script setup lang="tsx">
 import Modal from "components/Modal.vue";
 import type Changelog from "data/Changelog.vue";
 import projInfo from "data/projInfo.json";
+import { jsx } from "features/feature";
 import player from "game/player";
+import { infoComponents } from "game/settings";
 import { formatTime } from "util/bignum";
+import { coerceComponent, render } from "util/vue";
 import { computed, ref, toRefs, unref } from "vue";
 
 const { title, logo, author, discordName, discordLink, versionNumber, versionTitle } = projInfo;
@@ -65,6 +69,10 @@ const props = toRefs(_props);
 const isOpen = ref(false);
 
 const timePlayed = computed(() => formatTime(player.timePlayed));
+
+const infoComponent = computed(() => {
+    return coerceComponent(jsx(() => <>{infoComponents.map(render)}</>));
+});
 
 defineExpose({
     open() {

@@ -1,6 +1,7 @@
 import { hasWon } from "data/projEntry";
 import { globalBus } from "game/events";
 import player from "game/player";
+import { registerInfoComponent } from "game/settings";
 import {
     Computable,
     GetComputableTypeWithDefault,
@@ -9,10 +10,10 @@ import {
     processComputable
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { unref } from "vue";
-import { findFeatures, Replace, setDefault } from "./feature";
+import { shallowReactive, unref } from "vue";
+import { findFeatures, jsx, Replace, setDefault } from "./feature";
 
-export const hotkeys: Record<string, GenericHotkey | undefined> = {};
+export const hotkeys: Record<string, GenericHotkey | undefined> = shallowReactive({});
 export const HotkeyType = Symbol("Hotkey");
 
 export interface HotkeyOptions {
@@ -88,3 +89,23 @@ document.onkeydown = function (e) {
         hotkey.onPress();
     }
 };
+
+registerInfoComponent(
+    jsx(() => {
+        const keys = Object.values(hotkeys).filter(hotkey => unref(hotkey?.enabled));
+        if (keys.length === 0) {
+            return "";
+        }
+        return (
+            <div>
+                <br />
+                <h4>Hotkeys</h4>
+                {keys.map(hotkey => (
+                    <div>
+                        {hotkey?.key}: {hotkey?.description}
+                    </div>
+                ))}
+            </div>
+        );
+    })
+);
