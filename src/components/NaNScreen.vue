@@ -21,7 +21,7 @@
             </div>
             <br />
             <Toggle title="Autosave" v-model="autosave" />
-            <Toggle title="Pause game" v-model="isPaused" />
+            <Toggle v-if="projInfo.enablePausing" title="Pause game" v-model="isPaused" />
         </template>
         <template v-slot:footer>
             <div class="nan-footer">

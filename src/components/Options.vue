@@ -13,23 +13,24 @@
             <Toggle title="Unthrottled" v-model="unthrottled" />
             <Toggle :title="offlineProdTitle" v-model="offlineProd" />
             <Toggle :title="autosaveTitle" v-model="autosave" />
-            <Toggle :title="isPausedTitle" v-model="isPaused" />
+            <Toggle v-if="projInfo.enablePausing" :title="isPausedTitle" v-model="isPaused" />
         </template>
     </Modal>
 </template>
 
 <script setup lang="tsx">
 import Modal from "components/Modal.vue";
+import projInfo from "data/projInfo.json";
 import rawThemes from "data/themes";
+import { jsx } from "features/feature";
 import player from "game/player";
 import settings, { settingFields } from "game/settings";
 import { camelToTitle } from "util/common";
-import { computed, ref, toRefs } from "vue";
-import Toggle from "./fields/Toggle.vue";
-import Select from "./fields/Select.vue";
-import Tooltip from "./Tooltip.vue";
-import { jsx } from "features/feature";
 import { coerceComponent, render } from "util/vue";
+import { computed, ref, toRefs } from "vue";
+import Select from "./fields/Select.vue";
+import Toggle from "./fields/Toggle.vue";
+import Tooltip from "./Tooltip.vue";
 
 const isOpen = ref(false);
 
