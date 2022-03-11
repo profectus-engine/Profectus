@@ -272,6 +272,19 @@ export function createChallenge<T extends ChallengeOptions>(
     });
 }
 
+export function setupAutoComplete(
+    challenge: GenericChallenge,
+    autoActive: Computable<boolean> = true,
+    exitOnComplete = true
+): WatchStopHandle {
+    const isActive = typeof autoActive === "function" ? computed(autoActive) : autoActive;
+    return watch([challenge.canComplete, isActive], ([canComplete, isActive]) => {
+        if (canComplete && isActive) {
+            challenge.complete(!exitOnComplete);
+        }
+    });
+}
+
 declare module "game/settings" {
     interface Settings {
         hideChallenges: boolean;
