@@ -68,7 +68,7 @@ export type Buyable<T extends BuyableOptions> = Replace<
         cost: GetComputableType<T["cost"]>;
         resource: GetComputableType<T["resource"]>;
         canPurchase: GetComputableTypeWithDefault<T["canPurchase"], Ref<boolean>>;
-        purchaseLimit: GetComputableTypeWithDefault<T["purchaseLimit"], 1>;
+        purchaseLimit: GetComputableTypeWithDefault<T["purchaseLimit"], Decimal>;
         classes: GetComputableType<T["classes"]>;
         style: GetComputableType<T["style"]>;
         mark: GetComputableType<T["mark"]>;
@@ -172,6 +172,16 @@ export function createBuyable<T extends BuyableOptions>(
                 const Title = coerceComponent(currDisplay.title || "", "h3");
                 const Description = coerceComponent(currDisplay.description);
                 const EffectDisplay = coerceComponent(currDisplay.effectDisplay || "");
+                const amountDisplay =
+                    unref(genericBuyable.purchaseLimit) === Decimal.dInf ? (
+                        <>Amount: {formatWhole(genericBuyable.amount.value)}</>
+                    ) : (
+                        <>
+                            Amount: {formatWhole(genericBuyable.amount.value)} /{" "}
+                            {formatWhole(unref(genericBuyable.purchaseLimit))}
+                        </>
+                    );
+
                 return (
                     <span>
                         {currDisplay.title ? (
@@ -182,8 +192,7 @@ export function createBuyable<T extends BuyableOptions>(
                         <Description />
                         <div>
                             <br />
-                            Amount: {formatWhole(genericBuyable.amount.value)} /{" "}
-                            {formatWhole(unref(genericBuyable.purchaseLimit))}
+                            {amountDisplay}
                         </div>
                         {currDisplay.effectDisplay ? (
                             <div>
@@ -209,7 +218,7 @@ export function createBuyable<T extends BuyableOptions>(
         processComputable(buyable as T, "cost");
         processComputable(buyable as T, "resource");
         processComputable(buyable as T, "purchaseLimit");
-        setDefault(buyable, "purchaseLimit", 1);
+        setDefault(buyable, "purchaseLimit", Decimal.dInf);
         processComputable(buyable as T, "style");
         processComputable(buyable as T, "mark");
         processComputable(buyable as T, "small");
