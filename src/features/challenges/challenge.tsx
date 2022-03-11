@@ -1,3 +1,4 @@
+import { isArray } from "@vue/shared";
 import Toggle from "components/fields/Toggle.vue";
 import ChallengeComponent from "features/challenges/Challenge.vue";
 import {
@@ -94,12 +95,6 @@ export type GenericChallenge = Replace<
     }
 >;
 
-export function createActiveChallenge(
-    challenges: GenericChallenge[]
-): Ref<GenericChallenge | undefined> {
-    return computed(() => challenges.find(challenge => challenge.active.value));
-}
-
 export function createChallenge<T extends ChallengeOptions>(
     optionsFunc: () => T & ThisType<Challenge<T>>
 ): Challenge<T> {
@@ -149,7 +144,11 @@ export function createChallenge<T extends ChallengeOptions>(
                 genericChallenge.active.value = false;
                 genericChallenge.onExit?.();
                 genericChallenge.reset?.reset();
-            } else if (unref(genericChallenge.canStart)) {
+            } else if (
+                unref(genericChallenge.canStart) &&
+                unref(genericChallenge.visibility) === Visibility.Visible &&
+                !genericChallenge.maxed.value
+            ) {
                 genericChallenge.reset?.reset();
                 genericChallenge.active.value = true;
                 genericChallenge.onEnter?.();
@@ -188,16 +187,6 @@ export function createChallenge<T extends ChallengeOptions>(
             }
             return unref(visibility);
         });
-        if (challenge.canStart == null) {
-            challenge.canStart = computed(
-                () =>
-                    unref((challenge as GenericChallenge).visibility) === Visibility.Visible &&
-                    Decimal.lt(
-                        (challenge as GenericChallenge).completions.value,
-                        unref((challenge as GenericChallenge).completionLimit)
-                    )
-            );
-        }
         if (challenge.canComplete == null) {
             challenge.canComplete = computed(() => {
                 const genericChallenge = challenge as GenericChallenge;
@@ -283,6 +272,21 @@ export function setupAutoComplete(
             challenge.complete(!exitOnComplete);
         }
     });
+}
+
+export function createActiveChallenge(
+    challenges: GenericChallenge[]
+): Ref<GenericChallenge | undefined> {
+    return computed(() => challenges.find(challenge => challenge.active.value));
+}
+
+export function isAnyChallengeActive(
+    challenges: GenericChallenge[] | Ref<GenericChallenge | undefined>
+): Ref<boolean> {
+    if (isArray(challenges)) {
+        challenges = createActiveChallenge(challenges);
+    }
+    return computed(() => (challenges as Ref<GenericChallenge | undefined>).value != null);
 }
 
 declare module "game/settings" {
