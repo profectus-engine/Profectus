@@ -59,6 +59,7 @@ export interface MilestoneOptions {
 export interface BaseMilestone extends Persistent<boolean> {
     id: string;
     earned: Ref<boolean>;
+    complete: VoidFunction;
     type: typeof MilestoneType;
     [Component]: typeof MilestoneComponent;
     [GatherProps]: () => Record<string, unknown>;
@@ -92,6 +93,10 @@ export function createMilestone<T extends MilestoneOptions>(
         milestone[Component] = MilestoneComponent;
 
         milestone.earned = milestone[PersistentState];
+        milestone.complete = function () {
+            milestone[PersistentState].value = true;
+        };
+
         processComputable(milestone as T, "visibility");
         setDefault(milestone, "visibility", Visibility.Visible);
         const visibility = milestone.visibility as ProcessedComputable<Visibility>;
