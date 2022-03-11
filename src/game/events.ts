@@ -1,7 +1,7 @@
 import projInfo from "data/projInfo.json";
 import Decimal from "util/bignum";
 import { createNanoEvents } from "nanoevents";
-import { App, Ref } from "vue";
+import { App, Ref, watch } from "vue";
 import { GenericLayer } from "./layers";
 import player from "./player";
 import settings, { Settings } from "./settings";
@@ -12,6 +12,7 @@ export interface GlobalEvents {
     removeLayer: (layer: GenericLayer) => void;
     update: (diff: number, trueDiff: number) => void;
     loadSettings: (settings: Partial<Settings>) => void;
+    gameWon: VoidFunction;
     setupVue: (vue: App) => void;
 }
 
@@ -102,6 +103,11 @@ function update() {
 
 export async function startGameLoop() {
     hasWon = (await import("data/projEntry")).hasWon;
+    watch(hasWon, hasWon => {
+        if (hasWon) {
+            globalBus.emit("gameWon");
+        }
+    });
     if (settings.unthrottled) {
         requestAnimationFrame(update);
     } else {
