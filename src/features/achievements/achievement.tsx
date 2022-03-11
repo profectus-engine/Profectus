@@ -2,7 +2,6 @@ import AchievementComponent from "features/achievements/Achievement.vue";
 import {
     CoercableComponent,
     Component,
-    findFeatures,
     GatherProps,
     getUniqueID,
     Replace,
@@ -10,7 +9,6 @@ import {
     StyleValue,
     Visibility
 } from "features/feature";
-import { globalBus } from "game/events";
 import "game/notifications";
 import { Persistent, makePersistent, PersistentState } from "game/persistence";
 import {
@@ -22,15 +20,16 @@ import {
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { coerceComponent } from "util/vue";
-import { Unsubscribe } from "nanoevents";
-import { Ref, unref } from "vue";
+import { Ref, unref, watchEffect } from "vue";
 import { useToast } from "vue-toastification";
+
+const toast = useToast();
 
 export const AchievementType = Symbol("Achievement");
 
 export interface AchievementOptions {
     visibility?: Computable<Visibility>;
-    shouldEarn?: Computable<boolean>;
+    shouldEarn?: () => boolean;
     display?: Computable<CoercableComponent>;
     mark?: Computable<boolean | string>;
     image?: Computable<string>;
@@ -52,7 +51,6 @@ export type Achievement<T extends AchievementOptions> = Replace<
     T & BaseAchievement,
     {
         visibility: GetComputableTypeWithDefault<T["visibility"], Visibility.Visible>;
-        shouldEarn: GetComputableType<T["shouldEarn"]>;
         display: GetComputableType<T["display"]>;
         mark: GetComputableType<T["mark"]>;
         image: GetComputableType<T["image"]>;
@@ -85,7 +83,6 @@ export function createAchievement<T extends AchievementOptions>(
 
         processComputable(achievement as T, "visibility");
         setDefault(achievement, "visibility", Visibility.Visible);
-        processComputable(achievement as T, "shouldEarn");
         processComputable(achievement as T, "display");
         processComputable(achievement as T, "mark");
         processComputable(achievement as T, "image");
@@ -97,29 +94,18 @@ export function createAchievement<T extends AchievementOptions>(
             return { visibility, display, earned, image, style, classes, mark, id };
         };
 
-        return achievement as unknown as Achievement<T>;
-    });
-}
-
-const toast = useToast();
-
-const listeners: Record<string, Unsubscribe | undefined> = {};
-globalBus.on("addLayer", layer => {
-    const achievements: GenericAchievement[] = (
-        findFeatures(layer, AchievementType) as GenericAchievement[]
-    ).filter(ach => ach.shouldEarn != null);
-    if (achievements.length) {
-        listeners[layer.id] = layer.on("postUpdate", () => {
-            achievements.forEach(achievement => {
+        if (achievement.shouldEarn) {
+            const genericAchievement = achievement as GenericAchievement;
+            watchEffect(() => {
                 if (
-                    unref(achievement.visibility) === Visibility.Visible &&
-                    !unref(achievement.earned) &&
-                    unref(achievement.shouldEarn)
+                    !genericAchievement.earned.value &&
+                    unref(genericAchievement.visibility) === Visibility.Visible &&
+                    genericAchievement.shouldEarn?.()
                 ) {
-                    achievement[PersistentState].value = true;
-                    achievement.onComplete?.();
-                    if (achievement.display) {
-                        const Display = coerceComponent(unref(achievement.display));
+                    genericAchievement.earned.value = true;
+                    genericAchievement.onComplete?.();
+                    if (genericAchievement.display) {
+                        const Display = coerceComponent(unref(genericAchievement.display));
                         toast.info(
                             <div>
                                 <h3>Achievement earned!</h3>
@@ -133,11 +119,8 @@ globalBus.on("addLayer", layer => {
                     }
                 }
             });
-        });
-    }
-});
-globalBus.on("removeLayer", layer => {
-    // unsubscribe from postUpdate
-    listeners[layer.id]?.();
-    listeners[layer.id] = undefined;
-});
+        }
+
+        return achievement as unknown as Achievement<T>;
+    });
+}
