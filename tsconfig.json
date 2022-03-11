@@ -44,6 +44,6 @@
       "includeVersion": true,
       "categorizeByGroup": false,
       "readme": "none",
-      "out": "../api"
+      "out": "../docs/api"
   }
 }
