@@ -19,10 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **BREAKING** Buyables now default to an infinite purchase limit
 - **BREAKING** devSpeed, playedTime, offlineTime, and diff now use numbers instead of Decimals
+- **BREAKING** Achievements and milestones now use watchEffect to check for completion, instead of polling each tick. shouldEarn properties now only accept functions
 - Cached more decimal values for optimization
 ### Fixed
 - Many types not being exported
-- Achievements and milestones now use watchEffect to check for completion, instead of polling each tick
 - setupHoldToClick wouldn't stop clicking after a component is unmounted
 - Header's banner would not have correct width
 ### Removed
