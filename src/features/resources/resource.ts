@@ -1,5 +1,5 @@
 import Decimal, { DecimalSource, format, formatWhole } from "util/bignum";
-import { computed, ComputedRef, ref, Ref, watch } from "vue";
+import { computed, ComputedRef, isRef, ref, Ref, watch } from "vue";
 import { globalBus } from "game/events";
 import { State, persistent } from "game/persistence";
 
@@ -15,7 +15,9 @@ export function createResource<T extends State>(
     precision = 0,
     small = undefined
 ): Resource<T> {
-    const resource: Partial<Resource<T>> = persistent(defaultValue);
+    const resource: Partial<Resource<T>> = isRef(defaultValue)
+        ? defaultValue
+        : persistent(defaultValue);
     resource.displayName = displayName;
     resource.precision = precision;
     resource.small = small;
