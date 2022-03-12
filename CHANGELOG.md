@@ -6,7 +6,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.3] - 2022-03-05
+## [0.1.3] - 2022-03-11
+### Added
+- Milestone.complete
+- Challenge.complete
+- setupAutoClick function to run a clickable's onClick every tick
+- setupAutoComplete function to attempt to complete a challenge every tick
+- isAnyChallengeActive function to query if any challenge from a given list is active
+- Hotkeys now appear in info modal, if any exist
+- projInfo.json now includes a "enablePausing" option that can be used to prevent the player from pausing the game
+- Added a "gameWon" global event
+### Changed
+- **BREAKING** Buyables now default to an infinite purchase limit
+- **BREAKING** devSpeed, playedTime, offlineTime, and diff now use numbers instead of Decimals
+- Cached more decimal values for optimization
+### Fixed
+- Many types not being exported
+- Achievements and milestones now use watchEffect to check for completion, instead of polling each tick
+- setupHoldToClick wouldn't stop clicking after a component is unmounted
+- Header's banner would not have correct width
+### Removed
+- **BREAKING** Removed setupAutoReset
+### Documentation
+- Support for documentation generation using typedoc
+- Hide main layer from docs
+- Hide prestige layer from docs
+- Use stub declaration files for libs that don't provide types (vue-panzoom and vue-textarea-autosize)
+
+## [0.1.2] - 2022-03-05
 ### Changed
 - **BREAKING** Removed "@" path alias, and used baseUrl instead
 - **BREAKING** Renamed createExponentialScaling to createPolynomialScaling and removed coefficient parameter
