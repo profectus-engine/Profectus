@@ -87,7 +87,7 @@ export function createClickable<T extends ClickableOptions>(
         processComputable(clickable as T, "display");
 
         if (clickable.onClick) {
-            const onClick = clickable.onClick;
+            const onClick = clickable.onClick.bind(clickable);
             clickable.onClick = function () {
                 if (unref(clickable.canClick)) {
                     onClick();
@@ -95,7 +95,7 @@ export function createClickable<T extends ClickableOptions>(
             };
         }
         if (clickable.onHold) {
-            const onHold = clickable.onHold;
+            const onHold = clickable.onHold.bind(clickable);
             clickable.onHold = function () {
                 if (unref(clickable.canClick)) {
                     onHold();

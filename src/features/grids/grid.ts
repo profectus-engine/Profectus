@@ -279,7 +279,7 @@ export function createGrid<T extends GridOptions>(
         processComputable(grid as T, "getDisplay");
 
         if (grid.onClick) {
-            const onClick = grid.onClick;
+            const onClick = grid.onClick.bind(grid);
             grid.onClick = function (id, state) {
                 if (unref((grid as GenericGrid).cells[id].canClick)) {
                     onClick(id, state);
@@ -287,7 +287,7 @@ export function createGrid<T extends GridOptions>(
             };
         }
         if (grid.onHold) {
-            const onHold = grid.onHold;
+            const onHold = grid.onHold.bind(grid);
             grid.onHold = function (id, state) {
                 if (unref((grid as GenericGrid).cells[id].canClick)) {
                     onHold(id, state);

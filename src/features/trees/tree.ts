@@ -101,7 +101,7 @@ export function createTreeNode<T extends TreeNodeOptions>(
         processComputable(treeNode as T, "mark");
 
         if (treeNode.onClick) {
-            const onClick = treeNode.onClick;
+            const onClick = treeNode.onClick.bind(treeNode);
             treeNode.onClick = function () {
                 if (unref(treeNode.canClick)) {
                     onClick();
@@ -109,7 +109,7 @@ export function createTreeNode<T extends TreeNodeOptions>(
             };
         }
         if (treeNode.onHold) {
-            const onHold = treeNode.onHold;
+            const onHold = treeNode.onHold.bind(treeNode);
             treeNode.onHold = function () {
                 if (unref(treeNode.canClick)) {
                     onHold();
