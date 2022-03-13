@@ -18,6 +18,7 @@ import {
     ProcessedComputable
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
+import { unref } from "vue";
 
 export const BarType = Symbol("Bar");
 
@@ -124,7 +125,7 @@ export function createBar<T extends BarOptions>(optionsFunc: () => T & ThisType<
                 direction,
                 display,
                 visibility,
-                style,
+                style: unref(style),
                 classes,
                 borderStyle,
                 textStyle,

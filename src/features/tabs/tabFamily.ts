@@ -145,7 +145,7 @@ export function createTabFamily<T extends TabFamilyOptions>(
 
         tabFamily[GatherProps] = function (this: GenericTabFamily) {
             const { visibility, activeTab, selected, tabs, style, classes } = this;
-            return { visibility, activeTab, selected, tabs, style, classes };
+            return { visibility, activeTab, selected, tabs, style: unref(style), classes };
         };
 
         // This is necessary because board.types is different from T and TabFamily

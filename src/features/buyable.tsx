@@ -226,7 +226,17 @@ export function createBuyable<T extends BuyableOptions>(
         buyable[GatherProps] = function (this: GenericBuyable) {
             const { display, visibility, style, classes, onClick, canClick, small, mark, id } =
                 this;
-            return { display, visibility, style, classes, onClick, canClick, small, mark, id };
+            return {
+                display,
+                visibility,
+                style: unref(style),
+                classes,
+                onClick,
+                canClick,
+                small,
+                mark,
+                id
+            };
         };
 
         return buyable as unknown as Buyable<T>;

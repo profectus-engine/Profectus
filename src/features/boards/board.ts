@@ -316,7 +316,7 @@ export function createBoard<T extends BoardOptions>(
                 visibility,
                 width,
                 height,
-                style,
+                style: unref(style),
                 classes,
                 links,
                 selectedAction,

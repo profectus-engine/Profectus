@@ -134,7 +134,7 @@ export function createMilestone<T extends MilestoneOptions>(
 
         milestone[GatherProps] = function (this: GenericMilestone) {
             const { visibility, display, style, classes, earned, id } = this;
-            return { visibility, display, style, classes, earned, id };
+            return { visibility, display, style: unref(style), classes, earned, id };
         };
 
         if (milestone.shouldEarn) {

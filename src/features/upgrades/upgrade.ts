@@ -154,7 +154,7 @@ export function createUpgrade<T extends UpgradeOptions>(
             return {
                 display,
                 visibility,
-                style,
+                style: unref(style),
                 classes,
                 resource,
                 cost,

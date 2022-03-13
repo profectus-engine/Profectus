@@ -119,7 +119,7 @@ export function createClickable<T extends ClickableOptions>(
             return {
                 display,
                 visibility,
-                style,
+                style: unref(style),
                 classes,
                 onClick,
                 onHold,

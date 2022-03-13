@@ -247,7 +247,7 @@ export function createChallenge<T extends ChallengeOptions>(
                 canComplete,
                 display,
                 visibility,
-                style,
+                style: unref(style),
                 classes,
                 completed,
                 canStart,

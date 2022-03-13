@@ -91,7 +91,7 @@ export function createAchievement<T extends AchievementOptions>(
 
         achievement[GatherProps] = function (this: GenericAchievement) {
             const { visibility, display, earned, image, style, classes, mark, id } = this;
-            return { visibility, display, earned, image, style, classes, mark, id };
+            return { visibility, display, earned, image, style: unref(style), classes, mark, id };
         };
 
         if (achievement.shouldEarn) {
