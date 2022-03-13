@@ -1,31 +1,30 @@
 <template>
-    <div
+    <button
         v-if="unref(visibility) !== Visibility.None"
-        :style="{ visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined }"
+        :style="[
+            { visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined },
+            unref(style) ?? []
+        ]"
+        @click="onClick"
+        @mousedown="start"
+        @mouseleave="stop"
+        @mouseup="stop"
+        @touchstart="start"
+        @touchend="stop"
+        @touchcancel="stop"
+        :class="{
+            feature: true,
+            clickable: true,
+            can: unref(canClick),
+            locked: !unref(canClick),
+            small,
+            ...unref(classes)
+        }"
     >
-        <button
-            :style="unref(style)"
-            @click="onClick"
-            @mousedown="start"
-            @mouseleave="stop"
-            @mouseup="stop"
-            @touchstart="start"
-            @touchend="stop"
-            @touchcancel="stop"
-            :class="{
-                feature: true,
-                clickable: true,
-                can: unref(canClick),
-                locked: !unref(canClick),
-                small,
-                ...unref(classes)
-            }"
-        >
-            <component v-if="unref(comp)" :is="unref(comp)" />
-            <MarkNode :mark="unref(mark)" />
-            <LinkNode :id="id" />
-        </button>
-    </div>
+        <component v-if="unref(comp)" :is="unref(comp)" />
+        <MarkNode :mark="unref(mark)" />
+        <LinkNode :id="id" />
+    </button>
 </template>
 
 <script lang="tsx">
