@@ -7,6 +7,8 @@
     margin: var(--feature-margin);
     box-sizing: border-box;
     color: var(--feature-foreground);
+    z-index: 0;
+    transition: all 0.5s, z-index 0s 0.5s;
 }
 
 .can,
@@ -20,6 +22,7 @@
     transform: scale(1.15, 1.15);
     box-shadow: 0 0 20px var(--points);
     z-index: 1;
+    transition: all 0.5s, z-index 0s;
 }
 
 .locked,
