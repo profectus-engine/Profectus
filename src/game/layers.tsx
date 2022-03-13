@@ -89,14 +89,18 @@ export type GenericLayer = Replace<
     }
 >;
 
-export function createLayer<T extends LayerOptions>(optionsFunc: () => T): Layer<T> {
+export function createLayer<T extends LayerOptions>(
+    optionsFunc: (() => T) & ThisType<BaseLayer>
+): Layer<T> {
     return createLazyProxy(() => {
-        const layer = optionsFunc() as T & Partial<BaseLayer>;
+        const layer = {} as T & Partial<BaseLayer>;
         const emitter = (layer.emitter = createNanoEvents<LayerEvents>());
         layer.on = emitter.on.bind(emitter);
         layer.emit = emitter.emit.bind(emitter);
 
         layer.minimized = persistent(false);
+
+        Object.assign(layer, optionsFunc.call(layer));
 
         processComputable(layer as T, "color");
         processComputable(layer as T, "display");
