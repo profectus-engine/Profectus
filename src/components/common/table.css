@@ -34,57 +34,57 @@
 	margin: 10px 0;
 }
 
-.row.mergeAdjacent > .feature,
-.row.mergeAdjacent > .tooltip-container > .feature {
+.row.mergeAdjacent > .feature:not(.dontMerge),
+.row.mergeAdjacent > .tooltip-container > .feature:not(.dontMerge) {
     margin-left: 0;
     margin-right: 0;
     border-radius: 0;
 }
 
-.row.mergeAdjacent > .feature:first-child,
-.row.mergeAdjacent > .tooltip-container:first-child > .feature {
+.row.mergeAdjacent > .feature:not(.dontMerge):first-child,
+.row.mergeAdjacent > .tooltip-container:first-child > .feature:not(.dontMerge) {
     border-radius: var(--border-radius) 0 0 var(--border-radius);
 }
 
-.row.mergeAdjacent > .feature:last-child,
-.row.mergeAdjacent > .tooltip-container:last-child > .feature {
+.row.mergeAdjacent > .feature:not(.dontMerge):last-child,
+.row.mergeAdjacent > .tooltip-container:last-child > .feature:not(.dontMerge) {
     border-radius: 0 var(--border-radius) var(--border-radius) 0;
 }
 
-.row.mergeAdjacent > .feature:first-child:last-child,
-.row.mergeAdjacent > .tooltip-container:first-child:last-child > .feature {
+.row.mergeAdjacent > .feature:not(.dontMerge):first-child:last-child,
+.row.mergeAdjacent > .tooltip-container:first-child:last-child > .feature:not(.dontMerge) {
     border-radius: var(--border-radius);
 }
 
 /*
 TODO how to implement mergeAdjacent for grids?
-.row.mergeAdjacent + .row.mergeAdjacent > .feature {
+.row.mergeAdjacent + .row.mergeAdjacent > .feature:not(.dontMerge) {
     border-top-left-radius: 0;
     border-top-right-radius: 0;
 }
 */
 
-.col.mergeAdjacent .feature {
+.col.mergeAdjacent .feature:not(.dontMerge) {
     margin-top: 0;
     margin-bottom: 0;
     border-radius: 0;
 }
 
-.col.mergeAdjacent .feature:first-child {
+.col.mergeAdjacent .feature:not(.dontMerge):first-child {
     border-radius: var(--border-radius) var(--border-radius) 0 0;
 }
 
-.col.mergeAdjacent .feature:last-child {
+.col.mergeAdjacent .feature:not(.dontMerge):last-child {
     border-radius: 0 0 var(--border-radius) var(--border-radius);
 }
 
-.col.mergeAdjacent .feature:first-child:last-child {
+.col.mergeAdjacent .feature:not(.dontMerge):first-child:last-child {
     border-radius: var(--border-radius);
 }
 
 /*
 TODO how to implement mergeAdjacent for grids?
-.col.mergeAdjacent + .col.mergeAdjacent > .feature {
+.col.mergeAdjacent + .col.mergeAdjacent > .feature:not(.dontMerge) {
     border-top-left-radius: 0;
     border-bottom-left-radius: 0;
 }
