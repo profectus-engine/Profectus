@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2022-03-13
+### Added
+- You can now access this.on() from within a createLayer function (and other BaseLayer properties)
+- Support for passing non-persistent refs to createResource
+- dontMerge class to allow features to ignore mergeAdjacent
+### Fixed
+- Clickables would not merge adjacent
+- onClick and onHold functions would not be bound to their object when being called
+- Refs passed to a components style prop would be ignored
+- Fixed z-index issue when stopping hovering over features with .can class
+
 ## [0.1.3] - 2022-03-11
 ### Added
 - Milestone.complete
