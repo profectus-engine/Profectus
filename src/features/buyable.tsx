@@ -163,7 +163,8 @@ export function createBuyable<T extends BuyableOptions>(
             // TODO once processComputable types correctly, remove this "as X"
             const currDisplay = unref(display) as BuyableDisplay;
             if (isCoercableComponent(currDisplay)) {
-                return <currDisplay />;
+                const CurrDisplay = coerceComponent(currDisplay);
+                return <CurrDisplay />;
             }
             if (currDisplay != null && buyable.cost != null && buyable.resource != null) {
                 const genericBuyable = buyable as GenericBuyable;
