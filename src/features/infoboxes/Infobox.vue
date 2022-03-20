@@ -24,12 +24,12 @@
                 <component :is="bodyComponent" :style="unref(bodyStyle)" />
             </div>
         </CollapseTransition>
-        <LinkNode :id="id" />
+        <Node :id="id" />
     </div>
 </template>
 
 <script lang="ts">
-import LinkNode from "components/links/LinkNode.vue";
+import Node from "components/Node.vue";
 import themes from "data/themes";
 import { CoercableComponent, Visibility } from "features/feature";
 import settings from "game/settings";
@@ -66,7 +66,7 @@ export default defineComponent({
         }
     },
     components: {
-        LinkNode,
+        Node,
         CollapseTransition
     },
     setup(props) {

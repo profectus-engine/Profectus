@@ -40,7 +40,7 @@
             <div class="fill" :style="[barStyle, unref(style) ?? {}, unref(fillStyle) ?? {}]" />
         </div>
         <MarkNode :mark="unref(mark)" />
-        <LinkNode :id="id" />
+        <Node :id="id" />
     </div>
 </template>
 
@@ -50,7 +50,7 @@ import { CoercableComponent, Visibility } from "features/feature";
 import Decimal, { DecimalSource } from "util/bignum";
 import { computeOptionalComponent, processedPropType, unwrapRef } from "util/vue";
 import { computed, CSSProperties, defineComponent, StyleValue, toRefs, unref } from "vue";
-import LinkNode from "components/links/LinkNode.vue";
+import Node from "components/Node.vue";
 import MarkNode from "components/MarkNode.vue";
 
 export default defineComponent({
@@ -90,7 +90,7 @@ export default defineComponent({
     },
     components: {
         MarkNode,
-        LinkNode
+        Node
     },
     setup(props) {
         const { progress, width, height, direction, display } = toRefs(props);

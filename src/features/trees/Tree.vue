@@ -25,14 +25,16 @@
             small
         />
     </span>
+    <Links v-if="branches" :links="unref(branches)" />
 </template>
 
 <script lang="ts">
 import "components/common/table.css";
-import { GenericTreeNode } from "features/trees/tree";
+import { GenericTreeNode, TreeBranch } from "features/trees/tree";
 import { processedPropType } from "util/vue";
 import { defineComponent, unref } from "vue";
 import TreeNode from "./TreeNode.vue";
+import Links from "features/links/Links.vue";
 
 export default defineComponent({
     props: {
@@ -41,9 +43,10 @@ export default defineComponent({
             required: true
         },
         leftSideNodes: processedPropType<GenericTreeNode[]>(Array),
-        rightSideNodes: processedPropType<GenericTreeNode[]>(Array)
+        rightSideNodes: processedPropType<GenericTreeNode[]>(Array),
+        branches: processedPropType<TreeBranch[]>(Array)
     },
-    components: { TreeNode },
+    components: { TreeNode, Links },
     setup() {
         function gatherNodeProps(node: GenericTreeNode) {
             const {

@@ -23,13 +23,13 @@
     >
         <component v-if="unref(comp)" :is="unref(comp)" />
         <MarkNode :mark="unref(mark)" />
-        <LinkNode :id="id" />
+        <Node :id="id" />
     </button>
 </template>
 
 <script lang="tsx">
 import "components/common/features.css";
-import LinkNode from "components/links/LinkNode.vue";
+import Node from "components/Node.vue";
 import MarkNode from "components/MarkNode.vue";
 import { GenericClickable } from "features/clickables/clickable";
 import { jsx, StyleValue, Visibility } from "features/feature";
@@ -81,7 +81,7 @@ export default defineComponent({
         }
     },
     components: {
-        LinkNode,
+        Node,
         MarkNode
     },
     setup(props) {

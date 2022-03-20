@@ -33,12 +33,12 @@
             <component :is="unref(comp)" />
         </button>
         <MarkNode :mark="unref(mark)" />
-        <LinkNode :id="id" />
+        <Node :id="id" />
     </Tooltip>
 </template>
 
 <script lang="ts">
-import LinkNode from "components/links/LinkNode.vue";
+import Node from "components/Node.vue";
 import MarkNode from "components/MarkNode.vue";
 import TooltipVue from "components/Tooltip.vue";
 import { CoercableComponent, StyleValue, Visibility } from "features/feature";
@@ -94,7 +94,7 @@ export default defineComponent({
     components: {
         Tooltip: TooltipVue,
         MarkNode,
-        LinkNode
+        Node
     },
     setup(props) {
         const { tooltip, forceTooltip, onClick, onHold, display } = toRefs(props);

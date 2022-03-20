@@ -18,7 +18,7 @@
     >
         <component v-if="component" :is="component" />
         <MarkNode :mark="unref(mark)" />
-        <LinkNode :id="id" />
+        <Node :id="id" />
     </div>
 </template>
 
@@ -27,7 +27,7 @@ import { CoercableComponent, Visibility } from "features/feature";
 import { computeOptionalComponent, processedPropType } from "util/vue";
 import { defineComponent, StyleValue, toRefs, unref } from "vue";
 import Tooltip from "components/Tooltip.vue";
-import LinkNode from "components/links/LinkNode.vue";
+import Node from "components/Node.vue";
 import MarkNode from "components/MarkNode.vue";
 import "components/common/features.css";
 
@@ -52,7 +52,7 @@ export default defineComponent({
         }
     },
     components: {
-        LinkNode,
+        Node,
         MarkNode,
         Tooltip
     },

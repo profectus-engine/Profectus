@@ -1,35 +1,21 @@
 <template>
     <slot />
     <div ref="resizeListener" class="resize-listener" />
-    <svg v-if="validLinks" v-bind="$attrs">
-        <LinkVue
-            v-for="(link, index) in validLinks"
-            :key="index"
-            :link="link"
-            :startNode="nodes[link.startNode.id]!"
-            :endNode="nodes[link.endNode.id]!"
-        />
-    </svg>
 </template>
 
 <script setup lang="ts">
 import {
-    Link,
-    LinkNode,
+    RegisterNodeInjectionKey,
+    UnregisterNodeInjectionKey,
     NodesInjectionKey,
-    RegisterLinkNodeInjectionKey,
-    UnregisterLinkNodeInjectionKey
-} from "features/links";
-import { computed, nextTick, onMounted, provide, ref, toRef } from "vue";
-import LinkVue from "./Link.vue";
-
-const _props = defineProps<{ links?: Link[] }>();
-const links = toRef(_props, "links");
+    FeatureNode
+} from "game/layers";
+import { nextTick, onMounted, provide, ref } from "vue";
 
 const observer = new MutationObserver(updateNodes);
 const resizeObserver = new ResizeObserver(updateNodes);
 
-const nodes = ref<Record<string, LinkNode | undefined>>({});
+const nodes = ref<Record<string, FeatureNode | undefined>>({});
 
 defineExpose({ nodes });
 
@@ -43,26 +29,13 @@ onMounted(() => {
     }
 });
 
-const validLinks = computed(
-    () =>
-        links.value?.filter(link => {
-            const n = nodes.value;
-            return (
-                n[link.startNode.id]?.x != undefined &&
-                n[link.startNode.id]?.y != undefined &&
-                n[link.endNode.id]?.x != undefined &&
-                n[link.endNode.id]?.y != undefined
-            );
-        }) ?? []
-);
-
 const observerOptions = {
     attributes: true,
     childList: true,
     subtree: false
 };
 
-provide(RegisterLinkNodeInjectionKey, (id, element) => {
+provide(RegisterNodeInjectionKey, (id, element) => {
     nodes.value[id] = { element };
     observer.observe(element, observerOptions);
     nextTick(() => {
@@ -71,7 +44,7 @@ provide(RegisterLinkNodeInjectionKey, (id, element) => {
         }
     });
 });
-provide(UnregisterLinkNodeInjectionKey, id => {
+provide(UnregisterNodeInjectionKey, id => {
     nodes.value[id] = undefined;
 });
 provide(NodesInjectionKey, nodes);

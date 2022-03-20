@@ -8,7 +8,7 @@ import {
     StyleValue,
     Visibility
 } from "features/feature";
-import { Link } from "features/links";
+import { Link } from "features/links/links";
 import { GenericReset } from "features/reset";
 import { displayResource, Resource } from "features/resources/resource";
 import { Tooltip } from "features/tooltip";
@@ -199,8 +199,8 @@ export function createTree<T extends TreeOptions>(
         processComputable(tree as T, "branches");
 
         tree[GatherProps] = function (this: GenericTree) {
-            const { nodes, leftSideNodes, rightSideNodes } = this;
-            return { nodes, leftSideNodes, rightSideNodes };
+            const { nodes, leftSideNodes, rightSideNodes, branches } = this;
+            return { nodes, leftSideNodes, rightSideNodes, branches };
         };
 
         return tree as unknown as Tree<T>;

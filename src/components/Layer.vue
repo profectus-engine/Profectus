@@ -10,9 +10,9 @@
             :class="[{ showGoBack }, unref(classes)]"
             v-else
         >
-            <Links :links="unref(links)" ref="linksRef">
+            <Context ref="contextRef">
                 <component :is="component" />
-            </Links>
+            </Context>
         </div>
         <button v-if="unref(minimizable)" class="minimize" @click="minimized.value = true">
             ▼
@@ -21,17 +21,17 @@
 </template>
 
 <script lang="ts">
-import Links from "components/links/Links.vue";
 import projInfo from "data/projInfo.json";
 import { CoercableComponent, StyleValue } from "features/feature";
-import { Link, LinkNode } from "features/links";
+import { FeatureNode } from "game/layers";
 import { PersistentRef } from "game/persistence";
 import player from "game/player";
 import { computeComponent, processedPropType, wrapRef } from "util/vue";
 import { computed, defineComponent, nextTick, PropType, Ref, ref, toRefs, unref, watch } from "vue";
+import Context from "./Context.vue";
 
 export default defineComponent({
-    components: { Links },
+    components: { Context },
     props: {
         index: {
             type: Number,
@@ -60,10 +60,9 @@ export default defineComponent({
         color: processedPropType<string>(String),
         style: processedPropType<StyleValue>(String, Object, Array),
         classes: processedPropType<Record<string, boolean>>(Object),
-        links: processedPropType<Link[]>(Array),
         minimizable: processedPropType<boolean>(Boolean),
         nodes: {
-            type: Object as PropType<Ref<Record<string, LinkNode | undefined>>>,
+            type: Object as PropType<Ref<Record<string, FeatureNode | undefined>>>,
             required: true
         }
     },
@@ -84,9 +83,9 @@ export default defineComponent({
             updateTab(minimized, minWidth)
         );
 
-        const linksRef = ref<typeof Links | null>(null);
+        const contextRef = ref<typeof Context | null>(null);
         watch(
-            () => linksRef.value?.nodes,
+            () => contextRef.value?.nodes,
             nodes => {
                 if (nodes) {
                     props.nodes.value = nodes;
@@ -116,7 +115,7 @@ export default defineComponent({
         return {
             component,
             showGoBack,
-            linksRef,
+            contextRef,
             unref,
             goBack
         };

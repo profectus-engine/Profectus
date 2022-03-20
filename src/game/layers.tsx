@@ -7,7 +7,6 @@ import {
     setDefault,
     StyleValue
 } from "features/feature";
-import { Link, LinkNode } from "features/links";
 import {
     Computable,
     GetComputableType,
@@ -17,10 +16,24 @@ import {
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { createNanoEvents, Emitter } from "nanoevents";
-import { Ref, ref, unref } from "vue";
+import { InjectionKey, Ref, ref, unref } from "vue";
 import { globalBus } from "./events";
 import { persistent, PersistentRef } from "./persistence";
 import player from "./player";
+
+export interface FeatureNode {
+    x?: number;
+    y?: number;
+    rect?: DOMRect;
+    element: HTMLElement;
+}
+
+export const RegisterNodeInjectionKey: InjectionKey<(id: string, element: HTMLElement) => void> =
+    Symbol("RegisterNode");
+export const UnregisterNodeInjectionKey: InjectionKey<(id: string) => void> =
+    Symbol("UnregisterNode");
+export const NodesInjectionKey: InjectionKey<Ref<Record<string, FeatureNode | undefined>>> =
+    Symbol("Nodes");
 
 export interface LayerEvents {
     // Generation
@@ -55,7 +68,6 @@ export interface LayerOptions {
     minimizable?: Computable<boolean>;
     forceHideGoBack?: Computable<boolean>;
     minWidth?: Computable<number>;
-    links?: Computable<Link[]>;
 }
 
 export interface BaseLayer {
@@ -63,7 +75,7 @@ export interface BaseLayer {
     emitter: Emitter<LayerEvents>;
     on: OmitThisParameter<Emitter<LayerEvents>["on"]>;
     emit: <K extends keyof LayerEvents>(event: K, ...args: Parameters<LayerEvents[K]>) => void;
-    nodes: Ref<Record<string, LinkNode | undefined>>;
+    nodes: Ref<Record<string, FeatureNode | undefined>>;
 }
 
 export type Layer<T extends LayerOptions> = Replace<
@@ -77,7 +89,6 @@ export type Layer<T extends LayerOptions> = Replace<
         minWidth: GetComputableTypeWithDefault<T["minWidth"], 600>;
         minimizable: GetComputableTypeWithDefault<T["minimizable"], true>;
         forceHideGoBack: GetComputableType<T["forceHideGoBack"]>;
-        links: GetComputableType<T["links"]>;
     }
 >;
 
@@ -112,7 +123,6 @@ export function createLayer<T extends LayerOptions>(
         setDefault(layer, "minWidth", 600);
         processComputable(layer as T, "minimizable");
         setDefault(layer, "minimizable", true);
-        processComputable(layer as T, "links");
 
         return layer as unknown as Layer<T>;
     });

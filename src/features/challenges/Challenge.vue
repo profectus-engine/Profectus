@@ -22,7 +22,7 @@
         </button>
         <component v-if="unref(comp)" :is="unref(comp)" />
         <MarkNode :mark="unref(mark)" />
-        <LinkNode :id="id" />
+        <Node :id="id" />
     </div>
 </template>
 
@@ -43,7 +43,7 @@ import {
     UnwrapRef,
     watchEffect
 } from "vue";
-import LinkNode from "components/links/LinkNode.vue";
+import Node from "components/Node.vue";
 import MarkNode from "components/MarkNode.vue";
 
 export default defineComponent({
@@ -91,7 +91,7 @@ export default defineComponent({
     },
     components: {
         MarkNode,
-        LinkNode
+        Node
     },
     setup(props) {
         const { active, maxed, canComplete, display } = toRefs(props);

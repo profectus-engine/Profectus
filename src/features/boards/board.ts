@@ -22,7 +22,7 @@ import {
 import { createLazyProxy } from "util/proxies";
 import { Unsubscribe } from "nanoevents";
 import { computed, Ref, unref } from "vue";
-import { Link } from "../links";
+import { Link } from "../links/links";
 
 export const BoardType = Symbol("Board");
 

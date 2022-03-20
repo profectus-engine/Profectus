@@ -11,13 +11,14 @@
 </template>
 
 <script setup lang="ts">
-import { Link, LinkNode } from "features/links";
+import { Link } from "features/links/links";
+import { FeatureNode } from "game/layers";
 import { computed, toRefs, unref } from "vue";
 
 const _props = defineProps<{
     link: Link;
-    startNode: LinkNode;
-    endNode: LinkNode;
+    startNode: FeatureNode;
+    endNode: FeatureNode;
 }>();
 const props = toRefs(_props);
 

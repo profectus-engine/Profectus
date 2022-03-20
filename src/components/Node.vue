@@ -1,16 +1,16 @@
 <template>
-    <div class="branch" ref="node"></div>
+    <div class="node" ref="node"></div>
 </template>
 
 <script setup lang="ts">
-import { RegisterLinkNodeInjectionKey, UnregisterLinkNodeInjectionKey } from "features/links";
+import { RegisterNodeInjectionKey, UnregisterNodeInjectionKey } from "game/layers";
 import { computed, inject, onUnmounted, ref, toRefs, unref, watch } from "vue";
 
 const _props = defineProps<{ id: string }>();
 const props = toRefs(_props);
 
-const register = inject(RegisterLinkNodeInjectionKey);
-const unregister = inject(UnregisterLinkNodeInjectionKey);
+const register = inject(RegisterNodeInjectionKey);
+const unregister = inject(UnregisterNodeInjectionKey);
 
 const node = ref<HTMLElement | null>(null);
 const parentNode = computed(() => node.value && node.value.parentElement);
@@ -30,7 +30,7 @@ if (register && unregister) {
 </script>
 
 <style scoped>
-.branch {
+.node {
     position: absolute;
     z-index: -10;
     top: 0;

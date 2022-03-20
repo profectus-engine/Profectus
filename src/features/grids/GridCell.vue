@@ -18,13 +18,13 @@
     >
         <div v-if="title"><component :is="titleComponent" /></div>
         <component :is="component" style="white-space: pre-line" />
-        <LinkNode :id="id" />
+        <Node :id="id" />
     </button>
 </template>
 
 <script lang="ts">
 import "components/common/features.css";
-import LinkNode from "components/links/LinkNode.vue";
+import Node from "components/Node.vue";
 import { CoercableComponent, StyleValue, Visibility } from "features/feature";
 import {
     computeComponent,
@@ -58,7 +58,7 @@ export default defineComponent({
         }
     },
     components: {
-        LinkNode
+        Node
     },
     setup(props) {
         const { onClick, onHold, title, display } = toRefs(props);
