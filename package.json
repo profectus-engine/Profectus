@@ -12,6 +12,8 @@
     "core-js": "^3.6.5",
     "lodash.clonedeep": "^4.5.0",
     "nanoevents": "^6.0.2",
+    "particles.vue3": "^2.0.3",
+    "tsparticles": "^2.0.3",
     "vue": "^3.2.26",
     "vue-next-select": "^2.10.2",
     "vue-panzoom": "^1.1.6",

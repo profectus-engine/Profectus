@@ -6,10 +6,13 @@
         <TPS v-if="unref(showTPS)" />
         <GameOverScreen />
         <NaNScreen />
+        <component :is="gameComponent" />
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="tsx">
+import { jsx } from "features/feature";
+import { coerceComponent, render } from "util/vue";
 import { computed, toRef, unref } from "vue";
 import Game from "./components/Game.vue";
 import GameOverScreen from "./components/GameOverScreen.vue";
@@ -18,7 +21,7 @@ import Nav from "./components/Nav.vue";
 import TPS from "./components/TPS.vue";
 import projInfo from "./data/projInfo.json";
 import themes from "./data/themes";
-import settings from "./game/settings";
+import settings, { gameComponents } from "./game/settings";
 import "./main.css";
 
 function updateMouse(/* event */) {
@@ -28,6 +31,10 @@ function updateMouse(/* event */) {
 const useHeader = projInfo.useHeader;
 const theme = computed(() => themes[settings.theme].variables);
 const showTPS = toRef(settings, "showTPS");
+
+const gameComponent = computed(() => {
+    return coerceComponent(jsx(() => <>{gameComponents.map(render)}</>));
+});
 </script>
 
 <style scoped>

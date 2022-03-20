@@ -67,3 +67,8 @@ export const infoComponents: CoercableComponent[] = reactive([]);
 export function registerInfoComponent(component: CoercableComponent) {
     infoComponents.push(component);
 }
+
+export const gameComponents: CoercableComponent[] = reactive([]);
+export function registerGameComponent(component: CoercableComponent) {
+    gameComponents.push(component);
+}

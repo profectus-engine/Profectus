@@ -24,7 +24,7 @@ import {
     ProcessedComputable
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { computed, ref, Ref, unref } from "vue";
+import { computed, ref, Ref, shallowRef, unref } from "vue";
 
 export const TreeNodeType = Symbol("TreeNode");
 export const TreeType = Symbol("Tree");
@@ -175,7 +175,7 @@ export function createTree<T extends TreeOptions>(
         tree[Component] = TreeComponent;
 
         tree.isResetting = ref(false);
-        tree.resettingNode = ref(null);
+        tree.resettingNode = shallowRef(null);
 
         tree.reset = function (node) {
             const genericTree = tree as GenericTree;
