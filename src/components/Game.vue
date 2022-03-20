@@ -29,8 +29,9 @@ const layerKeys = computed(() => Object.keys(layers));
 const useHeader = projInfo.useHeader;
 
 function gatherLayerProps(layer: GenericLayer) {
-    const { display, minimized, minWidth, name, color, style, classes, links, minimizable } = layer;
-    return { display, minimized, minWidth, name, color, style, classes, links, minimizable };
+    const { display, minimized, minWidth, name, color, style, classes, links, minimizable, nodes } =
+        layer;
+    return { display, minimized, minWidth, name, color, style, classes, links, minimizable, nodes };
 }
 </script>
 

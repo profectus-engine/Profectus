@@ -17,10 +17,9 @@
                             <slot name="header" :shown="isOpen"> default header </slot>
                         </div>
                         <div class="modal-body">
-                            <Links v-if="links" :links="links">
+                            <Links :links="links" ref="linksRef">
                                 <slot name="body" :shown="isOpen"> default body </slot>
                             </Links>
-                            <slot name="body" v-else :shown="isOpen"> default body </slot>
                         </div>
                         <div class="modal-footer">
                             <slot name="footer" :shown="isOpen">
@@ -40,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { Link } from "features/links";
+import { Link, LinkNode } from "features/links";
 import { computed, ref, toRefs } from "vue";
 import Links from "./links/Links.vue";
 
@@ -60,7 +59,12 @@ function close() {
 
 const isAnimating = ref(false);
 
-defineExpose({ isOpen });
+const linksRef = ref<typeof Links | null>(null);
+const nodes = computed<Record<string, LinkNode | undefined> | null>(
+    () => linksRef.value?.nodes ?? null
+);
+
+defineExpose({ isOpen, nodes });
 </script>
 
 <style>

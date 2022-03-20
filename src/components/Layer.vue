@@ -10,7 +10,7 @@
             :class="[{ showGoBack }, unref(classes)]"
             v-else
         >
-            <Links :links="unref(links)">
+            <Links :links="unref(links)" ref="linksRef">
                 <component :is="component" />
             </Links>
         </div>
@@ -24,11 +24,11 @@
 import Links from "components/links/Links.vue";
 import projInfo from "data/projInfo.json";
 import { CoercableComponent, StyleValue } from "features/feature";
-import { Link } from "features/links";
+import { Link, LinkNode } from "features/links";
 import { PersistentRef } from "game/persistence";
 import player from "game/player";
 import { computeComponent, processedPropType, wrapRef } from "util/vue";
-import { computed, defineComponent, nextTick, PropType, toRefs, unref, watch } from "vue";
+import { computed, defineComponent, nextTick, PropType, Ref, ref, toRefs, unref, watch } from "vue";
 
 export default defineComponent({
     components: { Links },
@@ -61,7 +61,11 @@ export default defineComponent({
         style: processedPropType<StyleValue>(String, Object, Array),
         classes: processedPropType<Record<string, boolean>>(Object),
         links: processedPropType<Link[]>(Array),
-        minimizable: processedPropType<boolean>(Boolean)
+        minimizable: processedPropType<boolean>(Boolean),
+        nodes: {
+            type: Object as PropType<Ref<Record<string, LinkNode | undefined>>>,
+            required: true
+        }
     },
     setup(props) {
         const { display, index, minimized, minWidth, tab } = toRefs(props);
@@ -78,6 +82,16 @@ export default defineComponent({
         nextTick(() => updateTab(minimized.value, unref(minWidth.value)));
         watch([minimized, wrapRef(minWidth)], ([minimized, minWidth]) =>
             updateTab(minimized, minWidth)
+        );
+
+        const linksRef = ref<typeof Links | null>(null);
+        watch(
+            () => linksRef.value?.nodes,
+            nodes => {
+                if (nodes) {
+                    props.nodes.value = nodes;
+                }
+            }
         );
 
         function updateTab(minimized: boolean, minWidth: number) {
@@ -102,6 +116,7 @@ export default defineComponent({
         return {
             component,
             showGoBack,
+            linksRef,
             unref,
             goBack
         };

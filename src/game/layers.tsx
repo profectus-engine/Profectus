@@ -7,7 +7,7 @@ import {
     setDefault,
     StyleValue
 } from "features/feature";
-import { Link } from "features/links";
+import { Link, LinkNode } from "features/links";
 import {
     Computable,
     GetComputableType,
@@ -17,7 +17,7 @@ import {
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { createNanoEvents, Emitter } from "nanoevents";
-import { ref, unref } from "vue";
+import { Ref, ref, unref } from "vue";
 import { globalBus } from "./events";
 import { persistent, PersistentRef } from "./persistence";
 import player from "./player";
@@ -63,6 +63,7 @@ export interface BaseLayer {
     emitter: Emitter<LayerEvents>;
     on: OmitThisParameter<Emitter<LayerEvents>["on"]>;
     emit: <K extends keyof LayerEvents>(event: K, ...args: Parameters<LayerEvents[K]>) => void;
+    nodes: Ref<Record<string, LinkNode | undefined>>;
 }
 
 export type Layer<T extends LayerOptions> = Replace<
@@ -97,6 +98,7 @@ export function createLayer<T extends LayerOptions>(
         const emitter = (layer.emitter = createNanoEvents<LayerEvents>());
         layer.on = emitter.on.bind(emitter);
         layer.emit = emitter.emit.bind(emitter);
+        layer.nodes = ref({});
 
         layer.minimized = persistent(false);
 

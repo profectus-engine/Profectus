@@ -1,9 +1,10 @@
 import { Position } from "game/layers";
-import { InjectionKey, SVGAttributes } from "vue";
+import { InjectionKey, Ref, SVGAttributes } from "vue";
 
 export interface LinkNode {
     x?: number;
     y?: number;
+    rect?: DOMRect;
     element: HTMLElement;
 }
 
@@ -19,3 +20,5 @@ export const RegisterLinkNodeInjectionKey: InjectionKey<
 > = Symbol("RegisterLinkNode");
 export const UnregisterLinkNodeInjectionKey: InjectionKey<(id: string) => void> =
     Symbol("UnregisterLinkNode");
+export const NodesInjectionKey: InjectionKey<Ref<Record<string, LinkNode | undefined>>> =
+    Symbol("Nodes");

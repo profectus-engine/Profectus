@@ -16,6 +16,7 @@
 import {
     Link,
     LinkNode,
+    NodesInjectionKey,
     RegisterLinkNodeInjectionKey,
     UnregisterLinkNodeInjectionKey
 } from "features/links";
@@ -29,6 +30,8 @@ const observer = new MutationObserver(updateNodes);
 const resizeObserver = new ResizeObserver(updateNodes);
 
 const nodes = ref<Record<string, LinkNode | undefined>>({});
+
+defineExpose({ nodes });
 
 const resizeListener = ref<Element | null>(null);
 
@@ -71,6 +74,7 @@ provide(RegisterLinkNodeInjectionKey, (id, element) => {
 provide(UnregisterLinkNodeInjectionKey, id => {
     nodes.value[id] = undefined;
 });
+provide(NodesInjectionKey, nodes);
 
 let isDirty = true;
 let boundingRect = resizeListener.value?.getBoundingClientRect();
@@ -90,10 +94,11 @@ function updateNode(id: string) {
     if (!node || boundingRect == null) {
         return;
     }
-    const linkStartRect = node.element.getBoundingClientRect();
+    const nodeRect = node.element.getBoundingClientRect();
 
-    node.x = linkStartRect.x + linkStartRect.width / 2 - boundingRect.x;
-    node.y = linkStartRect.y + linkStartRect.height / 2 - boundingRect.y;
+    node.y = nodeRect.x + nodeRect.width / 2 - boundingRect.x;
+    node.x = nodeRect.y + nodeRect.height / 2 - boundingRect.y;
+    node.rect = nodeRect;
 }
 </script>
 
