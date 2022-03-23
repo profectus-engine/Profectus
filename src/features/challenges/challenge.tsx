@@ -73,7 +73,7 @@ export type Challenge<T extends ChallengeOptions> = Replace<
     T & BaseChallenge,
     {
         visibility: GetComputableTypeWithDefault<T["visibility"], Visibility.Visible>;
-        canStart: GetComputableTypeWithDefault<T["canStart"], Ref<boolean>>;
+        canStart: GetComputableTypeWithDefault<T["canStart"], true>;
         canComplete: GetComputableTypeWithDefault<T["canComplete"], Ref<boolean>>;
         completionLimit: GetComputableTypeWithDefault<T["completionLimit"], 1>;
         mark: GetComputableTypeWithDefault<T["mark"], Ref<boolean>>;
@@ -209,6 +209,7 @@ export function createChallenge<T extends ChallengeOptions>(
         }
 
         processComputable(challenge as T, "canStart");
+        setDefault(challenge, "canStart", true);
         processComputable(challenge as T, "canComplete");
         processComputable(challenge as T, "completionLimit");
         setDefault(challenge, "completionLimit", 1);

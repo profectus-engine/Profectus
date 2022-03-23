@@ -12,12 +12,16 @@
             feature: true,
             challenge: true,
             done: unref(completed),
-            canStart: unref(canStart),
+            canStart: unref(canStart) && !unref(maxed),
             maxed: unref(maxed),
             ...unref(classes)
         }"
     >
-        <button class="toggleChallenge" @click="toggle">
+        <button
+            class="toggleChallenge"
+            @click="toggle"
+            :disabled="!unref(canStart) || unref(maxed)"
+        >
             {{ buttonText }}
         </button>
         <component v-if="unref(comp)" :is="unref(comp)" />
