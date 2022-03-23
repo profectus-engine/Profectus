@@ -13,32 +13,47 @@
 <script setup lang="ts">
 import { Link } from "features/links/links";
 import { FeatureNode } from "game/layers";
-import { computed, toRefs, unref } from "vue";
+import { computed, toRefs } from "vue";
 
 const _props = defineProps<{
     link: Link;
     startNode: FeatureNode;
     endNode: FeatureNode;
+    boundingRect: DOMRect | undefined;
 }>();
 const props = toRefs(_props);
 
 const startPosition = computed(() => {
-    const position = { x: props.startNode.value.x || 0, y: props.startNode.value.y || 0 };
+    const rect = props.startNode.value.rect;
+    const boundingRect = props.boundingRect.value;
+    const position =
+        rect && boundingRect
+            ? {
+                  x: rect.x + rect.width / 2 - boundingRect.x,
+                  y: rect.y + rect.height / 2 - boundingRect.y
+              }
+            : { x: 0, y: 0 };
     if (props.link.value.offsetStart) {
-        position.x += unref(props.link.value.offsetStart).x;
-        position.y += unref(props.link.value.offsetStart).y;
+        position.x += props.link.value.offsetStart.x;
+        position.y += props.link.value.offsetStart.y;
     }
     return position;
 });
 
 const endPosition = computed(() => {
-    const position = { x: props.endNode.value.x || 0, y: props.endNode.value.y || 0 };
+    const rect = props.endNode.value.rect;
+    const boundingRect = props.boundingRect.value;
+    const position =
+        rect && boundingRect
+            ? {
+                  x: rect.x + rect.width / 2 - boundingRect.x,
+                  y: rect.y + rect.height / 2 - boundingRect.y
+              }
+            : { x: 0, y: 0 };
     if (props.link.value.offsetEnd) {
-        position.x += unref(props.link.value.offsetEnd).x;
-        position.y += unref(props.link.value.offsetEnd).y;
+        position.x += props.link.value.offsetEnd.x;
+        position.y += props.link.value.offsetEnd.y;
     }
     return position;
 });
 </script>
-
-<style scoped></style>
