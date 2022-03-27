@@ -72,7 +72,7 @@ export default defineComponent({
         style: processedPropType<StyleValue>(String, Object, Array),
         classes: processedPropType<Record<string, boolean>>(Object),
         tooltip: processedPropType<CoercableComponent | Tooltip>(Object, String, Function),
-        onClick: Function as PropType<VoidFunction>,
+        onClick: Function as PropType<(e?: MouseEvent | TouchEvent) => void>,
         onHold: Function as PropType<VoidFunction>,
         color: processedPropType<string>(String),
         glowColor: processedPropType<string>(String),

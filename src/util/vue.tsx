@@ -86,19 +86,21 @@ export function isCoercableComponent(component: unknown): component is Coercable
 }
 
 export function setupHoldToClick(
-    onClick?: Ref<VoidFunction | undefined>,
+    onClick?: Ref<((e?: MouseEvent | TouchEvent) => void) | undefined>,
     onHold?: Ref<VoidFunction | undefined>
 ): {
-    start: VoidFunction;
+    start: (e: MouseEvent | TouchEvent) => void;
     stop: VoidFunction;
     handleHolding: VoidFunction;
 } {
     const interval = ref<null | number>(null);
+    const event = ref<MouseEvent | TouchEvent | undefined>(undefined);
 
-    function start() {
+    function start(e: MouseEvent | TouchEvent) {
         if (!interval.value) {
             interval.value = setInterval(handleHolding, 250);
         }
+        event.value = e;
     }
     function stop() {
         if (interval.value) {
@@ -110,7 +112,7 @@ export function setupHoldToClick(
         if (onHold && onHold.value) {
             onHold.value();
         } else if (onClick && onClick.value) {
-            onClick.value();
+            onClick.value(event.value);
         }
     }
 

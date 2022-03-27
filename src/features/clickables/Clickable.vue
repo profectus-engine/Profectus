@@ -67,7 +67,7 @@ export default defineComponent({
         },
         style: processedPropType<StyleValue>(Object, String, Array),
         classes: processedPropType<Record<string, boolean>>(Object),
-        onClick: Function as PropType<VoidFunction>,
+        onClick: Function as PropType<(e?: MouseEvent | TouchEvent) => void>,
         onHold: Function as PropType<VoidFunction>,
         canClick: {
             type: processedPropType<boolean>(Boolean),

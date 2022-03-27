@@ -40,7 +40,7 @@ export interface TreeNodeOptions {
     style?: Computable<StyleValue>;
     mark?: Computable<boolean | string>;
     reset?: GenericReset;
-    onClick?: VoidFunction;
+    onClick?: (e?: MouseEvent | TouchEvent) => void;
     onHold?: VoidFunction;
 }
 

@@ -40,7 +40,7 @@ export default defineComponent({
             type: processedPropType<Visibility>(Number),
             required: true
         },
-        onClick: Function as PropType<VoidFunction>,
+        onClick: Function as PropType<(e?: MouseEvent | TouchEvent) => void>,
         onHold: Function as PropType<VoidFunction>,
         display: {
             type: processedPropType<CoercableComponent>(Object, String, Function),

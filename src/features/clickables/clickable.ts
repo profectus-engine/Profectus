@@ -37,7 +37,7 @@ export interface ClickableOptions {
           }
     >;
     small?: boolean;
-    onClick?: VoidFunction;
+    onClick?: (e?: MouseEvent | TouchEvent) => void;
     onHold?: VoidFunction;
 }
 
@@ -88,9 +88,9 @@ export function createClickable<T extends ClickableOptions>(
 
         if (clickable.onClick) {
             const onClick = clickable.onClick.bind(clickable);
-            clickable.onClick = function () {
+            clickable.onClick = function (e) {
                 if (unref(clickable.canClick)) {
-                    onClick();
+                    onClick(e);
                 }
             };
         }

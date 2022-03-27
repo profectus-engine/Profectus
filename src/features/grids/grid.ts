@@ -185,7 +185,7 @@ export interface GridCell {
     classes?: Record<string, boolean>;
     title?: CoercableComponent;
     display: CoercableComponent;
-    onClick?: VoidFunction;
+    onClick?: (e?: MouseEvent | TouchEvent) => void;
     onHold?: VoidFunction;
 }
 
@@ -200,7 +200,7 @@ export interface GridOptions {
     getClasses?: CellComputable<Record<string, boolean>>;
     getTitle?: CellComputable<CoercableComponent>;
     getDisplay: CellComputable<CoercableComponent>;
-    onClick?: (id: string | number, state: State) => void;
+    onClick?: (id: string | number, state: State, e?: MouseEvent | TouchEvent) => void;
     onHold?: (id: string | number, state: State) => void;
 }
 
