@@ -5,7 +5,8 @@ import {
     Component as ComponentKey,
     GatherProps,
     GenericComponent,
-    JSXFunction
+    JSXFunction,
+    Visibility
 } from "features/feature";
 import {
     Component,
@@ -119,6 +120,21 @@ export function setupHoldToClick(
     onUnmounted(stop);
 
     return { start, stop, handleHolding };
+}
+
+export function getFirstFeature<T extends { visibility: ProcessedComputable<Visibility> }>(
+    features: T[],
+    filter: (feature: T) => boolean
+): { firstFeature: Ref<T | undefined>; hiddenFeatures: Ref<T[]> } {
+    const filteredFeatures = computed(() =>
+        features.filter(
+            feature => unref(feature.visibility) === Visibility.Visible && filter(feature)
+        )
+    );
+    return {
+        firstFeature: computed(() => filteredFeatures.value[0]),
+        hiddenFeatures: computed(() => filteredFeatures.value.slice(1))
+    };
 }
 
 export function computeComponent(
