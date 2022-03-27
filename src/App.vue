@@ -1,6 +1,6 @@
 <template>
     <div id="modal-root" :style="theme" />
-    <div class="app" @mousemove="updateMouse" :style="theme" :class="{ useHeader }">
+    <div class="app" :style="theme" :class="{ useHeader }">
         <Nav v-if="useHeader" />
         <Game />
         <TPS v-if="unref(showTPS)" />
@@ -23,10 +23,6 @@ import projInfo from "./data/projInfo.json";
 import themes from "./data/themes";
 import settings, { gameComponents } from "./game/settings";
 import "./main.css";
-
-function updateMouse(/* event */) {
-    // TODO use event to update mouse position for particles
-}
 
 const useHeader = projInfo.useHeader;
 const theme = computed(() => themes[settings.theme].variables);
