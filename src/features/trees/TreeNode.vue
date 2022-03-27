@@ -12,7 +12,7 @@
             ...unref(classes)
         }"
     >
-        <button
+        <div
             @click="click"
             @mousedown="start"
             @mouseleave="stop"
@@ -31,7 +31,7 @@
             ]"
         >
             <component :is="unref(comp)" />
-        </button>
+        </div>
         <MarkNode :mark="unref(mark)" />
         <Node :id="id" />
     </Tooltip>
@@ -156,7 +156,7 @@ export default defineComponent({
     margin: 0 10px 0 10px;
 }
 
-.treeNode button {
+.treeNode > *:first-child {
     width: 100%;
     height: 100%;
     border: 2px solid rgba(0, 0, 0, 0.125);
@@ -166,6 +166,7 @@ export default defineComponent({
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.25);
     box-shadow: -4px -4px 4px rgba(0, 0, 0, 0.25) inset, 0px 0px 20px var(--background);
     text-transform: capitalize;
+    display: flex;
 }
 
 .treeNode.small {
@@ -173,7 +174,7 @@ export default defineComponent({
     width: 60px;
 }
 
-.treeNode.small button {
+.treeNode.small > *:first-child {
     font-size: 30px;
 }
 
