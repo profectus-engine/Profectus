@@ -102,13 +102,10 @@ export default defineComponent({
     min-width: 120px;
     padding-left: 5px;
     padding-right: 5px;
-    min-height: 75px;
     background-color: var(--locked);
     border-width: 4px;
     border-radius: 5px;
     color: rgba(0, 0, 0, 0.5);
-    margin-top: 0;
-    margin-bottom: 0;
 }
 
 .milestone.done {
@@ -116,12 +113,12 @@ export default defineComponent({
     cursor: default;
 }
 
-.milestone >>> .equal-spaced {
+.milestone :deep(.equal-spaced) {
     display: flex;
     justify-content: center;
 }
 
-.milestone >>> .equal-spaced > * {
+.milestone :deep(.equal-spaced > *) {
     margin: auto;
 }
 </style>
