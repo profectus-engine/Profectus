@@ -22,8 +22,8 @@ import { persistent, PersistentRef } from "./persistence";
 import player from "./player";
 
 export interface FeatureNode {
-    rect?: DOMRect;
-    observer?: MutationObserver;
+    rect: DOMRect;
+    observer: MutationObserver;
     element: HTMLElement;
 }
 

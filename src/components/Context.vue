@@ -24,11 +24,11 @@ const observerOptions = {
 provide(RegisterNodeInjectionKey, (id, element) => {
     const observer = new MutationObserver(() => updateNode(id));
     observer.observe(element, observerOptions);
-    nodes.value[id] = { element, observer };
+    nodes.value[id] = { element, observer, rect: element.getBoundingClientRect() };
     nextTick(() => updateNode(id));
 });
 provide(UnregisterNodeInjectionKey, id => {
-    nodes.value[id]?.observer?.disconnect();
+    nodes.value[id]?.observer.disconnect();
     nodes.value[id] = undefined;
 });
 provide(NodesInjectionKey, nodes);

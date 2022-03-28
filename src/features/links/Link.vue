@@ -26,13 +26,12 @@ const props = toRefs(_props);
 const startPosition = computed(() => {
     const rect = props.startNode.value.rect;
     const boundingRect = props.boundingRect.value;
-    const position =
-        rect && boundingRect
-            ? {
-                  x: rect.x + rect.width / 2 - boundingRect.x,
-                  y: rect.y + rect.height / 2 - boundingRect.y
-              }
-            : { x: 0, y: 0 };
+    const position = boundingRect
+        ? {
+              x: rect.x + rect.width / 2 - boundingRect.x,
+              y: rect.y + rect.height / 2 - boundingRect.y
+          }
+        : { x: 0, y: 0 };
     if (props.link.value.offsetStart) {
         position.x += props.link.value.offsetStart.x;
         position.y += props.link.value.offsetStart.y;
@@ -43,13 +42,12 @@ const startPosition = computed(() => {
 const endPosition = computed(() => {
     const rect = props.endNode.value.rect;
     const boundingRect = props.boundingRect.value;
-    const position =
-        rect && boundingRect
-            ? {
-                  x: rect.x + rect.width / 2 - boundingRect.x,
-                  y: rect.y + rect.height / 2 - boundingRect.y
-              }
-            : { x: 0, y: 0 };
+    const position = boundingRect
+        ? {
+              x: rect.x + rect.width / 2 - boundingRect.x,
+              y: rect.y + rect.height / 2 - boundingRect.y
+          }
+        : { x: 0, y: 0 };
     if (props.link.value.offsetEnd) {
         position.x += props.link.value.offsetEnd.x;
         position.y += props.link.value.offsetEnd.y;

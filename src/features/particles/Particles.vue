@@ -35,7 +35,7 @@ import { Emitters } from "tsparticles-plugin-emitters/Emitters";
 import { EmitterContainer } from "tsparticles-plugin-emitters/EmitterContainer";
 import { defineComponent, inject, nextTick, onMounted, PropType, ref } from "vue";
 import { ParticlesComponent } from "particles.vue3";
-import { NodesInjectionKey } from "game/layers";
+import { FeatureNode, NodesInjectionKey } from "game/layers";
 
 // TODO get typing support on the Particles component
 export default defineComponent({
@@ -93,9 +93,8 @@ export default defineComponent({
                 nextTick(() => {
                     if (resizeListener.value != null && props.onContainerResized) {
                         // TODO don't overlap with Links.vue
-                        Object.values(nodes.value).forEach(
-                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                            node => (node!.rect = node?.element.getBoundingClientRect())
+                        (Object.values(nodes.value) as FeatureNode[]).forEach(
+                            node => (node.rect = node.element.getBoundingClientRect())
                         );
                         props.onContainerResized(resizeListener.value.getBoundingClientRect());
                     }

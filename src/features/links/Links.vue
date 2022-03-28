@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 import { Link } from "features/links/links";
-import { NodesInjectionKey } from "game/layers";
+import { FeatureNode, NodesInjectionKey } from "game/layers";
 import { computed, inject, nextTick, onMounted, ref, toRef } from "vue";
 import LinkVue from "./Link.vue";
 
@@ -43,9 +43,8 @@ function updateNodes() {
         isDirty = false;
         nextTick(() => {
             boundingRect.value = resizeListener.value?.getBoundingClientRect();
-            Object.values(nodes.value).forEach(
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                node => (node!.rect = node?.element.getBoundingClientRect())
+            (Object.values(nodes.value) as FeatureNode[]).forEach(
+                node => (node.rect = node.element.getBoundingClientRect())
             );
             isDirty = true;
         });
