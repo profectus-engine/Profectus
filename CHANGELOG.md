@@ -6,6 +6,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2022-03-27
+### Added
+- Particles feature
+- Collapsible layout component
+- Utility function for splitting off the first from the list of features that meets a given filter
+### Changed
+- **BREAKING** Reworked most of the code from Links into a generic Context component that manages the positions of features in the DOM
+- Updated vue-cli and TS dependencies
+- Challenges cannot be started when maxed, and `canStart` now defaults to `true`
+- onClick listeners on various features now get passed a MouseEvent or TouchEvent when possible
+- Minor style changes to Milestones, most notably removing min-height
+### Fixed
+- Buyables didn't support CoercableComponents for displays
+- TreeNodes would have a double glow effect on hover
+### Removed
+- Unused mousemove listener attached to App.vue
+
 ## [0.1.4] - 2022-03-13
 ### Added
 - You can now access this.on() from within a createLayer function (and other BaseLayer properties)
