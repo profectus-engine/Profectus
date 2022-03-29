@@ -1,5 +1,5 @@
 <template>
-    <div class="tabs-container">
+    <div class="tabs-container" :class="{ useHeader }">
         <div v-for="(tab, index) in tabs" :key="index" class="tab" :ref="`tab-${index}`">
             <Nav v-if="index === 0 && !useHeader" />
             <div class="inner-tab">
@@ -29,9 +29,8 @@ const layerKeys = computed(() => Object.keys(layers));
 const useHeader = projInfo.useHeader;
 
 function gatherLayerProps(layer: GenericLayer) {
-    const { display, minimized, minWidth, name, color, style, classes, links, minimizable, nodes } =
-        layer;
-    return { display, minimized, minWidth, name, color, style, classes, links, minimizable, nodes };
+    const { display, minimized, minWidth, name, color, style, classes, minimizable, nodes } = layer;
+    return { display, minimized, minWidth, name, color, style, classes, minimizable, nodes };
 }
 </script>
 
@@ -42,6 +41,11 @@ function gatherLayerProps(layer: GenericLayer) {
     overflow-x: auto;
     overflow-y: hidden;
     display: flex;
+}
+
+.tabs-container:not(.useHeader) {
+    width: calc(100vw - 50px);
+    margin-left: 50px;
 }
 
 .tab {

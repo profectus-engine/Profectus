@@ -147,12 +147,12 @@ function openDiscord() {
 }
 
 .overlay-nav {
-    position: absolute;
+    position: fixed;
     top: 10px;
     left: 10px;
     display: flex;
     flex-direction: column;
-    z-index: 1;
+    z-index: 2;
 }
 
 .overlay-nav > * {
