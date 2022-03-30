@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2022-03-29
+### Changed
+- **BREAKING** Reworked conversion.modifyGainAmount into conversion.gainModifier, with several utility functions. This makes nextAt accurate with modified gain
+### Fixed
+- Made overlay nav not overlap leftmost layer
+
 ## [0.2.0] - 2022-03-27
 ### Added
 - Particles feature
