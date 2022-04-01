@@ -50,6 +50,7 @@ function updateNodes() {
         });
     }
 }
+document.fonts.ready.then(updateNodes);
 
 const validLinks = computed(() => {
     const n = nodes.value;

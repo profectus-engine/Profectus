@@ -29,6 +29,7 @@ function updateTop() {
 }
 
 nextTick(updateTop);
+document.fonts.ready.then(updateTop);
 
 onMounted(() => {
     const el = element.value?.parentElement;
