@@ -1,27 +1,24 @@
 import ParticlesComponent from "features/particles/Particles.vue";
-import { Container } from "tsparticles-engine";
-import { IEmitter } from "tsparticles-plugin-emitters/Options/Interfaces/IEmitter";
-import { EmitterInstance } from "tsparticles-plugin-emitters/EmitterInstance";
-import { EmitterContainer } from "tsparticles-plugin-emitters/EmitterContainer";
-import { Ref, shallowRef } from "vue";
-import { Component, GatherProps, getUniqueID, Replace, setDefault } from "features/feature";
+import { Ref, shallowRef, unref } from "vue";
+import { Component, GatherProps, getUniqueID, Replace, StyleValue } from "features/feature";
 import { createLazyProxy } from "util/proxies";
+import { Application } from "pixi.js";
+import { Emitter, EmitterConfigV3, upgradeConfig } from "@pixi/particle-emitter";
+import { Computable, GetComputableType } from "util/computed";
 
 export const ParticlesType = Symbol("Particles");
 
 export interface ParticlesOptions {
-    fullscreen?: boolean;
-    zIndex?: number;
+    classes?: Computable<Record<string, boolean>>;
+    style?: Computable<StyleValue>;
     onContainerResized?: (boundingRect: DOMRect) => void;
+    onHotReload?: VoidFunction;
 }
 
 export interface BaseParticles {
     id: string;
-    containerRef: Ref<null | (EmitterContainer & Container)>;
-    addEmitter: (
-        options: IEmitter & { particles: Required<IEmitter>["particles"] }
-    ) => Promise<EmitterInstance>;
-    removeEmitter: (emitter: EmitterInstance) => void;
+    app: Ref<null | Application>;
+    addEmitter: (config: EmitterConfigV3) => Promise<Emitter>;
     type: typeof ParticlesType;
     [Component]: typeof ParticlesComponent;
     [GatherProps]: () => Record<string, unknown>;
@@ -30,18 +27,12 @@ export interface BaseParticles {
 export type Particles<T extends ParticlesOptions> = Replace<
     T & BaseParticles,
     {
-        fullscreen: undefined extends T["fullscreen"] ? true : T["fullscreen"];
-        zIndex: undefined extends T["zIndex"] ? 1 : T["zIndex"];
+        classes: GetComputableType<T["classes"]>;
+        style: GetComputableType<T["style"]>;
     }
 >;
 
-export type GenericParticles = Replace<
-    Particles<ParticlesOptions>,
-    {
-        fullscreen: boolean;
-        zIndex: number;
-    }
->;
+export type GenericParticles = Particles<ParticlesOptions>;
 
 export function createParticles<T extends ParticlesOptions>(
     optionsFunc: () => T & ThisType<Particles<T>>
@@ -52,46 +43,38 @@ export function createParticles<T extends ParticlesOptions>(
         particles.type = ParticlesType;
         particles[Component] = ParticlesComponent;
 
-        particles.containerRef = shallowRef(null);
-        particles.addEmitter = (
-            options: IEmitter & { particles: Required<IEmitter>["particles"] }
-        ): Promise<EmitterInstance> => {
+        particles.app = shallowRef(null);
+        particles.addEmitter = (config: EmitterConfigV3): Promise<Emitter> => {
             const genericParticles = particles as GenericParticles;
-            if (genericParticles.containerRef.value) {
-                // TODO why does addEmitter require a position parameter
-                return Promise.resolve(genericParticles.containerRef.value.addEmitter(options));
+            if (genericParticles.app.value) {
+                return Promise.resolve(new Emitter(genericParticles.app.value.stage, config));
             }
-            return new Promise<EmitterInstance>(resolve => {
-                emittersToAdd.push({ resolve, options });
+            return new Promise<Emitter>(resolve => {
+                emittersToAdd.push({ resolve, config });
             });
-        };
-        particles.removeEmitter = (emitter: EmitterInstance) => {
-            // TODO I can't find a proper way to remove an emitter without accessing private functions
-            emitter.emitters.removeEmitter(emitter);
         };
 
         let emittersToAdd: {
-            resolve: (value: EmitterInstance | PromiseLike<EmitterInstance>) => void;
-            options: IEmitter & { particles: Required<IEmitter>["particles"] };
+            resolve: (value: Emitter | PromiseLike<Emitter>) => void;
+            config: EmitterConfigV3;
         }[] = [];
 
-        function onInit(container: EmitterContainer & Container) {
-            (particles as GenericParticles).containerRef.value = container;
-            emittersToAdd.forEach(({ resolve, options }) => resolve(container.addEmitter(options)));
+        function onInit(app: Application) {
+            (particles as GenericParticles).app.value = app;
+            emittersToAdd.forEach(({ resolve, config }) => resolve(new Emitter(app.stage, config)));
             emittersToAdd = [];
         }
 
-        setDefault(particles, "fullscreen", true);
-        setDefault(particles, "zIndex", 1);
         particles.onContainerResized = particles.onContainerResized?.bind(particles);
 
         particles[GatherProps] = function (this: GenericParticles) {
-            const { id, fullscreen, zIndex, onContainerResized } = this;
+            const { id, style, classes, onContainerResized, onHotReload } = this;
             return {
                 id,
-                fullscreen,
-                zIndex,
+                style: unref(style),
+                classes,
                 onContainerResized,
+                onHotReload,
                 onInit
             };
         };
@@ -99,3 +82,10 @@ export function createParticles<T extends ParticlesOptions>(
         return particles as unknown as Particles<T>;
     });
 }
+
+declare global {
+    interface Window {
+        upgradeConfig: typeof upgradeConfig;
+    }
+}
+window.upgradeConfig = upgradeConfig;
