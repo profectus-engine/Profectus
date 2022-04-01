@@ -36,8 +36,8 @@ export function createLazyProxy<T extends object>(objectFunc: () => T): T {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return (calculateObj() as any)[key];
         },
-        set() {
-            console.error("Layers and features are shallow readonly");
+        set(target, key, value) {
+            console.error("Layers and features are shallow readonly", key, value);
             return false;
         },
         has(target, key) {
