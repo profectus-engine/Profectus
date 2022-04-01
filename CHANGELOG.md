@@ -6,6 +6,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2022-04-01
+Unironically posting an update on April Fool's Day ;)
+### Changed
+- **BREAKING** Replaced tsparticles with pixi-emitter. Different options, and behaves differently.
+- Print key and value in lazy proxy's setter message
+- Update bounding boxes after web fonts load in
+### Removed
+- safff.txt
+
 ## [0.2.1] - 2022-03-29
 ### Changed
 - **BREAKING** Reworked conversion.modifyGainAmount into conversion.gainModifier, with several utility functions. This makes nextAt accurate with modified gain
