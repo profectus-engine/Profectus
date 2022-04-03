@@ -2,7 +2,7 @@ import { globalBus } from "game/events";
 import Decimal, { DecimalSource } from "util/bignum";
 import { ProxyState } from "util/proxies";
 import { isArray } from "@vue/shared";
-import { isRef, Ref, ref } from "vue";
+import { isReactive, isRef, Ref, ref } from "vue";
 import { GenericLayer } from "./layers";
 
 export const PersistentState = Symbol("PersistentState");
@@ -70,12 +70,20 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
                     // Add ref to save data
                     persistentState[key] = (value as Persistent)[PersistentState];
                     // Load previously saved value
-                    if (savedValue != null) {
-                        (persistentState[key] as Ref<unknown>).value = savedValue;
+                    if (isReactive(persistentState)) {
+                        if (savedValue != null) {
+                            persistentState[key] = savedValue;
+                        } else {
+                            persistentState[key] = (value as Persistent)[DefaultValue];
+                        }
                     } else {
-                        (persistentState[key] as Ref<unknown>).value = (value as Persistent)[
-                            DefaultValue
-                        ];
+                        if (savedValue != null) {
+                            (persistentState[key] as Ref<unknown>).value = savedValue;
+                        } else {
+                            (persistentState[key] as Ref<unknown>).value = (value as Persistent)[
+                                DefaultValue
+                            ];
+                        }
                     }
                 } else if (
                     !(value instanceof Decimal) &&
