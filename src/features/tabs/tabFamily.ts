@@ -10,7 +10,7 @@ import {
 } from "features/feature";
 import TabButtonComponent from "features/tabs/TabButton.vue";
 import TabFamilyComponent from "features/tabs/TabFamily.vue";
-import { Persistent, makePersistent, PersistentState } from "game/persistence";
+import { Persistent, PersistentState, persistent } from "game/persistence";
 import {
     Computable,
     GetComputableType,
@@ -60,13 +60,13 @@ export type GenericTabButton = Replace<
 
 export interface TabFamilyOptions {
     visibility?: Computable<Visibility>;
-    tabs: Record<string, TabButtonOptions>;
     classes?: Computable<Record<string, boolean>>;
     style?: Computable<StyleValue>;
 }
 
 export interface BaseTabFamily extends Persistent<string> {
     id: string;
+    tabs: Record<string, TabButtonOptions>;
     activeTab: Ref<GenericTab | CoercableComponent | null>;
     selected: Ref<string>;
     type: typeof TabFamilyType;
@@ -90,21 +90,41 @@ export type GenericTabFamily = Replace<
 >;
 
 export function createTabFamily<T extends TabFamilyOptions>(
+    tabs: Record<string, () => TabButtonOptions>,
     optionsFunc: () => T & ThisType<TabFamily<T>>
 ): TabFamily<T> {
-    return createLazyProxy(() => {
-        const tabFamily: T & Partial<BaseTabFamily> = optionsFunc();
+    if (Object.keys(tabs).length === 0) {
+        console.warn("Cannot create tab family with 0 tabs");
+        throw "Cannot create tab family with 0 tabs";
+    }
 
-        if (Object.keys(tabFamily.tabs).length === 0) {
-            console.warn("Cannot create tab family with 0 tabs", tabFamily);
-            throw "Cannot create tab family with 0 tabs";
-        }
+    return createLazyProxy(persistent => {
+        // Create temp literally just to avoid explicitly assigning types
+        const temp = Object.assign(persistent, optionsFunc());
+        const tabFamily: Partial<BaseTabFamily> & typeof temp = temp;
 
         tabFamily.id = getUniqueID("tabFamily-");
         tabFamily.type = TabFamilyType;
         tabFamily[Component] = TabFamilyComponent;
 
-        makePersistent<string>(tabFamily, Object.keys(tabFamily.tabs)[0]);
+        tabFamily.tabs = Object.keys(tabs).reduce<Record<string, GenericTabButton>>(
+            (parsedTabs, tab) => {
+                const tabButton: TabButtonOptions & Partial<BaseTabButton> = tabs[tab]();
+                tabButton.type = TabButtonType;
+                tabButton[Component] = TabButtonComponent;
+
+                processComputable(tabButton as TabButtonOptions, "visibility");
+                setDefault(tabButton, "visibility", Visibility.Visible);
+                processComputable(tabButton as TabButtonOptions, "tab");
+                processComputable(tabButton as TabButtonOptions, "display");
+                processComputable(tabButton as TabButtonOptions, "classes");
+                processComputable(tabButton as TabButtonOptions, "style");
+                processComputable(tabButton as TabButtonOptions, "glowColor");
+                parsedTabs[tab] = tabButton as GenericTabButton;
+                return parsedTabs;
+            },
+            {}
+        );
         tabFamily.selected = tabFamily[PersistentState];
         tabFamily.activeTab = computed(() => {
             const tabs = unref(processedTabFamily.tabs);
@@ -129,20 +149,6 @@ export function createTabFamily<T extends TabFamilyOptions>(
         processComputable(tabFamily as T, "classes");
         processComputable(tabFamily as T, "style");
 
-        for (const tab in tabFamily.tabs) {
-            const tabButton: TabButtonOptions & Partial<BaseTabButton> = tabFamily.tabs[tab];
-            tabButton.type = TabButtonType;
-            tabButton[Component] = TabButtonComponent;
-
-            processComputable(tabButton as TabButtonOptions, "visibility");
-            setDefault(tabButton, "visibility", Visibility.Visible);
-            processComputable(tabButton as TabButtonOptions, "tab");
-            processComputable(tabButton as TabButtonOptions, "display");
-            processComputable(tabButton as TabButtonOptions, "classes");
-            processComputable(tabButton as TabButtonOptions, "style");
-            processComputable(tabButton as TabButtonOptions, "glowColor");
-        }
-
         tabFamily[GatherProps] = function (this: GenericTabFamily) {
             const { visibility, activeTab, selected, tabs, style, classes } = this;
             return { visibility, activeTab, selected, tabs, style: unref(style), classes };
@@ -151,5 +157,5 @@ export function createTabFamily<T extends TabFamilyOptions>(
         // This is necessary because board.types is different from T and TabFamily
         const processedTabFamily = tabFamily as unknown as TabFamily<T>;
         return processedTabFamily;
-    });
+    }, persistent(Object.keys(tabs)[0]));
 }

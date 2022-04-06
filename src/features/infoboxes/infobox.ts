@@ -18,7 +18,7 @@ import {
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { Ref, unref } from "vue";
-import { Persistent, makePersistent, PersistentState } from "game/persistence";
+import { Persistent, PersistentState, persistent } from "game/persistence";
 
 export const InfoboxType = Symbol("Infobox");
 
@@ -65,9 +65,10 @@ export type GenericInfobox = Replace<
 export function createInfobox<T extends InfoboxOptions>(
     optionsFunc: () => T & ThisType<Infobox<T>>
 ): Infobox<T> {
-    return createLazyProxy(() => {
-        const infobox: T & Partial<BaseInfobox> = optionsFunc();
-        makePersistent<boolean>(infobox, false);
+    return createLazyProxy(persistent => {
+        // Create temp literally just to avoid explicitly assigning types
+        const temp = Object.assign(persistent, optionsFunc());
+        const infobox: Partial<BaseInfobox> & typeof temp = temp;
         infobox.id = getUniqueID("infobox-");
         infobox.type = InfoboxType;
         infobox[Component] = InfoboxComponent;
@@ -112,5 +113,5 @@ export function createInfobox<T extends InfoboxOptions>(
         };
 
         return infobox as unknown as Infobox<T>;
-    });
+    }, persistent<boolean>(false));
 }

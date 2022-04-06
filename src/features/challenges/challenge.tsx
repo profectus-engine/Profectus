@@ -15,7 +15,7 @@ import {
 import { GenericReset } from "features/reset";
 import { Resource } from "features/resources/resource";
 import { globalBus } from "game/events";
-import { persistent, PersistentRef } from "game/persistence";
+import { Persistent, persistent } from "game/persistence";
 import settings, { registerSettingField } from "game/settings";
 import Decimal, { DecimalSource } from "util/bignum";
 import {
@@ -58,10 +58,10 @@ export interface ChallengeOptions {
 
 export interface BaseChallenge {
     id: string;
-    completions: PersistentRef<DecimalSource>;
+    completions: Persistent<DecimalSource>;
     completed: Ref<boolean>;
     maxed: Ref<boolean>;
-    active: PersistentRef<boolean>;
+    active: Persistent<boolean>;
     toggle: VoidFunction;
     complete: (remainInChallenge?: boolean) => void;
     type: typeof ChallengeType;
@@ -98,6 +98,8 @@ export type GenericChallenge = Replace<
 export function createChallenge<T extends ChallengeOptions>(
     optionsFunc: () => T & ThisType<Challenge<T>>
 ): Challenge<T> {
+    const completions = persistent(0);
+    const active = persistent(false);
     return createLazyProxy(() => {
         const challenge: T & Partial<BaseChallenge> = optionsFunc();
 
@@ -116,8 +118,8 @@ export function createChallenge<T extends ChallengeOptions>(
         challenge.type = ChallengeType;
         challenge[Component] = ChallengeComponent;
 
-        challenge.completions = persistent(0);
-        challenge.active = persistent(false);
+        challenge.completions = completions;
+        challenge.active = active;
         challenge.completed = computed(() =>
             Decimal.gt((challenge as GenericChallenge).completions.value, 0)
         );

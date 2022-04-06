@@ -13,7 +13,7 @@ import {
 import MilestoneComponent from "features/milestones/Milestone.vue";
 import { globalBus } from "game/events";
 import "game/notifications";
-import { makePersistent, Persistent, PersistentState } from "game/persistence";
+import { persistent, Persistent, PersistentState } from "game/persistence";
 import settings, { registerSettingField } from "game/settings";
 import { camelToTitle } from "util/common";
 import {
@@ -85,9 +85,10 @@ export type GenericMilestone = Replace<
 export function createMilestone<T extends MilestoneOptions>(
     optionsFunc: () => T & ThisType<Milestone<T>>
 ): Milestone<T> {
-    return createLazyProxy(() => {
-        const milestone: T & Partial<BaseMilestone> = optionsFunc();
-        makePersistent<boolean>(milestone, false);
+    return createLazyProxy(persistent => {
+        // Create temp literally just to avoid explicitly assigning types
+        const temp = Object.assign(persistent, optionsFunc());
+        const milestone: Partial<BaseMilestone> & typeof temp = temp;
         milestone.id = getUniqueID("milestone-");
         milestone.type = MilestoneType;
         milestone[Component] = MilestoneComponent;
@@ -168,7 +169,7 @@ export function createMilestone<T extends MilestoneOptions>(
         }
 
         return milestone as unknown as Milestone<T>;
-    });
+    }, persistent<boolean>(false));
 }
 
 declare module "game/settings" {

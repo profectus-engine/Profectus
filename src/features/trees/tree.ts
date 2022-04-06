@@ -13,7 +13,7 @@ import { GenericReset } from "features/reset";
 import { displayResource, Resource } from "features/resources/resource";
 import { Tooltip } from "features/tooltip";
 import TreeComponent from "features/trees/Tree.vue";
-import { persistent } from "game/persistence";
+import { deletePersistent, persistent } from "game/persistence";
 import Decimal, { DecimalSource, format, formatWhole } from "util/bignum";
 import {
     Computable,
@@ -76,16 +76,18 @@ export type GenericTreeNode = Replace<
 export function createTreeNode<T extends TreeNodeOptions>(
     optionsFunc: () => T & ThisType<TreeNode<T>>
 ): TreeNode<T> {
+    const forceTooltip = persistent(false);
     return createLazyProxy(() => {
         const treeNode: T & Partial<BaseTreeNode> = optionsFunc();
         treeNode.id = getUniqueID("treeNode-");
         treeNode.type = TreeNodeType;
 
         if (treeNode.tooltip) {
-            treeNode.forceTooltip = persistent(false);
+            treeNode.forceTooltip = forceTooltip;
         } else {
             // If we don't have a tooltip, no point in making this persistent
             treeNode.forceTooltip = ref(false);
+            deletePersistent(forceTooltip);
         }
 
         processComputable(treeNode as T, "visibility");

@@ -23,7 +23,7 @@ import {
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { computed, Ref, unref } from "vue";
-import { Persistent, makePersistent, PersistentState } from "game/persistence";
+import { persistent, Persistent, PersistentState } from "game/persistence";
 
 export const UpgradeType = Symbol("Upgrade");
 
@@ -80,9 +80,10 @@ export type GenericUpgrade = Replace<
 export function createUpgrade<T extends UpgradeOptions>(
     optionsFunc: () => T & ThisType<Upgrade<T>>
 ): Upgrade<T> {
-    return createLazyProxy(() => {
-        const upgrade: T & Partial<BaseUpgrade> = optionsFunc();
-        makePersistent<boolean>(upgrade, false);
+    return createLazyProxy(persistent => {
+        // Create temp literally just to avoid explicitly assigning types
+        const temp = Object.assign(persistent, optionsFunc());
+        const upgrade: Partial<BaseUpgrade> & typeof temp = temp;
         upgrade.id = getUniqueID("upgrade-");
         upgrade.type = UpgradeType;
         upgrade[Component] = UpgradeComponent;
@@ -167,7 +168,7 @@ export function createUpgrade<T extends UpgradeOptions>(
         };
 
         return upgrade as unknown as Upgrade<T>;
-    });
+    }, persistent<boolean>(false));
 }
 
 export function setupAutoPurchase(

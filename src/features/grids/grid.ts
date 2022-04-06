@@ -19,7 +19,7 @@ import {
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { computed, Ref, unref } from "vue";
-import { State, Persistent, makePersistent, PersistentState } from "game/persistence";
+import { State, Persistent, PersistentState, persistent } from "game/persistence";
 
 export const GridType = Symbol("Grid");
 
@@ -243,9 +243,10 @@ export type GenericGrid = Replace<
 export function createGrid<T extends GridOptions>(
     optionsFunc: () => T & ThisType<Grid<T>>
 ): Grid<T> {
-    return createLazyProxy(() => {
-        const grid: T & Partial<BaseGrid> = optionsFunc();
-        makePersistent(grid, {});
+    return createLazyProxy(persistent => {
+        // Create temp literally just to avoid explicitly assigning types
+        const temp = Object.assign(persistent, optionsFunc());
+        const grid: Partial<BaseGrid> & typeof temp = temp;
         grid.id = getUniqueID("grid-");
         grid[Component] = GridComponent;
 
@@ -301,5 +302,5 @@ export function createGrid<T extends GridOptions>(
         };
 
         return grid as unknown as Grid<T>;
-    });
+    }, persistent({}));
 }

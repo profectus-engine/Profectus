@@ -10,7 +10,7 @@ import {
     Visibility
 } from "features/feature";
 import "game/notifications";
-import { Persistent, makePersistent, PersistentState } from "game/persistence";
+import { Persistent, PersistentState, persistent } from "game/persistence";
 import {
     Computable,
     GetComputableType,
@@ -69,9 +69,10 @@ export type GenericAchievement = Replace<
 export function createAchievement<T extends AchievementOptions>(
     optionsFunc: () => T & ThisType<Achievement<T>>
 ): Achievement<T> {
-    return createLazyProxy(() => {
-        const achievement: T & Partial<BaseAchievement> = optionsFunc();
-        makePersistent<boolean>(achievement, false);
+    return createLazyProxy(persistent => {
+        // Create temp literally just to avoid explicitly assigning types
+        const temp = Object.assign(persistent, optionsFunc());
+        const achievement: Partial<BaseAchievement> & typeof temp = temp;
         achievement.id = getUniqueID("achievement-");
         achievement.type = AchievementType;
         achievement[Component] = AchievementComponent;
@@ -122,5 +123,5 @@ export function createAchievement<T extends AchievementOptions>(
         }
 
         return achievement as unknown as Achievement<T>;
-    });
+    }, persistent<boolean>(false));
 }

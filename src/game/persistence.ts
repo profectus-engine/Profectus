@@ -3,10 +3,12 @@ import Decimal, { DecimalSource } from "util/bignum";
 import { ProxyState } from "util/proxies";
 import { isArray } from "@vue/shared";
 import { isReactive, isRef, Ref, ref } from "vue";
-import { GenericLayer } from "./layers";
+import { addingLayers, GenericLayer, persistentRefs } from "./layers";
 
 export const PersistentState = Symbol("PersistentState");
 export const DefaultValue = Symbol("DefaultValue");
+export const StackTrace = Symbol("StackTrace");
+export const Deleted = Symbol("Deleted");
 
 // Note: This is a union of things that should be safely stringifiable without needing
 // special processes for knowing what to load them in as
@@ -20,31 +22,52 @@ export type State =
     | { [key: string]: State }
     | { [key: number]: State };
 
-export type Persistent<T extends State = State> = {
+export type Persistent<T extends State = State> = Ref<T> & {
     [PersistentState]: Ref<T>;
     [DefaultValue]: T;
+    [StackTrace]: string;
+    [Deleted]: boolean;
 };
-export type PersistentRef<T extends State = State> = Ref<T> & Persistent<T>;
 
-export function persistent<T extends State>(defaultValue: T | Ref<T>): PersistentRef<T> {
+function getStackTrace() {
+    return (
+        new Error().stack
+            ?.split("\n")
+            .slice(3, 5)
+            .map(line => line.trim())
+            .join("\n") || ""
+    );
+}
+
+export function persistent<T extends State>(defaultValue: T | Ref<T>): Persistent<T> {
     const persistent = (
         isRef(defaultValue) ? defaultValue : (ref<T>(defaultValue) as unknown)
-    ) as PersistentRef<T>;
+    ) as Persistent<T>;
 
     persistent[PersistentState] = persistent;
     persistent[DefaultValue] = isRef(defaultValue) ? defaultValue.value : defaultValue;
-    return persistent as PersistentRef<T>;
+    persistent[StackTrace] = getStackTrace();
+    persistent[Deleted] = false;
+
+    if (addingLayers.length === 0) {
+        console.warn(
+            "Creating a persistent ref outside of a layer. This is not officially supported",
+            persistent,
+            "\nCreated at:\n" + persistent[StackTrace]
+        );
+    } else {
+        persistentRefs[addingLayers[addingLayers.length - 1]].add(persistent);
+    }
+
+    return persistent as Persistent<T>;
 }
 
-export function makePersistent<T extends State>(
-    obj: unknown,
-    defaultValue: T
-): asserts obj is Persistent<T> {
-    const persistent = obj as Partial<Persistent<T>>;
-    const state = ref(defaultValue) as Ref<T>;
-
-    persistent[PersistentState] = state;
-    persistent[DefaultValue] = isRef(defaultValue) ? (defaultValue.value as T) : defaultValue;
+export function deletePersistent(persistent: Persistent) {
+    if (addingLayers.length === 0) {
+        console.warn("Deleting a persistent ref outside of a layer. Ignoring...", persistent);
+    }
+    persistentRefs[addingLayers[addingLayers.length - 1]].delete(persistent);
+    persistent[Deleted] = true;
 }
 
 globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>) => {
@@ -56,6 +79,19 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
             if (value && typeof value === "object") {
                 if (PersistentState in value) {
                     foundPersistent = true;
+                    if ((value as Persistent)[Deleted]) {
+                        console.warn(
+                            "Deleted persistent ref present in returned object. Ignoring...",
+                            value,
+                            "\nCreated at:\n" + (value as Persistent)[StackTrace]
+                        );
+                        return;
+                    }
+                    persistentRefs[layer.id].delete(
+                        ProxyState in value
+                            ? ((value as any)[ProxyState] as Persistent)
+                            : (value as Persistent)
+                    );
 
                     // Construct save path if it doesn't exist
                     const persistentState = path.reduce<Record<string, unknown>>((acc, curr) => {
@@ -122,4 +158,12 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
         return foundPersistent;
     };
     handleObject(layer);
+    persistentRefs[layer.id].forEach(persistent => {
+        console.error(
+            `Created persistent ref in ${layer.id} without registering it to the layer! Make sure to include everything persistent in the returned object`,
+            persistent,
+            "\nCreated at:\n" + persistent[StackTrace]
+        );
+    });
+    persistentRefs[layer.id].clear();
 });

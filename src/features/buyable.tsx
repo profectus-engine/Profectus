@@ -1,6 +1,6 @@
 import ClickableComponent from "features/clickables/Clickable.vue";
 import { Resource } from "features/resources/resource";
-import { Persistent, makePersistent, PersistentState } from "game/persistence";
+import { Persistent, PersistentState, persistent } from "game/persistence";
 import Decimal, { DecimalSource, format, formatWhole } from "util/bignum";
 import {
     Computable,
@@ -89,8 +89,10 @@ export type GenericBuyable = Replace<
 export function createBuyable<T extends BuyableOptions>(
     optionsFunc: () => T & ThisType<Buyable<T>>
 ): Buyable<T> {
-    return createLazyProxy(() => {
-        const buyable: T & Partial<BaseBuyable> = optionsFunc();
+    return createLazyProxy(persistent => {
+        // Create temp literally just to avoid explicitly assigning types
+        const temp = Object.assign(persistent, optionsFunc());
+        const buyable: Partial<BaseBuyable> & typeof temp = temp;
 
         if (buyable.canPurchase == null && (buyable.resource == null || buyable.cost == null)) {
             console.warn(
@@ -100,7 +102,6 @@ export function createBuyable<T extends BuyableOptions>(
             throw "Cannot create buyable without a canPurchase property or a resource and cost property";
         }
 
-        makePersistent<DecimalSource>(buyable, 0);
         buyable.id = getUniqueID("buyable-");
         buyable.type = BuyableType;
         buyable[Component] = ClickableComponent;
@@ -239,5 +240,5 @@ export function createBuyable<T extends BuyableOptions>(
         };
 
         return buyable as unknown as Buyable<T>;
-    });
+    }, persistent<DecimalSource>(0));
 }
