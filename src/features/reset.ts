@@ -1,13 +1,7 @@
 import { getUniqueID, Replace } from "features/feature";
 import { globalBus } from "game/events";
 import { GenericLayer } from "game/layers";
-import {
-    DefaultValue,
-    Persistent,
-    persistent,
-    PersistentRef,
-    PersistentState
-} from "game/persistence";
+import { DefaultValue, Persistent, persistent, PersistentState } from "game/persistence";
 import Decimal from "util/bignum";
 import { Computable, GetComputableType, processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
@@ -70,7 +64,7 @@ export function createReset<T extends ResetOptions>(
 }
 
 const listeners: Record<string, Unsubscribe | undefined> = {};
-export function trackResetTime(layer: GenericLayer, reset: GenericReset): PersistentRef<Decimal> {
+export function trackResetTime(layer: GenericLayer, reset: GenericReset): Persistent<Decimal> {
     const resetTime = persistent<Decimal>(new Decimal(0));
     listeners[layer.id] = layer.on("preUpdate", diff => {
         resetTime.value = Decimal.add(resetTime.value, diff);
