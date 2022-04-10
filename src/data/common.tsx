@@ -80,7 +80,7 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
                     <b>
                         {displayResource(
                             resetButton.conversion.gainResource,
-                            unref(resetButton.conversion.currentGain)
+                            unref(resetButton.conversion.actualGain)
                         )}
                     </b>{" "}
                     {resetButton.conversion.gainResource.displayName}
@@ -99,7 +99,7 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
 
         if (resetButton.canClick == null) {
             resetButton.canClick = computed(() =>
-                Decimal.gt(unref(resetButton.conversion.currentGain), 0)
+                Decimal.gt(unref(resetButton.conversion.actualGain), 0)
             );
         }
 
