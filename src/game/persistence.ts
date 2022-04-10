@@ -65,8 +65,9 @@ export function persistent<T extends State>(defaultValue: T | Ref<T>): Persisten
 export function deletePersistent(persistent: Persistent) {
     if (addingLayers.length === 0) {
         console.warn("Deleting a persistent ref outside of a layer. Ignoring...", persistent);
+    } else {
+        persistentRefs[addingLayers[addingLayers.length - 1]].delete(persistent);
     }
-    persistentRefs[addingLayers[addingLayers.length - 1]].delete(persistent);
     persistent[Deleted] = true;
 }
 
@@ -89,7 +90,8 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
                     }
                     persistentRefs[layer.id].delete(
                         ProxyState in value
-                            ? ((value as any)[ProxyState] as Persistent)
+                            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                              ((value as any)[ProxyState] as Persistent)
                             : (value as Persistent)
                     );
 
