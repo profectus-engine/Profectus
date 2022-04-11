@@ -15,7 +15,7 @@ import {
     TreeNodeOptions
 } from "features/trees/tree";
 import player from "game/player";
-import Decimal from "util/bignum";
+import Decimal, { DecimalSource } from "util/bignum";
 import {
     Computable,
     GetComputableType,
@@ -33,6 +33,7 @@ export interface ResetButtonOptions extends ClickableOptions {
     showNextAt?: Computable<boolean>;
     display?: Computable<CoercableComponent>;
     canClick?: Computable<boolean>;
+    minimumGain?: Computable<DecimalSource>;
 }
 
 export type ResetButton<T extends ResetButtonOptions> = Replace<
@@ -42,6 +43,7 @@ export type ResetButton<T extends ResetButtonOptions> = Replace<
         showNextAt: GetComputableTypeWithDefault<T["showNextAt"], true>;
         display: GetComputableTypeWithDefault<T["display"], Ref<JSX.Element>>;
         canClick: GetComputableTypeWithDefault<T["canClick"], Ref<boolean>>;
+        minimumGain: GetComputableTypeWithDefault<T["minimumGain"], 1>;
         onClick: VoidFunction;
     }
 >;
@@ -53,6 +55,7 @@ export type GenericResetButton = Replace<
         showNextAt: ProcessedComputable<boolean>;
         display: ProcessedComputable<CoercableComponent>;
         canClick: ProcessedComputable<boolean>;
+        minimumGain: ProcessedComputable<DecimalSource>;
     }
 >;
 
@@ -64,6 +67,7 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
 
         processComputable(resetButton as T, "showNextAt");
         setDefault(resetButton, "showNextAt", true);
+        setDefault(resetButton, "minimumGain", 1);
 
         if (resetButton.resetDescription == null) {
             resetButton.resetDescription = computed(() =>
@@ -80,7 +84,10 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
                     <b>
                         {displayResource(
                             resetButton.conversion.gainResource,
-                            unref(resetButton.conversion.actualGain)
+                            Decimal.max(
+                                unref(resetButton.conversion.actualGain),
+                                unref(resetButton.minimumGain as ProcessedComputable<DecimalSource>)
+                            )
                         )}
                     </b>{" "}
                     {resetButton.conversion.gainResource.displayName}
@@ -99,7 +106,10 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
 
         if (resetButton.canClick == null) {
             resetButton.canClick = computed(() =>
-                Decimal.gt(unref(resetButton.conversion.actualGain), 0)
+                Decimal.gte(
+                    unref(resetButton.conversion.actualGain),
+                    unref(resetButton.minimumGain as ProcessedComputable<DecimalSource>)
+                )
             );
         }
 
