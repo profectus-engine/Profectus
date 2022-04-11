@@ -97,7 +97,7 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
                         {displayResource(
                             resetButton.conversion.baseResource,
                             resetButton.conversion.buyMax ||
-                                Decimal.neq(1, unref(resetButton.conversion.actualGain))
+                                Decimal.floor(unref(resetButton.conversion.actualGain)).neq(1)
                                 ? unref(resetButton.conversion.nextAt)
                                 : unref(resetButton.conversion.currentAt)
                         )}{" "}
