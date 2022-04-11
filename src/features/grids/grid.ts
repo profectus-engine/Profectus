@@ -2,6 +2,7 @@ import GridComponent from "features/grids/Grid.vue";
 import {
     CoercableComponent,
     Component,
+    OptionsFunc,
     GatherProps,
     getUniqueID,
     Replace,
@@ -241,12 +242,10 @@ export type GenericGrid = Replace<
 >;
 
 export function createGrid<T extends GridOptions>(
-    optionsFunc: () => T & ThisType<Grid<T>>
+    optionsFunc: OptionsFunc<T, Grid<T>, BaseGrid>
 ): Grid<T> {
     return createLazyProxy(persistent => {
-        // Create temp literally just to avoid explicitly assigning types
-        const temp = Object.assign(persistent, optionsFunc());
-        const grid: Partial<BaseGrid> & typeof temp = temp;
+        const grid = Object.assign(persistent, optionsFunc());
         grid.id = getUniqueID("grid-");
         grid[Component] = GridComponent;
 

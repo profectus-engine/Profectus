@@ -2,6 +2,7 @@ import InfoboxComponent from "features/infoboxes/Infobox.vue";
 import {
     CoercableComponent,
     Component,
+    OptionsFunc,
     GatherProps,
     getUniqueID,
     Replace,
@@ -63,12 +64,10 @@ export type GenericInfobox = Replace<
 >;
 
 export function createInfobox<T extends InfoboxOptions>(
-    optionsFunc: () => T & ThisType<Infobox<T>>
+    optionsFunc: OptionsFunc<T, Infobox<T>, BaseInfobox>
 ): Infobox<T> {
     return createLazyProxy(persistent => {
-        // Create temp literally just to avoid explicitly assigning types
-        const temp = Object.assign(persistent, optionsFunc());
-        const infobox: Partial<BaseInfobox> & typeof temp = temp;
+        const infobox = Object.assign(persistent, optionsFunc());
         infobox.id = getUniqueID("infobox-");
         infobox.type = InfoboxType;
         infobox[Component] = InfoboxComponent;

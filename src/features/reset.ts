@@ -1,4 +1,4 @@
-import { getUniqueID, Replace } from "features/feature";
+import { OptionsFunc, getUniqueID, Replace } from "features/feature";
 import { globalBus } from "game/events";
 import { GenericLayer } from "game/layers";
 import { DefaultValue, Persistent, persistent, PersistentState } from "game/persistence";
@@ -31,10 +31,10 @@ export type Reset<T extends ResetOptions> = Replace<
 export type GenericReset = Reset<ResetOptions>;
 
 export function createReset<T extends ResetOptions>(
-    optionsFunc: () => T & ThisType<Reset<T>>
+    optionsFunc: OptionsFunc<T, Reset<T>, BaseReset>
 ): Reset<T> {
     return createLazyProxy(() => {
-        const reset: T & Partial<BaseReset> = optionsFunc();
+        const reset = optionsFunc();
         reset.id = getUniqueID("reset-");
         reset.type = ResetType;
 

@@ -15,6 +15,7 @@ import { computed, Ref, unref } from "vue";
 import {
     CoercableComponent,
     Component,
+    OptionsFunc,
     GatherProps,
     getUniqueID,
     jsx,
@@ -87,12 +88,10 @@ export type GenericBuyable = Replace<
 >;
 
 export function createBuyable<T extends BuyableOptions>(
-    optionsFunc: () => T & ThisType<Buyable<T>>
+    optionsFunc: OptionsFunc<T, Buyable<T>, BaseBuyable>
 ): Buyable<T> {
     return createLazyProxy(persistent => {
-        // Create temp literally just to avoid explicitly assigning types
-        const temp = Object.assign(persistent, optionsFunc());
-        const buyable: Partial<BaseBuyable> & typeof temp = temp;
+        const buyable = Object.assign(persistent, optionsFunc());
 
         if (buyable.canPurchase == null && (buyable.resource == null || buyable.cost == null)) {
             console.warn(

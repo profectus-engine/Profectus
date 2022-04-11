@@ -24,6 +24,8 @@ export type FeatureComponent<T> = Omit<
 
 export type Replace<T, S> = S & Omit<T, keyof S>;
 
+export type OptionsFunc<T, S = T, R = Record<string, unknown>> = () => T & ThisType<S> & Partial<R>;
+
 let id = 0;
 // Get a unique ID to allow a feature to be found for creating branches
 // and any other uses requiring unique identifiers for each feature

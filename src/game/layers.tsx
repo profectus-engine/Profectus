@@ -1,6 +1,7 @@
 import Modal from "components/Modal.vue";
 import {
     CoercableComponent,
+    OptionsFunc,
     jsx,
     JSXFunction,
     Replace,
@@ -104,7 +105,7 @@ export const persistentRefs: Record<string, Set<Persistent>> = {};
 export const addingLayers: string[] = [];
 export function createLayer<T extends LayerOptions>(
     id: string,
-    optionsFunc: (() => T) & ThisType<BaseLayer>
+    optionsFunc: OptionsFunc<T, BaseLayer, BaseLayer>
 ): Layer<T> {
     return createLazyProxy(() => {
         const layer = {} as T & Partial<BaseLayer>;

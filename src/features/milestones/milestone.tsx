@@ -2,6 +2,7 @@ import Select from "components/fields/Select.vue";
 import {
     CoercableComponent,
     Component,
+    OptionsFunc,
     GatherProps,
     getUniqueID,
     jsx,
@@ -83,12 +84,10 @@ export type GenericMilestone = Replace<
 >;
 
 export function createMilestone<T extends MilestoneOptions>(
-    optionsFunc: () => T & ThisType<Milestone<T>>
+    optionsFunc: OptionsFunc<T, Milestone<T>, BaseMilestone>
 ): Milestone<T> {
     return createLazyProxy(persistent => {
-        // Create temp literally just to avoid explicitly assigning types
-        const temp = Object.assign(persistent, optionsFunc());
-        const milestone: Partial<BaseMilestone> & typeof temp = temp;
+        const milestone = Object.assign(persistent, optionsFunc());
         milestone.id = getUniqueID("milestone-");
         milestone.type = MilestoneType;
         milestone[Component] = MilestoneComponent;

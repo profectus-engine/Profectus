@@ -1,6 +1,7 @@
 import {
     CoercableComponent,
     Component,
+    OptionsFunc,
     GatherProps,
     getUniqueID,
     Replace,
@@ -74,11 +75,11 @@ export type GenericTreeNode = Replace<
 >;
 
 export function createTreeNode<T extends TreeNodeOptions>(
-    optionsFunc: () => T & ThisType<TreeNode<T>>
+    optionsFunc: OptionsFunc<T, TreeNode<T>, BaseTreeNode>
 ): TreeNode<T> {
     const forceTooltip = persistent(false);
     return createLazyProxy(() => {
-        const treeNode: T & Partial<BaseTreeNode> = optionsFunc();
+        const treeNode = optionsFunc();
         treeNode.id = getUniqueID("treeNode-");
         treeNode.type = TreeNodeType;
 
@@ -168,10 +169,10 @@ export type GenericTree = Replace<
 >;
 
 export function createTree<T extends TreeOptions>(
-    optionsFunc: () => T & ThisType<Tree<T>>
+    optionsFunc: OptionsFunc<T, Tree<T>, BaseTree>
 ): Tree<T> {
     return createLazyProxy(() => {
-        const tree: T & Partial<BaseTree> = optionsFunc();
+        const tree = optionsFunc();
         tree.id = getUniqueID("tree-");
         tree.type = TreeType;
         tree[Component] = TreeComponent;

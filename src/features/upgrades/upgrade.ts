@@ -2,6 +2,7 @@ import UpgradeComponent from "features/upgrades/Upgrade.vue";
 import {
     CoercableComponent,
     Component,
+    OptionsFunc,
     findFeatures,
     GatherProps,
     getUniqueID,
@@ -78,12 +79,10 @@ export type GenericUpgrade = Replace<
 >;
 
 export function createUpgrade<T extends UpgradeOptions>(
-    optionsFunc: () => T & ThisType<Upgrade<T>>
+    optionsFunc: OptionsFunc<T, Upgrade<T>, BaseUpgrade>
 ): Upgrade<T> {
     return createLazyProxy(persistent => {
-        // Create temp literally just to avoid explicitly assigning types
-        const temp = Object.assign(persistent, optionsFunc());
-        const upgrade: Partial<BaseUpgrade> & typeof temp = temp;
+        const upgrade = Object.assign(persistent, optionsFunc());
         upgrade.id = getUniqueID("upgrade-");
         upgrade.type = UpgradeType;
         upgrade[Component] = UpgradeComponent;

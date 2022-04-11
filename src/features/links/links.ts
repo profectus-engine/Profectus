@@ -1,5 +1,5 @@
 import LinksComponent from "./Links.vue";
-import { Component, GatherProps, Replace } from "features/feature";
+import { Component, OptionsFunc, GatherProps, Replace } from "features/feature";
 import { Position } from "game/layers";
 import {
     Computable,
@@ -44,10 +44,10 @@ export type GenericLinks = Replace<
 >;
 
 export function createLinks<T extends LinksOptions>(
-    optionsFunc: (() => T) & ThisType<Links<T>>
+    optionsFunc: OptionsFunc<T, Links<T>, BaseLinks>
 ): Links<T> {
     return createLazyProxy(() => {
-        const links: T & Partial<BaseLinks> = optionsFunc();
+        const links = optionsFunc();
         links.type = LinksType;
         links[Component] = LinksComponent;
 

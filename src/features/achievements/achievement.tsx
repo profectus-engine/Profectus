@@ -2,6 +2,7 @@ import AchievementComponent from "features/achievements/Achievement.vue";
 import {
     CoercableComponent,
     Component,
+    OptionsFunc,
     GatherProps,
     getUniqueID,
     Replace,
@@ -67,12 +68,10 @@ export type GenericAchievement = Replace<
 >;
 
 export function createAchievement<T extends AchievementOptions>(
-    optionsFunc: () => T & ThisType<Achievement<T>>
+    optionsFunc: OptionsFunc<T, Achievement<T>, BaseAchievement>
 ): Achievement<T> {
     return createLazyProxy(persistent => {
-        // Create temp literally just to avoid explicitly assigning types
-        const temp = Object.assign(persistent, optionsFunc());
-        const achievement: Partial<BaseAchievement> & typeof temp = temp;
+        const achievement = Object.assign(persistent, optionsFunc());
         achievement.id = getUniqueID("achievement-");
         achievement.type = AchievementType;
         achievement[Component] = AchievementComponent;

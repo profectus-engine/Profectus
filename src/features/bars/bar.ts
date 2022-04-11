@@ -2,6 +2,7 @@ import BarComponent from "features/bars/Bar.vue";
 import {
     CoercableComponent,
     Component,
+    OptionsFunc,
     GatherProps,
     getUniqueID,
     Replace,
@@ -79,9 +80,11 @@ export type GenericBar = Replace<
     }
 >;
 
-export function createBar<T extends BarOptions>(optionsFunc: () => T & ThisType<Bar<T>>): Bar<T> {
+export function createBar<T extends BarOptions>(
+    optionsFunc: OptionsFunc<T, Bar<T>, BaseBar>
+): Bar<T> {
     return createLazyProxy(() => {
-        const bar: T & Partial<BaseBar> = optionsFunc();
+        const bar = optionsFunc();
         bar.id = getUniqueID("bar-");
         bar.type = BarType;
         bar[Component] = BarComponent;

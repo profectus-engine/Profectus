@@ -4,6 +4,7 @@ import ChallengeComponent from "features/challenges/Challenge.vue";
 import {
     CoercableComponent,
     Component,
+    OptionsFunc,
     GatherProps,
     getUniqueID,
     jsx,
@@ -96,12 +97,12 @@ export type GenericChallenge = Replace<
 >;
 
 export function createChallenge<T extends ChallengeOptions>(
-    optionsFunc: () => T & ThisType<Challenge<T>>
+    optionsFunc: OptionsFunc<T, Challenge<T>, BaseChallenge>
 ): Challenge<T> {
     const completions = persistent(0);
     const active = persistent(false);
     return createLazyProxy(() => {
-        const challenge: T & Partial<BaseChallenge> = optionsFunc();
+        const challenge = optionsFunc();
 
         if (
             challenge.canComplete == null &&

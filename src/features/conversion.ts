@@ -1,17 +1,15 @@
 import { GenericLayer } from "game/layers";
 import Decimal, { DecimalSource } from "util/bignum";
-import { isFunction } from "util/common";
 import {
     Computable,
     convertComputable,
-    DoNotCache,
     GetComputableTypeWithDefault,
     processComputable,
     ProcessedComputable
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { computed, isRef, Ref, unref } from "vue";
-import { Replace, setDefault } from "./feature";
+import { OptionsFunc, Replace, setDefault } from "./feature";
 import { Resource } from "./resources/resource";
 
 export interface ConversionOptions {
@@ -62,10 +60,10 @@ export interface GainModifier {
 }
 
 export function createConversion<T extends ConversionOptions>(
-    optionsFunc: () => T & ThisType<Conversion<T>>
+    optionsFunc: OptionsFunc<T, Conversion<T>, BaseConversion>
 ): Conversion<T> {
     return createLazyProxy(() => {
-        const conversion: T = optionsFunc();
+        const conversion = optionsFunc();
 
         if (conversion.currentGain == null) {
             conversion.currentGain = computed(() => {
@@ -199,13 +197,13 @@ export function createPolynomialScaling(
 }
 
 export function createCumulativeConversion<S extends ConversionOptions>(
-    optionsFunc: () => S & ThisType<Conversion<S>>
+    optionsFunc: OptionsFunc<S, Conversion<S>>
 ): Conversion<S> {
     return createConversion(optionsFunc);
 }
 
 export function createIndependentConversion<S extends ConversionOptions>(
-    optionsFunc: () => S & ThisType<Conversion<S>>
+    optionsFunc: OptionsFunc<S, Conversion<S>>
 ): Conversion<S> {
     return createConversion(() => {
         const conversion: S = optionsFunc();

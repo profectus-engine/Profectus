@@ -1,6 +1,7 @@
 import BoardComponent from "features/boards/Board.vue";
 import {
     Component,
+    OptionsFunc,
     findFeatures,
     GatherProps,
     getUniqueID,
@@ -197,13 +198,11 @@ export type GenericBoard = Replace<
 >;
 
 export function createBoard<T extends BoardOptions>(
-    optionsFunc: () => T & ThisType<Board<T>>
+    optionsFunc: OptionsFunc<T, Board<T>, BaseBoard>
 ): Board<T> {
     return createLazyProxy(
         persistent => {
-            // Create temp literally just to avoid explicitly assigning types
-            const temp = Object.assign(persistent, optionsFunc());
-            const board: Partial<BaseBoard> & typeof temp = temp;
+            const board = Object.assign(persistent, optionsFunc());
             board.id = getUniqueID("board-");
             board.type = BoardType;
             board[Component] = BoardComponent;

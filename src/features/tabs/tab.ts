@@ -1,6 +1,7 @@
 import {
     CoercableComponent,
     Component,
+    OptionsFunc,
     GatherProps,
     getUniqueID,
     Replace,
@@ -36,9 +37,11 @@ export type Tab<T extends TabOptions> = Replace<
 
 export type GenericTab = Tab<TabOptions>;
 
-export function createTab<T extends TabOptions>(optionsFunc: () => T & ThisType<Tab<T>>): Tab<T> {
+export function createTab<T extends TabOptions>(
+    optionsFunc: OptionsFunc<T, Tab<T>, BaseTab>
+): Tab<T> {
     return createLazyProxy(() => {
-        const tab: T & Partial<BaseTab> = optionsFunc();
+        const tab = optionsFunc();
         tab.id = getUniqueID("tab-");
         tab.type = TabType;
         tab[Component] = TabComponent;

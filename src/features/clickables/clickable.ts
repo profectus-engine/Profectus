@@ -2,6 +2,7 @@ import ClickableComponent from "features/clickables/Clickable.vue";
 import {
     CoercableComponent,
     Component,
+    OptionsFunc,
     GatherProps,
     getUniqueID,
     Replace,
@@ -69,10 +70,10 @@ export type GenericClickable = Replace<
 >;
 
 export function createClickable<T extends ClickableOptions>(
-    optionsFunc: () => T & ThisType<Clickable<T>>
+    optionsFunc: OptionsFunc<T, Clickable<T>, BaseClickable>
 ): Clickable<T> {
     return createLazyProxy(() => {
-        const clickable: T & Partial<BaseClickable> = optionsFunc();
+        const clickable = optionsFunc();
         clickable.id = getUniqueID("clickable-");
         clickable.type = ClickableType;
         clickable[Component] = ClickableComponent;

@@ -1,6 +1,13 @@
 import ParticlesComponent from "features/particles/Particles.vue";
 import { Ref, shallowRef, unref } from "vue";
-import { Component, GatherProps, getUniqueID, Replace, StyleValue } from "features/feature";
+import {
+    Component,
+    OptionsFunc,
+    GatherProps,
+    getUniqueID,
+    Replace,
+    StyleValue
+} from "features/feature";
 import { createLazyProxy } from "util/proxies";
 import { Application } from "pixi.js";
 import { Emitter, EmitterConfigV3, upgradeConfig } from "@pixi/particle-emitter";
@@ -35,10 +42,10 @@ export type Particles<T extends ParticlesOptions> = Replace<
 export type GenericParticles = Particles<ParticlesOptions>;
 
 export function createParticles<T extends ParticlesOptions>(
-    optionsFunc: () => T & ThisType<Particles<T>>
+    optionsFunc: OptionsFunc<T, Particles<T>, BaseParticles>
 ): Particles<T> {
     return createLazyProxy(() => {
-        const particles: T & Partial<BaseParticles> = optionsFunc();
+        const particles = optionsFunc();
         particles.id = getUniqueID("particles-");
         particles.type = ParticlesType;
         particles[Component] = ParticlesComponent;

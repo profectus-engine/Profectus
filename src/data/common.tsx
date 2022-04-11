@@ -5,7 +5,7 @@ import {
     GenericClickable
 } from "features/clickables/clickable";
 import { GenericConversion } from "features/conversion";
-import { CoercableComponent, jsx, Replace, setDefault } from "features/feature";
+import { CoercableComponent, OptionsFunc, jsx, Replace, setDefault } from "features/feature";
 import { displayResource } from "features/resources/resource";
 import {
     createTreeNode,
@@ -57,7 +57,7 @@ export type GenericResetButton = Replace<
 >;
 
 export function createResetButton<T extends ClickableOptions & ResetButtonOptions>(
-    optionsFunc: () => T
+    optionsFunc: OptionsFunc<T>
 ): ResetButton<T> {
     return createClickable(() => {
         const resetButton = optionsFunc();
@@ -139,7 +139,7 @@ export type GenericLayerTreeNode = Replace<
 >;
 
 export function createLayerTreeNode<T extends LayerTreeNodeOptions>(
-    optionsFunc: () => T
+    optionsFunc: OptionsFunc<T>
 ): LayerTreeNode<T> {
     return createTreeNode(() => {
         const options = optionsFunc();

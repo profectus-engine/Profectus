@@ -1,6 +1,7 @@
 import {
     CoercableComponent,
     Component,
+    OptionsFunc,
     GatherProps,
     getUniqueID,
     Replace,
@@ -91,7 +92,7 @@ export type GenericTabFamily = Replace<
 
 export function createTabFamily<T extends TabFamilyOptions>(
     tabs: Record<string, () => TabButtonOptions>,
-    optionsFunc: () => T & ThisType<TabFamily<T>>
+    optionsFunc: OptionsFunc<T, TabFamily<T>, BaseTabFamily>
 ): TabFamily<T> {
     if (Object.keys(tabs).length === 0) {
         console.warn("Cannot create tab family with 0 tabs");
@@ -99,9 +100,7 @@ export function createTabFamily<T extends TabFamilyOptions>(
     }
 
     return createLazyProxy(persistent => {
-        // Create temp literally just to avoid explicitly assigning types
-        const temp = Object.assign(persistent, optionsFunc());
-        const tabFamily: Partial<BaseTabFamily> & typeof temp = temp;
+        const tabFamily = Object.assign(persistent, optionsFunc());
 
         tabFamily.id = getUniqueID("tabFamily-");
         tabFamily.type = TabFamilyType;
