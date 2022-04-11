@@ -150,6 +150,7 @@ export function createLinearScaling(
             if (conversion.gainModifier) {
                 current = conversion.gainModifier.revert(current);
             }
+            current = Decimal.max(0, current);
             return Decimal.times(current, unref(coefficient)).add(unref(base));
         },
         nextAt(conversion) {
@@ -157,6 +158,7 @@ export function createLinearScaling(
             if (conversion.gainModifier) {
                 next = conversion.gainModifier.revert(next);
             }
+            next = Decimal.max(0, next);
             return Decimal.times(next, unref(coefficient)).add(unref(base)).max(unref(base));
         }
     };
@@ -184,6 +186,7 @@ export function createPolynomialScaling(
             if (conversion.gainModifier) {
                 current = conversion.gainModifier.revert(current);
             }
+            current = Decimal.max(0, current);
             return Decimal.root(current, unref(exponent)).times(unref(base));
         },
         nextAt(conversion) {
@@ -191,6 +194,7 @@ export function createPolynomialScaling(
             if (conversion.gainModifier) {
                 next = conversion.gainModifier.revert(next);
             }
+            next = Decimal.max(0, next);
             return Decimal.root(next, unref(exponent)).times(unref(base)).max(unref(base));
         }
     };
