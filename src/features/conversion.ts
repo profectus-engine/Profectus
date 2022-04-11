@@ -214,6 +214,21 @@ export function createIndependentConversion<S extends ConversionOptions>(
 
         setDefault(conversion, "buyMax", false);
 
+        if (conversion.currentGain == null) {
+            conversion.currentGain = computed(() => {
+                let gain = conversion.gainModifier
+                    ? conversion.gainModifier.apply(
+                          conversion.scaling.currentGain(conversion as GenericConversion)
+                      )
+                    : conversion.scaling.currentGain(conversion as GenericConversion);
+                gain = Decimal.floor(gain).max(conversion.gainResource.value);
+
+                if (!unref(conversion.buyMax)) {
+                    gain = gain.min(Decimal.add(conversion.gainResource.value, 1));
+                }
+                return gain;
+            });
+        }
         if (conversion.actualGain == null) {
             conversion.actualGain = computed(() => {
                 let gain = Decimal.sub(
