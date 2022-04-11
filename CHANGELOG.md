@@ -6,6 +6,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2022-04-10
+### Added
+- conversion.currentAt [#4](https://github.com/profectus-engine/Profectus/pull/4)
+- OptionsFunc utility type, improving type inferencing in feature types
+- minimumGain property to ResetButton, defaulting to 1
+### Changed
+- **BREAKING** Major persistence rework
+    - Removed makePersistent
+    - Removed old Persistent, and renamed PersistentRef to Persistent
+    - createLazyProxy now takes optional base object (replacing use cases for makePersistent)
+    - Added warnings when creating refs outside a layer
+    - Added warnings when persistent refs aren't included in their layer object
+- **BREAKING** createLayer now takes id as the first param, rather than inside the option function
+- resetButton now shows "Req:" instead of "Next:" when conversion.buyMax is false
+- Conversion nextAt and currentAt now cap at 0 after reverting modifier
+### Fixed
+- Independent conversion gain calculation [#4](https://github.com/profectus-engine/Profectus/pull/4)
+- Persistence issue when loading layer dynamically
+- resetButton's gain and requirement display being incorrect when conversion.buyMax is false
+- Independent conversions with buyMax false capping incorrectly
+
 ## [0.2.2] - 2022-04-01
 Unironically posting an update on April Fool's Day ;)
 ### Changed
