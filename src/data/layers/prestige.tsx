@@ -13,8 +13,8 @@ import { DecimalSource } from "util/bignum";
 import { render } from "util/vue";
 import { createLayerTreeNode, createResetButton } from "../common";
 
-const layer = createLayer(() => {
-    const id = "p";
+const id = "p";
+const layer = createLayer(id, () => {
     const name = "Prestige";
     const color = "#4BDC13";
     const points = createResource<DecimalSource>(0, "prestige points");
@@ -43,7 +43,6 @@ const layer = createLayer(() => {
     }));
 
     return {
-        id,
         name,
         color,
         points,

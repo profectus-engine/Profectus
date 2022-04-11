@@ -13,7 +13,7 @@ import prestige from "./layers/prestige";
 /**
  * @hidden
  */
-export const main = createLayer(() => {
+export const main = createLayer("main", () => {
     const points = createResource<DecimalSource>(10);
     const best = trackBest(points);
     const total = trackTotal(points);
@@ -40,7 +40,6 @@ export const main = createLayer(() => {
     })) as GenericTree;
 
     return {
-        id: "main",
         name: "Tree",
         links: tree.links,
         display: jsx(() => (
