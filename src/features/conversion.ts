@@ -74,7 +74,7 @@ export function createConversion<T extends ConversionOptions>(
                     : conversion.scaling.currentGain(conversion as GenericConversion);
                 gain = Decimal.floor(gain).max(0);
 
-                if (!conversion.buyMax) {
+                if (!unref(conversion.buyMax)) {
                     gain = gain.min(1);
                 }
                 return gain;
@@ -211,12 +211,17 @@ export function createIndependentConversion<S extends ConversionOptions>(
         setDefault(conversion, "buyMax", false);
 
         if (conversion.actualGain == null) {
-            conversion.actualGain = computed(() =>
-                Decimal.sub(
+            conversion.actualGain = computed(() => {
+                let gain = Decimal.sub(
                     conversion.scaling.currentGain(conversion as GenericConversion),
                     conversion.gainResource.value
-                ).max(0)
-            );
+                ).max(0);
+
+                if (!unref(conversion.buyMax)) {
+                    gain = gain.min(1);
+                }
+                return gain;
+            });
         }
         setDefault(conversion, "convert", function () {
             conversion.gainResource.value = conversion.gainModifier
