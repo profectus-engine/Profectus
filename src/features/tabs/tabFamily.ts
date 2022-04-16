@@ -92,7 +92,7 @@ export type GenericTabFamily = Replace<
 
 export function createTabFamily<T extends TabFamilyOptions>(
     tabs: Record<string, () => TabButtonOptions>,
-    optionsFunc: OptionsFunc<T, TabFamily<T>, BaseTabFamily>
+    optionsFunc?: OptionsFunc<T, TabFamily<T>, BaseTabFamily>
 ): TabFamily<T> {
     if (Object.keys(tabs).length === 0) {
         console.warn("Cannot create tab family with 0 tabs");
@@ -100,7 +100,7 @@ export function createTabFamily<T extends TabFamilyOptions>(
     }
 
     return createLazyProxy(persistent => {
-        const tabFamily = Object.assign(persistent, optionsFunc());
+        const tabFamily = Object.assign(persistent, optionsFunc?.());
 
         tabFamily.id = getUniqueID("tabFamily-");
         tabFamily.type = TabFamilyType;
