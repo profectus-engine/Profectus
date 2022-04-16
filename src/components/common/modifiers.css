@@ -2,6 +2,10 @@
     display: flex;
 }
 
+.modifier-container:nth-child(2n) {
+    background: var(--raised-background);
+}
+
 .modifier-amount {
     flex-basis: 100px;
     flex-shrink: 0;

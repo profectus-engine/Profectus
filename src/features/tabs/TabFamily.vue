@@ -150,8 +150,18 @@ export default defineComponent({
     height: calc(100% + 50px);
 }
 
+.modal-body > .tab-family-container:first-child {
+    margin: calc(10px + var(--feature-margin)) 10px 0 10px;
+    border: none;
+}
+
 .tab-family-container > :nth-child(2) {
     margin-top: 20px;
+}
+
+.modal-body > .tab-family-container > :nth-child(2) {
+    /* TODO Why does it need this instead of 20px? */
+    margin-top: 50px;
 }
 
 .tab-family-container[data-v-f18896fc] > :last-child {
