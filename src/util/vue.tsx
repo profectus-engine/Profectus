@@ -71,6 +71,30 @@ export function renderCol(...objects: (VueFeature | CoercableComponent)[]): JSX.
     return <Col>{objects.map(render)}</Col>;
 }
 
+export function renderJSX(object: VueFeature | CoercableComponent): JSX.Element {
+    if (isCoercableComponent(object)) {
+        if (typeof object === "function") {
+            return (object as JSXFunction)();
+        }
+        if (typeof object === "string") {
+            return <>{object}</>;
+        }
+        // TODO why is object typed as never?
+        const Comp = object as DefineComponent;
+        return <Comp />;
+    }
+    const Component = object[ComponentKey];
+    return <Component {...object[GatherProps]()} />;
+}
+
+export function renderRowJSX(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
+    return <Row>{objects.map(renderJSX)}</Row>;
+}
+
+export function renderColJSX(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
+    return <Col>{objects.map(renderJSX)}</Col>;
+}
+
 export function isCoercableComponent(component: unknown): component is CoercableComponent {
     if (typeof component === "string") {
         return true;
