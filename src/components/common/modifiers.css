@@ -1,0 +1,12 @@
+.modifier-container {
+    display: flex;
+}
+
+.modifier-amount {
+    flex-basis: 100px;
+    flex-shrink: 0;
+}
+
+.modifier-description {
+    flex-grow: 1;
+}
