@@ -50,7 +50,7 @@ export default defineComponent({
             required: true
         },
         minWidth: {
-            type: processedPropType<number>(Number),
+            type: processedPropType<number | string>(Number, String),
             required: true
         },
         name: {
@@ -93,7 +93,11 @@ export default defineComponent({
             }
         );
 
-        function updateTab(minimized: boolean, minWidth: number) {
+        function updateTab(minimized: boolean, minWidth: number | string) {
+            const width =
+                typeof minWidth === "number" || Number.isNaN(parseInt(minWidth))
+                    ? minWidth + "px"
+                    : minWidth;
             const tabValue = tab.value();
             if (tabValue != undefined) {
                 if (minimized) {
@@ -106,7 +110,7 @@ export default defineComponent({
                     tabValue.style.flexGrow = "";
                     tabValue.style.flexShrink = "";
                     tabValue.style.width = "";
-                    tabValue.style.minWidth = tabValue.style.flexBasis = `${minWidth}px`;
+                    tabValue.style.minWidth = tabValue.style.flexBasis = `${width}px`;
                     tabValue.style.margin = "";
                 }
             }

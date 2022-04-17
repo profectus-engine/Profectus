@@ -66,7 +66,7 @@ export interface LayerOptions {
     name?: Computable<string>;
     minimizable?: Computable<boolean>;
     forceHideGoBack?: Computable<boolean>;
-    minWidth?: Computable<number>;
+    minWidth?: Computable<number | string>;
 }
 
 export interface BaseLayer {
