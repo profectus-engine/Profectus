@@ -57,23 +57,17 @@
 </template>
 
 <script setup lang="ts">
+import projInfo from "data/projInfo.json";
 import Modal from "components/Modal.vue";
 import player, { PlayerData } from "game/player";
 import settings from "game/settings";
 import { getUniqueID, loadSave, save, newSave } from "util/save";
-import {
-    ComponentPublicInstance,
-    computed,
-    nextTick,
-    ref,
-    shallowReactive,
-    unref,
-    watch
-} from "vue";
+import { ComponentPublicInstance, computed, nextTick, ref, shallowReactive, watch } from "vue";
 import Select from "./fields/Select.vue";
 import Text from "./fields/Text.vue";
 import Save from "./Save.vue";
 import Draggable from "vuedraggable";
+import LZString from "lz-string";
 
 export type LoadablePlayerData = Omit<Partial<PlayerData>, "id"> & { id: string; error?: unknown };
 
@@ -89,21 +83,32 @@ defineExpose({
 const importingFailed = ref(false);
 const saveToImport = ref("");
 
-watch(saveToImport, save => {
-    if (save) {
+watch(saveToImport, importedSave => {
+    if (importedSave) {
         nextTick(() => {
             try {
-                const playerData = JSON.parse(decodeURIComponent(escape(atob(save))));
+                if (importedSave[0] === "{") {
+                    // plaintext. No processing needed
+                } else if (importedSave[0] === "e") {
+                    // Assumed to be base64, which starts with e
+                    importedSave = decodeURIComponent(escape(atob(importedSave)));
+                } else if (importedSave[0] === "ᯡ") {
+                    // Assumed to be lz, which starts with ᯡ
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    importedSave = LZString.decompressFromUTF16(importedSave)!;
+                } else {
+                    console.warn("Unable to determine preset encoding", importedSave);
+                    importingFailed.value = true;
+                    return;
+                }
+                const playerData = JSON.parse(importedSave);
                 if (typeof playerData !== "object") {
                     importingFailed.value = true;
                     return;
                 }
                 const id = getUniqueID();
                 playerData.id = id;
-                localStorage.setItem(
-                    id,
-                    btoa(unescape(encodeURIComponent(JSON.stringify(playerData))))
-                );
+                save(playerData);
                 saveToImport.value = "";
                 importingFailed.value = false;
 
@@ -132,14 +137,30 @@ let bank = ref(
 const cachedSaves = shallowReactive<Record<string, LoadablePlayerData | undefined>>({});
 function getCachedSave(id: string) {
     if (cachedSaves[id] == null) {
-        const save = localStorage.getItem(id);
+        let save = localStorage.getItem(id);
         if (save == null) {
             cachedSaves[id] = { error: `Save doesn't exist in localStorage`, id };
         } else if (save === "dW5kZWZpbmVk") {
             cachedSaves[id] = { error: `Save is undefined`, id };
         } else {
             try {
-                cachedSaves[id] = { ...JSON.parse(decodeURIComponent(escape(atob(save)))), id };
+                if (save[0] === "{") {
+                    // plaintext. No processing needed
+                } else if (save[0] === "e") {
+                    // Assumed to be base64, which starts with e
+                    save = decodeURIComponent(escape(atob(save)));
+                } else if (save[0] === "ᯡ") {
+                    // Assumed to be lz, which starts with ᯡ
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    save = LZString.decompressFromUTF16(save)!;
+                } else {
+                    console.warn("Unable to determine preset encoding", save);
+                    importingFailed.value = true;
+                    cachedSaves[id] = { error: "Unable to determine preset encoding", id };
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    return cachedSaves[id]!;
+                }
+                cachedSaves[id] = { ...JSON.parse(save), id };
             } catch (error) {
                 cachedSaves[id] = { error, id };
                 console.warn(
@@ -170,7 +191,19 @@ function exportSave(id: string) {
     if (player.id === id) {
         saveToExport = save();
     } else {
-        saveToExport = btoa(unescape(encodeURIComponent(JSON.stringify(saves.value[id]))));
+        saveToExport = JSON.stringify(saves.value[id]);
+        switch (projInfo.saveEncoding) {
+            default:
+                console.warn(`Unknown save encoding: ${projInfo.saveEncoding}. Defaulting to lz`);
+            case "lz":
+                saveToExport = LZString.compressToUTF16(saveToExport);
+                break;
+            case "base64":
+                saveToExport = btoa(unescape(encodeURIComponent(saveToExport)));
+                break;
+            case "plain":
+                break;
+        }
     }
 
     // Put on clipboard. Using the clipboard API asks for permissions and stuff
@@ -189,10 +222,7 @@ function duplicateSave(id: string) {
     }
 
     const playerData = { ...saves.value[id], id: getUniqueID() };
-    localStorage.setItem(
-        playerData.id,
-        btoa(unescape(encodeURIComponent(JSON.stringify(playerData))))
-    );
+    save(playerData as PlayerData);
 
     settings.saves.push(playerData.id);
 }
@@ -214,12 +244,22 @@ function openSave(id: string) {
 }
 
 function newFromPreset(preset: string) {
-    const playerData = JSON.parse(decodeURIComponent(escape(atob(preset))));
+    if (preset[0] === "{") {
+        // plaintext. No processing needed
+    } else if (preset[0] === "e") {
+        // Assumed to be base64, which starts with e
+        preset = decodeURIComponent(escape(atob(preset)));
+    } else if (preset[0] === "ᯡ") {
+        // Assumed to be lz, which starts with ᯡ
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        preset = LZString.decompressFromUTF16(preset)!;
+    } else {
+        console.warn("Unable to determine preset encoding", preset);
+        return;
+    }
+    const playerData = JSON.parse(preset);
     playerData.id = getUniqueID();
-    localStorage.setItem(
-        playerData.id,
-        btoa(unescape(encodeURIComponent(JSON.stringify(playerData))))
-    );
+    save(playerData as PlayerData);
 
     settings.saves.push(playerData.id);
 }
@@ -232,7 +272,7 @@ function editSave(id: string, newName: string) {
             player.name = newName;
             save();
         } else {
-            localStorage.setItem(id, btoa(unescape(encodeURIComponent(JSON.stringify(currSave)))));
+            save(currSave as PlayerData);
             cachedSaves[id] = undefined;
         }
     }

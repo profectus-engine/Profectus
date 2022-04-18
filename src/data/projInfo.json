@@ -18,5 +18,6 @@
 
 	"maxTickLength": 3600,
 	"offlineLimit": 1,
-	"enablePausing": true
+	"enablePausing": true,
+	"saveEncoding": "lz"
 }

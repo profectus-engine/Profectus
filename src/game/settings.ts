@@ -2,6 +2,7 @@ import projInfo from "data/projInfo.json";
 import { Themes } from "data/themes";
 import { CoercableComponent } from "features/feature";
 import { globalBus } from "game/events";
+import LZString from "lz-string";
 import { hardReset } from "util/save";
 import { reactive, watch } from "vue";
 
@@ -23,20 +24,44 @@ const state = reactive<Partial<Settings>>({
 
 watch(
     state,
-    state =>
-        localStorage.setItem(
-            projInfo.id,
-            btoa(unescape(encodeURIComponent(JSON.stringify(state))))
-        ),
+    state => {
+        let stringifiedSettings = JSON.stringify(state);
+        switch (projInfo.saveEncoding) {
+            default:
+                console.warn(`Unknown save encoding: ${projInfo.saveEncoding}. Defaulting to lz`);
+            case "lz":
+                stringifiedSettings = LZString.compressToUTF16(stringifiedSettings);
+                break;
+            case "base64":
+                stringifiedSettings = btoa(unescape(encodeURIComponent(stringifiedSettings)));
+                break;
+            case "plain":
+                break;
+        }
+        localStorage.setItem(projInfo.id, stringifiedSettings);
+    },
     { deep: true }
 );
 export default window.settings = state as Settings;
 
 export function loadSettings(): void {
     try {
-        const item: string | null = localStorage.getItem(projInfo.id);
+        let item: string | null = localStorage.getItem(projInfo.id);
         if (item != null && item !== "") {
-            const settings = JSON.parse(decodeURIComponent(escape(atob(item))));
+            if (item[0] === "{") {
+                // plaintext. No processing needed
+            } else if (item[0] === "e") {
+                // Assumed to be base64, which starts with e
+                item = decodeURIComponent(escape(atob(item)));
+            } else if (item[0] === "ᯡ") {
+                // Assumed to be lz, which starts with ᯡ
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                item = LZString.decompressFromUTF16(item)!;
+            } else {
+                console.warn("Unable to determine settings encoding", item);
+                return;
+            }
+            const settings = JSON.parse(item);
             if (typeof settings === "object") {
                 Object.assign(state, settings);
             }
