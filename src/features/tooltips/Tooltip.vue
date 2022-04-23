@@ -24,6 +24,7 @@
                     '--yoffset': unref(yoffset) || '0px'
                 }"
             >
+                <span v-if="showPin" class="material-icons pinned">push_pin</span>
                 <component v-if="comp" :is="comp" />
             </div>
         </transition>
@@ -31,8 +32,10 @@
 </template>
 
 <script lang="ts">
+import themes from "data/themes";
 import { CoercableComponent, jsx, StyleValue } from "features/feature";
 import { Persistent } from "game/persistence";
+import settings from "game/settings";
 import {
     coerceComponent,
     computeOptionalComponent,
@@ -93,6 +96,8 @@ export default defineComponent({
             }
         }
 
+        const showPin = computed(() => unwrapRef(pinned) && themes[settings.theme].showPin);
+
         return {
             TooltipDirection,
             isHovered,
@@ -100,7 +105,8 @@ export default defineComponent({
             comp,
             elementComp,
             unref,
-            togglePinned
+            togglePinned,
+            showPin
         };
     }
 });
@@ -209,5 +215,12 @@ export default defineComponent({
     top: 0;
     margin-top: -10px;
     border-color: transparent transparent var(--tooltip-background) transparent;
+}
+
+.pinned {
+    position: absolute;
+    right: -5px;
+    top: -5px;
+    transform: rotateZ(45deg);
 }
 </style>
