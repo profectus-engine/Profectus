@@ -20,7 +20,7 @@ import {
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { computed, Ref, unref } from "vue";
-import { State, Persistent, PersistentState, persistent } from "game/persistence";
+import { State, Persistent, persistent } from "game/persistence";
 
 export const GridType = Symbol("Grid");
 
@@ -205,12 +205,13 @@ export interface GridOptions {
     onHold?: (id: string | number, state: State) => void;
 }
 
-export interface BaseGrid extends Persistent<Record<string | number, State>> {
+export interface BaseGrid {
     id: string;
     getID: (id: string | number, state: State) => string;
     getState: (id: string | number) => State;
     setState: (id: string | number, state: State) => void;
     cells: Record<string | number, GridCell>;
+    cellState: Persistent<Record<string | number, State>>;
     type: typeof GridType;
     [Component]: typeof GridComponent;
     [GatherProps]: () => Record<string, unknown>;
@@ -244,22 +245,25 @@ export type GenericGrid = Replace<
 export function createGrid<T extends GridOptions>(
     optionsFunc: OptionsFunc<T, Grid<T>, BaseGrid>
 ): Grid<T> {
-    return createLazyProxy(persistent => {
-        const grid = Object.assign(persistent, optionsFunc());
+    const cellState = persistent<Record<string | number, State>>({});
+    return createLazyProxy(() => {
+        const grid = optionsFunc();
         grid.id = getUniqueID("grid-");
         grid[Component] = GridComponent;
+
+        grid.cellState = cellState;
 
         grid.getID = function (this: GenericGrid, cell: string | number) {
             return grid.id + "-" + cell;
         };
         grid.getState = function (this: GenericGrid, cell: string | number) {
-            if (this[PersistentState].value[cell] != undefined) {
-                return this[PersistentState].value[cell];
+            if (this.cellState.value[cell] != undefined) {
+                return cellState.value[cell];
             }
             return this.cells[cell].startState;
         };
         grid.setState = function (this: GenericGrid, cell: string | number, state: State) {
-            this[PersistentState].value[cell] = state;
+            cellState.value[cell] = state;
         };
 
         grid.cells = createGridProxy(grid as GenericGrid);
@@ -301,5 +305,5 @@ export function createGrid<T extends GridOptions>(
         };
 
         return grid as unknown as Grid<T>;
-    }, persistent({}));
+    });
 }

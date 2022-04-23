@@ -11,7 +11,7 @@ import {
 } from "features/feature";
 import TabButtonComponent from "features/tabs/TabButton.vue";
 import TabFamilyComponent from "features/tabs/TabFamily.vue";
-import { Persistent, PersistentState, persistent } from "game/persistence";
+import { Persistent, persistent } from "game/persistence";
 import {
     Computable,
     GetComputableType,
@@ -65,11 +65,11 @@ export interface TabFamilyOptions {
     style?: Computable<StyleValue>;
 }
 
-export interface BaseTabFamily extends Persistent<string> {
+export interface BaseTabFamily {
     id: string;
     tabs: Record<string, TabButtonOptions>;
     activeTab: Ref<GenericTab | CoercableComponent | null>;
-    selected: Ref<string>;
+    selected: Persistent<string>;
     type: typeof TabFamilyType;
     [Component]: typeof TabFamilyComponent;
     [GatherProps]: () => Record<string, unknown>;
@@ -99,8 +99,10 @@ export function createTabFamily<T extends TabFamilyOptions>(
         throw "Cannot create tab family with 0 tabs";
     }
 
-    return createLazyProxy(persistent => {
-        const tabFamily = Object.assign(persistent, optionsFunc?.());
+    const selected = persistent(Object.keys(tabs)[0]);
+    return createLazyProxy(() => {
+        const tabFamily =
+            optionsFunc?.() || ({} as ReturnType<OptionsFunc<T, TabFamily<T>, BaseTabFamily>>);
 
         tabFamily.id = getUniqueID("tabFamily-");
         tabFamily.type = TabFamilyType;
@@ -124,15 +126,14 @@ export function createTabFamily<T extends TabFamilyOptions>(
             },
             {}
         );
-        tabFamily.selected = tabFamily[PersistentState];
+        tabFamily.selected = selected;
         tabFamily.activeTab = computed(() => {
             const tabs = unref(processedTabFamily.tabs);
             if (
-                tabFamily[PersistentState].value in tabs &&
-                unref(tabs[processedTabFamily[PersistentState].value].visibility) ===
-                    Visibility.Visible
+                selected.value in tabs &&
+                unref(tabs[selected.value].visibility) === Visibility.Visible
             ) {
-                return unref(tabs[processedTabFamily[PersistentState].value].tab);
+                return unref(tabs[selected.value].tab);
             }
             const firstTab = Object.values(tabs).find(
                 tab => unref(tab.visibility) === Visibility.Visible
@@ -156,5 +157,5 @@ export function createTabFamily<T extends TabFamilyOptions>(
         // This is necessary because board.types is different from T and TabFamily
         const processedTabFamily = tabFamily as unknown as TabFamily<T>;
         return processedTabFamily;
-    }, persistent(Object.keys(tabs)[0]));
+    });
 }

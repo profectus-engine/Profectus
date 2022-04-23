@@ -14,7 +14,7 @@ import {
 import MilestoneComponent from "features/milestones/Milestone.vue";
 import { globalBus } from "game/events";
 import "game/notifications";
-import { persistent, Persistent, PersistentState } from "game/persistence";
+import { persistent, Persistent } from "game/persistence";
 import settings, { registerSettingField } from "game/settings";
 import { camelToTitle } from "util/common";
 import {
@@ -26,7 +26,7 @@ import {
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { coerceComponent, isCoercableComponent } from "util/vue";
-import { computed, Ref, unref, watchEffect } from "vue";
+import { computed, unref, watchEffect } from "vue";
 import { useToast } from "vue-toastification";
 
 const toast = useToast();
@@ -57,9 +57,9 @@ export interface MilestoneOptions {
     onComplete?: VoidFunction;
 }
 
-export interface BaseMilestone extends Persistent<boolean> {
+export interface BaseMilestone {
     id: string;
-    earned: Ref<boolean>;
+    earned: Persistent<boolean>;
     complete: VoidFunction;
     type: typeof MilestoneType;
     [Component]: typeof MilestoneComponent;
@@ -86,15 +86,16 @@ export type GenericMilestone = Replace<
 export function createMilestone<T extends MilestoneOptions>(
     optionsFunc: OptionsFunc<T, Milestone<T>, BaseMilestone>
 ): Milestone<T> {
+    const earned = persistent<boolean>(false);
     return createLazyProxy(persistent => {
         const milestone = Object.assign(persistent, optionsFunc());
         milestone.id = getUniqueID("milestone-");
         milestone.type = MilestoneType;
         milestone[Component] = MilestoneComponent;
 
-        milestone.earned = milestone[PersistentState];
+        milestone.earned = earned;
         milestone.complete = function () {
-            milestone[PersistentState].value = true;
+            earned.value = true;
         };
 
         processComputable(milestone as T, "visibility");
@@ -168,7 +169,7 @@ export function createMilestone<T extends MilestoneOptions>(
         }
 
         return milestone as unknown as Milestone<T>;
-    }, persistent<boolean>(false));
+    });
 }
 
 declare module "game/settings" {

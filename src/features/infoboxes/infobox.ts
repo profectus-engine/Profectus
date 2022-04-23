@@ -1,15 +1,16 @@
-import InfoboxComponent from "features/infoboxes/Infobox.vue";
 import {
     CoercableComponent,
     Component,
-    OptionsFunc,
     GatherProps,
     getUniqueID,
+    OptionsFunc,
     Replace,
     setDefault,
     StyleValue,
     Visibility
 } from "features/feature";
+import InfoboxComponent from "features/infoboxes/Infobox.vue";
+import { Persistent, persistent } from "game/persistence";
 import {
     Computable,
     GetComputableType,
@@ -18,8 +19,7 @@ import {
     ProcessedComputable
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { Ref, unref } from "vue";
-import { Persistent, PersistentState, persistent } from "game/persistence";
+import { unref } from "vue";
 
 export const InfoboxType = Symbol("Infobox");
 
@@ -34,9 +34,9 @@ export interface InfoboxOptions {
     display: Computable<CoercableComponent>;
 }
 
-export interface BaseInfobox extends Persistent<boolean> {
+export interface BaseInfobox {
     id: string;
-    collapsed: Ref<boolean>;
+    collapsed: Persistent<boolean>;
     type: typeof InfoboxType;
     [Component]: typeof InfoboxComponent;
     [GatherProps]: () => Record<string, unknown>;
@@ -66,13 +66,14 @@ export type GenericInfobox = Replace<
 export function createInfobox<T extends InfoboxOptions>(
     optionsFunc: OptionsFunc<T, Infobox<T>, BaseInfobox>
 ): Infobox<T> {
-    return createLazyProxy(persistent => {
-        const infobox = Object.assign(persistent, optionsFunc());
+    const collapsed = persistent<boolean>(false);
+    return createLazyProxy(() => {
+        const infobox = optionsFunc();
         infobox.id = getUniqueID("infobox-");
         infobox.type = InfoboxType;
         infobox[Component] = InfoboxComponent;
 
-        infobox.collapsed = infobox[PersistentState];
+        infobox.collapsed = collapsed;
 
         processComputable(infobox as T, "visibility");
         setDefault(infobox, "visibility", Visibility.Visible);
@@ -112,5 +113,5 @@ export function createInfobox<T extends InfoboxOptions>(
         };
 
         return infobox as unknown as Infobox<T>;
-    }, persistent<boolean>(false));
+    });
 }

@@ -1,6 +1,6 @@
 import ClickableComponent from "features/clickables/Clickable.vue";
 import { Resource } from "features/resources/resource";
-import { Persistent, PersistentState, persistent } from "game/persistence";
+import { Persistent, persistent } from "game/persistence";
 import Decimal, { DecimalSource, format, formatWhole } from "util/bignum";
 import {
     Computable,
@@ -49,9 +49,9 @@ export interface BuyableOptions {
     onPurchase?: (cost: DecimalSource) => void;
 }
 
-export interface BaseBuyable extends Persistent<DecimalSource> {
+export interface BaseBuyable {
     id: string;
-    amount: Ref<DecimalSource>;
+    amount: Persistent<DecimalSource>;
     maxed: Ref<boolean>;
     canAfford: Ref<boolean>;
     canClick: ProcessedComputable<boolean>;
@@ -90,8 +90,9 @@ export type GenericBuyable = Replace<
 export function createBuyable<T extends BuyableOptions>(
     optionsFunc: OptionsFunc<T, Buyable<T>, BaseBuyable>
 ): Buyable<T> {
-    return createLazyProxy(persistent => {
-        const buyable = Object.assign(persistent, optionsFunc());
+    const amount = persistent<DecimalSource>(0);
+    return createLazyProxy(() => {
+        const buyable = optionsFunc();
 
         if (buyable.canPurchase == null && (buyable.resource == null || buyable.cost == null)) {
             console.warn(
@@ -105,7 +106,7 @@ export function createBuyable<T extends BuyableOptions>(
         buyable.type = BuyableType;
         buyable[Component] = ClickableComponent;
 
-        buyable.amount = buyable[PersistentState];
+        buyable.amount = amount;
         buyable.canAfford = computed(() => {
             const genericBuyable = buyable as GenericBuyable;
             const cost = unref(genericBuyable.cost);
@@ -239,5 +240,5 @@ export function createBuyable<T extends BuyableOptions>(
         };
 
         return buyable as unknown as Buyable<T>;
-    }, persistent<DecimalSource>(0));
+    });
 }
