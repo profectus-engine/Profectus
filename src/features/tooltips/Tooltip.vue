@@ -4,7 +4,7 @@
         :class="{ shown: isShown, ...unref(classes) }"
         @mouseenter="isHovered = true"
         @mouseleave="isHovered = false"
-        @click="togglePinned"
+        @click.capture="togglePinned"
         :style="unref(style)"
     >
         <slot />
