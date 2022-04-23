@@ -113,3 +113,32 @@ export function createSequentialModifier(...modifiers: Modifier[]): Required<Mod
         ))
     };
 }
+
+export function createModifierSection(
+    title: string,
+    subtitle: string,
+    modifier: Required<Modifier>,
+    base = 1,
+    unit = ""
+) {
+    return (
+        <div>
+            <h3>
+                {title}
+                {subtitle ? <span class="subtitle"> ({subtitle})</span> : null}
+            </h3>
+            <br />
+            <div class="modifier-container">
+                <span class="modifier-amount">
+                    {base}
+                    {unit}
+                </span>
+                <span class="modifier-description">Base</span>
+            </div>
+            {renderJSX(unref(modifier.description))}
+            <hr />
+            Total: {format(modifier.apply(base))}
+            {unit}
+        </div>
+    );
+}

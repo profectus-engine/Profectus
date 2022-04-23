@@ -5,7 +5,7 @@ import {
     GenericClickable
 } from "features/clickables/clickable";
 import { GenericConversion } from "features/conversion";
-import { CoercableComponent, OptionsFunc, jsx, Replace, setDefault } from "features/feature";
+import { CoercableComponent, jsx, OptionsFunc, Replace, setDefault } from "features/feature";
 import { displayResource } from "features/resources/resource";
 import {
     createTreeNode,
