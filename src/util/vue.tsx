@@ -169,7 +169,7 @@ export function computeComponent(
     watchEffect(() => {
         comp.value = coerceComponent(unwrapRef(component), defaultWrapper);
     });
-    return comp as ShallowRef<Component | JSXFunction | "">;
+    return comp as ShallowRef<Component | "">;
 }
 export function computeOptionalComponent(
     component: Ref<ProcessedComputable<CoercableComponent | undefined> | undefined>,
