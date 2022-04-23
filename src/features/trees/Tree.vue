@@ -1,37 +1,17 @@
 <template>
-    <span class="row" v-for="(row, index) in unref(nodes)" :key="index" v-bind="$attrs">
-        <TreeNode
-            v-for="(node, nodeIndex) in row"
-            :key="nodeIndex"
-            v-bind="gatherNodeProps(node)"
-        />
-    </span>
-    <span class="left-side-nodes" v-if="unref(leftSideNodes)">
-        <TreeNode
-            v-for="(node, nodeIndex) in unref(leftSideNodes)"
-            :key="nodeIndex"
-            v-bind="gatherNodeProps(node)"
-            small
-        />
-    </span>
-    <span class="side-nodes" v-if="unref(rightSideNodes)">
-        <TreeNode
-            v-for="(node, nodeIndex) in unref(rightSideNodes)"
-            :key="nodeIndex"
-            v-bind="gatherNodeProps(node)"
-            small
-        />
-    </span>
+    <component :is="nodesComp" />
+    <component v-if="leftNodesComp" :is="leftNodesComp" />
+    <component v-if="rightNodesComp" :is="rightNodesComp" />
     <Links v-if="branches" :links="unref(branches)" />
 </template>
 
-<script lang="ts">
+<script lang="tsx">
 import "components/common/table.css";
 import { GenericTreeNode, TreeBranch } from "features/trees/tree";
-import { processedPropType } from "util/vue";
-import { defineComponent, unref } from "vue";
-import TreeNode from "./TreeNode.vue";
+import { coerceComponent, processedPropType, renderJSX, unwrapRef } from "util/vue";
+import { Component, defineComponent, shallowRef, toRefs, unref, watchEffect } from "vue";
 import Links from "features/links/Links.vue";
+import { jsx } from "features/feature";
 
 export default defineComponent({
     props: {
@@ -43,40 +23,51 @@ export default defineComponent({
         rightSideNodes: processedPropType<GenericTreeNode[]>(Array),
         branches: processedPropType<TreeBranch[]>(Array)
     },
-    components: { TreeNode, Links },
-    setup() {
-        function gatherNodeProps(node: GenericTreeNode) {
-            const {
-                display,
-                visibility,
-                style,
-                classes,
-                onClick,
-                onHold,
-                color,
-                glowColor,
-                canClick,
-                mark,
-                id
-            } = node;
-            return {
-                display,
-                visibility,
-                style,
-                classes,
-                onClick,
-                onHold,
-                color,
-                glowColor,
-                canClick,
-                mark,
-                id
-            };
-        }
+    components: { Links },
+    setup(props) {
+        const { nodes, leftSideNodes, rightSideNodes } = toRefs(props);
+
+        const nodesComp = shallowRef<Component | "">();
+        watchEffect(() => {
+            const currNodes = unwrapRef(nodes);
+            nodesComp.value = coerceComponent(
+                jsx(() => (
+                    <>
+                        {currNodes.map(row => (
+                            <span class="row">{row.map(renderJSX)}</span>
+                        ))}
+                    </>
+                ))
+            );
+        });
+
+        const leftNodesComp = shallowRef<Component | "">();
+        watchEffect(() => {
+            const currNodes = unwrapRef(leftSideNodes);
+            leftNodesComp.value = currNodes
+                ? coerceComponent(
+                      jsx(() => (
+                          <span class="left-side-nodes small">{currNodes.map(renderJSX)}</span>
+                      ))
+                  )
+                : "";
+        });
+
+        const rightNodesComp = shallowRef<Component | "">();
+        watchEffect(() => {
+            const currNodes = unwrapRef(rightSideNodes);
+            rightNodesComp.value = currNodes
+                ? coerceComponent(
+                      jsx(() => <span class="side-nodes small">{currNodes.map(renderJSX)}</span>)
+                  )
+                : "";
+        });
 
         return {
-            gatherNodeProps,
-            unref
+            unref,
+            nodesComp,
+            leftNodesComp,
+            rightNodesComp
         };
     }
 });
@@ -97,5 +88,14 @@ export default defineComponent({
     position: absolute;
     right: 15px;
     top: 65px;
+}
+
+.small :deep(.treeNode) {
+    height: 60px;
+    width: 60px;
+}
+
+.small :deep(.treeNode) > *:first-child {
+    font-size: 30px;
 }
 </style>

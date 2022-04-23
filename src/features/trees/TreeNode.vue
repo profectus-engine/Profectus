@@ -5,7 +5,6 @@
         :class="{
             treeNode: true,
             can: unref(canClick),
-            small: unref(small),
             ...unref(classes)
         }"
     >
@@ -67,8 +66,7 @@ export default defineComponent({
         id: {
             type: String,
             required: true
-        },
-        small: processedPropType<boolean>(Boolean)
+        }
     },
     components: {
         MarkNode,
@@ -113,19 +111,5 @@ export default defineComponent({
     box-shadow: -4px -4px 4px rgba(0, 0, 0, 0.25) inset, 0px 0px 20px var(--background);
     text-transform: capitalize;
     display: flex;
-}
-
-.treeNode.small {
-    height: 60px;
-    width: 60px;
-}
-
-.treeNode.small > *:first-child {
-    font-size: 30px;
-}
-
-.ghost {
-    visibility: hidden;
-    pointer-events: none;
 }
 </style>

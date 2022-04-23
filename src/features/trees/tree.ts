@@ -13,6 +13,7 @@ import { Link } from "features/links/links";
 import { GenericReset } from "features/reset";
 import { displayResource, Resource } from "features/resources/resource";
 import TreeComponent from "features/trees/Tree.vue";
+import TreeNodeComponent from "features/trees/TreeNode.vue";
 import Decimal, { DecimalSource, format, formatWhole } from "util/bignum";
 import {
     Computable,
@@ -45,6 +46,8 @@ export interface TreeNodeOptions {
 export interface BaseTreeNode {
     id: string;
     type: typeof TreeNodeType;
+    [Component]: typeof TreeNodeComponent;
+    [GatherProps]: () => Record<string, unknown>;
 }
 
 export type TreeNode<T extends TreeNodeOptions> = Replace<
@@ -76,6 +79,7 @@ export function createTreeNode<T extends TreeNodeOptions>(
         const treeNode = optionsFunc();
         treeNode.id = getUniqueID("treeNode-");
         treeNode.type = TreeNodeType;
+        treeNode[Component] = TreeNodeComponent;
 
         processComputable(treeNode as T, "visibility");
         setDefault(treeNode, "visibility", Visibility.Visible);
@@ -104,6 +108,35 @@ export function createTreeNode<T extends TreeNodeOptions>(
                 }
             };
         }
+
+        treeNode[GatherProps] = function (this: GenericTreeNode) {
+            const {
+                display,
+                visibility,
+                style,
+                classes,
+                onClick,
+                onHold,
+                color,
+                glowColor,
+                canClick,
+                mark,
+                id
+            } = this;
+            return {
+                display,
+                visibility,
+                style,
+                classes,
+                onClick,
+                onHold,
+                color,
+                glowColor,
+                canClick,
+                mark,
+                id
+            };
+        };
 
         return treeNode as unknown as TreeNode<T>;
     });
