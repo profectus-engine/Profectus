@@ -15,7 +15,7 @@ import {
     ProcessedComputable
 } from "util/computed";
 import { VueFeature } from "util/vue";
-import { readonly, ref, Ref } from "vue";
+import { Ref } from "vue";
 import { persistent } from "game/persistence";
 
 declare module "@vue/runtime-dom" {
@@ -49,7 +49,8 @@ export interface BaseTooltip {
 export type Tooltip<T extends TooltipOptions> = Replace<
     T & BaseTooltip,
     {
-        pinnable: T["pinnable"] extends unknown ? true : T["pinnable"];
+        pinnable: T["pinnable"] extends undefined ? false : T["pinnable"];
+        pinned: T["pinnable"] extends true ? Ref<boolean> : undefined;
         display: GetComputableType<T["display"]>;
         classes: GetComputableType<T["classes"]>;
         style: GetComputableType<T["style"]>;
@@ -63,6 +64,7 @@ export type GenericTooltip = Replace<
     Tooltip<TooltipOptions>,
     {
         pinnable: boolean;
+        pinned: Ref<boolean> | undefined;
         direction: ProcessedComputable<TooltipDirection>;
     }
 >;
