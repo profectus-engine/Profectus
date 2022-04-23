@@ -164,8 +164,8 @@ export function getFirstFeature<T extends { visibility: ProcessedComputable<Visi
 export function computeComponent(
     component: Ref<ProcessedComputable<CoercableComponent>>,
     defaultWrapper = "div"
-): ShallowRef<Component | JSXFunction | ""> {
-    const comp = shallowRef<Component | JSXFunction | "">();
+): ShallowRef<Component | ""> {
+    const comp = shallowRef<Component | "">();
     watchEffect(() => {
         comp.value = coerceComponent(unwrapRef(component), defaultWrapper);
     });
@@ -174,8 +174,8 @@ export function computeComponent(
 export function computeOptionalComponent(
     component: Ref<ProcessedComputable<CoercableComponent | undefined> | undefined>,
     defaultWrapper = "div"
-): ShallowRef<Component | JSXFunction | "" | null> {
-    const comp = shallowRef<Component | JSXFunction | "" | null>(null);
+): ShallowRef<Component | "" | null> {
+    const comp = shallowRef<Component | "" | null>(null);
     watchEffect(() => {
         const currComponent = unwrapRef(component);
         comp.value = currComponent == null ? null : coerceComponent(currComponent, defaultWrapper);

@@ -3,7 +3,7 @@
         <img v-if="banner" :src="banner" class="banner" :alt="title" />
         <div v-else class="title">{{ title }}</div>
         <div @click="changelog?.open()" class="version-container">
-            <Tooltip display="Changelog" bottom class="version"
+            <Tooltip display="Changelog" :direction="TooltipDirection.DOWN" class="version"
                 ><span>v{{ versionNumber }}</span></Tooltip
             >
         </div>
@@ -26,51 +26,56 @@
         </div>
         <div>
             <a href="https://forums.moddingtree.com/" target="_blank">
-                <Tooltip display="Forums" bottom yoffset="5px">
+                <Tooltip display="Forums" :direction="TooltipDirection.DOWN" yoffset="5px">
                     <span class="material-icons">forum</span>
                 </Tooltip>
             </a>
         </div>
         <div @click="info?.open()">
-            <Tooltip display="Info" bottom class="info">
+            <Tooltip display="Info" :direction="TooltipDirection.DOWN" class="info">
                 <span class="material-icons">info</span>
             </Tooltip>
         </div>
         <div @click="savesManager?.open()">
-            <Tooltip display="Saves" bottom xoffset="-20px">
+            <Tooltip display="Saves" :direction="TooltipDirection.DOWN" xoffset="-20px">
                 <span class="material-icons">library_books</span>
             </Tooltip>
         </div>
         <div @click="options?.open()">
-            <Tooltip display="Options" bottom xoffset="-66px">
+            <Tooltip display="Options" :direction="TooltipDirection.DOWN" xoffset="-66px">
                 <span class="material-icons">settings</span>
             </Tooltip>
         </div>
     </div>
     <div v-else class="overlay-nav" v-bind="$attrs">
         <div @click="changelog?.open()" class="version-container">
-            <Tooltip display="Changelog" right xoffset="25%" class="version">
+            <Tooltip
+                display="Changelog"
+                :direction="TooltipDirection.RIGHT"
+                xoffset="25%"
+                class="version"
+            >
                 <span>v{{ versionNumber }}</span>
             </Tooltip>
         </div>
         <div @click="savesManager?.open()">
-            <Tooltip display="Saves" right>
+            <Tooltip display="Saves" :direction="TooltipDirection.RIGHT">
                 <span class="material-icons">library_books</span>
             </Tooltip>
         </div>
         <div @click="options?.open()">
-            <Tooltip display="Options" right>
+            <Tooltip display="Options" :direction="TooltipDirection.RIGHT">
                 <span class="material-icons">settings</span>
             </Tooltip>
         </div>
         <div @click="info?.open()">
-            <Tooltip display="Info" right>
+            <Tooltip display="Info" :direction="TooltipDirection.RIGHT">
                 <span class="material-icons">info</span>
             </Tooltip>
         </div>
         <div>
             <a href="https://forums.moddingtree.com/" target="_blank">
-                <Tooltip display="Forums" right xoffset="7px">
+                <Tooltip display="Forums" :direction="TooltipDirection.RIGHT" xoffset="7px">
                     <span class="material-icons">forum</span>
                 </Tooltip>
             </a>
@@ -105,7 +110,8 @@ import { ComponentPublicInstance, ref } from "vue";
 import Info from "./Info.vue";
 import Options from "./Options.vue";
 import SavesManager from "./SavesManager.vue";
-import Tooltip from "./Tooltip.vue";
+import Tooltip from "features/tooltips/Tooltip.vue";
+import { TooltipDirection } from "features/tooltips/tooltip";
 
 const info = ref<ComponentPublicInstance<typeof Info> | null>(null);
 const savesManager = ref<ComponentPublicInstance<typeof SavesManager> | null>(null);

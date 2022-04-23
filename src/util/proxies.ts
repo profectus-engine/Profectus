@@ -40,8 +40,10 @@ export function createLazyProxy<T extends object, S>(
             return (calculateObj() as any)[key];
         },
         set(target, key, value) {
-            console.error("Layers and features are shallow readonly", key, value);
-            return false;
+            // TODO give warning about this? It should only be done with caution
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (calculateObj() as any)[key] = value;
+            return true;
         },
         has(target, key) {
             if (key === ProxyState) {

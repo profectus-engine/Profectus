@@ -26,7 +26,6 @@
 import { CoercableComponent, Visibility } from "features/feature";
 import { computeOptionalComponent, processedPropType } from "util/vue";
 import { defineComponent, StyleValue, toRefs, unref } from "vue";
-import Tooltip from "components/Tooltip.vue";
 import Node from "components/Node.vue";
 import MarkNode from "components/MarkNode.vue";
 import "components/common/features.css";
@@ -53,8 +52,7 @@ export default defineComponent({
     },
     components: {
         Node,
-        MarkNode,
-        Tooltip
+        MarkNode
     },
     setup(props) {
         const { display } = toRefs(props);

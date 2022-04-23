@@ -30,7 +30,7 @@ import { coerceComponent, render } from "util/vue";
 import { computed, ref, toRefs } from "vue";
 import Select from "./fields/Select.vue";
 import Toggle from "./fields/Toggle.vue";
-import Tooltip from "./Tooltip.vue";
+import Tooltip from "features/tooltips/Tooltip.vue";
 
 const isOpen = ref(false);
 

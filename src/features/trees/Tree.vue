@@ -4,7 +4,6 @@
             v-for="(node, nodeIndex) in row"
             :key="nodeIndex"
             v-bind="gatherNodeProps(node)"
-            :force-tooltip="node.forceTooltip"
         />
     </span>
     <span class="left-side-nodes" v-if="unref(leftSideNodes)">
@@ -12,7 +11,6 @@
             v-for="(node, nodeIndex) in unref(leftSideNodes)"
             :key="nodeIndex"
             v-bind="gatherNodeProps(node)"
-            :force-tooltip="node.forceTooltip"
             small
         />
     </span>
@@ -21,7 +19,6 @@
             v-for="(node, nodeIndex) in unref(rightSideNodes)"
             :key="nodeIndex"
             v-bind="gatherNodeProps(node)"
-            :force-tooltip="node.forceTooltip"
             small
         />
     </span>
@@ -54,12 +51,10 @@ export default defineComponent({
                 visibility,
                 style,
                 classes,
-                tooltip,
                 onClick,
                 onHold,
                 color,
                 glowColor,
-                forceTooltip,
                 canClick,
                 mark,
                 id
@@ -69,12 +64,10 @@ export default defineComponent({
                 visibility,
                 style,
                 classes,
-                tooltip,
                 onClick,
                 onHold,
                 color,
                 glowColor,
-                forceTooltip,
                 canClick,
                 mark,
                 id

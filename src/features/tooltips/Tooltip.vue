@@ -1,20 +1,23 @@
 <template>
     <div
         class="tooltip-container"
-        :class="{ shown: isShown }"
+        :class="{ shown: isShown, ...unref(classes) }"
         @mouseenter="isHovered = true"
         @mouseleave="isHovered = false"
+        @click="togglePinned"
+        :style="unref(style)"
     >
         <slot />
+        <component v-if="elementComp" :is="elementComp" />
         <transition name="fade">
             <div
                 v-if="isShown"
                 class="tooltip"
                 :class="{
-                    top: unref(top),
-                    left: unref(left),
-                    right: unref(right),
-                    bottom: unref(bottom)
+                    top: unref(direction) === TooltipDirection.UP,
+                    left: unref(direction) === TooltipDirection.LEFT,
+                    right: unref(direction) === TooltipDirection.RIGHT,
+                    bottom: unref(direction) === TooltipDirection.DOWN
                 }"
                 :style="{
                     '--xoffset': unref(xoffset) || '0px',
@@ -28,33 +31,76 @@
 </template>
 
 <script lang="ts">
-import { CoercableComponent } from "features/feature";
-import { computeOptionalComponent, processedPropType, unwrapRef } from "util/vue";
-import { computed, defineComponent, ref, toRefs, unref } from "vue";
+import { CoercableComponent, jsx, StyleValue } from "features/feature";
+import { Persistent } from "game/persistence";
+import {
+    coerceComponent,
+    computeOptionalComponent,
+    processedPropType,
+    render,
+    unwrapRef,
+    VueFeature
+} from "util/vue";
+import {
+    Component,
+    computed,
+    defineComponent,
+    PropType,
+    ref,
+    shallowRef,
+    toRefs,
+    unref,
+    watchEffect
+} from "vue";
+import { TooltipDirection } from "./tooltip";
 
 export default defineComponent({
     props: {
-        display: processedPropType<CoercableComponent>(Object, String, Function),
-        top: processedPropType<boolean>(Boolean),
-        left: processedPropType<boolean>(Boolean),
-        right: processedPropType<boolean>(Boolean),
-        bottom: processedPropType<boolean>(Boolean),
+        element: processedPropType<VueFeature>(Object),
+        display: {
+            type: processedPropType<CoercableComponent>(Object, String, Function),
+            required: true
+        },
+        style: processedPropType<StyleValue>(Object, String, Array),
+        classes: processedPropType<Record<string, boolean>>(Object),
+        direction: processedPropType<TooltipDirection>(Number),
         xoffset: processedPropType<string>(String),
         yoffset: processedPropType<string>(String),
-        force: processedPropType<boolean>(Boolean)
+        pinned: Object as PropType<Persistent<boolean>>
     },
     setup(props) {
-        const { display, force } = toRefs(props);
+        const { element, display, pinned } = toRefs(props);
 
         const isHovered = ref(false);
-        const isShown = computed(() => (unwrapRef(force) || isHovered.value) && comp.value);
+        const isShown = computed(() => (unwrapRef(pinned) || isHovered.value) && comp.value);
         const comp = computeOptionalComponent(display);
 
+        const elementComp = shallowRef<Component | "" | null>(null);
+        watchEffect(() => {
+            const currComponent = unwrapRef(element);
+            elementComp.value =
+                currComponent == null
+                    ? null
+                    : coerceComponent(jsx(() => render(currComponent) as JSX.Element));
+        });
+
+        function togglePinned(e: MouseEvent) {
+            const isPinned = pinned as unknown as Persistent<boolean> | undefined; // Vue typing :/
+            if (e.shiftKey && isPinned) {
+                isPinned.value = !isPinned.value;
+                e.stopPropagation();
+                e.preventDefault();
+            }
+        }
+
         return {
+            TooltipDirection,
             isHovered,
             isShown,
             comp,
-            unref
+            elementComp,
+            unref,
+            togglePinned
         };
     }
 });
