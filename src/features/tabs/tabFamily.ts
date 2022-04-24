@@ -101,8 +101,7 @@ export function createTabFamily<T extends TabFamilyOptions>(
 
     const selected = persistent(Object.keys(tabs)[0]);
     return createLazyProxy(() => {
-        const tabFamily =
-            optionsFunc?.() || ({} as ReturnType<OptionsFunc<T, TabFamily<T>, BaseTabFamily>>);
+        const tabFamily = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
 
         tabFamily.id = getUniqueID("tabFamily-");
         tabFamily.type = TabFamilyType;

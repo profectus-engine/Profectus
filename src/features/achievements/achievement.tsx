@@ -68,11 +68,11 @@ export type GenericAchievement = Replace<
 >;
 
 export function createAchievement<T extends AchievementOptions>(
-    optionsFunc: OptionsFunc<T, Achievement<T>, BaseAchievement>
+    optionsFunc?: OptionsFunc<T, Achievement<T>, BaseAchievement>
 ): Achievement<T> {
     const earned = persistent<boolean>(false);
     return createLazyProxy(() => {
-        const achievement = optionsFunc();
+        const achievement = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         achievement.id = getUniqueID("achievement-");
         achievement.type = AchievementType;
         achievement[Component] = AchievementComponent;

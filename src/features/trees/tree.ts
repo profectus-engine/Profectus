@@ -73,10 +73,10 @@ export type GenericTreeNode = Replace<
 >;
 
 export function createTreeNode<T extends TreeNodeOptions>(
-    optionsFunc: OptionsFunc<T, TreeNode<T>, BaseTreeNode>
+    optionsFunc?: OptionsFunc<T, TreeNode<T>, BaseTreeNode>
 ): TreeNode<T> {
     return createLazyProxy(() => {
-        const treeNode = optionsFunc();
+        const treeNode = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         treeNode.id = getUniqueID("treeNode-");
         treeNode.type = TreeNodeType;
         treeNode[Component] = TreeNodeComponent;

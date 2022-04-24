@@ -20,7 +20,7 @@ export interface Link extends SVGAttributes {
 }
 
 export interface LinksOptions {
-    links?: Computable<Link[]>;
+    links: Computable<Link[]>;
 }
 
 export interface BaseLinks {
