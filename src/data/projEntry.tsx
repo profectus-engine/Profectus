@@ -44,19 +44,19 @@ export const main = createLayer("main", () => {
         links: tree.links,
         display: jsx(() => (
             <>
-                <div v-show={player.devSpeed === 0}>Game Paused</div>
-                <div v-show={player.devSpeed && player.devSpeed !== 1}>
-                    Dev Speed: {format(player.devSpeed || 0)}x
-                </div>
-                <div v-show={player.offlineTime != undefined}>
-                    Offline Time: {formatTime(player.offlineTime || 0)}
-                </div>
+                {player.devSpeed === 0 ? <div>Game Paused</div> : null}
+                {player.devSpeed && player.devSpeed !== 1 ? (
+                    <div>Dev Speed: {format(player.devSpeed || 0)}x</div>
+                ) : null}
+                {player.offlineTime != undefined ? (
+                    <div>Offline Time: {formatTime(player.offlineTime || 0)}</div>
+                ) : null}
                 <div>
-                    <span v-show={Decimal.lt(points.value, "1e1000")}>You have </span>
+                    {Decimal.lt(points.value, "1e1000") ? <span>You have </span> : null}
                     <h2>{format(points.value)}</h2>
-                    <span v-show={Decimal.lt(points.value, "1e1e6")}> points</span>
+                    {Decimal.lt(points.value, "1e1e6") ? <span> points</span> : null}
                 </div>
-                <div v-show={Decimal.gt(pointGain.value, 0)}>({oomps.value})</div>
+                {Decimal.gt(pointGain.value, 0) ? <div>({oomps.value})</div> : null}
                 <Spacer />
                 {render(tree)}
             </>
