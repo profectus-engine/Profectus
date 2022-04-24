@@ -118,7 +118,7 @@ export function createModifierSection(
     title: string,
     subtitle: string,
     modifier: Required<Modifier>,
-    base = 1,
+    base: DecimalSource = 1,
     unit = ""
 ) {
     return (
@@ -130,7 +130,7 @@ export function createModifierSection(
             <br />
             <div class="modifier-container">
                 <span class="modifier-amount">
-                    {base}
+                    {format(base)}
                     {unit}
                 </span>
                 <span class="modifier-description">Base</span>
