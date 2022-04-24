@@ -34,7 +34,9 @@ export default defineComponent({
                 jsx(() => (
                     <>
                         {currNodes.map(row => (
-                            <span class="row">{row.map(renderJSX)}</span>
+                            <span class="row tree-row" style="margin: 50px auto;">
+                                {row.map(renderJSX)}
+                            </span>
                         ))}
                     </>
                 ))
@@ -74,10 +76,6 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.row {
-    margin: 50px auto;
-}
-
 .left-side-nodes {
     position: absolute;
     left: 15px;
@@ -88,6 +86,11 @@ export default defineComponent({
     position: absolute;
     right: 15px;
     top: 65px;
+}
+
+.left-side-nodes :deep(.treeNode),
+.side-nodes :deep(.treeNode) {
+    margin: 20px auto;
 }
 
 .small :deep(.treeNode) {
