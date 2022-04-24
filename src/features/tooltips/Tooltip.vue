@@ -1,11 +1,10 @@
 <template>
     <div
         class="tooltip-container"
-        :class="{ shown: isShown, ...unref(classes) }"
+        :class="{ shown: isShown }"
         @mouseenter="isHovered = true"
         @mouseleave="isHovered = false"
         @click.capture="togglePinned"
-        :style="unref(style)"
     >
         <slot />
         <component v-if="elementComp" :is="elementComp" />
@@ -17,12 +16,16 @@
                     top: unref(direction) === TooltipDirection.UP,
                     left: unref(direction) === TooltipDirection.LEFT,
                     right: unref(direction) === TooltipDirection.RIGHT,
-                    bottom: unref(direction) === TooltipDirection.DOWN
+                    bottom: unref(direction) === TooltipDirection.DOWN,
+                    ...unref(classes)
                 }"
-                :style="{
-                    '--xoffset': unref(xoffset) || '0px',
-                    '--yoffset': unref(yoffset) || '0px'
-                }"
+                :style="[
+                    {
+                        '--xoffset': unref(xoffset) || '0px',
+                        '--yoffset': unref(yoffset) || '0px'
+                    },
+                    unref(style) ?? {}
+                ]"
             >
                 <span v-if="showPin" class="material-icons pinned">push_pin</span>
                 <component v-if="comp" :is="comp" />
@@ -140,6 +143,10 @@ export default defineComponent({
     color: var(--points);
     z-index: 100 !important;
     word-break: break-word;
+}
+
+.tooltip :deep(hr) {
+    margin: var(--feature-margin) 0;
 }
 
 .shown {
