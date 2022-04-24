@@ -297,7 +297,7 @@ export function createResourceTooltip(
     const req = convertComputable(requirement);
     return computed(() => {
         if (requiredResource == null || Decimal.gte(resource.value, unref(req))) {
-            return displayResource(resource);
+            return displayResource(resource) + " " + resource.displayName;
         }
         return `Reach ${
             Decimal.eq(requiredResource.precision, 0)
