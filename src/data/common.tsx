@@ -133,7 +133,7 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
 export interface LayerTreeNodeOptions extends TreeNodeOptions {
     layerID: string;
     color: Computable<string>; // marking as required
-    display?: Computable<string>;
+    display?: Computable<CoercableComponent>;
     append?: Computable<boolean>;
 }
 export type LayerTreeNode<T extends LayerTreeNodeOptions> = Replace<
@@ -146,7 +146,7 @@ export type LayerTreeNode<T extends LayerTreeNodeOptions> = Replace<
 export type GenericLayerTreeNode = Replace<
     LayerTreeNode<LayerTreeNodeOptions>,
     {
-        display: ProcessedComputable<string>;
+        display: ProcessedComputable<CoercableComponent>;
         append?: ProcessedComputable<boolean>;
     }
 >;
@@ -161,7 +161,7 @@ export function createLayerTreeNode<T extends LayerTreeNodeOptions>(
         processComputable(options as T, "append");
         return {
             ...options,
-            display: options.layerID,
+            display: options.display,
             onClick: unref((options as unknown as GenericLayerTreeNode).append)
                 ? function () {
                       if (player.tabs.includes(options.layerID)) {
