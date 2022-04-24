@@ -15,7 +15,7 @@ import {
     ProcessedComputable
 } from "util/computed";
 import { VueFeature } from "util/vue";
-import { Ref, unref } from "vue";
+import { nextTick, Ref, unref } from "vue";
 import { persistent } from "game/persistence";
 
 declare module "@vue/runtime-dom" {
@@ -73,18 +73,6 @@ export function addTooltip<T extends TooltipOptions>(
     element: VueFeature,
     options: T & ThisType<Tooltip<T>> & Partial<BaseTooltip>
 ): Tooltip<T> {
-    if (options.pinnable) {
-        if ("pinned" in element) {
-            console.error(
-                "Cannot add pinnable tooltip to element that already has a property called 'pinned'"
-            );
-            options.pinnable = false;
-        } else {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (element as any).pinned = options.pinned = persistent<boolean>(false);
-        }
-    }
-
     processComputable(options as T, "display");
     processComputable(options as T, "classes");
     processComputable(options as T, "style");
@@ -93,25 +81,39 @@ export function addTooltip<T extends TooltipOptions>(
     processComputable(options as T, "xoffset");
     processComputable(options as T, "yoffset");
 
-    const elementComponent = element[Component];
-    element[Component] = TooltipComponent;
-    const elementGratherProps = element[GatherProps].bind(element);
-    element[GatherProps] = function gatherTooltipProps(this: GenericTooltip) {
-        const { display, classes, style, direction, xoffset, yoffset, pinned } = this;
-        return {
-            element: {
-                [Component]: elementComponent,
-                [GatherProps]: elementGratherProps
-            },
-            display,
-            classes,
-            style: unref(style),
-            direction,
-            xoffset,
-            yoffset,
-            pinned
-        };
-    }.bind(options as GenericTooltip);
+    nextTick(() => {
+        if (options.pinnable) {
+            if ("pinned" in element) {
+                console.error(
+                    "Cannot add pinnable tooltip to element that already has a property called 'pinned'"
+                );
+                options.pinnable = false;
+            } else {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (element as any).pinned = options.pinned = persistent<boolean>(false);
+            }
+        }
+
+        const elementComponent = element[Component];
+        element[Component] = TooltipComponent;
+        const elementGratherProps = element[GatherProps].bind(element);
+        element[GatherProps] = function gatherTooltipProps(this: GenericTooltip) {
+            const { display, classes, style, direction, xoffset, yoffset, pinned } = this;
+            return {
+                element: {
+                    [Component]: elementComponent,
+                    [GatherProps]: elementGratherProps
+                },
+                display,
+                classes,
+                style: unref(style),
+                direction,
+                xoffset,
+                yoffset,
+                pinned
+            };
+        }.bind(options as GenericTooltip);
+    });
 
     return options as unknown as Tooltip<T>;
 }
