@@ -237,6 +237,7 @@ function openSave(id: string) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     saves.value[player.id]!.time = player.time;
     save();
+    cachedSaves[player.id] = undefined;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     loadSave(saves.value[id]!);
     // Delete cached version in case of opening it again
