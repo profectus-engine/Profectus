@@ -138,4 +138,8 @@ export default defineComponent({
 .clickable.small {
     min-height: unset;
 }
+
+.clickable > * {
+    pointer-events: none;
+}
 </style>

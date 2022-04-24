@@ -106,4 +106,8 @@ export default defineComponent({
 :not(.floating) .tabButton:not(.active) {
     border-bottom-color: transparent;
 }
+
+.tabButton > * {
+    pointer-events: none;
+}
 </style>

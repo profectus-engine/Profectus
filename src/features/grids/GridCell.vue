@@ -87,4 +87,8 @@ export default defineComponent({
     font-size: 10px;
     background-color: var(--layer-color);
 }
+
+.tile > * {
+    pointer-events: none;
+}
 </style>

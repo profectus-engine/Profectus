@@ -112,4 +112,8 @@ export default defineComponent({
     text-transform: capitalize;
     display: flex;
 }
+
+.treeNode > *:first-child > * {
+    pointer-events: none;
+}
 </style>
