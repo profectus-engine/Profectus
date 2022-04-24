@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.3.3] - 2022-04-23
+## [0.3.3] - 2022-04-24
 ### Fixed
 - Spacing between rows in Tree components
 - Computed style attributes on tooltips were ignored
