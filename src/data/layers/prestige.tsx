@@ -8,6 +8,8 @@ import { jsx } from "features/feature";
 import { createReset } from "features/reset";
 import MainDisplay from "features/resources/MainDisplay.vue";
 import { createResource } from "features/resources/resource";
+import { addTooltip } from "features/tooltips/tooltip";
+import { createResourceTooltip } from "features/trees/tree";
 import { createLayer } from "game/layers";
 import { DecimalSource } from "util/bignum";
 import { render } from "util/vue";
@@ -35,6 +37,10 @@ const layer = createLayer(id, () => {
         color,
         reset
     }));
+    addTooltip(treeNode, {
+        display: createResourceTooltip(points),
+        pinnable: true
+    });
 
     const resetButton = createResetButton(() => ({
         conversion,
