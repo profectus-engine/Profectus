@@ -15,7 +15,7 @@ import {
     ProcessedComputable
 } from "util/computed";
 import { VueFeature } from "util/vue";
-import { Ref } from "vue";
+import { Ref, unref } from "vue";
 import { persistent } from "game/persistence";
 
 declare module "@vue/runtime-dom" {
@@ -105,7 +105,7 @@ export function addTooltip<T extends TooltipOptions>(
             },
             display,
             classes,
-            style,
+            style: unref(style),
             direction,
             xoffset,
             yoffset,
