@@ -35,7 +35,7 @@ const defaultTheme: Theme = {
     variables: {
         "--foreground": "#dfdfdf",
         "--background": "#0f0f0f",
-        "--feature-foreground": "#eee",
+        "--feature-foreground": "#0f0f0f",
         "--tooltip-background": "rgba(0, 0, 0, 0.75)",
         "--raised-background": "#0f0f0f",
         "--points": "#ffffff",

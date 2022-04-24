@@ -70,7 +70,7 @@ function onUpdate(value: SelectOption) {
 }
 
 .vue-dropdown-item {
-    color: var(--feature-foreground);
+    color: var(--foreground);
 }
 
 .vue-dropdown-item,
