@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2022-04-23
+### Fixed
+- Clickables and several other elements would not register clicks sometimes, if the display is updating rapidly
+- createLayerTreeNode wasn't using display option correctly
+
 ## [0.3.1] - 2022-04-23
 ### Added
 - Render utility methods that always return JSX Elements
