@@ -6,6 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2022-04-23
+### Added
+- Render utility methods that always return JSX Elements
+### Changed
+- **BREAKING** Tooltips overhaul
+    - Tree Nodes no longer have tooltips related properties
+    - Tooltips can now be added to any feature with a Vue component using the `addTooltip` function
+    - Any tooltip can be made pinnable by setting pinnable to true in the addTooltip options, or by passing a `Ref<boolean>` to a Tooltip component
+    - Pinned tooltips have an icon to represent that. It can be disabled by setting the theme's `showPin` property to false
+- Modifiers are now their own features rather than a part of conversions
+    - Including utilities to display the current state of all the modifiers
+- TabFamilies' options function is now optional
+- Layer.minWidth can take string values
+    - If parseable into a number, it'll have "px" appended. Otherwise it'll be un-processed
+- TreeNodes now have Vue components attached to them
+- `createResourceTooltip` now shows the resource name
+- Made classic and aqua theme's `feature-foreground` color dark rather than light
+
 ## [0.3.0] - 2022-04-10
 ### Added
 - conversion.currentAt [#4](https://github.com/profectus-engine/Profectus/pull/4)
