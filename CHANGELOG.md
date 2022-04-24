@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2022-04-23
+### Fixed
+- Spacing between rows in Tree components
+- Computed style attributes on tooltips were ignored
+- Tooltips could cause infinite loops due to cyclical dependencies
+
 ## [0.3.2] - 2022-04-23
 ### Fixed
 - Clickables and several other elements would not register clicks sometimes, if the display is updating rapidly
