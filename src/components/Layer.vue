@@ -110,7 +110,7 @@ export default defineComponent({
                     tabValue.style.flexGrow = "";
                     tabValue.style.flexShrink = "";
                     tabValue.style.width = "";
-                    tabValue.style.minWidth = tabValue.style.flexBasis = `${width}px`;
+                    tabValue.style.minWidth = tabValue.style.flexBasis = width;
                     tabValue.style.margin = "";
                 }
             }
