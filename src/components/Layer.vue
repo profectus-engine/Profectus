@@ -193,7 +193,6 @@ export default defineComponent({
     right: 9px;
     z-index: 7;
     line-height: 30px;
-    width: 30px;
     border: none;
     background: var(--background);
     box-shadow: var(--background) 0 2px 3px 5px;
@@ -201,7 +200,6 @@ export default defineComponent({
     color: var(--foreground);
     font-size: 40px;
     cursor: pointer;
-    padding: 0;
     margin-top: -44px;
     margin-right: -30px;
 }
@@ -214,15 +212,19 @@ export default defineComponent({
 }
 
 .goBack {
-    position: absolute;
-    top: 0;
+    position: sticky;
+    top: 6px;
     left: 20px;
-    background-color: transparent;
-    border: 1px solid transparent;
+    line-height: 30px;
+    margin-top: -50px;
+    margin-left: -35px;
+    border: none;
+    background: var(--background);
+    box-shadow: var(--background) 0 2px 3px 5px;
+    border-radius: 50%;
     color: var(--foreground);
     font-size: 40px;
     cursor: pointer;
-    line-height: 40px;
     z-index: 7;
 }
 
