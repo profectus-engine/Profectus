@@ -11,7 +11,6 @@
                 />
                 <component :is="tab" :index="index" v-else />
             </div>
-            <div class="separator" v-if="index !== tabs.length - 1"></div>
         </div>
     </div>
 </template>
@@ -66,14 +65,8 @@ function gatherLayerProps(layer: GenericLayer) {
     flex-grow: 1;
 }
 
-.separator {
-    position: absolute;
-    right: -4px;
-    top: 0;
-    bottom: 0;
-    width: 8px;
-    background: var(--outline);
-    z-index: 1;
+.tab + .tab > .inner-tab {
+    border-left: solid 4px var(--outline);
 }
 </style>
 
@@ -82,7 +75,7 @@ function gatherLayerProps(layer: GenericLayer) {
     height: 4px;
     border: none;
     background: var(--outline);
-    margin: var(--feature-margin) -10px;
+    margin: var(--feature-margin) 0;
 }
 
 .tab .modal-body hr {

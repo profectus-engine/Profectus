@@ -43,18 +43,7 @@ onMounted(() => {
 .sticky {
     position: sticky;
     background: var(--background);
-    margin-left: -10px;
-    margin-right: -10px;
-    padding-left: 10px;
-    padding-right: 10px;
-    width: 100%;
+    width: calc(100% - 2px);
     z-index: 3;
-}
-
-.modal-body .sticky {
-    margin-left: 0;
-    margin-right: 0;
-    padding-left: 0;
-    padding-right: 0;
 }
 </style>
