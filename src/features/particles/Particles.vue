@@ -102,10 +102,10 @@ export default defineComponent({
 .not-fullscreen,
 .resize-listener {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    top: 5px;
+    left: 5px;
+    right: 5px;
+    bottom: 5px;
     pointer-events: none;
 }
 </style>
