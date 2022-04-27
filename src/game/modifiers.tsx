@@ -119,7 +119,8 @@ export function createModifierSection(
     subtitle: string,
     modifier: Required<Modifier>,
     base: DecimalSource = 1,
-    unit = ""
+    unit = "",
+    baseText: CoercableComponent = "Base"
 ) {
     return (
         <div>
@@ -133,7 +134,7 @@ export function createModifierSection(
                     {format(base)}
                     {unit}
                 </span>
-                <span class="modifier-description">Base</span>
+                <span class="modifier-description">{renderJSX(baseText)}</span>
             </div>
             {renderJSX(unref(modifier.description))}
             <hr />
