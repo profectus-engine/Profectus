@@ -1,0 +1,9 @@
+.modifier-toggle {
+    padding-right: 10px;
+    transform: translateY(-1px);
+    display: inline-block;
+}
+
+.modifier-toggle.collapsed {
+    transform: translate(-5px, -5px) rotate(-90deg);
+}

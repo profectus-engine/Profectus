@@ -5,7 +5,14 @@ import {
     GenericClickable
 } from "features/clickables/clickable";
 import { GenericConversion } from "features/conversion";
-import { CoercableComponent, jsx, OptionsFunc, Replace, setDefault } from "features/feature";
+import {
+    CoercableComponent,
+    jsx,
+    JSXFunction,
+    OptionsFunc,
+    Replace,
+    setDefault
+} from "features/feature";
 import { displayResource } from "features/resources/resource";
 import {
     createTreeNode,
@@ -14,16 +21,21 @@ import {
     TreeNode,
     TreeNodeOptions
 } from "features/trees/tree";
+import { Modifier } from "game/modifiers";
+import { Persistent, persistent } from "game/persistence";
 import player from "game/player";
-import Decimal, { DecimalSource } from "util/bignum";
+import Decimal, { DecimalSource, format } from "util/bignum";
 import {
     Computable,
+    convertComputable,
     GetComputableType,
     GetComputableTypeWithDefault,
     processComputable,
     ProcessedComputable
 } from "util/computed";
+import { renderJSX } from "util/vue";
 import { computed, Ref, unref } from "vue";
+import "./common.css";
 
 export interface ResetButtonOptions extends ClickableOptions {
     conversion: GenericConversion;
@@ -176,4 +188,69 @@ export function createLayerTreeNode<T extends LayerTreeNodeOptions>(
                   }
         };
     }) as unknown as LayerTreeNode<T>;
+}
+
+export function createCollapsibleModifierSections(
+    sections: {
+        title: string;
+        subtitle?: string;
+        modifier: Required<Modifier>;
+        base?: Computable<DecimalSource>;
+        unit?: string;
+        baseText?: Computable<CoercableComponent>;
+        visible?: Computable<boolean>;
+    }[]
+): [JSXFunction, Persistent<boolean>[]] {
+    const processedBase = sections.map(s => convertComputable(s.base));
+    const processedBaseText = sections.map(s => convertComputable(s.baseText));
+    const processedVisible = sections.map(s => convertComputable(s.visible));
+    const collapsed = sections.map(() => persistent<boolean>(false));
+    const jsxFunc = jsx(() => {
+        const sectionJSX = sections.map((s, i) => {
+            if (unref(processedVisible[i]) === false) return null;
+            const header = (
+                <h3
+                    onClick={() => (collapsed[i].value = !collapsed[i].value)}
+                    style="cursor: pointer"
+                >
+                    <span class={"modifier-toggle" + (unref(collapsed[i]) ? " collapsed" : "")}>
+                        ▼
+                    </span>
+                    {s.title}
+                    {s.subtitle ? <span class="subtitle"> ({s.subtitle})</span> : null}
+                </h3>
+            );
+
+            const modifiers = unref(collapsed[i]) ? null : (
+                <>
+                    <div class="modifier-container">
+                        <span class="modifier-amount">
+                            {format(unref(processedBase[i]) ?? 1)}
+                            {s.unit}
+                        </span>
+                        <span class="modifier-description">
+                            {renderJSX(unref(processedBaseText[i]) ?? "Base")}
+                        </span>
+                    </div>
+                    {renderJSX(unref(s.modifier.description))}
+                </>
+            );
+
+            return (
+                <>
+                    {i === 0 ? null : <br />}
+                    <div>
+                        {header}
+                        <br />
+                        {modifiers}
+                        <hr />
+                        Total: {format(s.modifier.apply(unref(processedBase[i]) ?? 1))}
+                        {s.unit}
+                    </div>
+                </>
+            );
+        });
+        return <>{sectionJSX}</>;
+    });
+    return [jsxFunc, collapsed];
 }
