@@ -33,7 +33,7 @@
                 <div class="field">
                     <span class="field-title">Create Save</span>
                     <div class="field-buttons">
-                        <button class="button" @click="newSave">New Game</button>
+                        <button class="button" @click="openSave(newSave().id)">New Game</button>
                         <Select
                             v-if="Object.keys(bank).length > 0"
                             :options="bank"
@@ -263,6 +263,8 @@ function newFromPreset(preset: string) {
     save(playerData as PlayerData);
 
     settings.saves.push(playerData.id);
+
+    openSave(playerData.id);
 }
 
 function editSave(id: string, newName: string) {
