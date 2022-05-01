@@ -35,22 +35,33 @@ export interface Modifier {
 }
 
 /**
+ * Utility type used to narrow down a modifier type that will have a description and/or enabled property based on optional parameters, T and S (respectively).
+ */
+export type ModifierFromOptionalParams<T, S> = T extends undefined
+    ? S extends undefined
+        ? Omit<WithRequired<Modifier, "revert">, "description" | "enabled">
+        : Omit<WithRequired<Modifier, "revert" | "enabled">, "description">
+    : S extends undefined
+    ? Omit<WithRequired<Modifier, "revert" | "description">, "enabled">
+    : WithRequired<Modifier, "revert" | "enabled" | "description">;
+
+/**
  * Create a modifier that adds some value to the input value
  * @param addend The amount to add to the input value
  * @param description Description of what this modifier is doing
  * @param enabled A computable that will be processed and passed directly into the returned modifier
  */
-export function createAdditiveModifier(
-    addend: Computable<DecimalSource>,
-    description?: Computable<CoercableComponent>,
-    enabled?: Computable<boolean>
-): Modifier {
+export function createAdditiveModifier<
+    T extends Computable<CoercableComponent> | undefined,
+    S extends Computable<boolean> | undefined,
+    R = ModifierFromOptionalParams<T, S>
+>(addend: Computable<DecimalSource>, description?: T, enabled?: S): R {
     const processedAddend = convertComputable(addend);
     const processedDescription = convertComputable(description);
     const processedEnabled = enabled == null ? undefined : convertComputable(enabled);
     return {
-        apply: gain => Decimal.add(gain, unref(processedAddend)),
-        revert: gain => Decimal.sub(gain, unref(processedAddend)),
+        apply: (gain: DecimalSource) => Decimal.add(gain, unref(processedAddend)),
+        revert: (gain: DecimalSource) => Decimal.sub(gain, unref(processedAddend)),
         enabled: processedEnabled,
         description:
             description == null
@@ -66,7 +77,7 @@ export function createAdditiveModifier(
                           ) : null}
                       </div>
                   ))
-    };
+    } as unknown as R;
 }
 
 /**
@@ -75,17 +86,17 @@ export function createAdditiveModifier(
  * @param description Description of what this modifier is doing
  * @param enabled A computable that will be processed and passed directly into the returned modifier
  */
-export function createMultiplicativeModifier(
-    multiplier: Computable<DecimalSource>,
-    description?: Computable<CoercableComponent>,
-    enabled?: Computable<boolean>
-): Modifier {
+export function createMultiplicativeModifier<
+    T extends Computable<CoercableComponent> | undefined,
+    S extends Computable<boolean> | undefined,
+    R = ModifierFromOptionalParams<T, S>
+>(multiplier: Computable<DecimalSource>, description?: T, enabled?: S): R {
     const processedMultiplier = convertComputable(multiplier);
     const processedDescription = convertComputable(description);
     const processedEnabled = enabled == null ? undefined : convertComputable(enabled);
     return {
-        apply: gain => Decimal.times(gain, unref(processedMultiplier)),
-        revert: gain => Decimal.div(gain, unref(processedMultiplier)),
+        apply: (gain: DecimalSource) => Decimal.times(gain, unref(processedMultiplier)),
+        revert: (gain: DecimalSource) => Decimal.div(gain, unref(processedMultiplier)),
         enabled: processedEnabled,
         description:
             description == null
@@ -101,7 +112,7 @@ export function createMultiplicativeModifier(
                           ) : null}
                       </div>
                   ))
-    };
+    } as unknown as R;
 }
 
 /**
@@ -110,17 +121,17 @@ export function createMultiplicativeModifier(
  * @param description Description of what this modifier is doing
  * @param enabled A computable that will be processed and passed directly into the returned modifier
  */
-export function createExponentialModifier(
-    exponent: Computable<DecimalSource>,
-    description?: Computable<CoercableComponent>,
-    enabled?: Computable<boolean>
-): Modifier {
+export function createExponentialModifier<
+    T extends Computable<CoercableComponent> | undefined,
+    S extends Computable<boolean> | undefined,
+    R = ModifierFromOptionalParams<T, S>
+>(exponent: Computable<DecimalSource>, description?: T, enabled?: S): R {
     const processedExponent = convertComputable(exponent);
     const processedDescription = convertComputable(description);
     const processedEnabled = enabled == null ? undefined : convertComputable(enabled);
     return {
-        apply: gain => Decimal.pow(gain, unref(processedExponent)),
-        revert: gain => Decimal.root(gain, unref(processedExponent)),
+        apply: (gain: DecimalSource) => Decimal.pow(gain, unref(processedExponent)),
+        revert: (gain: DecimalSource) => Decimal.root(gain, unref(processedExponent)),
         enabled: processedEnabled,
         description:
             description == null
@@ -136,7 +147,7 @@ export function createExponentialModifier(
                           ) : null}
                       </div>
                   ))
-    };
+    } as unknown as R;
 }
 
 /**
@@ -146,16 +157,19 @@ export function createExponentialModifier(
  * @param modifiers The modifiers to perform sequentially
  * @see {@link createModifierSection}
  */
-export function createSequentialModifier(
-    ...modifiers: Modifier[]
-): WithRequired<Modifier, "description"> {
+export function createSequentialModifier<
+    T extends Modifier[],
+    S = T extends WithRequired<Modifier, "revert">[]
+        ? WithRequired<Modifier, "description" | "revert">
+        : Omit<WithRequired<Modifier, "description">, "revert">
+>(...modifiers: T): S {
     return {
-        apply: gain =>
+        apply: (gain: DecimalSource) =>
             modifiers
                 .filter(m => unref(m.enabled) !== false)
                 .reduce((gain, modifier) => modifier.apply(gain), gain),
         revert: modifiers.every(m => m.revert != null)
-            ? gain =>
+            ? (gain: DecimalSource) =>
                   modifiers
                       .filter(m => unref(m.enabled) !== false)
                       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -172,7 +186,7 @@ export function createSequentialModifier(
                 ).map(renderJSX)}
             </>
         ))
-    };
+    } as unknown as S;
 }
 
 /**
