@@ -195,6 +195,45 @@ export function createPolynomialScaling(
     };
 }
 
+export function createExponentialScaling(
+    factor: DecimalSource | Ref<DecimalSource>,
+    base: DecimalSource | Ref<DecimalSource>,
+    exponent: DecimalSource | Ref<DecimalSource>
+): ScalingFunction {
+    return {
+        currentGain(conversion) {
+            const gain = Decimal.div(conversion.baseResource.value, unref(factor))
+                .log(unref(base))
+                .root(unref(exponent));
+
+            if (gain.isNan()) {
+                return new Decimal(0);
+            }
+            return gain;
+        },
+        currentAt(conversion) {
+            let current: DecimalSource = unref(conversion.currentGain);
+            if (conversion.gainModifier) {
+                current = conversion.gainModifier.revert(current);
+            }
+            current = Decimal.max(0, current);
+            return Decimal.pow(unref(base), Decimal.pow(current, unref(exponent))).times(
+                unref(factor)
+            );
+        },
+        nextAt(conversion) {
+            let next: DecimalSource = Decimal.add(unref(conversion.currentGain), 1);
+            if (conversion.gainModifier) {
+                next = conversion.gainModifier.revert(next);
+            }
+            next = Decimal.max(0, next);
+            return Decimal.pow(unref(base), Decimal.pow(next, unref(exponent)))
+                .times(unref(factor))
+                .max(unref(base));
+        }
+    };
+}
+
 export function createCumulativeConversion<S extends ConversionOptions>(
     optionsFunc: OptionsFunc<S, Conversion<S>>
 ): Conversion<S> {
