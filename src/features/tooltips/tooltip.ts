@@ -17,6 +17,7 @@ import {
 import { VueFeature } from "util/vue";
 import { nextTick, Ref, unref } from "vue";
 import { persistent } from "game/persistence";
+import { Direction } from "util/common";
 
 declare module "@vue/runtime-dom" {
     interface CSSProperties {
@@ -25,19 +26,12 @@ declare module "@vue/runtime-dom" {
     }
 }
 
-export enum TooltipDirection {
-    UP,
-    LEFT,
-    RIGHT,
-    DOWN
-}
-
 export interface TooltipOptions {
     pinnable?: boolean;
     display: Computable<CoercableComponent>;
     classes?: Computable<Record<string, boolean>>;
     style?: Computable<StyleValue>;
-    direction?: Computable<TooltipDirection>;
+    direction?: Computable<Direction>;
     xoffset?: Computable<string>;
     yoffset?: Computable<string>;
 }
@@ -54,7 +48,7 @@ export type Tooltip<T extends TooltipOptions> = Replace<
         display: GetComputableType<T["display"]>;
         classes: GetComputableType<T["classes"]>;
         style: GetComputableType<T["style"]>;
-        direction: GetComputableTypeWithDefault<T["direction"], TooltipDirection.UP>;
+        direction: GetComputableTypeWithDefault<T["direction"], Direction.Up>;
         xoffset: GetComputableType<T["xoffset"]>;
         yoffset: GetComputableType<T["yoffset"]>;
     }
@@ -65,7 +59,7 @@ export type GenericTooltip = Replace<
     {
         pinnable: boolean;
         pinned: Ref<boolean> | undefined;
-        direction: ProcessedComputable<TooltipDirection>;
+        direction: ProcessedComputable<Direction>;
     }
 >;
 
@@ -77,7 +71,7 @@ export function addTooltip<T extends TooltipOptions>(
     processComputable(options as T, "classes");
     processComputable(options as T, "style");
     processComputable(options as T, "direction");
-    setDefault(options, "direction", TooltipDirection.UP);
+    setDefault(options, "direction", Direction.Up);
     processComputable(options as T, "xoffset");
     processComputable(options as T, "yoffset");
 

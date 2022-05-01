@@ -11,6 +11,7 @@ import {
     Visibility
 } from "features/feature";
 import { DecimalSource } from "util/bignum";
+import { Direction } from "util/common";
 import {
     Computable,
     GetComputableType,
@@ -22,14 +23,6 @@ import { createLazyProxy } from "util/proxies";
 import { unref } from "vue";
 
 export const BarType = Symbol("Bar");
-
-export enum Direction {
-    Up = "Up",
-    Down = "Down",
-    Left = "Left",
-    Right = "Right",
-    Default = "Up"
-}
 
 export interface BarOptions {
     visibility?: Computable<Visibility>;

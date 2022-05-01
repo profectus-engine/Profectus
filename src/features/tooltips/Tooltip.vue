@@ -13,10 +13,10 @@
                 v-if="isShown"
                 class="tooltip"
                 :class="{
-                    top: unref(direction) === TooltipDirection.UP,
-                    left: unref(direction) === TooltipDirection.LEFT,
-                    right: unref(direction) === TooltipDirection.RIGHT,
-                    bottom: unref(direction) === TooltipDirection.DOWN,
+                    top: unref(direction) === Direction.Up,
+                    left: unref(direction) === Direction.Left,
+                    right: unref(direction) === Direction.Right,
+                    bottom: unref(direction) === Direction.Down,
                     ...unref(classes)
                 }"
                 :style="[
@@ -39,6 +39,7 @@ import themes from "data/themes";
 import { CoercableComponent, jsx, StyleValue } from "features/feature";
 import { Persistent } from "game/persistence";
 import settings from "game/settings";
+import { Direction } from "util/common";
 import {
     coerceComponent,
     computeOptionalComponent,
@@ -58,7 +59,6 @@ import {
     unref,
     watchEffect
 } from "vue";
-import { TooltipDirection } from "./tooltip";
 
 export default defineComponent({
     props: {
@@ -69,7 +69,7 @@ export default defineComponent({
         },
         style: processedPropType<StyleValue>(Object, String, Array),
         classes: processedPropType<Record<string, boolean>>(Object),
-        direction: processedPropType<TooltipDirection>(Number),
+        direction: processedPropType<Direction>(Number),
         xoffset: processedPropType<string>(String),
         yoffset: processedPropType<string>(String),
         pinned: Object as PropType<Persistent<boolean>>
@@ -102,7 +102,7 @@ export default defineComponent({
         const showPin = computed(() => unwrapRef(pinned) && themes[settings.theme].showPin);
 
         return {
-            TooltipDirection,
+            Direction,
             isHovered,
             isShown,
             comp,

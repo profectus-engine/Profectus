@@ -14,3 +14,11 @@ export function isPlainObject(object: unknown): boolean {
 export function isFunction(func: unknown): func is Function {
     return typeof func === "function";
 }
+
+export enum Direction {
+    Up = "Up",
+    Down = "Down",
+    Left = "Left",
+    Right = "Right",
+    Default = "Up"
+}
