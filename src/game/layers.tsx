@@ -17,7 +17,7 @@ import {
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { createNanoEvents, Emitter } from "nanoevents";
-import { InjectionKey, Ref, ref, unref } from "vue";
+import { InjectionKey, Ref, ref, shallowReactive, unref } from "vue";
 import { globalBus } from "./events";
 import { Persistent, persistent } from "./persistence";
 import player from "./player";
@@ -44,7 +44,7 @@ export interface LayerEvents {
     postUpdate: (diff: number) => void;
 }
 
-export const layers: Record<string, Readonly<GenericLayer> | undefined> = {};
+export const layers: Record<string, Readonly<GenericLayer> | undefined> = shallowReactive({});
 window.layers = layers;
 
 declare module "@vue/runtime-dom" {
