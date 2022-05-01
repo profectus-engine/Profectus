@@ -25,6 +25,7 @@ import { Modifier } from "game/modifiers";
 import { Persistent, persistent } from "game/persistence";
 import player from "game/player";
 import Decimal, { DecimalSource, format } from "util/bignum";
+import { WithRequired } from "util/common";
 import {
     Computable,
     convertComputable,
@@ -194,7 +195,7 @@ export function createCollapsibleModifierSections(
     sections: {
         title: string;
         subtitle?: string;
-        modifier: Required<Modifier>;
+        modifier: WithRequired<Modifier, "description">;
         base?: Computable<DecimalSource>;
         unit?: string;
         baseText?: Computable<CoercableComponent>;
