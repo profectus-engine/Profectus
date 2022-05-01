@@ -1,3 +1,5 @@
+export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+
 // Reference:
 // https://stackoverflow.com/questions/7225407/convert-camelcasetext-to-sentence-case-text
 export function camelToTitle(camel: string): string {
