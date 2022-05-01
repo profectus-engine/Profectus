@@ -69,7 +69,7 @@ export default defineComponent({
         },
         style: processedPropType<StyleValue>(Object, String, Array),
         classes: processedPropType<Record<string, boolean>>(Object),
-        direction: processedPropType<Direction>(Number),
+        direction: processedPropType<Direction>(String),
         xoffset: processedPropType<string>(String),
         yoffset: processedPropType<string>(String),
         pinned: Object as PropType<Persistent<boolean>>
