@@ -6,6 +6,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4] - 2022-05-01
+### Added
+- Saves can now be encoded in two new options: plaintext and lz compressed, determined by a new "saveEncoding" property in projInfo
+    - Saves will be loaded in whatever format is detected. The setting only applies when writing saves
+- createModifierSection has new parameter to override the label used for the base value
+- createCollapsibleModifierSections utility function to display `createModifierSection`s in collapsible forms
+### Fixed
+- Saves manager would not clear the current save from its cache when switching saves, leading to progress loss if flipping between saves
+- Layer.minWidth being ignored
+- Separators between tabs (player.tabs) would not extend to the bottom of the screen when scrolling
+- Tree nodes not being clicked on their edges
+### Changed
+- **BREAKING** No features extend persistent anymore
+    - This will break ALL existing saves that aren't manually dealt with in fixOldSave
+    - Affected features: Achievement, Buyable, Grid, Infobox, Milestone, TabFamily, and Upgrade
+    - Affected features will now have a property within them where the persistent ref is stored. This means new persistent refs can now be safely added to these features
+- Features with option functions with 0 required properties now don't require passing in an options function
+- Improved the look of the goBack and minimize buttons (and made them more consistent with each other)
+- Newly created saves are immediately switched to
+- TooltipDirection and Direction have been merged into one enum
+- Made layers shallow reactive, so it works better with dynamic layers
+- Modifier functions all have more explicit types now
+- Scaling functions take computables instead of processed computables
+### Removed
+- Unused tsParticles.d.ts file
+### Documented
+- modifiers.ts
+- conversions.ts
+
 ## [0.3.3] - 2022-04-24
 ### Fixed
 - Spacing between rows in Tree components
