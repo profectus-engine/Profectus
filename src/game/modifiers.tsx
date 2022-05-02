@@ -10,26 +10,26 @@ import { computed, unref } from "vue";
  * An object that can be used to apply or unapply some modification to a number.
  * Being reversible requires the operation being invertible, but some features may rely on that.
  * Descriptions can be optionally included for displaying them to the player.
- * The built-in modifier creators are designed to display the modifiers using
- * {@link createModifierSection}
+ * The built-in modifier creators are designed to display the modifiers using.
+ * {@link createModifierSection}.
  */
 export interface Modifier {
     /**
-     * Applies some operation on the input and returns the result
+     * Applies some operation on the input and returns the result.
      */
     apply: (gain: DecimalSource) => DecimalSource;
     /**
-     * Reverses the operation applied by the apply property. Required by some features
+     * Reverses the operation applied by the apply property. Required by some features.
      */
     revert?: (gain: DecimalSource) => DecimalSource;
     /**
      * Whether or not this modifier should be considered enabled.
-     * Typically for use with modifiers passed into {@link createSequentialModifier}
+     * Typically for use with modifiers passed into {@link createSequentialModifier}.
      */
     enabled?: ProcessedComputable<boolean>;
     /**
      * A description of this modifier.
-     * @see {@link createModifierSection}
+     * @see {@link createModifierSection}.
      */
     description?: ProcessedComputable<CoercableComponent>;
 }
@@ -46,10 +46,10 @@ export type ModifierFromOptionalParams<T, S> = T extends undefined
     : WithRequired<Modifier, "revert" | "enabled" | "description">;
 
 /**
- * Create a modifier that adds some value to the input value
- * @param addend The amount to add to the input value
- * @param description Description of what this modifier is doing
- * @param enabled A computable that will be processed and passed directly into the returned modifier
+ * Create a modifier that adds some value to the input value.
+ * @param addend The amount to add to the input value.
+ * @param description Description of what this modifier is doing.
+ * @param enabled A computable that will be processed and passed directly into the returned modifier.
  */
 export function createAdditiveModifier<
     T extends Computable<CoercableComponent> | undefined,
@@ -81,10 +81,10 @@ export function createAdditiveModifier<
 }
 
 /**
- * Create a modifier that multiplies the input value by some value
- * @param multiplier The value to multiply the input value by
- * @param description Description of what this modifier is doing
- * @param enabled A computable that will be processed and passed directly into the returned modifier
+ * Create a modifier that multiplies the input value by some value.
+ * @param multiplier The value to multiply the input value by.
+ * @param description Description of what this modifier is doing.
+ * @param enabled A computable that will be processed and passed directly into the returned modifier.
  */
 export function createMultiplicativeModifier<
     T extends Computable<CoercableComponent> | undefined,
@@ -116,10 +116,10 @@ export function createMultiplicativeModifier<
 }
 
 /**
- * Create a modifier that raises the input value to the power of some value
- * @param exponent The value to raise the input value to the power of
- * @param description Description of what this modifier is doing
- * @param enabled A computable that will be processed and passed directly into the returned modifier
+ * Create a modifier that raises the input value to the power of some value.
+ * @param exponent The value to raise the input value to the power of.
+ * @param description Description of what this modifier is doing.
+ * @param enabled A computable that will be processed and passed directly into the returned modifier.
  */
 export function createExponentialModifier<
     T extends Computable<CoercableComponent> | undefined,
@@ -154,8 +154,8 @@ export function createExponentialModifier<
  * Takes an array of modifiers and applies and reverses them in order.
  * Modifiers that are not enabled will not be applied nor reversed.
  * Also joins their descriptions together.
- * @param modifiers The modifiers to perform sequentially
- * @see {@link createModifierSection}
+ * @param modifiers The modifiers to perform sequentially.
+ * @see {@link createModifierSection}.
  */
 export function createSequentialModifier<
     T extends Modifier[],
@@ -191,13 +191,13 @@ export function createSequentialModifier<
 
 /**
  * Create a JSX element that displays a modifier.
- * Intended to be used with the output from {@link createSequentialModifier}
- * @param title The header for the section
- * @param subtitle Smaller text that appears in the header after the title
- * @param modifier The modifier to render
- * @param base The base value that'll be passed into the modifier
- * @param unit The unit of the value being modified, if any
- * @param baseText The label to use for the base value
+ * Intended to be used with the output from {@link createSequentialModifier}.
+ * @param title The header for the section.
+ * @param subtitle Smaller text that appears in the header after the title.
+ * @param modifier The modifier to render.
+ * @param base The base value that'll be passed into the modifier.
+ * @param unit The unit of the value being modified, if any.
+ * @param baseText The label to use for the base value.
  */
 export function createModifierSection(
     title: string,
