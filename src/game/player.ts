@@ -51,7 +51,11 @@ const playerHandler: ProxyHandler<Record<PropertyKey, any>> = {
         }
 
         const value = target[ProxyState][key];
-        if (key !== "value" && isPlainObject(value) && !(value instanceof Decimal)) {
+        if (
+            key !== "value" &&
+            (isPlainObject(value) || Array.isArray(value)) &&
+            !(value instanceof Decimal)
+        ) {
             if (value !== target[key]?.[ProxyState]) {
                 const path = [...target[ProxyPath], key];
                 target[key] = new Proxy({ [ProxyState]: value, [ProxyPath]: path }, playerHandler);
