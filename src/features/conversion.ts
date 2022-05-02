@@ -4,6 +4,7 @@ import Decimal, { DecimalSource } from "util/bignum";
 import { WithRequired } from "util/common";
 import {
     Computable,
+    convertComputable,
     GetComputableTypeWithDefault,
     processComputable,
     ProcessedComputable
@@ -226,18 +227,20 @@ export interface ScalingFunction {
  * | 20            | 6            |
  */
 export function createLinearScaling(
-    base: DecimalSource | Ref<DecimalSource>,
-    coefficient: DecimalSource | Ref<DecimalSource>
+    base: Computable<DecimalSource>,
+    coefficient: Computable<DecimalSource>
 ): ScalingFunction {
+    const processedBase = convertComputable(base);
+    const processedCoefficient = convertComputable(coefficient);
     return {
         currentGain(conversion) {
-            if (Decimal.lt(conversion.baseResource.value, unref(base))) {
+            if (Decimal.lt(conversion.baseResource.value, unref(processedBase))) {
                 return 0;
             }
 
-            return Decimal.sub(conversion.baseResource.value, unref(base))
+            return Decimal.sub(conversion.baseResource.value, unref(processedBase))
                 .sub(1)
-                .times(unref(coefficient))
+                .times(unref(processedCoefficient))
                 .add(1);
         },
         currentAt(conversion) {
@@ -246,7 +249,9 @@ export function createLinearScaling(
                 current = conversion.gainModifier.revert(current);
             }
             current = Decimal.max(0, current);
-            return Decimal.sub(current, 1).div(unref(coefficient)).add(unref(base));
+            return Decimal.sub(current, 1)
+                .div(unref(processedCoefficient))
+                .add(unref(processedBase));
         },
         nextAt(conversion) {
             let next: DecimalSource = Decimal.add(unref(conversion.currentGain), 1);
@@ -254,7 +259,10 @@ export function createLinearScaling(
                 next = conversion.gainModifier.revert(next);
             }
             next = Decimal.max(0, next);
-            return Decimal.sub(next, 1).div(unref(coefficient)).add(unref(base)).max(unref(base));
+            return Decimal.sub(next, 1)
+                .div(unref(processedCoefficient))
+                .add(unref(processedBase))
+                .max(unref(processedBase));
         }
     };
 }
@@ -273,17 +281,19 @@ export function createLinearScaling(
  * | 250           | 5            |
  */
 export function createPolynomialScaling(
-    base: DecimalSource | Ref<DecimalSource>,
-    exponent: DecimalSource | Ref<DecimalSource>
+    base: Computable<DecimalSource>,
+    exponent: Computable<DecimalSource>
 ): ScalingFunction {
+    const processedBase = convertComputable(base);
+    const processedExponent = convertComputable(exponent);
     return {
         currentGain(conversion) {
-            if (Decimal.lt(conversion.baseResource.value, unref(base))) {
+            if (Decimal.lt(conversion.baseResource.value, unref(processedBase))) {
                 return 0;
             }
 
-            const gain = Decimal.div(conversion.baseResource.value, unref(base)).pow(
-                unref(exponent)
+            const gain = Decimal.div(conversion.baseResource.value, unref(processedBase)).pow(
+                unref(processedExponent)
             );
 
             if (gain.isNan()) {
@@ -297,7 +307,7 @@ export function createPolynomialScaling(
                 current = conversion.gainModifier.revert(current);
             }
             current = Decimal.max(0, current);
-            return Decimal.root(current, unref(exponent)).times(unref(base));
+            return Decimal.root(current, unref(processedExponent)).times(unref(processedBase));
         },
         nextAt(conversion) {
             let next: DecimalSource = Decimal.add(unref(conversion.currentGain), 1);
@@ -305,7 +315,9 @@ export function createPolynomialScaling(
                 next = conversion.gainModifier.revert(next);
             }
             next = Decimal.max(0, next);
-            return Decimal.root(next, unref(exponent)).times(unref(base)).max(unref(base));
+            return Decimal.root(next, unref(processedExponent))
+                .times(unref(processedBase))
+                .max(unref(processedBase));
         }
     };
 }
@@ -390,10 +402,11 @@ export function createIndependentConversion<S extends ConversionOptions>(
 export function setupPassiveGeneration(
     layer: GenericLayer,
     conversion: GenericConversion,
-    rate: ProcessedComputable<DecimalSource> = 1
+    rate: Computable<DecimalSource> = 1
 ): void {
+    const processedRate = convertComputable(rate);
     layer.on("preUpdate", diff => {
-        const currRate = isRef(rate) ? rate.value : rate;
+        const currRate = unref(processedRate);
         if (Decimal.neq(currRate, 0)) {
             conversion.gainResource.value = Decimal.add(
                 conversion.gainResource.value,
