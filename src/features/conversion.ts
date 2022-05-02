@@ -1,6 +1,7 @@
 import { GenericLayer } from "game/layers";
 import { Modifier } from "game/modifiers";
 import Decimal, { DecimalSource } from "util/bignum";
+import { WithRequired } from "util/common";
 import {
     Computable,
     GetComputableTypeWithDefault,
@@ -12,24 +13,78 @@ import { computed, isRef, Ref, unref } from "vue";
 import { OptionsFunc, Replace, setDefault } from "./feature";
 import { Resource } from "./resources/resource";
 
+/**
+ * An object that configures a {@link conversion}.
+ */
 export interface ConversionOptions {
+    /**
+     * The scaling function that is used to determine the rate of conversion from one {@link resource} to the other.
+     */
     scaling: ScalingFunction;
+    /**
+     * How much of the output resource the conversion can currently convert for.
+     * Typically this will be set for you in a conversion constructor.
+     */
     currentGain?: Computable<DecimalSource>;
+    /**
+     * The absolute amount the output resource will be changed by.
+     * Typically this will be set for you in a conversion constructor.
+     * This will differ from {@link currentGain} in the cases where the conversion isn't just adding the converted amount to the output resource.
+     */
     actualGain?: Computable<DecimalSource>;
+    /**
+     * The amount of the input resource currently being required in order to produce the {@link currentGain}.
+     * That is, if it went below this value then {@link currentGain} would decrease.
+     * Typically this will be set for you in a conversion constructor.
+     */
     currentAt?: Computable<DecimalSource>;
+    /**
+     * The amount of the input resource required to make {@link currentGain} increase.
+     * Typically this will be set for you in a conversion constructor.
+     */
     nextAt?: Computable<DecimalSource>;
+    /**
+     * The input {@link resource} for this conversion.
+     */
     baseResource: Resource;
+    /**
+     * The output {@link resource} for this conversion. i.e. the resource being generated.
+     */
     gainResource: Resource;
+    /**
+     * Whether or not to cap the amount of the output resource gained by converting at 1.
+     */
     buyMax?: Computable<boolean>;
+    /**
+     * Whether or not to round up the cost to generate a given amount of the output resource.
+     */
     roundUpCost?: Computable<boolean>;
+    /**
+     * The function that performs the actual conversion from {@link baseResource} to {@link gainResource}.
+     * Typically this will be set for you in a conversion constructor.
+     */
     convert?: VoidFunction;
-    gainModifier?: Modifier;
+    /**
+     * An addition modifier that will be applied to the gain amounts.
+     * Must be reversible in order to correctly calculate {@link nextAt}.
+     * @see {@link createSequentialModifier} if you want to apply multiple modifiers.
+     */
+    gainModifier?: WithRequired<Modifier, "revert">;
 }
 
+/**
+ * The properties that are added onto a processed {@link ConversionOptions} to create a {@link Conversion}.
+ */
 export interface BaseConversion {
+    /**
+     * The function that performs the actual conversion.
+     */
     convert: VoidFunction;
 }
 
+/**
+ * An object that converts one {@link resource} into another at a given rate.
+ */
 export type Conversion<T extends ConversionOptions> = Replace<
     T & BaseConversion,
     {
@@ -42,6 +97,9 @@ export type Conversion<T extends ConversionOptions> = Replace<
     }
 >;
 
+/**
+ * A type that matches any {@link conversion} object.
+ */
 export type GenericConversion = Replace<
     Conversion<ConversionOptions>,
     {
@@ -54,6 +112,13 @@ export type GenericConversion = Replace<
     }
 >;
 
+/**
+ * Lazily creates a conversion with the given options.
+ * You typically shouldn't use this function directly. Instead use one of the other conversion constructors, which will then call this.
+ * @param optionsFunc Conversion options.
+ * @see {@link createCumulativeConversion}.
+ * @see {@link createIndependentConversion}.
+ */
 export function createConversion<T extends ConversionOptions>(
     optionsFunc: OptionsFunc<T, Conversion<T>, BaseConversion>
 ): Conversion<T> {
@@ -117,14 +182,49 @@ export function createConversion<T extends ConversionOptions>(
     });
 }
 
-export type ScalingFunction = {
+/**
+ * A collection of functions that allow a conversion to scale the amount of resources gained based on the input resource.
+ * This typically shouldn't be created directly. Instead use one of the scaling function constructors.
+ * @see {@link createLinearScaling}.
+ * @see {@link createPolynomialScaling}.
+ */
+export interface ScalingFunction {
+    /**
+     * Calculates the amount of the output resource a conversion should be able to currently produce.
+     * This should be based off of `conversion.baseResource.value`.
+     * The conversion is responsible for applying the gainModifier, so this function should be un-modified.
+     * It does not need to be clamped or rounded.
+     */
     currentGain: (conversion: GenericConversion) => DecimalSource;
+    /**
+     * Calculates the amount of the input resource that is required for the current value of `conversion.currentGain`.
+     * Note that `conversion.currentGain` has been modified by `conversion.gainModifier`, so you will need to revert that as appropriate.
+     * The conversion is responsible for rounding up the amount as appropriate.
+     * The returned value should not be below 0.
+     */
     currentAt: (conversion: GenericConversion) => DecimalSource;
+    /**
+     * Calculates the amount of the input resource that would be required for the current value of `conversion.currentGain` to increase.
+     * Note that `conversion.currentGain` has been modified by `conversion.gainModifier`, so you will need to revert that as appropriate.
+     * The conversion is responsible for rounding up the amount as appropriate.
+     * The returned value should not be below 0.
+     */
     nextAt: (conversion: GenericConversion) => DecimalSource;
-};
+}
 
-// Gain formula is (baseResource - base) * coefficient
-// e.g. if base is 10 and coefficient is 0.5, 10 points makes 1 gain, 12 points is 2
+/**
+ * Creates a scaling function based off the formula `(baseResource - base) * coefficient`.
+ * If the baseResource value is less than base then the currentGain will be 0.
+ * @param base The base variable in the scaling formula.
+ * @param coefficient The coefficient variable in the scaling formula.
+ * @example
+ * A scaling function created via `createLinearScaling(10, 0.5)` would produce the following values:
+ * | Base Resource | Current Gain |
+ * | ------------- | ------------ |
+ * | 10            | 1            |
+ * | 12            | 2            |
+ * | 20            | 6            |
+ */
 export function createLinearScaling(
     base: DecimalSource | Ref<DecimalSource>,
     coefficient: DecimalSource | Ref<DecimalSource>
@@ -146,7 +246,7 @@ export function createLinearScaling(
                 current = conversion.gainModifier.revert(current);
             }
             current = Decimal.max(0, current);
-            return Decimal.times(current, unref(coefficient)).add(unref(base));
+            return Decimal.sub(current, 1).div(unref(coefficient)).add(unref(base));
         },
         nextAt(conversion) {
             let next: DecimalSource = Decimal.add(unref(conversion.currentGain), 1);
@@ -154,19 +254,34 @@ export function createLinearScaling(
                 next = conversion.gainModifier.revert(next);
             }
             next = Decimal.max(0, next);
-            return Decimal.times(next, unref(coefficient)).add(unref(base)).max(unref(base));
+            return Decimal.sub(next, 1).div(unref(coefficient)).add(unref(base)).max(unref(base));
         }
     };
 }
 
-// Gain formula is (baseResource / base) ^ exponent
-// e.g. if exponent is 0.5 and base is 10, then having 10 points makes gain 1, and 40 points is 2
+/**
+ * Creates a scaling function based off the formula `(baseResource / base) ^ exponent`.
+ * If the baseResource value is less than base then the currentGain will be 0.
+ * @param base The base variable in the scaling formula.
+ * @param exponent The exponent variable in the scaling formula.
+ * @example
+ * A scaling function created via `createLinearScaling(10, 0.5)` would produce the following values:
+ * | Base Resource | Current Gain |
+ * | ------------- | ------------ |
+ * | 10            | 1            |
+ * | 40            | 2            |
+ * | 250           | 5            |
+ */
 export function createPolynomialScaling(
     base: DecimalSource | Ref<DecimalSource>,
     exponent: DecimalSource | Ref<DecimalSource>
 ): ScalingFunction {
     return {
         currentGain(conversion) {
+            if (Decimal.lt(conversion.baseResource.value, unref(base))) {
+                return 0;
+            }
+
             const gain = Decimal.div(conversion.baseResource.value, unref(base)).pow(
                 unref(exponent)
             );
@@ -195,12 +310,23 @@ export function createPolynomialScaling(
     };
 }
 
+/**
+ * Creates a conversion that simply adds to the gainResource amount upon converting.
+ * This is similar to the behavior of "normal" layers in The Modding Tree.
+ * This is equivalent to just calling createConversion directly.
+ * @param optionsFunc Conversion options.
+ */
 export function createCumulativeConversion<S extends ConversionOptions>(
     optionsFunc: OptionsFunc<S, Conversion<S>>
 ): Conversion<S> {
     return createConversion(optionsFunc);
 }
 
+/**
+ * Creates a conversion that will replace the gainResource amount with the new amount upon converting.
+ * This is similar to the behavior of "static" layers in The Modding Tree.
+ * @param optionsFunc Converison options.
+ */
 export function createIndependentConversion<S extends ConversionOptions>(
     optionsFunc: OptionsFunc<S, Conversion<S>>
 ): Conversion<S> {
@@ -253,6 +379,14 @@ export function createIndependentConversion<S extends ConversionOptions>(
     });
 }
 
+/**
+ * This will automatically increase the value of conversion.gainResource without lowering the value of the input resource.
+ * It will by default perform 100% of a conversion's currentGain per second.
+ * If you use a ref for the rate you can set it's value to 0 when passive generation should be disabled.
+ * @param layer The layer this passive generation will be associated with.
+ * @param conversion The conversion that will determine how much generation there is.
+ * @param rate A multiplier to multiply against the conversion's currentGain.
+ */
 export function setupPassiveGeneration(
     layer: GenericLayer,
     conversion: GenericConversion,
@@ -269,7 +403,22 @@ export function setupPassiveGeneration(
     });
 }
 
-function softcap(
+/**
+ * Given a value, this function finds the amount above a certain value and raises it to a power.
+ * If the power is <1, this will effectively make the value scale slower after the cap.
+ * @param value The raw value.
+ * @param cap The value after which the softcap should be applied.
+ * @param power The power to raise value above the cap to.
+ * @example
+ * A softcap added via `addSoftcap(scaling, 100, 0.5)` would produce the following values:
+ * | Raw Value | Softcapped Value |
+ * | --------- | ---------------- |
+ * | 1         | 1                |
+ * | 100       | 100              |
+ * | 125       | 105              |
+ * | 200       | 110              |
+ */
+export function softcap(
     value: DecimalSource,
     cap: DecimalSource,
     power: DecimalSource = 0.5
@@ -281,6 +430,15 @@ function softcap(
     }
 }
 
+/**
+ * Creates a scaling function based off an existing scaling function, with a softcap applied to it.
+ * The softcap will take any value above a certain value and raise it to a power.
+ * If the power is <1, this will effectively make the value scale slower after the cap.
+ * @param scaling The raw scaling function.
+ * @param cap The value after which the softcap should be applied.
+ * @param power The power to raise value about the cap to.
+ * @see {@link softcap}.
+ */
 export function addSoftcap(
     scaling: ScalingFunction,
     cap: ProcessedComputable<DecimalSource>,
@@ -293,6 +451,12 @@ export function addSoftcap(
     };
 }
 
+/**
+ * Creates a scaling function off an existing function, with a hardcap applied to it.
+ * The harcap will ensure that the currentGain will stop at a given cap.
+ * @param scaling The raw scaling function.
+ * @param cap The maximum value the scaling function can output.
+ */
 export function addHardcap(
     scaling: ScalingFunction,
     cap: ProcessedComputable<DecimalSource>
