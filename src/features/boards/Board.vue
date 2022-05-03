@@ -19,7 +19,7 @@
         @mousedown="(e: MouseEvent) => mouseDown(e)"
         @touchstart="(e: TouchEvent) => mouseDown(e)"
         @mouseup="() => endDragging(dragging)"
-        @touchend="() => endDragging(dragging)"
+        @touchend.passive="() => endDragging(dragging)"
         @mouseleave="() => endDragging(dragging)"
     >
         <svg class="stage" width="100%" height="100%">

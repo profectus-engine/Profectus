@@ -12,9 +12,9 @@
         @mousedown="start"
         @mouseleave="stop"
         @mouseup="stop"
-        @touchstart="start"
-        @touchend="stop"
-        @touchcancel="stop"
+        @touchstart.passive="start"
+        @touchend.passive="stop"
+        @touchcancel.passive="stop"
     >
         <div v-if="title"><component :is="titleComponent" /></div>
         <component :is="component" style="white-space: pre-line" />

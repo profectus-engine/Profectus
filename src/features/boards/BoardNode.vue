@@ -46,9 +46,9 @@
             @mouseenter="isHovering = true"
             @mouseleave="isHovering = false"
             @mousedown="mouseDown"
-            @touchstart="mouseDown"
+            @touchstart.passive="mouseDown"
             @mouseup="mouseUp"
-            @touchend="mouseUp"
+            @touchend.passive="mouseUp"
         >
             <g v-if="shape === Shape.Circle">
                 <circle
