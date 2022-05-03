@@ -43,9 +43,9 @@ function updateNodes() {
         isDirty = false;
         nextTick(() => {
             boundingRect.value = resizeListener.value?.getBoundingClientRect();
-            (Object.values(nodes.value) as FeatureNode[]).forEach(
-                node => (node.rect = node.element.getBoundingClientRect())
-            );
+            (Object.values(nodes.value) as FeatureNode[])
+                .filter(n => n) // Sometimes the values become undefined
+                .forEach(node => (node.rect = node.element.getBoundingClientRect()));
             isDirty = true;
         });
     }
