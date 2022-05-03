@@ -202,7 +202,7 @@ export function createSequentialModifier<
 export function createModifierSection(
     title: string,
     subtitle: string,
-    modifier: Required<Modifier>,
+    modifier: WithRequired<Modifier, "description">,
     base: DecimalSource = 1,
     unit = "",
     baseText: CoercableComponent = "Base"
