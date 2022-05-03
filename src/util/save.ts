@@ -102,8 +102,10 @@ export async function loadSave(playerObj: Partial<PlayerData>): Promise<void> {
     const { fixOldSave, getInitialLayers } = await import("data/projEntry");
 
     for (const layer in layers) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        removeLayer(layers[layer]!);
+        const l = layers[layer];
+        if (l) {
+            removeLayer(l);
+        }
     }
     getInitialLayers(playerObj).forEach(layer => addLayer(layer, playerObj));
 
