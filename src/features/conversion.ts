@@ -10,7 +10,7 @@ import {
     ProcessedComputable
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { computed, isRef, Ref, unref } from "vue";
+import { computed, Ref, unref } from "vue";
 import { OptionsFunc, Replace, setDefault } from "./feature";
 import { Resource } from "./resources/resource";
 
