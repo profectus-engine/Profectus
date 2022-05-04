@@ -1,6 +1,13 @@
 <template>
     <div class="tabs-container" :class="{ useHeader }">
-        <div v-for="(tab, index) in tabs" :key="index" class="tab" :ref="`tab-${index}`">
+        <div
+            v-for="(tab, index) in tabs"
+            :key="index"
+            class="tab"
+            :ref="`tab-${index}`"
+            :style="unref(layers[tab]?.style)"
+            :class="unref(layers[tab]?.classes)"
+        >
             <Nav v-if="index === 0 && !useHeader" />
             <div class="inner-tab">
                 <Layer
@@ -19,7 +26,7 @@
 import projInfo from "data/projInfo.json";
 import { GenericLayer, layers } from "game/layers";
 import player from "game/player";
-import { computed, toRef } from "vue";
+import { computed, toRef, unref } from "vue";
 import Layer from "./Layer.vue";
 import Nav from "./Nav.vue";
 
@@ -28,8 +35,8 @@ const layerKeys = computed(() => Object.keys(layers));
 const useHeader = projInfo.useHeader;
 
 function gatherLayerProps(layer: GenericLayer) {
-    const { display, minimized, minWidth, name, color, style, classes, minimizable, nodes } = layer;
-    return { display, minimized, minWidth, name, color, style, classes, minimizable, nodes };
+    const { display, minimized, minWidth, name, color, minimizable, nodes } = layer;
+    return { display, minimized, minWidth, name, color, minimizable, nodes };
 }
 </script>
 

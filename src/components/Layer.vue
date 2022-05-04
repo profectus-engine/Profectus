@@ -4,12 +4,7 @@
         <button class="layer-tab minimized" v-if="minimized.value" @click="minimized.value = false">
             <div>{{ unref(name) }}</div>
         </button>
-        <div
-            class="layer-tab"
-            :style="unref(style)"
-            :class="[{ showGoBack }, unref(classes)]"
-            v-else
-        >
+        <div class="layer-tab" :class="{ showGoBack }" v-else>
             <Context ref="contextRef">
                 <component :is="component" />
             </Context>
@@ -22,7 +17,7 @@
 
 <script lang="ts">
 import projInfo from "data/projInfo.json";
-import { CoercableComponent, StyleValue } from "features/feature";
+import { CoercableComponent } from "features/feature";
 import { FeatureNode } from "game/layers";
 import { Persistent } from "game/persistence";
 import player from "game/player";
@@ -58,8 +53,6 @@ export default defineComponent({
             required: true
         },
         color: processedPropType<string>(String),
-        style: processedPropType<StyleValue>(String, Object, Array),
-        classes: processedPropType<Record<string, boolean>>(Object),
         minimizable: processedPropType<boolean>(Boolean),
         nodes: {
             type: Object as PropType<Ref<Record<string, FeatureNode | undefined>>>,
