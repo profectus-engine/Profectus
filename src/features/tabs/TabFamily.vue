@@ -115,7 +115,7 @@ export default defineComponent({
 
         function gatherButtonProps(button: GenericTabButton) {
             const { display, style, classes, glowColor, visibility } = button;
-            return { display, style, classes, glowColor, visibility };
+            return { display, style: unref(style), classes, glowColor, visibility };
         }
 
         return {
