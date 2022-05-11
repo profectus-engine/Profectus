@@ -192,9 +192,9 @@ function exportSave(id: string) {
         saveToExport = save();
     } else {
         saveToExport = JSON.stringify(saves.value[id]);
-        switch (projInfo.saveEncoding) {
+        switch (projInfo.exportEncoding) {
             default:
-                console.warn(`Unknown save encoding: ${projInfo.saveEncoding}. Defaulting to lz`);
+                console.warn(`Unknown save encoding: ${projInfo.exportEncoding}. Defaulting to lz`);
             case "lz":
                 saveToExport = LZString.compressToUTF16(saveToExport);
                 break;

@@ -25,19 +25,9 @@ export function setupInitialStore(player: Partial<PlayerData> = {}): Player {
 }
 
 export function save(playerData?: PlayerData): string {
-    let stringifiedSave = stringifySave(playerData ?? player[ProxyState]);
-    switch (projInfo.saveEncoding) {
-        default:
-            console.warn(`Unknown save encoding: ${projInfo.saveEncoding}. Defaulting to lz`);
-        case "lz":
-            stringifiedSave = LZString.compressToUTF16(stringifiedSave);
-            break;
-        case "base64":
-            stringifiedSave = btoa(unescape(encodeURIComponent(stringifiedSave)));
-            break;
-        case "plain":
-            break;
-    }
+    const stringifiedSave = LZString.compressToUTF16(
+        stringifySave(playerData ?? player[ProxyState])
+    );
     localStorage.setItem((playerData ?? player[ProxyState]).id, stringifiedSave);
     return stringifiedSave;
 }

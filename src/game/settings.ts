@@ -25,19 +25,7 @@ const state = reactive<Partial<Settings>>({
 watch(
     state,
     state => {
-        let stringifiedSettings = JSON.stringify(state);
-        switch (projInfo.saveEncoding) {
-            default:
-                console.warn(`Unknown save encoding: ${projInfo.saveEncoding}. Defaulting to lz`);
-            case "lz":
-                stringifiedSettings = LZString.compressToUTF16(stringifiedSettings);
-                break;
-            case "base64":
-                stringifiedSettings = btoa(unescape(encodeURIComponent(stringifiedSettings)));
-                break;
-            case "plain":
-                break;
-        }
+        const stringifiedSettings = LZString.compressToUTF16(JSON.stringify(state));
         localStorage.setItem(projInfo.id, stringifiedSettings);
     },
     { deep: true }
