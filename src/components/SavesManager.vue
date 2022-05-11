@@ -59,7 +59,7 @@
 <script setup lang="ts">
 import projInfo from "data/projInfo.json";
 import Modal from "components/Modal.vue";
-import player, { PlayerData } from "game/player";
+import player, { PlayerData, stringifySave } from "game/player";
 import settings from "game/settings";
 import { getUniqueID, loadSave, save, newSave } from "util/save";
 import { ComponentPublicInstance, computed, nextTick, ref, shallowReactive, watch } from "vue";
@@ -68,6 +68,7 @@ import Text from "./fields/Text.vue";
 import Save from "./Save.vue";
 import Draggable from "vuedraggable";
 import LZString from "lz-string";
+import { ProxyState } from "util/proxies";
 
 export type LoadablePlayerData = Omit<Partial<PlayerData>, "id"> & { id: string; error?: unknown };
 
@@ -189,21 +190,21 @@ const saves = computed(() =>
 function exportSave(id: string) {
     let saveToExport;
     if (player.id === id) {
-        saveToExport = save();
+        saveToExport = stringifySave(player[ProxyState]);
     } else {
         saveToExport = JSON.stringify(saves.value[id]);
-        switch (projInfo.exportEncoding) {
-            default:
-                console.warn(`Unknown save encoding: ${projInfo.exportEncoding}. Defaulting to lz`);
-            case "lz":
-                saveToExport = LZString.compressToUTF16(saveToExport);
-                break;
-            case "base64":
-                saveToExport = btoa(unescape(encodeURIComponent(saveToExport)));
-                break;
-            case "plain":
-                break;
-        }
+    }
+    switch (projInfo.exportEncoding) {
+        default:
+            console.warn(`Unknown save encoding: ${projInfo.exportEncoding}. Defaulting to lz`);
+        case "lz":
+            saveToExport = LZString.compressToUTF16(saveToExport);
+            break;
+        case "base64":
+            saveToExport = btoa(unescape(encodeURIComponent(saveToExport)));
+            break;
+        case "plain":
+            break;
     }
 
     // Put on clipboard. Using the clipboard API asks for permissions and stuff
