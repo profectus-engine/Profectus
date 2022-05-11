@@ -37,7 +37,7 @@
                         <Select
                             v-if="Object.keys(bank).length > 0"
                             :options="bank"
-                            :modelValue="undefined"
+                            :modelValue="selectedPreset"
                             @update:modelValue="preset => newFromPreset(preset as string)"
                             closeOnSelect
                             placeholder="Select preset"
@@ -83,6 +83,7 @@ defineExpose({
 
 const importingFailed = ref(false);
 const saveToImport = ref("");
+const selectedPreset = ref<string | null>(null);
 
 watch(saveToImport, importedSave => {
     if (importedSave) {
@@ -246,6 +247,12 @@ function openSave(id: string) {
 }
 
 function newFromPreset(preset: string) {
+    // Reset preset dropdown
+    selectedPreset.value = preset;
+    nextTick(() => {
+        selectedPreset.value = null;
+    });
+
     if (preset[0] === "{") {
         // plaintext. No processing needed
     } else if (preset[0] === "e") {
