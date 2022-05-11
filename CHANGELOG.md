@@ -6,7 +6,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.4] - 2022-05-01
+## [0.4.1] - 2022-05-10
+### Added
+- findFeatures can now accept multiple feature types
+- excludeFeatures can now be used to find features with a feature type _blacklist_
+- All the icons in the saves manager now have tooltips
+### Changed
+- All touch events that can be passive now are
+- Layers' style and classes attributes are now applied to the tab element rather than the layer-tab
+- Saving now always uses lz-string, and saveEncoding has been renamed to exportEncoding
+    - The property will now only affect exports, and defaults to base64 so exports can be shared in more places without issues
+- Buyables can now have their onClick/purchase function overwritten
+### Fixed
+- Arrays in player were not being wrapped in proxies for things like NaN detection
+- Error when switching between saves with different layers
+- Links would sometimes error from trying to use nodes that were removed earlier that frame
+- createModifierSection would require modifiers to have revert and enabled properties despite not using them
+- Tab buttons would not use the style property if it was a ref
+- Typings on the Board vue component were incorrect
+- Offline time would always show, if offlineLimit is set to 0
+- Buyables will now call onPurchase() when cost and/or resource were not set
+- Presets dropdown wouldn't deselect the option after creating the save
+### Documented
+- feature.ts
+
+## [0.4.0] - 2022-05-01
 ### Added
 - Saves can now be encoded in two new options: plaintext and lz compressed, determined by a new "saveEncoding" property in projInfo
     - Saves will be loaded in whatever format is detected. The setting only applies when writing saves
