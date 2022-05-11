@@ -46,7 +46,7 @@ export interface BuyableOptions {
     mark?: Computable<boolean | string>;
     small?: Computable<boolean>;
     display?: Computable<BuyableDisplay>;
-    onPurchase?: (cost: DecimalSource) => void;
+    onPurchase?: (cost: DecimalSource | undefined) => void;
 }
 
 export interface BaseBuyable {
@@ -144,20 +144,25 @@ export function createBuyable<T extends BuyableOptions>(
         });
         processComputable(buyable as T, "canPurchase");
         buyable.canClick = buyable.canPurchase as ProcessedComputable<boolean>;
-        buyable.onClick = buyable.purchase = function () {
-            const genericBuyable = buyable as GenericBuyable;
-            if (
-                !unref(genericBuyable.canPurchase) ||
-                genericBuyable.cost == null ||
-                genericBuyable.resource == null
-            ) {
-                return;
-            }
-            const cost = unref(genericBuyable.cost);
-            genericBuyable.resource.value = Decimal.sub(genericBuyable.resource.value, cost);
-            genericBuyable.amount.value = Decimal.add(genericBuyable.amount.value, 1);
-            this.onPurchase?.(cost);
-        };
+        buyable.onClick = buyable.purchase =
+            buyable.onClick ??
+            buyable.purchase ??
+            function (this: GenericBuyable) {
+                const genericBuyable = buyable as GenericBuyable;
+                if (!unref(genericBuyable.canPurchase)) {
+                    return;
+                }
+                const cost = unref(genericBuyable.cost);
+                if (genericBuyable.cost != null && genericBuyable.resource != null) {
+                    genericBuyable.resource.value = Decimal.sub(
+                        genericBuyable.resource.value,
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        cost!
+                    );
+                    genericBuyable.amount.value = Decimal.add(genericBuyable.amount.value, 1);
+                }
+                this.onPurchase?.(cost);
+            };
         processComputable(buyable as T, "display");
         const display = buyable.display;
         buyable.display = jsx(() => {
