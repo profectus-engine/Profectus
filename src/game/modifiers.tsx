@@ -14,13 +14,9 @@ import { computed, unref } from "vue";
  * {@link createModifierSection}.
  */
 export interface Modifier {
-    /**
-     * Applies some operation on the input and returns the result.
-     */
+    /** Applies some operation on the input and returns the result. */
     apply: (gain: DecimalSource) => DecimalSource;
-    /**
-     * Reverses the operation applied by the apply property. Required by some features.
-     */
+    /** Reverses the operation applied by the apply property. Required by some features. */
     revert?: (gain: DecimalSource) => DecimalSource;
     /**
      * Whether or not this modifier should be considered enabled.
