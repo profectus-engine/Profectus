@@ -1,6 +1,5 @@
-import { DefaultValue } from "game/persistence";
 import Decimal from "util/bignum";
-import { DoNotCache, ProcessedComputable } from "util/computed";
+import { DoNotCache } from "util/computed";
 import { CSSProperties, DefineComponent, isRef } from "vue";
 
 export const Component = Symbol("Component");
@@ -14,13 +13,6 @@ export type StyleValue = string | CSSProperties | Array<string | CSSProperties>;
 // this type can probably be safely removed
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type GenericComponent = DefineComponent<any, any, any>;
-
-export type FeatureComponent<T> = Omit<
-    {
-        [K in keyof T]: T[K] extends ProcessedComputable<infer S> ? S : T[K];
-    },
-    typeof Component | typeof DefaultValue
->;
 
 export type Replace<T, S> = S & Omit<T, keyof S>;
 
