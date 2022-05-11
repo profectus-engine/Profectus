@@ -60,13 +60,37 @@ export function setDefault<T, K extends keyof T>(
     }
 }
 
-export function findFeatures(obj: Record<string, unknown>, type: symbol): unknown[] {
+export function findFeatures(obj: Record<string, unknown>, ...types: symbol[]): unknown[] {
     const objects: unknown[] = [];
     const handleObject = (obj: Record<string, unknown>) => {
         Object.keys(obj).forEach(key => {
             const value = obj[key];
             if (value && typeof value === "object") {
-                if ((value as Record<string, unknown>).type === type) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                if (types.includes((value as Record<string, any>).type)) {
+                    objects.push(value);
+                } else if (!(value instanceof Decimal) && !isRef(value)) {
+                    handleObject(value as Record<string, unknown>);
+                }
+            }
+        });
+    };
+    handleObject(obj);
+    return objects;
+}
+
+export function excludeFeatures(obj: Record<string, unknown>, ...types: symbol[]): unknown[] {
+    const objects: unknown[] = [];
+    const handleObject = (obj: Record<string, unknown>) => {
+        Object.keys(obj).forEach(key => {
+            const value = obj[key];
+            if (value && typeof value === "object") {
+                if (
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    typeof (value as Record<string, any>).type == "symbol" &&
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    !types.includes((value as Record<string, any>).type)
+                ) {
                     objects.push(value);
                 } else if (!(value instanceof Decimal) && !isRef(value)) {
                     handleObject(value as Record<string, unknown>);
