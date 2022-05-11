@@ -8,36 +8,48 @@
                 left
                 v-if="save.error == undefined && !isConfirming"
             >
-                <span class="material-icons">content_paste</span>
+                <Tooltip display="Export" :direction="Direction.Left" class="info">
+                    <span class="material-icons">content_paste</span>
+                </Tooltip>
             </FeedbackButton>
             <button
                 @click="emit('duplicate')"
                 class="button"
                 v-if="save.error == undefined && !isConfirming"
             >
-                <span class="material-icons">content_copy</span>
+                <Tooltip display="Duplicate" :direction="Direction.Left" class="info">
+                    <span class="material-icons">content_copy</span>
+                </Tooltip>
             </button>
             <button
                 @click="isEditing = !isEditing"
                 class="button"
                 v-if="save.error == undefined && !isConfirming"
             >
-                <span class="material-icons">edit</span>
+                <Tooltip display="Edit Name" :direction="Direction.Left" class="info">
+                    <span class="material-icons">edit</span>
+                </Tooltip>
             </button>
             <DangerButton
                 :disabled="isActive"
                 @click="emit('delete')"
                 @confirmingChanged="value => (isConfirming = value)"
             >
-                <span class="material-icons" style="margin: -2px">delete</span>
+                <Tooltip display="Delete" :direction="Direction.Left" class="info">
+                    <span class="material-icons" style="margin: -2px">delete</span>
+                </Tooltip>
             </DangerButton>
         </div>
         <div class="actions" v-else>
             <button @click="changeName" class="button">
-                <span class="material-icons">check</span>
+                <Tooltip display="Save" :direction="Direction.Left" class="info">
+                    <span class="material-icons">check</span>
+                </Tooltip>
             </button>
             <button @click="isEditing = !isEditing" class="button">
-                <span class="material-icons">close</span>
+                <Tooltip display="Cancel" :direction="Direction.Left" class="info">
+                    <span class="material-icons">close</span>
+                </Tooltip>
             </button>
         </div>
         <div class="details" v-if="save.error == undefined && !isEditing">
@@ -58,7 +70,9 @@
 </template>
 
 <script setup lang="ts">
+import Tooltip from "features/tooltips/Tooltip.vue";
 import player from "game/player";
+import { Direction } from "util/common";
 import { computed, ref, toRefs, watch } from "vue";
 import DangerButton from "./fields/DangerButton.vue";
 import FeedbackButton from "./fields/FeedbackButton.vue";

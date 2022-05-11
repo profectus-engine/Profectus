@@ -120,6 +120,7 @@ export default defineComponent({
     position: relative;
     --xoffset: 0px;
     --yoffset: 0px;
+    text-shadow: none !important;
 }
 
 .tooltip,
