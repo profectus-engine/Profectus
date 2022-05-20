@@ -64,7 +64,10 @@ export function createAdditiveModifier<
                 ? undefined
                 : jsx(() => (
                       <div class="modifier-container">
-                          <span class="modifier-amount">+{format(unref(processedAddend))}</span>
+                          <span class="modifier-amount">
+                              {Decimal.gte(unref(processedAddend), 0) ? "+" : ""}
+                              {format(unref(processedAddend))}
+                          </span>
                           {unref(processedDescription) ? (
                               <span class="modifier-description">
                                   {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
