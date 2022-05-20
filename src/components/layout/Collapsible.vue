@@ -1,5 +1,5 @@
 <template>
-    <Col style="width: 100%">
+    <Col class="collapsible-container">
         <button @click="collapsed.value = !collapsed.value" class="feature collapsible-toggle">
             <component :is="displayComponent" />
         </button>
@@ -24,12 +24,29 @@ const contentComponent = computed(() => coerceComponent(props.content));
 </script>
 
 <style scoped>
-.collapsible-toggle {
+.collapsible-container {
     width: calc(100% - 10px);
+}
+
+.collapsible-toggle {
+    max-width: unset;
+    width: calc(100% + 0px);
+    margin: 0;
+    margin-left: -5px;
     background: var(--raised-background);
     padding: var(--feature-margin);
     color: var(--foreground);
     cursor: pointer;
+}
+
+.collapsible-toggle:last-child {
+    margin-left: unset;
+}
+
+:deep(.collapsible-toggle + .table) {
+    max-width: unset;
+    width: calc(100% + 10px);
+    margin-left: -5px;
 }
 
 :deep(.col) {
