@@ -161,7 +161,7 @@ export function createBuyable<T extends BuyableOptions>(
                     );
                     genericBuyable.amount.value = Decimal.add(genericBuyable.amount.value, 1);
                 }
-                this.onPurchase?.(cost);
+                genericBuyable.onPurchase?.(cost);
             };
         processComputable(buyable as T, "display");
         const display = buyable.display;
