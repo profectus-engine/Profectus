@@ -63,9 +63,9 @@ const validLinks = computed(() => {
 <style scoped>
 .resize-listener {
     position: absolute;
-    top: 5px;
-    left: 5px;
-    right: 5px;
+    top: 0px;
+    left: 0;
+    right: -4px;
     bottom: 5px;
     z-index: -10;
     pointer-events: none;

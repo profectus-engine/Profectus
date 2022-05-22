@@ -63,7 +63,7 @@ export default defineComponent({
                 props.onInit(app.value as Application);
             }
             updateBounds();
-            if (module.hot?.status() === "apply" && props.onHotReload) {
+            if (props.onHotReload) {
                 nextTick(props.onHotReload);
             }
         });
@@ -102,9 +102,9 @@ export default defineComponent({
 .not-fullscreen,
 .resize-listener {
     position: absolute;
-    top: 5px;
-    left: 5px;
-    right: 5px;
+    top: 0px;
+    left: 0;
+    right: -4px;
     bottom: 5px;
     pointer-events: none;
 }
