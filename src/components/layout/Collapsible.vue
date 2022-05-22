@@ -9,8 +9,8 @@
 
 <script setup lang="ts">
 import { CoercableComponent } from "features/feature";
-import { coerceComponent } from "util/vue";
-import { computed, Ref } from "vue";
+import { computeComponent } from "util/vue";
+import { Ref, toRef } from "vue";
 import Col from "./Column.vue";
 
 const props = defineProps<{
@@ -19,8 +19,8 @@ const props = defineProps<{
     content: CoercableComponent;
 }>();
 
-const displayComponent = computed(() => coerceComponent(props.display));
-const contentComponent = computed(() => coerceComponent(props.content));
+const displayComponent = computeComponent(toRef(props, "display"));
+const contentComponent = computeComponent(toRef(props, "content"));
 </script>
 
 <style scoped>

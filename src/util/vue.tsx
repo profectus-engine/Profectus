@@ -5,6 +5,7 @@ import {
     Component as ComponentKey,
     GatherProps,
     GenericComponent,
+    jsx,
     JSXFunction,
     Visibility
 } from "features/feature";
@@ -146,10 +147,16 @@ export function setupHoldToClick(
     return { start, stop, handleHolding };
 }
 
-export function getFirstFeature<T extends { visibility: ProcessedComputable<Visibility> }>(
+export function getFirstFeature<
+    T extends VueFeature & { visibility: ProcessedComputable<Visibility> }
+>(
     features: T[],
     filter: (feature: T) => boolean
-): { firstFeature: Ref<T | undefined>; hiddenFeatures: Ref<T[]> } {
+): {
+    firstFeature: Ref<T | undefined>;
+    collapsedContent: JSXFunction;
+    hasCollapsedContent: Ref<boolean>;
+} {
     const filteredFeatures = computed(() =>
         features.filter(
             feature => unref(feature.visibility) === Visibility.Visible && filter(feature)
@@ -157,7 +164,8 @@ export function getFirstFeature<T extends { visibility: ProcessedComputable<Visi
     );
     return {
         firstFeature: computed(() => filteredFeatures.value[0]),
-        hiddenFeatures: computed(() => filteredFeatures.value.slice(1))
+        collapsedContent: jsx(() => renderCol(...filteredFeatures.value.slice(1))),
+        hasCollapsedContent: computed(() => filteredFeatures.value.length > 1)
     };
 }
 
