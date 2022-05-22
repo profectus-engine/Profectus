@@ -1,5 +1,6 @@
 <template>
     <slot />
+    <div ref="resizeListener" class="resize-listener" />
 </template>
 
 <script setup lang="ts">
@@ -7,13 +8,39 @@ import {
     RegisterNodeInjectionKey,
     UnregisterNodeInjectionKey,
     NodesInjectionKey,
-    FeatureNode
+    FeatureNode,
+    BoundsInjectionKey
 } from "game/layers";
-import { nextTick, provide, ref } from "vue";
+import { nextTick, onMounted, provide, ref } from "vue";
 
 const nodes = ref<Record<string, FeatureNode | undefined>>({});
 
-defineExpose({ nodes });
+const resizeObserver = new ResizeObserver(updateBounds);
+const resizeListener = ref<Element | null>(null);
+onMounted(() => {
+    // ResizeListener exists because ResizeObserver's don't work when told to observe an SVG element
+    const resListener = resizeListener.value;
+    if (resListener != null) {
+        resizeObserver.observe(resListener);
+    }
+});
+let isDirty = true;
+let boundingRect = ref(resizeListener.value?.getBoundingClientRect());
+function updateBounds() {
+    if (resizeListener.value != null && isDirty) {
+        isDirty = false;
+        nextTick(() => {
+            boundingRect.value = resizeListener.value?.getBoundingClientRect();
+            (Object.values(nodes.value) as FeatureNode[])
+                .filter(n => n) // Sometimes the values become undefined
+                .forEach(node => (node.rect = node.element.getBoundingClientRect()));
+            isDirty = true;
+        });
+    }
+}
+document.fonts.ready.then(updateBounds);
+
+defineExpose({ nodes, boundingRect });
 
 const observerOptions = {
     attributes: true,
@@ -32,6 +59,7 @@ provide(UnregisterNodeInjectionKey, id => {
     nodes.value[id] = undefined;
 });
 provide(NodesInjectionKey, nodes);
+provide(BoundsInjectionKey, boundingRect);
 
 function updateNode(id: string) {
     const node = nodes.value[id];
@@ -41,3 +69,15 @@ function updateNode(id: string) {
     node.rect = node.element.getBoundingClientRect();
 }
 </script>
+
+<style scoped>
+.resize-listener {
+    position: absolute;
+    top: 0px;
+    left: 0;
+    right: -4px;
+    bottom: 5px;
+    z-index: -10;
+    pointer-events: none;
+}
+</style>

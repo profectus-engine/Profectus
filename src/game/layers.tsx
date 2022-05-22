@@ -34,6 +34,7 @@ export const UnregisterNodeInjectionKey: InjectionKey<(id: string) => void> =
     Symbol("UnregisterNode");
 export const NodesInjectionKey: InjectionKey<Ref<Record<string, FeatureNode | undefined>>> =
     Symbol("Nodes");
+export const BoundsInjectionKey: InjectionKey<Ref<DOMRect | undefined>> = Symbol("Bounds");
 
 export interface LayerEvents {
     // Generation

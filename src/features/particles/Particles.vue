@@ -1,4 +1,3 @@
-onMounted,
 <template>
     <div
         ref="resizeListener"
@@ -10,19 +9,9 @@ onMounted,
 
 <script lang="tsx">
 import { StyleValue } from "features/feature";
-import { FeatureNode, NodesInjectionKey } from "game/layers";
 import { Application } from "pixi.js";
 import { processedPropType } from "util/vue";
-import {
-    defineComponent,
-    inject,
-    nextTick,
-    onBeforeUnmount,
-    onMounted,
-    PropType,
-    ref,
-    unref
-} from "vue";
+import { defineComponent, nextTick, onBeforeUnmount, onMounted, PropType, ref, unref } from "vue";
 
 // TODO get typing support on the Particles component
 export default defineComponent({
@@ -44,10 +33,6 @@ export default defineComponent({
         const app = ref<null | Application>(null);
 
         const resizeObserver = new ResizeObserver(updateBounds);
-
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const nodes = inject(NodesInjectionKey)!;
-
         const resizeListener = ref<HTMLElement | null>(null);
 
         onMounted(() => {
@@ -77,10 +62,6 @@ export default defineComponent({
                 isDirty = false;
                 nextTick(() => {
                     if (resizeListener.value != null && props.onContainerResized) {
-                        // TODO don't overlap with Links.vue
-                        (Object.values(nodes.value).filter(n => n) as FeatureNode[]).forEach(
-                            node => (node.rect = node.element.getBoundingClientRect())
-                        );
                         props.onContainerResized(resizeListener.value.getBoundingClientRect());
                         app.value?.resize();
                     }

@@ -14,43 +14,24 @@
 
 <script setup lang="ts">
 import { Link } from "features/links/links";
-import { FeatureNode, NodesInjectionKey } from "game/layers";
-import { computed, inject, nextTick, onMounted, ref, toRef } from "vue";
+import { BoundsInjectionKey, NodesInjectionKey } from "game/layers";
+import { computed, inject, ref, toRef, watch } from "vue";
 import LinkVue from "./Link.vue";
 
 const _props = defineProps<{ links?: Link[] }>();
 const links = toRef(_props, "links");
 
-const resizeObserver = new ResizeObserver(updateNodes);
+const resizeListener = ref<Element | null>(null);
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 const nodes = inject(NodesInjectionKey)!;
-
-const resizeListener = ref<Element | null>(null);
-
-onMounted(() => {
-    // ResizeListener exists because ResizeObserver's don't work when told to observe an SVG element
-    const resListener = resizeListener.value;
-    if (resListener != null) {
-        resizeObserver.observe(resListener);
-    }
-});
-
-let isDirty = true;
-let boundingRect = ref(resizeListener.value?.getBoundingClientRect());
-function updateNodes() {
-    if (resizeListener.value != null && isDirty) {
-        isDirty = false;
-        nextTick(() => {
-            boundingRect.value = resizeListener.value?.getBoundingClientRect();
-            (Object.values(nodes.value) as FeatureNode[])
-                .filter(n => n) // Sometimes the values become undefined
-                .forEach(node => (node.rect = node.element.getBoundingClientRect()));
-            isDirty = true;
-        });
-    }
-}
-document.fonts.ready.then(updateNodes);
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+const outerBoundingRect = inject(BoundsInjectionKey)!;
+const boundingRect = ref<DOMRect | undefined>(undefined);
+watch(
+    [outerBoundingRect],
+    () => (boundingRect.value = resizeListener.value?.getBoundingClientRect())
+);
 
 const validLinks = computed(() => {
     const n = nodes.value;
