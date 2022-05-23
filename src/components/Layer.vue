@@ -5,7 +5,7 @@
             <div>{{ unref(name) }}</div>
         </button>
         <div class="layer-tab" :class="{ showGoBack }" v-else>
-            <Context ref="contextRef">
+            <Context @update-nodes="updateNodes">
                 <component :is="component" />
             </Context>
         </div>
@@ -22,7 +22,7 @@ import { FeatureNode } from "game/layers";
 import { Persistent } from "game/persistence";
 import player from "game/player";
 import { computeComponent, processedPropType, wrapRef } from "util/vue";
-import { computed, defineComponent, nextTick, PropType, Ref, ref, toRefs, unref, watch } from "vue";
+import { computed, defineComponent, nextTick, PropType, Ref, toRefs, unref, watch } from "vue";
 import Context from "./Context.vue";
 
 export default defineComponent({
@@ -76,15 +76,9 @@ export default defineComponent({
             updateTab(minimized, minWidth)
         );
 
-        const contextRef = ref<typeof Context | null>(null);
-        watch(
-            () => contextRef.value?.nodes,
-            nodes => {
-                if (nodes) {
-                    props.nodes.value = nodes;
-                }
-            }
-        );
+        function updateNodes(nodes: Record<string, FeatureNode | undefined>) {
+            props.nodes.value = nodes;
+        }
 
         function updateTab(minimized: boolean, minWidth: number | string) {
             const width =
@@ -112,7 +106,7 @@ export default defineComponent({
         return {
             component,
             showGoBack,
-            contextRef,
+            updateNodes,
             unref,
             goBack
         };
