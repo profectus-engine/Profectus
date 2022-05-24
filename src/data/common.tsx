@@ -106,10 +106,10 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
                     {resetButton.conversion.gainResource.displayName}
                     <div v-show={unref(resetButton.showNextAt)}>
                         <br />
-                        {resetButton.conversion.buyMax ? "Next:" : "Req:"}{" "}
+                        {unref(resetButton.conversion.buyMax) ? "Next:" : "Req:"}{" "}
                         {displayResource(
                             resetButton.conversion.baseResource,
-                            resetButton.conversion.buyMax ||
+                            unref(resetButton.conversion.buyMax) ||
                                 Decimal.floor(unref(resetButton.conversion.actualGain)).neq(1)
                                 ? unref(resetButton.conversion.nextAt)
                                 : unref(resetButton.conversion.currentAt)
