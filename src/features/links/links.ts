@@ -44,7 +44,7 @@ export type GenericLinks = Replace<
 >;
 
 export function createLinks<T extends LinksOptions>(
-    optionsFunc: OptionsFunc<T, Links<T>, BaseLinks>
+    optionsFunc: OptionsFunc<T, BaseLinks>
 ): Links<T> {
     return createLazyProxy(() => {
         const links = optionsFunc();

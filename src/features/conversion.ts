@@ -1,4 +1,4 @@
-import { GenericLayer } from "game/layers";
+import { BaseLayer } from "game/layers";
 import { Modifier } from "game/modifiers";
 import Decimal, { DecimalSource } from "util/bignum";
 import { WithRequired } from "util/common";
@@ -129,7 +129,7 @@ export type GenericConversion = Replace<
  * @see {@link createIndependentConversion}.
  */
 export function createConversion<T extends ConversionOptions>(
-    optionsFunc: OptionsFunc<T, Conversion<T>, BaseConversion>
+    optionsFunc: OptionsFunc<T, BaseConversion>
 ): Conversion<T> {
     return createLazyProxy(() => {
         const conversion = optionsFunc();
@@ -362,7 +362,7 @@ export function createPolynomialScaling(
  * @param optionsFunc Conversion options.
  */
 export function createCumulativeConversion<S extends ConversionOptions>(
-    optionsFunc: OptionsFunc<S, Conversion<S>>
+    optionsFunc: OptionsFunc<S, BaseConversion>
 ): Conversion<S> {
     return createConversion(optionsFunc);
 }
@@ -373,7 +373,7 @@ export function createCumulativeConversion<S extends ConversionOptions>(
  * @param optionsFunc Converison options.
  */
 export function createIndependentConversion<S extends ConversionOptions>(
-    optionsFunc: OptionsFunc<S, Conversion<S>>
+    optionsFunc: OptionsFunc<S, BaseConversion>
 ): Conversion<S> {
     return createConversion(() => {
         const conversion: S = optionsFunc();
@@ -428,12 +428,12 @@ export function createIndependentConversion<S extends ConversionOptions>(
  * This will automatically increase the value of conversion.gainResource without lowering the value of the input resource.
  * It will by default perform 100% of a conversion's currentGain per second.
  * If you use a ref for the rate you can set it's value to 0 when passive generation should be disabled.
- * @param layer The layer this passive generation will be associated with.
+ * @param layer The layer this passive generation will be associated with. Typically `this` when calling this function from inside a layer's options function.
  * @param conversion The conversion that will determine how much generation there is.
  * @param rate A multiplier to multiply against the conversion's currentGain.
  */
 export function setupPassiveGeneration(
-    layer: GenericLayer,
+    layer: BaseLayer,
     conversion: GenericConversion,
     rate: Computable<DecimalSource> = 1
 ): void {

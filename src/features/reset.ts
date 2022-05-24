@@ -1,6 +1,6 @@
 import { OptionsFunc, getUniqueID, Replace } from "features/feature";
 import { globalBus } from "game/events";
-import { GenericLayer } from "game/layers";
+import { BaseLayer } from "game/layers";
 import { DefaultValue, Persistent, persistent, PersistentState } from "game/persistence";
 import Decimal from "util/bignum";
 import { Computable, GetComputableType, processComputable } from "util/computed";
@@ -31,7 +31,7 @@ export type Reset<T extends ResetOptions> = Replace<
 export type GenericReset = Reset<ResetOptions>;
 
 export function createReset<T extends ResetOptions>(
-    optionsFunc: OptionsFunc<T, Reset<T>, BaseReset>
+    optionsFunc: OptionsFunc<T, BaseReset>
 ): Reset<T> {
     return createLazyProxy(() => {
         const reset = optionsFunc();
@@ -64,7 +64,7 @@ export function createReset<T extends ResetOptions>(
 }
 
 const listeners: Record<string, Unsubscribe | undefined> = {};
-export function trackResetTime(layer: GenericLayer, reset: GenericReset): Persistent<Decimal> {
+export function trackResetTime(layer: BaseLayer, reset: GenericReset): Persistent<Decimal> {
     const resetTime = persistent<Decimal>(new Decimal(0));
     listeners[layer.id] = layer.on("preUpdate", diff => {
         resetTime.value = Decimal.add(resetTime.value, diff);

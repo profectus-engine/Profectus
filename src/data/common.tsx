@@ -22,7 +22,7 @@ import {
     TreeNodeOptions
 } from "features/trees/tree";
 import { Modifier } from "game/modifiers";
-import { Persistent, persistent } from "game/persistence";
+import { DefaultValue, Persistent, persistent } from "game/persistence";
 import player from "game/player";
 import Decimal, { DecimalSource, format } from "util/bignum";
 import { WithRequired } from "util/common";
@@ -47,6 +47,7 @@ export interface ResetButtonOptions extends ClickableOptions {
     display?: Computable<CoercableComponent>;
     canClick?: Computable<boolean>;
     minimumGain?: Computable<DecimalSource>;
+    resetTime?: Persistent<DecimalSource>;
 }
 
 export type ResetButton<T extends ResetButtonOptions> = Replace<
@@ -136,6 +137,9 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
             }
             resetButton.conversion.convert();
             resetButton.tree.reset(resetButton.treeNode);
+            if (resetButton.resetTime) {
+                resetButton.resetTime.value = resetButton.resetTime[DefaultValue];
+            }
             onClick?.();
         };
 

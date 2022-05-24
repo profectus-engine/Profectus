@@ -198,7 +198,7 @@ export type GenericBoard = Replace<
 >;
 
 export function createBoard<T extends BoardOptions>(
-    optionsFunc: OptionsFunc<T, Board<T>, BaseBoard>
+    optionsFunc: OptionsFunc<T, BaseBoard>
 ): Board<T> {
     return createLazyProxy(
         persistent => {

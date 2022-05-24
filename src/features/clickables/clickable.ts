@@ -10,7 +10,7 @@ import {
     StyleValue,
     Visibility
 } from "features/feature";
-import { GenericLayer } from "game/layers";
+import { BaseLayer } from "game/layers";
 import { Unsubscribe } from "nanoevents";
 import {
     Computable,
@@ -70,7 +70,7 @@ export type GenericClickable = Replace<
 >;
 
 export function createClickable<T extends ClickableOptions>(
-    optionsFunc?: OptionsFunc<T, Clickable<T>, BaseClickable>
+    optionsFunc?: OptionsFunc<T, BaseClickable>
 ): Clickable<T> {
     return createLazyProxy(() => {
         const clickable = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
@@ -136,7 +136,7 @@ export function createClickable<T extends ClickableOptions>(
 }
 
 export function setupAutoClick(
-    layer: GenericLayer,
+    layer: BaseLayer,
     clickable: GenericClickable,
     autoActive: Computable<boolean> = true
 ): Unsubscribe {

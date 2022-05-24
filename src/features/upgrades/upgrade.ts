@@ -79,7 +79,7 @@ export type GenericUpgrade = Replace<
 >;
 
 export function createUpgrade<T extends UpgradeOptions>(
-    optionsFunc: OptionsFunc<T, Upgrade<T>, BaseUpgrade>
+    optionsFunc: OptionsFunc<T, BaseUpgrade>
 ): Upgrade<T> {
     const bought = persistent<boolean>(false);
     return createLazyProxy(() => {

@@ -43,7 +43,7 @@ export type GenericHotkey = Replace<
 >;
 
 export function createHotkey<T extends HotkeyOptions>(
-    optionsFunc: OptionsFunc<T, Hotkey<T>, BaseHotkey>
+    optionsFunc: OptionsFunc<T, BaseHotkey>
 ): Hotkey<T> {
     return createLazyProxy(() => {
         const hotkey = optionsFunc();

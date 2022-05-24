@@ -1,13 +1,13 @@
 import Modal from "components/Modal.vue";
 import {
     CoercableComponent,
-    OptionsFunc,
     jsx,
     JSXFunction,
     Replace,
     setDefault,
     StyleValue
 } from "features/feature";
+import { createNanoEvents, Emitter } from "nanoevents";
 import {
     Computable,
     GetComputableType,
@@ -16,7 +16,6 @@ import {
     ProcessedComputable
 } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { createNanoEvents, Emitter } from "nanoevents";
 import { InjectionKey, Ref, ref, shallowReactive, unref } from "vue";
 import { globalBus } from "./events";
 import { Persistent, persistent } from "./persistence";
@@ -106,7 +105,7 @@ export const persistentRefs: Record<string, Set<Persistent>> = {};
 export const addingLayers: string[] = [];
 export function createLayer<T extends LayerOptions>(
     id: string,
-    optionsFunc: OptionsFunc<T, BaseLayer, BaseLayer>
+    optionsFunc: (this: BaseLayer) => T & Partial<BaseLayer>
 ): Layer<T> {
     return createLazyProxy(() => {
         const layer = {} as T & Partial<BaseLayer>;
@@ -119,7 +118,7 @@ export function createLayer<T extends LayerOptions>(
         addingLayers.push(id);
         persistentRefs[id] = new Set();
         layer.minimized = persistent(false);
-        Object.assign(layer, optionsFunc.call(layer));
+        Object.assign(layer, optionsFunc.call(layer as BaseLayer));
         if (
             addingLayers[addingLayers.length - 1] == null ||
             addingLayers[addingLayers.length - 1] !== id
