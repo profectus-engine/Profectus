@@ -46,7 +46,7 @@ function updateBounds() {
 document.fonts.ready.then(updateBounds);
 
 const observerOptions = {
-    attributes: true,
+    attributes: false,
     childList: true,
     subtree: false
 };
