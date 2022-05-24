@@ -66,11 +66,19 @@ export interface ConversionOptions {
      */
     convert?: VoidFunction;
     /**
-     * An addition modifier that will be applied to the gain amounts.
+     * An additional modifier that will be applied to the gain amounts.
      * Must be reversible in order to correctly calculate {@link nextAt}.
      * @see {@link createSequentialModifier} if you want to apply multiple modifiers.
      */
     gainModifier?: WithRequired<Modifier, "revert">;
+    /**
+     * A modifier that will be applied to the cost amounts.
+     * That is to say, this modifier will be applied to the amount of baseResource before going into the scaling function.
+     * A cost modifier of x0.5 would give gain amounts equal to the player having half the baseResource they actually have.
+     * Must be reversible in order to correctly calculate {@link nextAt}.
+     * @see {@link createSequentialModifier} if you want to apply multiple modifiers.
+     */
+    costModifier?: WithRequired<Modifier, "revert">;
 }
 
 /**
@@ -234,11 +242,15 @@ export function createLinearScaling(
     const processedCoefficient = convertComputable(coefficient);
     return {
         currentGain(conversion) {
-            if (Decimal.lt(conversion.baseResource.value, unref(processedBase))) {
+            let baseAmount: DecimalSource = unref(conversion.baseResource.value);
+            if (conversion.costModifier) {
+                baseAmount = conversion.costModifier.apply(baseAmount);
+            }
+            if (Decimal.lt(baseAmount, unref(processedBase))) {
                 return 0;
             }
 
-            return Decimal.sub(conversion.baseResource.value, unref(processedBase))
+            return Decimal.sub(baseAmount, unref(processedBase))
                 .sub(1)
                 .times(unref(processedCoefficient))
                 .add(1);
@@ -248,21 +260,29 @@ export function createLinearScaling(
             if (conversion.gainModifier) {
                 current = conversion.gainModifier.revert(current);
             }
-            current = Decimal.max(0, current);
-            return Decimal.sub(current, 1)
+            current = Decimal.max(0, current)
+                .sub(1)
                 .div(unref(processedCoefficient))
                 .add(unref(processedBase));
+            if (conversion.costModifier) {
+                current = conversion.costModifier.revert(current);
+            }
+            return current;
         },
         nextAt(conversion) {
             let next: DecimalSource = Decimal.add(unref(conversion.currentGain), 1);
             if (conversion.gainModifier) {
                 next = conversion.gainModifier.revert(next);
             }
-            next = Decimal.max(0, next);
-            return Decimal.sub(next, 1)
+            next = Decimal.max(0, next)
+                .sub(1)
                 .div(unref(processedCoefficient))
                 .add(unref(processedBase))
                 .max(unref(processedBase));
+            if (conversion.costModifier) {
+                next = conversion.costModifier.revert(next);
+            }
+            return next;
         }
     };
 }
@@ -288,11 +308,15 @@ export function createPolynomialScaling(
     const processedExponent = convertComputable(exponent);
     return {
         currentGain(conversion) {
-            if (Decimal.lt(conversion.baseResource.value, unref(processedBase))) {
+            let baseAmount: DecimalSource = unref(conversion.baseResource.value);
+            if (conversion.costModifier) {
+                baseAmount = conversion.costModifier.apply(baseAmount);
+            }
+            if (Decimal.lt(baseAmount, unref(processedBase))) {
                 return 0;
             }
 
-            const gain = Decimal.div(conversion.baseResource.value, unref(processedBase)).pow(
+            const gain = Decimal.div(baseAmount, unref(processedBase)).pow(
                 unref(processedExponent)
             );
 
@@ -306,18 +330,27 @@ export function createPolynomialScaling(
             if (conversion.gainModifier) {
                 current = conversion.gainModifier.revert(current);
             }
-            current = Decimal.max(0, current);
-            return Decimal.root(current, unref(processedExponent)).times(unref(processedBase));
+            current = Decimal.max(0, current)
+                .root(unref(processedExponent))
+                .times(unref(processedBase));
+            if (conversion.costModifier) {
+                current = conversion.costModifier.revert(current);
+            }
+            return current;
         },
         nextAt(conversion) {
             let next: DecimalSource = Decimal.add(unref(conversion.currentGain), 1);
             if (conversion.gainModifier) {
                 next = conversion.gainModifier.revert(next);
             }
-            next = Decimal.max(0, next);
-            return Decimal.root(next, unref(processedExponent))
+            next = Decimal.max(0, next)
+                .root(unref(processedExponent))
                 .times(unref(processedBase))
                 .max(unref(processedBase));
+            if (conversion.costModifier) {
+                next = conversion.costModifier.revert(next);
+            }
+            return next;
         }
     };
 }
