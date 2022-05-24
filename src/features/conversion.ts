@@ -66,6 +66,12 @@ export interface ConversionOptions {
      */
     convert?: VoidFunction;
     /**
+     * A callback that happens after a conversion has been completed.
+     * Receives the amount gained via conversion.
+     * This will not be called whenever using currentGain without calling convert (e.g. passive generation)
+     */
+    onConvert?: (amountGained: DecimalSource) => void;
+    /**
      * An additional modifier that will be applied to the gain amounts.
      * Must be reversible in order to correctly calculate {@link nextAt}.
      * @see {@link createSequentialModifier} if you want to apply multiple modifiers.
@@ -169,12 +175,14 @@ export function createConversion<T extends ConversionOptions>(
 
         if (conversion.convert == null) {
             conversion.convert = function () {
+                const amountGained = unref((conversion as GenericConversion).currentGain);
                 conversion.gainResource.value = Decimal.add(
                     conversion.gainResource.value,
-                    unref((conversion as GenericConversion).currentGain)
+                    amountGained
                 );
                 // TODO just subtract cost?
                 conversion.baseResource.value = 0;
+                conversion.onConvert?.(amountGained);
             };
         }
 
@@ -409,6 +417,7 @@ export function createIndependentConversion<S extends ConversionOptions>(
             });
         }
         setDefault(conversion, "convert", function () {
+            const amountGained = unref((conversion as GenericConversion).actualGain);
             conversion.gainResource.value = conversion.gainModifier
                 ? conversion.gainModifier.apply(
                       unref((conversion as GenericConversion).currentGain)
@@ -418,6 +427,7 @@ export function createIndependentConversion<S extends ConversionOptions>(
             // Maybe by adding a cost function to scaling and nextAt just calls the cost function
             // with 1 + currentGain
             conversion.baseResource.value = 0;
+            conversion.onConvert?.(amountGained);
         });
 
         return conversion;
