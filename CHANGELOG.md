@@ -6,6 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2022-05-23
+### Added
+- costModifier to conversions
+- onConvert(amountGained) to conversions
+### Changed
+- **BREAKING** getFirstFeature has a new signature, that will lead to improved performance
+- trackResetTime is now intended to be used with a reset button
+- regularFormat handles small numbers better
+- Slider tooltips now appear below the slider, not above
+- Node's mutation observers now ignore attributes. This shouldn't have issues with links/particle effect positions, but prevents a _lot_ of unnecessary node updates
+- OptionsFunc no longer takes its S type parameter, as it was unnecessary. Layer options functions now have proper `this` typing
+    - Several functions have been updated to take BaseLayer instead of GenericLayer, to allow them to work with `this` inside layer options functions
+### Fixed
+- Particle effects and links would not always appear on reload or when switching layers
+- Particle effects and links no longer appear in wrong spot after nodes are added or removed
+- Collapsibles having wrong widths on the button and collapsed content sections
+- Additive modifiers with negative values appeared like "+-" instead of "-"
+- Buyables' onPurchase was not being called
+- Reset button would display "Next:" if the buyMax property is a ref
+
 ## [0.4.1] - 2022-05-10
 ### Added
 - findFeatures can now accept multiple feature types
