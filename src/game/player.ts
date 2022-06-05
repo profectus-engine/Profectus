@@ -3,6 +3,7 @@ import Decimal from "util/bignum";
 import type { ProxiedWithState } from "util/proxies";
 import { ProxyPath, ProxyState } from "util/proxies";
 import { reactive, unref } from "vue";
+import type { Ref } from "vue";
 import transientState from "./state";
 
 export interface PlayerData {
@@ -18,10 +19,22 @@ export interface PlayerData {
     keepGoing: boolean;
     modID: string;
     modVersion: string;
-    layers: Record<string, Record<string, unknown>>;
+    layers: Record<string, LayerData<unknown>>;
 }
 
 export type Player = ProxiedWithState<PlayerData>;
+
+export type LayerData<T> = {
+    [P in keyof T]?: T[P] extends (infer U)[]
+        ? LayerData<U>[]
+        : T[P] extends Record<string, never>
+        ? never
+        : T[P] extends Ref<infer S>
+        ? S
+        : T[P] extends object
+        ? LayerData<T[P]>
+        : T[P];
+};
 
 const state = reactive<PlayerData>({
     id: "",
