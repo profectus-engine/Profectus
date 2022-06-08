@@ -92,18 +92,20 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
                         )}
                     </b>{" "}
                     {resetButton.conversion.gainResource.displayName}
-                    <div v-show={unref(resetButton.showNextAt)}>
-                        <br />
-                        {unref(resetButton.conversion.buyMax) ? "Next:" : "Req:"}{" "}
-                        {displayResource(
-                            resetButton.conversion.baseResource,
-                            unref(resetButton.conversion.buyMax) ||
-                                Decimal.floor(unref(resetButton.conversion.actualGain)).neq(1)
-                                ? unref(resetButton.conversion.nextAt)
-                                : unref(resetButton.conversion.currentAt)
-                        )}{" "}
-                        {resetButton.conversion.baseResource.displayName}
-                    </div>
+                    {unref(resetButton.showNextAt) ? (
+                        <div>
+                            <br />
+                            {unref(resetButton.conversion.buyMax) ? "Next:" : "Req:"}{" "}
+                            {displayResource(
+                                resetButton.conversion.baseResource,
+                                unref(resetButton.conversion.buyMax) ||
+                                    Decimal.floor(unref(resetButton.conversion.actualGain)).neq(1)
+                                    ? unref(resetButton.conversion.nextAt)
+                                    : unref(resetButton.conversion.currentAt)
+                            )}{" "}
+                            {resetButton.conversion.baseResource.displayName}
+                        </div>
+                    ) : null}
                 </span>
             ));
         }
