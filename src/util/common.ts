@@ -8,10 +8,6 @@ export function camelToTitle(camel: string): string {
     return title;
 }
 
-export function isPlainObject(object: unknown): boolean {
-    return Object.prototype.toString.call(object) === "[object Object]";
-}
-
 // eslint-disable-next-line @typescript-eslint/ban-types
 export function isFunction(func: unknown): func is Function {
     return typeof func === "function";

@@ -1,5 +1,5 @@
 import Decimal from "util/bignum";
-import { isPlainObject } from "util/common";
+import { isPlainObject } from "is-plain-object";
 import { ProxiedWithState, ProxyPath, ProxyState } from "util/proxies";
 import { reactive, unref } from "vue";
 import transientState from "./state";
@@ -51,11 +51,7 @@ const playerHandler: ProxyHandler<Record<PropertyKey, any>> = {
         }
 
         const value = target[ProxyState][key];
-        if (
-            key !== "value" &&
-            (isPlainObject(value) || Array.isArray(value)) &&
-            !(value instanceof Decimal)
-        ) {
+        if (key !== "value" && (isPlainObject(value) || Array.isArray(value))) {
             if (value !== target[key]?.[ProxyState]) {
                 const path = [...target[ProxyPath], key];
                 target[key] = new Proxy({ [ProxyState]: value, [ProxyPath]: path }, playerHandler);
