@@ -19,6 +19,7 @@
     "nanoevents": "^6.0.2",
     "pixi.js": "^6.3.0",
     "vite": "^2.9.12",
+    "vite-plugin-pwa": "^0.12.0",
     "vite-tsconfig-paths": "^3.5.0",
     "vue": "^3.2.26",
     "vue-next-select": "^2.10.2",
