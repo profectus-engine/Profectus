@@ -124,13 +124,15 @@ watch(saveToImport, importedSave => {
     }
 });
 
-let bankContext = require.context("raw-loader!../../saves", true, /\.txt$/);
+let bankContext = import.meta.globEager("./../../saves/*.txt", { as: "raw" });
 let bank = ref(
-    bankContext.keys().reduce((acc: Array<{ label: string; value: string }>, curr) => {
-        // .slice(2, -4) strips the leading ./ and the trailing .txt
+    Object.keys(bankContext).reduce((acc: Array<{ label: string; value: string }>, curr) => {
         acc.push({
-            label: curr.slice(2, -4),
-            value: bankContext(curr).default
+            // .slice(2, -4) strips the leading ./ and the trailing .txt
+            label: curr.split("/").slice(-1)[0].slice(0, -4),
+            // Have to perform this unholy cast because globEager's typing doesn't appear to know
+            // adding { as: "raw" } will make the object contain strings rather than modules
+            value: bankContext[curr] as unknown as string
         });
         return acc;
     }, [])

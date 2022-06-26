@@ -119,7 +119,7 @@ export function setupHoldToClick(
     stop: VoidFunction;
     handleHolding: VoidFunction;
 } {
-    const interval = ref<null | number>(null);
+    const interval = ref<NodeJS.Timer | null>(null);
     const event = ref<MouseEvent | TouchEvent | undefined>(undefined);
 
     function start(e: MouseEvent | TouchEvent) {

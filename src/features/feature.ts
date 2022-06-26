@@ -41,7 +41,7 @@ export type Replace<T, S> = S & Omit<T, keyof S>;
  * with "this" bound to what the type will eventually be processed into.
  * Intended for making lazily evaluated objects.
  */
-export type OptionsFunc<T, R = Record<string, unknown>> = () => T & Partial<R>;
+export type OptionsFunc<T, R = Record<string, unknown>, S = R> = () => T & Partial<R> & ThisType<S>;
 
 let id = 0;
 /**

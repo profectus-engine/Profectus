@@ -15,7 +15,7 @@ const emit = defineEmits<{
 }>();
 
 const activated = ref(false);
-const activatedTimeout = ref<number | null>(null);
+const activatedTimeout = ref<NodeJS.Timer | null>(null);
 
 function click() {
     emit("click");

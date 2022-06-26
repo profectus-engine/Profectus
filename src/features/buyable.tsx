@@ -88,7 +88,7 @@ export type GenericBuyable = Replace<
 >;
 
 export function createBuyable<T extends BuyableOptions>(
-    optionsFunc: OptionsFunc<T, BaseBuyable>
+    optionsFunc: OptionsFunc<T, BaseBuyable, GenericBuyable>
 ): Buyable<T> {
     const amount = persistent<DecimalSource>(0);
     return createLazyProxy(() => {

@@ -29,6 +29,10 @@ export interface Theme {
 declare module "@vue/runtime-dom" {
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface CSSProperties extends Partial<ThemeVars> {}
+
+    interface HTMLAttributes {
+        style?: StyleValue;
+    }
 }
 
 const defaultTheme: Theme = {

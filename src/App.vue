@@ -23,9 +23,10 @@ import projInfo from "./data/projInfo.json";
 import themes from "./data/themes";
 import settings, { gameComponents } from "./game/settings";
 import "./main.css";
+import type { CSSProperties } from "vue";
 
 const useHeader = projInfo.useHeader;
-const theme = computed(() => themes[settings.theme].variables);
+const theme = computed(() => themes[settings.theme].variables as CSSProperties);
 const showTPS = toRef(settings, "showTPS");
 
 const gameComponent = computed(() => {

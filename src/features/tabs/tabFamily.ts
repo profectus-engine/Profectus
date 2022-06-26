@@ -92,7 +92,7 @@ export type GenericTabFamily = Replace<
 
 export function createTabFamily<T extends TabFamilyOptions>(
     tabs: Record<string, () => TabButtonOptions>,
-    optionsFunc?: OptionsFunc<T, BaseTabFamily>
+    optionsFunc?: OptionsFunc<T, BaseTabFamily, GenericTabFamily>
 ): TabFamily<T> {
     if (Object.keys(tabs).length === 0) {
         console.warn("Cannot create tab family with 0 tabs");

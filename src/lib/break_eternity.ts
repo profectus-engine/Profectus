@@ -1190,50 +1190,6 @@ export default class Decimal {
         return cost.div(currentRpS).add(cost.div(deltaRpS));
     }
 
-    public [Symbol.for("+")](other: DecimalSource): DecimalSource {
-        return this.add(other);
-    }
-
-    public [Symbol.for("-")](other: DecimalSource): DecimalSource {
-        return this.sub(other);
-    }
-
-    public [Symbol.for("*")](other: DecimalSource): DecimalSource {
-        return this.times(other);
-    }
-
-    public [Symbol.for("/")](other: DecimalSource): DecimalSource {
-        return this.div(other);
-    }
-
-    public [Symbol.for("minus")](): DecimalSource {
-        return this.neg();
-    }
-
-    public [Symbol.for("==")](other: DecimalSource): boolean {
-        return this.eq(other);
-    }
-
-    public [Symbol.for(">")](other: DecimalSource): boolean {
-        return this.gt(other);
-    }
-
-    public [Symbol.for("<")](other: DecimalSource): boolean {
-        return this.lt(other);
-    }
-
-    public [Symbol.for(">=")](other: DecimalSource): boolean {
-        return this.gte(other);
-    }
-
-    public [Symbol.for("<=")](other: DecimalSource): boolean {
-        return this.lte(other);
-    }
-
-    public [Symbol.for("!=")](other: DecimalSource): boolean {
-        return this.neq(other);
-    }
-
     public normalize(): this {
         /*
     PSEUDOCODE:

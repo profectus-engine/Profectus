@@ -18,7 +18,7 @@ export interface GlobalEvents {
 
 export const globalBus = createNanoEvents<GlobalEvents>();
 
-let intervalID: number | null = null;
+let intervalID: NodeJS.Timer | null = null;
 
 // Not imported immediately due to dependency cycles
 // This gets set during startGameLoop(), and will only be used in the update function

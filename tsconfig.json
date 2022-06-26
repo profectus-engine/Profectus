@@ -17,8 +17,8 @@
     "sourceMap": true,
     "baseUrl": "src",
     "types": [
-      "webpack-env",
-      "jest"
+      "jest",
+      "vite/client"
     ],
     "lib": [
       "esnext",

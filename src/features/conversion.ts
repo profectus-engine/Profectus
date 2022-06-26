@@ -135,7 +135,7 @@ export type GenericConversion = Replace<
  * @see {@link createIndependentConversion}.
  */
 export function createConversion<T extends ConversionOptions>(
-    optionsFunc: OptionsFunc<T, BaseConversion>
+    optionsFunc: OptionsFunc<T, BaseConversion, GenericConversion>
 ): Conversion<T> {
     return createLazyProxy(() => {
         const conversion = optionsFunc();
@@ -370,7 +370,7 @@ export function createPolynomialScaling(
  * @param optionsFunc Conversion options.
  */
 export function createCumulativeConversion<S extends ConversionOptions>(
-    optionsFunc: OptionsFunc<S, BaseConversion>
+    optionsFunc: OptionsFunc<S, BaseConversion, GenericConversion>
 ): Conversion<S> {
     return createConversion(optionsFunc);
 }
@@ -381,7 +381,7 @@ export function createCumulativeConversion<S extends ConversionOptions>(
  * @param optionsFunc Converison options.
  */
 export function createIndependentConversion<S extends ConversionOptions>(
-    optionsFunc: OptionsFunc<S, BaseConversion>
+    optionsFunc: OptionsFunc<S, BaseConversion, GenericConversion>
 ): Conversion<S> {
     return createConversion(() => {
         const conversion: S = optionsFunc();

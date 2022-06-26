@@ -37,7 +37,9 @@ export type Tab<T extends TabOptions> = Replace<
 
 export type GenericTab = Tab<TabOptions>;
 
-export function createTab<T extends TabOptions>(optionsFunc: OptionsFunc<T, BaseTab>): Tab<T> {
+export function createTab<T extends TabOptions>(
+    optionsFunc: OptionsFunc<T, BaseTab, GenericTab>
+): Tab<T> {
     return createLazyProxy(() => {
         const tab = optionsFunc();
         tab.id = getUniqueID("tab-");

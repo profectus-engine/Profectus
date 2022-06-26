@@ -64,7 +64,7 @@ export type GenericInfobox = Replace<
 >;
 
 export function createInfobox<T extends InfoboxOptions>(
-    optionsFunc: OptionsFunc<T, BaseInfobox>
+    optionsFunc: OptionsFunc<T, BaseInfobox, GenericInfobox>
 ): Infobox<T> {
     const collapsed = persistent<boolean>(false);
     return createLazyProxy(() => {

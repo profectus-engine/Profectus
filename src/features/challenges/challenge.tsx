@@ -97,7 +97,7 @@ export type GenericChallenge = Replace<
 >;
 
 export function createChallenge<T extends ChallengeOptions>(
-    optionsFunc: OptionsFunc<T, BaseChallenge>
+    optionsFunc: OptionsFunc<T, BaseChallenge, GenericChallenge>
 ): Challenge<T> {
     const completions = persistent(0);
     const active = persistent(false);

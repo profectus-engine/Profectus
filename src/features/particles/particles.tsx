@@ -42,7 +42,7 @@ export type Particles<T extends ParticlesOptions> = Replace<
 export type GenericParticles = Particles<ParticlesOptions>;
 
 export function createParticles<T extends ParticlesOptions>(
-    optionsFunc?: OptionsFunc<T, BaseParticles>
+    optionsFunc?: OptionsFunc<T, BaseParticles, GenericParticles>
 ): Particles<T> {
     return createLazyProxy(() => {
         const particles = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);

@@ -31,7 +31,7 @@ export type Reset<T extends ResetOptions> = Replace<
 export type GenericReset = Reset<ResetOptions>;
 
 export function createReset<T extends ResetOptions>(
-    optionsFunc: OptionsFunc<T, BaseReset>
+    optionsFunc: OptionsFunc<T, BaseReset, GenericReset>
 ): Reset<T> {
     return createLazyProxy(() => {
         const reset = optionsFunc();

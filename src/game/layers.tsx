@@ -3,6 +3,7 @@ import {
     CoercableComponent,
     jsx,
     JSXFunction,
+    OptionsFunc,
     Replace,
     setDefault,
     StyleValue
@@ -105,7 +106,7 @@ export const persistentRefs: Record<string, Set<Persistent>> = {};
 export const addingLayers: string[] = [];
 export function createLayer<T extends LayerOptions>(
     id: string,
-    optionsFunc: (this: BaseLayer) => T & Partial<BaseLayer>
+    optionsFunc: OptionsFunc<T, BaseLayer>
 ): Layer<T> {
     return createLazyProxy(() => {
         const layer = {} as T & Partial<BaseLayer>;
