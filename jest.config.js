@@ -1,4 +1,7 @@
 module.exports = {
-    moduleDirectories: ["src", "node_modules"],
-    testEnvironment: "jsdom"
+    preset: "vite-jest",
+    testEnvironment: "jest-environment-jsdom",
+    moduleNameMapper: {
+        "^./../(.*)$": "$1"
+    }
 };
