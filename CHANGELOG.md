@@ -6,6 +6,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2022-06-27
+### Added
+- Projects now cache for offline play, and show notification when an update is available
+- Projects can now be "installed" as a Progressive Web App
+- Conversions can now be given a custom spend function, which defaults to setting the base resource amount to 0
+- Components for displaying Floor and Square Root symbols
+### Changed
+- **BREAKING** Several projInfo properties now default to empty strings, to prevent things like reusing project IDs
+- **BREAKING** Replaced vue-cli-service with vite (should not break most projects)
+- Updated dependencies
+- Made all type-only imports explicit
+- setupPassiveGeneration now works properly on independent conversions
+- setupPassiveGeneration now takes an option cap it can't go over
+- Improved typing for PlayerData.layers
+- Options Functions have an improved `this` type - it now includes the options themselves
+- Removed v-show being used in data/common.tsx
+### Tests
+- Implement Jest, and running tests automatically on push
+- Tests written for utils/common.ts
+
 ## [0.4.2] - 2022-05-23
 ### Added
 - costModifier to conversions
