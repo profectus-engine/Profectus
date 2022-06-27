@@ -11,7 +11,7 @@
         <div class="discord">
             <span @click="openDiscord" class="material-icons">discord</span>
             <ul class="discord-links">
-                <li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
+                <li v-if="discordLink">
                     <a :href="discordLink" target="_blank">{{ discordName }}</a>
                 </li>
                 <li>
@@ -78,7 +78,7 @@
         <div class="discord">
             <span @click="openDiscord" class="material-icons">discord</span>
             <ul class="discord-links">
-                <li v-if="discordLink !== 'https://discord.gg/WzejVAx'">
+                <li v-if="discordLink">
                     <a :href="discordLink" target="_blank">{{ discordName }}</a>
                 </li>
                 <li>

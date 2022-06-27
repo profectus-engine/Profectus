@@ -21,11 +21,7 @@
                 <div class="link" @click="openChangelog">Changelog</div>
                 <br />
                 <div>
-                    <a
-                        :href="discordLink"
-                        v-if="discordLink !== 'https://discord.gg/WzejVAx'"
-                        class="info-modal-discord-link"
-                    >
+                    <a :href="discordLink" v-if="discordLink" class="info-modal-discord-link">
                         <span class="material-icons info-modal-discord">discord</span>
                         {{ discordName }}
                     </a>
