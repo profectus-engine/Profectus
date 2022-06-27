@@ -276,7 +276,7 @@ export function createLinearScaling(
             return current;
         },
         nextAt(conversion) {
-            let next: DecimalSource = Decimal.add(unref(conversion.currentGain), 1);
+            let next: DecimalSource = Decimal.add(unref(conversion.currentGain), 1).floor();
             if (conversion.gainModifier) {
                 next = conversion.gainModifier.revert(next);
             }
@@ -345,7 +345,7 @@ export function createPolynomialScaling(
             return current;
         },
         nextAt(conversion) {
-            let next: DecimalSource = Decimal.add(unref(conversion.currentGain), 1);
+            let next: DecimalSource = Decimal.add(unref(conversion.currentGain), 1).floor();
             if (conversion.gainModifier) {
                 next = conversion.gainModifier.revert(next);
             }
@@ -404,7 +404,7 @@ export function createIndependentConversion<S extends ConversionOptions>(
         if (conversion.actualGain == null) {
             conversion.actualGain = computed(() => {
                 let gain = Decimal.sub(
-                    conversion.scaling.currentGain(conversion as GenericConversion),
+                    Decimal.floor(conversion.scaling.currentGain(conversion as GenericConversion)),
                     conversion.gainResource.value
                 ).max(0);
 
@@ -439,20 +439,23 @@ export function createIndependentConversion<S extends ConversionOptions>(
  * @param layer The layer this passive generation will be associated with. Typically `this` when calling this function from inside a layer's options function.
  * @param conversion The conversion that will determine how much generation there is.
  * @param rate A multiplier to multiply against the conversion's currentGain.
+ * @param cap A value that should not be passed via passive generation. If null, no cap is applied.
  */
 export function setupPassiveGeneration(
     layer: BaseLayer,
     conversion: GenericConversion,
-    rate: Computable<DecimalSource> = 1
+    rate: Computable<DecimalSource> = 1,
+    cap: Computable<DecimalSource | null> = null
 ): void {
     const processedRate = convertComputable(rate);
+    const processedCap = convertComputable(cap);
     layer.on("preUpdate", diff => {
         const currRate = unref(processedRate);
         if (Decimal.neq(currRate, 0)) {
             conversion.gainResource.value = Decimal.add(
                 conversion.gainResource.value,
-                Decimal.times(currRate, diff).times(unref(conversion.currentGain))
-            );
+                Decimal.times(currRate, diff).times(Decimal.ceil(unref(conversion.actualGain)))
+            ).min(unref(processedCap) ?? Decimal.dInf);
         }
     });
 }
