@@ -52,6 +52,7 @@ export interface ConversionOptions {
     gainResource: Resource;
     /**
      * Whether or not to cap the amount of the output resource gained by converting at 1.
+     * Defaults to true.
      */
     buyMax?: Computable<boolean>;
     /**
@@ -63,6 +64,11 @@ export interface ConversionOptions {
      * Typically this will be set for you in a conversion constructor.
      */
     convert?: VoidFunction;
+    /**
+     * The function that spends the {@link baseResource} as part of the conversion.
+     * Defaults to setting the {@link baseResource} amount to 0.
+     */
+    spend?: (amountGained: DecimalSource) => void;
     /**
      * A callback that happens after a conversion has been completed.
      * Receives the amount gained via conversion.
@@ -106,6 +112,7 @@ export type Conversion<T extends ConversionOptions> = Replace<
         currentAt: GetComputableTypeWithDefault<T["currentAt"], Ref<DecimalSource>>;
         nextAt: GetComputableTypeWithDefault<T["nextAt"], Ref<DecimalSource>>;
         buyMax: GetComputableTypeWithDefault<T["buyMax"], true>;
+        spend: undefined extends T["spend"] ? (amountGained: DecimalSource) => void : T["spend"];
         roundUpCost: GetComputableTypeWithDefault<T["roundUpCost"], true>;
     }
 >;
@@ -121,6 +128,7 @@ export type GenericConversion = Replace<
         currentAt: ProcessedComputable<DecimalSource>;
         nextAt: ProcessedComputable<DecimalSource>;
         buyMax: ProcessedComputable<boolean>;
+        spend: (amountGained: DecimalSource) => void;
         roundUpCost: ProcessedComputable<boolean>;
     }
 >;
@@ -178,9 +186,14 @@ export function createConversion<T extends ConversionOptions>(
                     conversion.gainResource.value,
                     amountGained
                 );
-                // TODO just subtract cost?
-                conversion.baseResource.value = 0;
+                (conversion as GenericConversion).spend(amountGained);
                 conversion.onConvert?.(amountGained);
+            };
+        }
+
+        if (conversion.spend == null) {
+            conversion.spend = function () {
+                conversion.baseResource.value = 0;
             };
         }
 
@@ -421,15 +434,12 @@ export function createIndependentConversion<S extends ConversionOptions>(
                       unref((conversion as GenericConversion).currentGain)
                   )
                 : unref((conversion as GenericConversion).currentGain);
-            // TODO just subtract cost?
-            // Maybe by adding a cost function to scaling and nextAt just calls the cost function
-            // with 1 + currentGain
-            conversion.baseResource.value = 0;
+            (conversion as GenericConversion).spend(amountGained);
             conversion.onConvert?.(amountGained);
         });
 
         return conversion;
-    });
+    }) as Conversion<S>;
 }
 
 /**
