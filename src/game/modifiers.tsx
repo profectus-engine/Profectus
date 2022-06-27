@@ -1,8 +1,11 @@
 import "components/common/modifiers.css";
-import { CoercableComponent, jsx } from "features/feature";
-import Decimal, { DecimalSource, format } from "util/bignum";
-import { WithRequired } from "util/common";
-import { Computable, convertComputable, ProcessedComputable } from "util/computed";
+import type { CoercableComponent } from "features/feature";
+import { jsx } from "features/feature";
+import type { DecimalSource } from "util/bignum";
+import Decimal, { format } from "util/bignum";
+import type { WithRequired } from "util/common";
+import type { Computable, ProcessedComputable } from "util/computed";
+import { convertComputable } from "util/computed";
 import { renderJSX } from "util/vue";
 import { computed, unref } from "vue";
 

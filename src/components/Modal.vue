@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { FeatureNode } from "game/layers";
+import type { FeatureNode } from "game/layers";
 import { computed, ref, toRefs } from "vue";
 import Context from "./Context.vue";
 

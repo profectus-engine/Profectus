@@ -34,16 +34,18 @@
 </template>
 
 <script lang="ts">
-import Node from "components/Node.vue";
 import MarkNode from "components/MarkNode.vue";
-import { CoercableComponent, StyleValue, Visibility } from "features/feature";
+import Node from "components/Node.vue";
+import type { CoercableComponent, StyleValue } from "features/feature";
+import { Visibility } from "features/feature";
 import {
     computeOptionalComponent,
     isCoercableComponent,
     processedPropType,
     setupHoldToClick
 } from "util/vue";
-import { defineComponent, PropType, toRefs, unref } from "vue";
+import type { PropType } from "vue";
+import { defineComponent, toRefs, unref } from "vue";
 
 export default defineComponent({
     props: {

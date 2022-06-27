@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { Link } from "features/links/links";
+import type { Link } from "features/links/links";
 import { BoundsInjectionKey, NodesInjectionKey } from "game/layers";
 import { computed, inject, ref, toRef, watch } from "vue";
 import LinkVue from "./Link.vue";

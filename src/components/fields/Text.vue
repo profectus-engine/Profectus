@@ -26,11 +26,11 @@
 </template>
 
 <script setup lang="ts">
-import { CoercableComponent } from "features/feature";
+import "components/common/fields.css";
+import type { CoercableComponent } from "features/feature";
 import { coerceComponent } from "util/vue";
 import { computed, onMounted, ref, toRefs, unref } from "vue";
 import VueTextareaAutosize from "vue-textarea-autosize";
-import "components/common/fields.css";
 
 const _props = defineProps<{
     title?: CoercableComponent;

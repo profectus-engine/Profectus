@@ -1,41 +1,28 @@
-import {
-    Clickable,
-    ClickableOptions,
-    createClickable,
-    GenericClickable
-} from "features/clickables/clickable";
-import { GenericConversion } from "features/conversion";
-import {
-    CoercableComponent,
-    jsx,
-    JSXFunction,
-    OptionsFunc,
-    Replace,
-    setDefault
-} from "features/feature";
+import type { Clickable, ClickableOptions, GenericClickable } from "features/clickables/clickable";
+import { createClickable } from "features/clickables/clickable";
+import type { GenericConversion } from "features/conversion";
+import type { CoercableComponent, JSXFunction, OptionsFunc, Replace } from "features/feature";
+import { jsx, setDefault } from "features/feature";
 import { displayResource } from "features/resources/resource";
-import {
-    createTreeNode,
-    GenericTree,
-    GenericTreeNode,
-    TreeNode,
-    TreeNodeOptions
-} from "features/trees/tree";
-import { Modifier } from "game/modifiers";
-import { DefaultValue, Persistent, persistent } from "game/persistence";
+import type { GenericTree, GenericTreeNode, TreeNode, TreeNodeOptions } from "features/trees/tree";
+import { createTreeNode } from "features/trees/tree";
+import type { Modifier } from "game/modifiers";
+import type { Persistent } from "game/persistence";
+import { DefaultValue, persistent } from "game/persistence";
 import player from "game/player";
-import Decimal, { DecimalSource, format } from "util/bignum";
-import { WithRequired } from "util/common";
-import {
+import type { DecimalSource } from "util/bignum";
+import Decimal, { format } from "util/bignum";
+import type { WithRequired } from "util/common";
+import type {
     Computable,
-    convertComputable,
     GetComputableType,
     GetComputableTypeWithDefault,
-    processComputable,
     ProcessedComputable
 } from "util/computed";
+import { convertComputable, processComputable } from "util/computed";
 import { renderJSX } from "util/vue";
-import { computed, Ref, unref } from "vue";
+import type { Ref } from "vue";
+import { computed, unref } from "vue";
 import "./common.css";
 
 export interface ResetButtonOptions extends ClickableOptions {

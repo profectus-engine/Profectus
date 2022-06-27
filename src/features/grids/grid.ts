@@ -1,26 +1,19 @@
+import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import { Component, GatherProps, getUniqueID, setDefault, Visibility } from "features/feature";
 import GridComponent from "features/grids/Grid.vue";
-import {
-    CoercableComponent,
-    Component,
-    OptionsFunc,
-    GatherProps,
-    getUniqueID,
-    Replace,
-    setDefault,
-    StyleValue,
-    Visibility
-} from "features/feature";
+import type { Persistent, State } from "game/persistence";
+import { persistent } from "game/persistence";
 import { isFunction } from "util/common";
-import {
+import type {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
-    processComputable,
     ProcessedComputable
 } from "util/computed";
+import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { computed, Ref, unref } from "vue";
-import { State, Persistent, persistent } from "game/persistence";
+import type { Ref } from "vue";
+import { computed, unref } from "vue";
 
 export const GridType = Symbol("Grid");
 

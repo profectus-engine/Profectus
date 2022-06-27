@@ -26,23 +26,17 @@
 
 <script lang="tsx">
 import "components/common/features.css";
-import Node from "components/Node.vue";
 import MarkNode from "components/MarkNode.vue";
-import { jsx, StyleValue, Visibility } from "features/feature";
-import { displayResource, Resource } from "features/resources/resource";
-import { GenericUpgrade } from "features/upgrades/upgrade";
-import { DecimalSource } from "util/bignum";
+import Node from "components/Node.vue";
+import type { StyleValue } from "features/feature";
+import { jsx, Visibility } from "features/feature";
+import type { Resource } from "features/resources/resource";
+import { displayResource } from "features/resources/resource";
+import type { GenericUpgrade } from "features/upgrades/upgrade";
+import type { DecimalSource } from "util/bignum";
 import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "util/vue";
-import {
-    Component,
-    defineComponent,
-    PropType,
-    shallowRef,
-    toRefs,
-    unref,
-    UnwrapRef,
-    watchEffect
-} from "vue";
+import type { Component, PropType, UnwrapRef } from "vue";
+import { defineComponent, shallowRef, toRefs, unref, watchEffect } from "vue";
 
 export default defineComponent({
     props: {

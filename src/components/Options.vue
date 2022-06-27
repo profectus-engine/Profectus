@@ -23,6 +23,7 @@ import Modal from "components/Modal.vue";
 import projInfo from "data/projInfo.json";
 import rawThemes from "data/themes";
 import { jsx } from "features/feature";
+import Tooltip from "features/tooltips/Tooltip.vue";
 import player from "game/player";
 import settings, { settingFields } from "game/settings";
 import { camelToTitle } from "util/common";
@@ -30,7 +31,6 @@ import { coerceComponent, render } from "util/vue";
 import { computed, ref, toRefs } from "vue";
 import Select from "./fields/Select.vue";
 import Toggle from "./fields/Toggle.vue";
-import Tooltip from "features/tooltips/Tooltip.vue";
 
 const isOpen = ref(false);
 

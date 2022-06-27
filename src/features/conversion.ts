@@ -1,18 +1,16 @@
-import { BaseLayer } from "game/layers";
-import { Modifier } from "game/modifiers";
-import Decimal, { DecimalSource } from "util/bignum";
-import { WithRequired } from "util/common";
-import {
-    Computable,
-    convertComputable,
-    GetComputableTypeWithDefault,
-    processComputable,
-    ProcessedComputable
-} from "util/computed";
+import type { OptionsFunc, Replace } from "features/feature";
+import { setDefault } from "features/feature";
+import type { Resource } from "features/resources/resource";
+import type { BaseLayer } from "game/layers";
+import type { Modifier } from "game/modifiers";
+import type { DecimalSource } from "util/bignum";
+import Decimal from "util/bignum";
+import type { WithRequired } from "util/common";
+import type { Computable, GetComputableTypeWithDefault, ProcessedComputable } from "util/computed";
+import { convertComputable, processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { computed, Ref, unref } from "vue";
-import { OptionsFunc, Replace, setDefault } from "./feature";
-import { Resource } from "./resources/resource";
+import type { Ref } from "vue";
+import { computed, unref } from "vue";
 
 /**
  * An object that configures a {@link conversion}.

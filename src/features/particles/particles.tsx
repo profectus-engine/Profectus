@@ -1,17 +1,12 @@
+import type { EmitterConfigV3 } from "@pixi/particle-emitter";
+import { Emitter, upgradeConfig } from "@pixi/particle-emitter";
+import type { OptionsFunc, Replace, StyleValue } from "features/feature";
+import { Component, GatherProps, getUniqueID } from "features/feature";
 import ParticlesComponent from "features/particles/Particles.vue";
-import { Ref, shallowRef, unref } from "vue";
-import {
-    Component,
-    OptionsFunc,
-    GatherProps,
-    getUniqueID,
-    Replace,
-    StyleValue
-} from "features/feature";
-import { createLazyProxy } from "util/proxies";
 import { Application } from "pixi.js";
-import { Emitter, EmitterConfigV3, upgradeConfig } from "@pixi/particle-emitter";
-import { Computable, GetComputableType } from "util/computed";
+import type { Computable, GetComputableType } from "util/computed";
+import { createLazyProxy } from "util/proxies";
+import { Ref, shallowRef, unref } from "vue";
 
 export const ParticlesType = Symbol("Particles");
 

@@ -10,12 +10,13 @@
 </template>
 
 <script setup lang="ts">
-import { CoercableComponent } from "features/feature";
-import { Resource } from "features/resources/resource";
+import type { CoercableComponent } from "features/feature";
+import type { Resource } from "features/resources/resource";
+import ResourceVue from "features/resources/Resource.vue";
 import Decimal from "util/bignum";
 import { computeOptionalComponent } from "util/vue";
-import { computed, Ref, StyleValue, toRefs } from "vue";
-import ResourceVue from "features/resources/Resource.vue";
+import type { Ref, StyleValue } from "vue";
+import { computed, toRefs } from "vue";
 
 const _props = defineProps<{
     resource: Resource;
@@ -34,5 +35,3 @@ const showPrefix = computed(() => {
     return Decimal.lt(props.resource.value, "1e1000");
 });
 </script>
-
-<style scoped></style>

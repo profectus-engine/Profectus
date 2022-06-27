@@ -1,31 +1,20 @@
 import Col from "components/layout/Column.vue";
 import Row from "components/layout/Row.vue";
+import type { CoercableComponent, GenericComponent, JSXFunction } from "features/feature";
+import { Component as ComponentKey, GatherProps, jsx, Visibility } from "features/feature";
+import type { ProcessedComputable } from "util/computed";
+import { DoNotCache } from "util/computed";
+import type { Component, ComputedRef, DefineComponent, PropType, Ref, ShallowRef } from "vue";
 import {
-    CoercableComponent,
-    Component as ComponentKey,
-    GatherProps,
-    GenericComponent,
-    jsx,
-    JSXFunction,
-    Visibility
-} from "features/feature";
-import {
-    Component,
     computed,
-    ComputedRef,
-    DefineComponent,
     defineComponent,
     isRef,
     onUnmounted,
-    PropType,
     ref,
-    Ref,
-    ShallowRef,
     shallowRef,
     unref,
     watchEffect
 } from "vue";
-import { DoNotCache, ProcessedComputable } from "./computed";
 
 export function coerceComponent(
     component: CoercableComponent,

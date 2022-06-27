@@ -1,15 +1,17 @@
+import App from "App.vue";
+import projInfo from "data/projInfo.json";
+import type { GenericLayer } from "game/layers";
+import "game/notifications";
+import type { PlayerData } from "game/player";
+import type { Settings } from "game/settings";
+import type { Transient } from "game/state";
+import type { DecimalSource } from "util/bignum";
+import Decimal from "util/bignum";
+import { load } from "util/save";
 import { useRegisterSW } from "virtual:pwa-register/vue";
-import { App as VueApp, createApp, nextTick } from "vue";
+import type { App as VueApp } from "vue";
+import { createApp, nextTick } from "vue";
 import { useToast } from "vue-toastification";
-import App from "./App.vue";
-import projInfo from "./data/projInfo.json";
-import { GenericLayer } from "./game/layers";
-import { PlayerData } from "./game/player";
-import { Settings } from "./game/settings";
-import { Transient } from "./game/state";
-import Decimal, { DecimalSource } from "./util/bignum";
-import { load } from "./util/save";
-import "./game/notifications";
 
 document.title = projInfo.title;
 if (projInfo.id === "") {

@@ -1,29 +1,22 @@
 import ClickableComponent from "features/clickables/Clickable.vue";
-import { Resource } from "features/resources/resource";
-import { Persistent, persistent } from "game/persistence";
-import Decimal, { DecimalSource, format, formatWhole } from "util/bignum";
-import {
+import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import { Component, GatherProps, getUniqueID, jsx, setDefault, Visibility } from "features/feature";
+import type { Resource } from "features/resources/resource";
+import type { Persistent } from "game/persistence";
+import { persistent } from "game/persistence";
+import type { DecimalSource } from "util/bignum";
+import Decimal, { format, formatWhole } from "util/bignum";
+import type {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
-    processComputable,
     ProcessedComputable
 } from "util/computed";
+import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { coerceComponent, isCoercableComponent } from "util/vue";
-import { computed, Ref, unref } from "vue";
-import {
-    CoercableComponent,
-    Component,
-    OptionsFunc,
-    GatherProps,
-    getUniqueID,
-    jsx,
-    Replace,
-    setDefault,
-    StyleValue,
-    Visibility
-} from "./feature";
+import type { Ref } from "vue";
+import { computed, unref } from "vue";
 
 export const BuyableType = Symbol("Buyable");
 

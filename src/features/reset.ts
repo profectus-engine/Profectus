@@ -1,11 +1,14 @@
-import { OptionsFunc, getUniqueID, Replace } from "features/feature";
+import type { OptionsFunc, Replace } from "features/feature";
+import { getUniqueID } from "features/feature";
 import { globalBus } from "game/events";
-import { BaseLayer } from "game/layers";
-import { DefaultValue, Persistent, persistent, PersistentState } from "game/persistence";
+import type { BaseLayer } from "game/layers";
+import type { Persistent } from "game/persistence";
+import { DefaultValue, persistent, PersistentState } from "game/persistence";
+import type { Unsubscribe } from "nanoevents";
 import Decimal from "util/bignum";
-import { Computable, GetComputableType, processComputable } from "util/computed";
+import type { Computable, GetComputableType } from "util/computed";
+import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { Unsubscribe } from "nanoevents";
 import { isRef, unref } from "vue";
 
 export const ResetType = Symbol("Reset");

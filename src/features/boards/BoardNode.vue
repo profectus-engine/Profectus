@@ -168,14 +168,8 @@
 
 <script setup lang="ts">
 import themes from "data/themes";
-import {
-    BoardNode,
-    GenericBoardNodeAction,
-    GenericNodeType,
-    getNodeProperty,
-    ProgressDisplay,
-    Shape
-} from "features/boards/board";
+import type { BoardNode, GenericBoardNodeAction, GenericNodeType } from "features/boards/board";
+import { ProgressDisplay, getNodeProperty, Shape } from "features/boards/board";
 import { Visibility } from "features/feature";
 import settings from "game/settings";
 import { computed, ref, toRefs, unref, watch } from "vue";

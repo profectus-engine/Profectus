@@ -77,7 +77,7 @@ import { computed, ref, toRefs, watch } from "vue";
 import DangerButton from "./fields/DangerButton.vue";
 import FeedbackButton from "./fields/FeedbackButton.vue";
 import Text from "./fields/Text.vue";
-import { LoadablePlayerData } from "./SavesManager.vue";
+import type { LoadablePlayerData } from "./SavesManager.vue";
 
 const _props = defineProps<{
     save: LoadablePlayerData;

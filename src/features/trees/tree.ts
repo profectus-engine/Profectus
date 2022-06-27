@@ -1,30 +1,23 @@
-import {
-    CoercableComponent,
-    Component,
-    OptionsFunc,
-    GatherProps,
-    getUniqueID,
-    Replace,
-    setDefault,
-    StyleValue,
-    Visibility
-} from "features/feature";
-import { Link } from "features/links/links";
-import { GenericReset } from "features/reset";
-import { displayResource, Resource } from "features/resources/resource";
+import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import { Component, GatherProps, getUniqueID, setDefault, Visibility } from "features/feature";
+import type { Link } from "features/links/links";
+import type { GenericReset } from "features/reset";
+import type { Resource } from "features/resources/resource";
+import { displayResource } from "features/resources/resource";
 import TreeComponent from "features/trees/Tree.vue";
 import TreeNodeComponent from "features/trees/TreeNode.vue";
-import Decimal, { DecimalSource, format, formatWhole } from "util/bignum";
-import {
+import type { DecimalSource } from "util/bignum";
+import Decimal, { format, formatWhole } from "util/bignum";
+import type {
     Computable,
-    convertComputable,
     GetComputableType,
     GetComputableTypeWithDefault,
-    processComputable,
     ProcessedComputable
 } from "util/computed";
+import { convertComputable, processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { computed, ref, Ref, shallowRef, unref } from "vue";
+import type { Ref } from "vue";
+import { computed, ref, shallowRef, unref } from "vue";
 
 export const TreeNodeType = Symbol("TreeNode");
 export const TreeType = Symbol("Tree");

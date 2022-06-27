@@ -1,5 +1,6 @@
-import { computed, Ref } from "vue";
-import { isFunction } from "./common";
+import type { Ref } from "vue";
+import { computed } from "vue";
+import { isFunction } from "util/common";
 
 export const DoNotCache = Symbol("DoNotCache");
 

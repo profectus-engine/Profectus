@@ -1,5 +1,6 @@
-import Decimal, { DecimalSource } from "lib/break_eternity";
 import projInfo from "data/projInfo.json";
+import type { DecimalSource } from "lib/break_eternity";
+import Decimal from "lib/break_eternity";
 
 export default Decimal;
 

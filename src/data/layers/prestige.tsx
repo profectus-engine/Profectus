@@ -11,7 +11,7 @@ import { createResource } from "features/resources/resource";
 import { addTooltip } from "features/tooltips/tooltip";
 import { createResourceTooltip } from "features/trees/tree";
 import { createLayer } from "game/layers";
-import { DecimalSource } from "util/bignum";
+import type { DecimalSource } from "util/bignum";
 import { render } from "util/vue";
 import { createLayerTreeNode, createResetButton } from "../common";
 

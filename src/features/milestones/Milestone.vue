@@ -16,11 +16,13 @@
 
 <script lang="tsx">
 import "components/common/features.css";
-import { jsx, StyleValue, Visibility } from "features/feature";
-import { GenericMilestone } from "features/milestones/milestone";
+import Node from "components/Node.vue";
+import type { StyleValue } from "features/feature";
+import { jsx, Visibility } from "features/feature";
+import type { GenericMilestone } from "features/milestones/milestone";
 import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "util/vue";
-import { Component, defineComponent, shallowRef, toRefs, unref, UnwrapRef, watchEffect } from "vue";
-import Node from "../../components/Node.vue";
+import type { Component, UnwrapRef } from "vue";
+import { defineComponent, shallowRef, toRefs, unref, watchEffect } from "vue";
 
 export default defineComponent({
     props: {

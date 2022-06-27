@@ -36,29 +36,21 @@
 
 <script lang="ts">
 import themes from "data/themes";
-import { CoercableComponent, jsx, StyleValue } from "features/feature";
-import { Persistent } from "game/persistence";
+import type { CoercableComponent, StyleValue } from "features/feature";
+import { jsx } from "features/feature";
+import type { Persistent } from "game/persistence";
 import settings from "game/settings";
 import { Direction } from "util/common";
+import type { VueFeature } from "util/vue";
 import {
     coerceComponent,
     computeOptionalComponent,
     processedPropType,
     render,
-    unwrapRef,
-    VueFeature
+    unwrapRef
 } from "util/vue";
-import {
-    Component,
-    computed,
-    defineComponent,
-    PropType,
-    ref,
-    shallowRef,
-    toRefs,
-    unref,
-    watchEffect
-} from "vue";
+import type { Component, PropType } from "vue";
+import { computed, defineComponent, ref, shallowRef, toRefs, unref, watchEffect } from "vue";
 
 export default defineComponent({
     props: {

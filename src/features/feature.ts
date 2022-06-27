@@ -1,6 +1,7 @@
 import Decimal from "util/bignum";
 import { DoNotCache } from "util/computed";
-import { CSSProperties, DefineComponent, isRef } from "vue";
+import type { CSSProperties, DefineComponent } from "vue";
+import { isRef } from "vue";
 
 /**
  * A symbol to use as a key for a vue component a feature can be rendered with

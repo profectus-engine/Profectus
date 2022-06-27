@@ -1,24 +1,15 @@
 import ClickableComponent from "features/clickables/Clickable.vue";
-import {
-    CoercableComponent,
-    Component,
-    OptionsFunc,
-    GatherProps,
-    getUniqueID,
-    Replace,
-    setDefault,
-    StyleValue,
-    Visibility
-} from "features/feature";
-import { BaseLayer } from "game/layers";
-import { Unsubscribe } from "nanoevents";
-import {
+import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import { Component, GatherProps, getUniqueID, setDefault, Visibility } from "features/feature";
+import type { BaseLayer } from "game/layers";
+import type { Unsubscribe } from "nanoevents";
+import type {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
-    processComputable,
     ProcessedComputable
 } from "util/computed";
+import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { computed, unref } from "vue";
 

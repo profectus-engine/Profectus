@@ -1,6 +1,7 @@
-import Decimal from "util/bignum";
 import { isPlainObject } from "is-plain-object";
-import { ProxiedWithState, ProxyPath, ProxyState } from "util/proxies";
+import Decimal from "util/bignum";
+import type { ProxiedWithState } from "util/proxies";
+import { ProxyPath, ProxyState } from "util/proxies";
 import { reactive, unref } from "vue";
 import transientState from "./state";
 

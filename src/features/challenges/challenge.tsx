@@ -1,33 +1,26 @@
 import { isArray } from "@vue/shared";
 import Toggle from "components/fields/Toggle.vue";
 import ChallengeComponent from "features/challenges/Challenge.vue";
-import {
-    CoercableComponent,
-    Component,
-    OptionsFunc,
-    GatherProps,
-    getUniqueID,
-    jsx,
-    Replace,
-    setDefault,
-    StyleValue,
-    Visibility
-} from "features/feature";
-import { GenericReset } from "features/reset";
-import { Resource } from "features/resources/resource";
+import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import { Component, GatherProps, getUniqueID, jsx, setDefault, Visibility } from "features/feature";
+import type { GenericReset } from "features/reset";
+import type { Resource } from "features/resources/resource";
 import { globalBus } from "game/events";
-import { Persistent, persistent } from "game/persistence";
+import type { Persistent } from "game/persistence";
+import { persistent } from "game/persistence";
 import settings, { registerSettingField } from "game/settings";
-import Decimal, { DecimalSource } from "util/bignum";
-import {
+import type { DecimalSource } from "util/bignum";
+import Decimal from "util/bignum";
+import type {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
-    processComputable,
     ProcessedComputable
 } from "util/computed";
+import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { computed, Ref, unref, watch, WatchStopHandle } from "vue";
+import type { Ref, WatchStopHandle } from "vue";
+import { computed, unref, watch } from "vue";
 
 export const ChallengeType = Symbol("ChallengeType");
 

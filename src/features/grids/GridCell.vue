@@ -25,14 +25,16 @@
 <script lang="ts">
 import "components/common/features.css";
 import Node from "components/Node.vue";
-import { CoercableComponent, StyleValue, Visibility } from "features/feature";
+import type { CoercableComponent, StyleValue } from "features/feature";
+import { Visibility } from "features/feature";
 import {
     computeComponent,
     computeOptionalComponent,
     processedPropType,
     setupHoldToClick
 } from "util/vue";
-import { defineComponent, PropType, toRefs, unref } from "vue";
+import type { PropType } from "vue";
+import { defineComponent, toRefs, unref } from "vue";
 
 export default defineComponent({
     props: {

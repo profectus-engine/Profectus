@@ -2,23 +2,24 @@ import AchievementComponent from "features/achievements/Achievement.vue";
 import {
     CoercableComponent,
     Component,
-    OptionsFunc,
     GatherProps,
     getUniqueID,
+    OptionsFunc,
     Replace,
     setDefault,
     StyleValue,
     Visibility
 } from "features/feature";
 import "game/notifications";
-import { Persistent, persistent } from "game/persistence";
-import {
+import type { Persistent } from "game/persistence";
+import { persistent } from "game/persistence";
+import type {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
-    processComputable,
     ProcessedComputable
 } from "util/computed";
+import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { coerceComponent } from "util/vue";
 import { unref, watchEffect } from "vue";

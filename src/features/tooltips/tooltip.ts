@@ -1,23 +1,18 @@
-import TooltipComponent from "./Tooltip.vue";
-import {
-    CoercableComponent,
-    Component,
-    GatherProps,
-    Replace,
-    setDefault,
-    StyleValue
-} from "features/feature";
-import {
+import type { CoercableComponent, Replace, StyleValue } from "features/feature";
+import { Component, GatherProps, setDefault } from "features/feature";
+import { persistent } from "game/persistence";
+import { Direction } from "util/common";
+import type {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
-    processComputable,
     ProcessedComputable
 } from "util/computed";
-import { VueFeature } from "util/vue";
-import { nextTick, Ref, unref } from "vue";
-import { persistent } from "game/persistence";
-import { Direction } from "util/common";
+import { processComputable } from "util/computed";
+import type { VueFeature } from "util/vue";
+import type { Ref } from "vue";
+import { nextTick, unref } from "vue";
+import TooltipComponent from "./Tooltip.vue";
 
 declare module "@vue/runtime-dom" {
     interface CSSProperties {

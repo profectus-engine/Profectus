@@ -1,6 +1,6 @@
 import projInfo from "data/projInfo.json";
 import { Themes } from "data/themes";
-import { CoercableComponent } from "features/feature";
+import type { CoercableComponent } from "features/feature";
 import { globalBus } from "game/events";
 import LZString from "lz-string";
 import { hardReset } from "util/save";

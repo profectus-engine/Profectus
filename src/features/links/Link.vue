@@ -11,8 +11,8 @@
 </template>
 
 <script setup lang="ts">
-import { Link } from "features/links/links";
-import { FeatureNode } from "game/layers";
+import type { Link } from "features/links/links";
+import type { FeatureNode } from "game/layers";
 import { computed, toRefs } from "vue";
 
 const _props = defineProps<{

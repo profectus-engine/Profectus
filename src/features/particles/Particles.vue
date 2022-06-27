@@ -8,10 +8,11 @@
 </template>
 
 <script lang="tsx">
-import { StyleValue } from "features/feature";
+import type { StyleValue } from "features/feature";
 import { Application } from "pixi.js";
 import { processedPropType } from "util/vue";
-import { defineComponent, nextTick, onBeforeUnmount, onMounted, PropType, ref, unref } from "vue";
+import type { PropType } from "vue";
+import { defineComponent, nextTick, onBeforeUnmount, onMounted, ref, unref } from "vue";
 
 // TODO get typing support on the Particles component
 export default defineComponent({

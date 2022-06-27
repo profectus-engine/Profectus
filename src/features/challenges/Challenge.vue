@@ -32,23 +32,15 @@
 
 <script lang="tsx">
 import "components/common/features.css";
-import { GenericChallenge } from "features/challenges/challenge";
-import { jsx, StyleValue, Visibility } from "features/feature";
+import MarkNode from "components/MarkNode.vue";
+import Node from "components/Node.vue";
+import type { GenericChallenge } from "features/challenges/challenge";
+import type { StyleValue } from "features/feature";
+import { jsx, Visibility } from "features/feature";
 import { getHighNotifyStyle, getNotifyStyle } from "game/notifications";
 import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "util/vue";
-import {
-    Component,
-    computed,
-    defineComponent,
-    PropType,
-    shallowRef,
-    toRefs,
-    unref,
-    UnwrapRef,
-    watchEffect
-} from "vue";
-import Node from "components/Node.vue";
-import MarkNode from "components/MarkNode.vue";
+import type { Component, PropType, UnwrapRef } from "vue";
+import { computed, defineComponent, shallowRef, toRefs, unref, watchEffect } from "vue";
 
 export default defineComponent({
     props: {

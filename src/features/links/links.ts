@@ -1,14 +1,11 @@
-import LinksComponent from "./Links.vue";
-import { Component, OptionsFunc, GatherProps, Replace } from "features/feature";
-import { Position } from "game/layers";
-import {
-    Computable,
-    GetComputableType,
-    processComputable,
-    ProcessedComputable
-} from "util/computed";
+import type { OptionsFunc, Replace } from "features/feature";
+import { GatherProps, Component } from "features/feature";
+import type { Position } from "game/layers";
+import type { Computable, GetComputableType, ProcessedComputable } from "util/computed";
+import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { SVGAttributes } from "vue";
+import type { SVGAttributes } from "vue";
+import LinksComponent from "./Links.vue";
 
 export const LinksType = Symbol("Links");
 

@@ -7,11 +7,12 @@
 
 <script lang="tsx">
 import "components/common/table.css";
-import { GenericTreeNode, TreeBranch } from "features/trees/tree";
-import { coerceComponent, processedPropType, renderJSX, unwrapRef } from "util/vue";
-import { Component, defineComponent, shallowRef, toRefs, unref, watchEffect } from "vue";
-import Links from "features/links/Links.vue";
 import { jsx } from "features/feature";
+import Links from "features/links/Links.vue";
+import type { GenericTreeNode, TreeBranch } from "features/trees/tree";
+import { coerceComponent, processedPropType, renderJSX, unwrapRef } from "util/vue";
+import type { Component } from "vue";
+import { defineComponent, shallowRef, toRefs, unref, watchEffect } from "vue";
 
 export default defineComponent({
     props: {

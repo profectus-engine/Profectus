@@ -1,29 +1,28 @@
 import BoardComponent from "features/boards/Board.vue";
+import type { OptionsFunc, Replace, StyleValue } from "features/feature";
 import {
     Component,
-    OptionsFunc,
     findFeatures,
     GatherProps,
     getUniqueID,
-    Replace,
     setDefault,
-    StyleValue,
     Visibility
 } from "features/feature";
 import { globalBus } from "game/events";
-import { State, Persistent, PersistentState, persistent } from "game/persistence";
+import type { Persistent, State } from "game/persistence";
+import { persistent, PersistentState } from "game/persistence";
+import type { Unsubscribe } from "nanoevents";
 import { isFunction } from "util/common";
-import {
+import type {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
-    processComputable,
     ProcessedComputable
 } from "util/computed";
+import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { Unsubscribe } from "nanoevents";
 import { computed, Ref, unref } from "vue";
-import { Link } from "../links/links";
+import type { Link } from "../links/links";
 
 export const BoardType = Symbol("Board");
 

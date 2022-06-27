@@ -17,12 +17,13 @@
 
 <script lang="ts">
 import projInfo from "data/projInfo.json";
-import { CoercableComponent } from "features/feature";
-import { FeatureNode } from "game/layers";
-import { Persistent } from "game/persistence";
+import type { CoercableComponent } from "features/feature";
+import type { FeatureNode } from "game/layers";
+import type { Persistent } from "game/persistence";
 import player from "game/player";
 import { computeComponent, processedPropType, wrapRef } from "util/vue";
-import { computed, defineComponent, nextTick, PropType, Ref, toRefs, unref, watch } from "vue";
+import type { PropType, Ref } from "vue";
+import { computed, defineComponent, nextTick, toRefs, unref, watch } from "vue";
 import Context from "./Context.vue";
 
 export default defineComponent({

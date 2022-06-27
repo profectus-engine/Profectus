@@ -8,9 +8,10 @@
 </template>
 
 <script setup lang="ts">
-import { CoercableComponent } from "features/feature";
+import type { CoercableComponent } from "features/feature";
 import { computeComponent } from "util/vue";
-import { Ref, toRef } from "vue";
+import type { Ref } from "vue";
+import { toRef } from "vue";
 import Col from "./Column.vue";
 
 const props = defineProps<{

@@ -1,11 +1,13 @@
 import projInfo from "data/projInfo.json";
-import Decimal from "util/bignum";
+import player from "game/player";
+import type { Settings } from "game/settings";
+import settings from "game/settings";
+import state from "game/state";
 import { createNanoEvents } from "nanoevents";
-import { App, Ref, watch } from "vue";
-import { GenericLayer } from "./layers";
-import player from "./player";
-import settings, { Settings } from "./settings";
-import state from "./state";
+import Decimal from "util/bignum";
+import type { App, Ref } from "vue";
+import { watch } from "vue";
+import type { GenericLayer } from "./layers";
 
 export interface GlobalEvents {
     addLayer: (layer: GenericLayer, saveData: Record<string, unknown>) => void;

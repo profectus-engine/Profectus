@@ -51,18 +51,19 @@
 </template>
 
 <script setup lang="ts">
-import {
+import type {
     BoardData,
     BoardNode,
     BoardNodeLink,
     GenericBoardNodeAction,
-    GenericNodeType,
-    getNodeProperty
+    GenericNodeType
 } from "features/boards/board";
-import { StyleValue, Visibility } from "features/feature";
+import { getNodeProperty } from "features/boards/board";
+import type { StyleValue } from "features/feature";
+import { Visibility } from "features/feature";
 import { PersistentState } from "game/persistence";
-import { ProcessedComputable } from "util/computed";
-import { computed, Ref, ref, toRefs, unref } from "vue";
+import type { ProcessedComputable } from "util/computed";
+import { computed, ref, Ref, toRefs, unref } from "vue";
 import panZoom from "vue-panzoom";
 import BoardLinkVue from "./BoardLink.vue";
 import BoardNodeVue from "./BoardNode.vue";

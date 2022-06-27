@@ -29,10 +29,11 @@
 
 <script lang="tsx">
 import "components/common/features.css";
-import Node from "components/Node.vue";
 import MarkNode from "components/MarkNode.vue";
-import { GenericClickable } from "features/clickables/clickable";
-import { jsx, StyleValue, Visibility } from "features/feature";
+import Node from "components/Node.vue";
+import type { GenericClickable } from "features/clickables/clickable";
+import type { StyleValue } from "features/feature";
+import { jsx, Visibility } from "features/feature";
 import {
     coerceComponent,
     isCoercableComponent,
@@ -40,16 +41,8 @@ import {
     setupHoldToClick,
     unwrapRef
 } from "util/vue";
-import {
-    Component,
-    defineComponent,
-    PropType,
-    shallowRef,
-    toRefs,
-    unref,
-    UnwrapRef,
-    watchEffect
-} from "vue";
+import type { Component, PropType, UnwrapRef } from "vue";
+import { defineComponent, shallowRef, toRefs, unref, watchEffect } from "vue";
 
 export default defineComponent({
     props: {

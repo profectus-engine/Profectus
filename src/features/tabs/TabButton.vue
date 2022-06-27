@@ -20,7 +20,8 @@
 </template>
 
 <script lang="ts">
-import { CoercableComponent, StyleValue, Visibility } from "features/feature";
+import type { CoercableComponent, StyleValue } from "features/feature";
+import { Visibility } from "features/feature";
 import { getNotifyStyle } from "game/notifications";
 import { computeComponent, processedPropType, unwrapRef } from "util/vue";
 import { computed, defineComponent, toRefs, unref } from "vue";

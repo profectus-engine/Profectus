@@ -8,10 +8,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRefs, unref } from "vue";
-import Tooltip from "features/tooltips/Tooltip.vue";
 import "components/common/fields.css";
+import Tooltip from "features/tooltips/Tooltip.vue";
 import { Direction } from "util/common";
+import { computed, toRefs, unref } from "vue";
 
 const _props = defineProps<{
     title?: string;

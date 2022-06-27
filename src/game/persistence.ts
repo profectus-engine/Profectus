@@ -1,9 +1,12 @@
-import { globalBus } from "game/events";
-import Decimal, { DecimalSource } from "util/bignum";
-import { ProxyState } from "util/proxies";
 import { isArray } from "@vue/shared";
-import { isReactive, isRef, Ref, ref } from "vue";
-import { addingLayers, GenericLayer, persistentRefs } from "./layers";
+import { globalBus } from "game/events";
+import type { GenericLayer } from "game/layers";
+import { addingLayers, persistentRefs } from "game/layers";
+import type { DecimalSource } from "util/bignum";
+import Decimal from "util/bignum";
+import { ProxyState } from "util/proxies";
+import type { Ref } from "vue";
+import { isReactive, isRef, ref } from "vue";
 
 export const PersistentState = Symbol("PersistentState");
 export const DefaultValue = Symbol("DefaultValue");

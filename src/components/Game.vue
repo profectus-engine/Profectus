@@ -24,7 +24,8 @@
 
 <script setup lang="ts">
 import projInfo from "data/projInfo.json";
-import { GenericLayer, layers } from "game/layers";
+import type { GenericLayer } from "game/layers";
+import { layers } from "game/layers";
 import player from "game/player";
 import { computed, toRef, unref } from "vue";
 import Layer from "./Layer.vue";

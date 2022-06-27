@@ -15,7 +15,7 @@
 
 <script setup lang="ts">
 import "components/common/fields.css";
-import { CoercableComponent } from "features/feature";
+import type { CoercableComponent } from "features/feature";
 import { computeOptionalComponent, unwrapRef } from "util/vue";
 import { ref, toRef, watch } from "vue";
 import VueNextSelect from "vue-next-select";

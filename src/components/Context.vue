@@ -8,9 +8,9 @@ import {
     RegisterNodeInjectionKey,
     UnregisterNodeInjectionKey,
     NodesInjectionKey,
-    FeatureNode,
     BoundsInjectionKey
 } from "game/layers";
+import type { FeatureNode } from "game/layers";
 import { nextTick, onMounted, provide, ref } from "vue";
 
 const emit = defineEmits<{

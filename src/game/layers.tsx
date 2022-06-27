@@ -1,26 +1,28 @@
 import Modal from "components/Modal.vue";
-import {
+import type {
     CoercableComponent,
-    jsx,
     JSXFunction,
     OptionsFunc,
     Replace,
-    setDefault,
     StyleValue
 } from "features/feature";
-import { createNanoEvents, Emitter } from "nanoevents";
-import {
+import { jsx, setDefault } from "features/feature";
+import { globalBus } from "game/events";
+import type { Persistent } from "game/persistence";
+import { persistent } from "game/persistence";
+import player from "game/player";
+import type { Emitter } from "nanoevents";
+import { createNanoEvents } from "nanoevents";
+import type {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
-    processComputable,
     ProcessedComputable
 } from "util/computed";
+import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { InjectionKey, Ref, ref, shallowReactive, unref } from "vue";
-import { globalBus } from "./events";
-import { Persistent, persistent } from "./persistence";
-import player from "./player";
+import type { InjectionKey, Ref } from "vue";
+import { ref, shallowReactive, unref } from "vue";
 
 export interface FeatureNode {
     rect: DOMRect;

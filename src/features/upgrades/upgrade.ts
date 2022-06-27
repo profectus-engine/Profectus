@@ -1,30 +1,30 @@
-import UpgradeComponent from "features/upgrades/Upgrade.vue";
+import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
 import {
-    CoercableComponent,
     Component,
-    OptionsFunc,
     findFeatures,
     GatherProps,
     getUniqueID,
-    Replace,
     setDefault,
-    StyleValue,
     Visibility
 } from "features/feature";
-import { Resource } from "features/resources/resource";
-import { GenericLayer } from "game/layers";
-import Decimal, { DecimalSource } from "util/bignum";
+import type { Resource } from "features/resources/resource";
+import UpgradeComponent from "features/upgrades/Upgrade.vue";
+import type { GenericLayer } from "game/layers";
+import type { Persistent } from "game/persistence";
+import { persistent } from "game/persistence";
+import type { DecimalSource } from "util/bignum";
+import Decimal from "util/bignum";
 import { isFunction } from "util/common";
-import {
+import type {
     Computable,
     GetComputableType,
     GetComputableTypeWithDefault,
-    processComputable,
     ProcessedComputable
 } from "util/computed";
+import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { computed, Ref, unref } from "vue";
-import { persistent, Persistent } from "game/persistence";
+import type { Ref } from "vue";
+import { computed, unref } from "vue";
 
 export const UpgradeType = Symbol("Upgrade");
 

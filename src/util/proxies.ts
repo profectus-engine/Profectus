@@ -1,4 +1,4 @@
-import Decimal from "./bignum";
+import Decimal from "util/bignum";
 
 export const ProxyState = Symbol("ProxyState");
 export const ProxyPath = Symbol("ProxyPath");

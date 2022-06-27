@@ -101,12 +101,13 @@
 <script setup lang="ts">
 import Changelog from "data/Changelog.vue";
 import projInfo from "data/projInfo.json";
-import { ComponentPublicInstance, ref } from "vue";
+import Tooltip from "features/tooltips/Tooltip.vue";
+import { Direction } from "util/common";
+import type { ComponentPublicInstance } from "vue";
+import { ref } from "vue";
 import Info from "./Info.vue";
 import Options from "./Options.vue";
 import SavesManager from "./SavesManager.vue";
-import Tooltip from "features/tooltips/Tooltip.vue";
-import { Direction } from "util/common";
 
 const info = ref<ComponentPublicInstance<typeof Info> | null>(null);
 const savesManager = ref<ComponentPublicInstance<typeof SavesManager> | null>(null);
