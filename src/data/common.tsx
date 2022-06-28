@@ -248,3 +248,7 @@ export function createCollapsibleModifierSections(
     });
     return [jsxFunc, collapsed];
 }
+
+export function colorText(textToColor: string, color = "var(--accent2)"): string {
+    return `<span style="color: ${color}">${textToColor}</span>`;
+}
