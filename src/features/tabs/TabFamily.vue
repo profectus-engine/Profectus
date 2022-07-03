@@ -11,7 +11,11 @@
             tabStyle ?? []
         ]"
     >
-        <Sticky class="tab-buttons-container">
+        <Sticky
+            class="tab-buttons-container"
+            :class="unref(buttonContainerClasses)"
+            :style="unref(buttonContainerStyle)"
+        >
             <div class="tab-buttons" :class="{ floating }">
                 <TabButton
                     v-for="(button, id) in unref(tabs)"
@@ -61,7 +65,9 @@ export default defineComponent({
             required: true
         },
         style: processedPropType<StyleValue>(String, Object, Array),
-        classes: processedPropType<Record<string, boolean>>(Object)
+        classes: processedPropType<Record<string, boolean>>(Object),
+        buttonContainerStyle: processedPropType<StyleValue>(String, Object, Array),
+        buttonContainerClasses: processedPropType<Record<string, boolean>>(Object)
     },
     components: {
         Sticky,
