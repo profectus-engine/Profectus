@@ -1,15 +1,17 @@
 <template>
-    <div>
-        <span v-if="showPrefix">You have </span>
-        <ResourceVue :resource="resource" :color="color || 'white'" />
-        {{ resource.displayName
-        }}<!-- remove whitespace -->
-        <span v-if="effectComponent">, <component :is="effectComponent" /></span>
-        <br /><br />
-    </div>
+    <Sticky>
+        <div class="main-display">
+            <span v-if="showPrefix">You have </span>
+            <ResourceVue :resource="resource" :color="color || 'white'" />
+            {{ resource.displayName
+            }}<!-- remove whitespace -->
+            <span v-if="effectComponent">, <component :is="effectComponent" /></span>
+        </div>
+    </Sticky>
 </template>
 
 <script setup lang="ts">
+import Sticky from "components/layout/Sticky.vue";
 import type { CoercableComponent } from "features/feature";
 import type { Resource } from "features/resources/resource";
 import ResourceVue from "features/resources/Resource.vue";
@@ -35,3 +37,11 @@ const showPrefix = computed(() => {
     return Decimal.lt(props.resource.value, "1e1000");
 });
 </script>
+
+<style>
+.main-display {
+    height: 50px;
+    line-height: 50px;
+    margin-bottom: 20px;
+}
+</style>
