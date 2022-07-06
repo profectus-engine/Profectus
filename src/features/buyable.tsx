@@ -26,6 +26,7 @@ export type BuyableDisplay =
           title?: CoercableComponent;
           description: CoercableComponent;
           effectDisplay?: CoercableComponent;
+          showAmount?: boolean;
       };
 
 export interface BuyableOptions {
@@ -170,15 +171,6 @@ export function createBuyable<T extends BuyableOptions>(
                 const Title = coerceComponent(currDisplay.title || "", "h3");
                 const Description = coerceComponent(currDisplay.description);
                 const EffectDisplay = coerceComponent(currDisplay.effectDisplay || "");
-                const amountDisplay =
-                    unref(genericBuyable.purchaseLimit) === Decimal.dInf ? (
-                        <>Amount: {formatWhole(genericBuyable.amount.value)}</>
-                    ) : (
-                        <>
-                            Amount: {formatWhole(genericBuyable.amount.value)} /{" "}
-                            {formatWhole(unref(genericBuyable.purchaseLimit))}
-                        </>
-                    );
 
                 return (
                     <span>
@@ -188,10 +180,19 @@ export function createBuyable<T extends BuyableOptions>(
                             </div>
                         ) : null}
                         <Description />
-                        <div>
-                            <br />
-                            {amountDisplay}
-                        </div>
+                        {currDisplay.showAmount === false ? null : (
+                            <div>
+                                <br />
+                                {unref(genericBuyable.purchaseLimit) === Decimal.dInf ? (
+                                    <>Amount: {formatWhole(genericBuyable.amount.value)}</>
+                                ) : (
+                                    <>
+                                        Amount: {formatWhole(genericBuyable.amount.value)} /{" "}
+                                        {formatWhole(unref(genericBuyable.purchaseLimit))}
+                                    </>
+                                )}
+                            </div>
+                        )}
                         {currDisplay.effectDisplay ? (
                             <div>
                                 <br />
