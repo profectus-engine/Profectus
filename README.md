@@ -13,7 +13,7 @@ npm install
 
 ### Hosts dev server and hot-reloads modules as they're changed
 ```
-npm starts
+npm start
 ```
 
 ### Compiles and minifies for production
