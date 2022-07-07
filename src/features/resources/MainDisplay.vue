@@ -1,11 +1,18 @@
 <template>
     <Sticky>
-        <div class="main-display">
-            <span v-if="showPrefix">You have </span>
-            <ResourceVue :resource="resource" :color="color || 'white'" />
-            {{ resource.displayName
-            }}<!-- remove whitespace -->
-            <span v-if="effectComponent">, <component :is="effectComponent" /></span>
+        <div
+            class="main-display-container"
+            :style="{ height: `${(effectRef?.$el.clientHeight ?? 0) + 50}px` }"
+        >
+            <div class="main-display">
+                <span v-if="showPrefix">You have </span>
+                <ResourceVue :resource="resource" :color="color || 'white'" />
+                {{ resource.displayName
+                }}<!-- remove whitespace -->
+                <span v-if="effectComponent"
+                    >, <component :is="effectComponent" ref="effectRef"
+                /></span>
+            </div>
         </div>
     </Sticky>
 </template>
@@ -17,7 +24,7 @@ import type { Resource } from "features/resources/resource";
 import ResourceVue from "features/resources/Resource.vue";
 import Decimal from "util/bignum";
 import { computeOptionalComponent } from "util/vue";
-import type { Ref, StyleValue } from "vue";
+import { ComponentPublicInstance, ref, Ref, StyleValue } from "vue";
 import { computed, toRefs } from "vue";
 
 const _props = defineProps<{
@@ -29,6 +36,8 @@ const _props = defineProps<{
 }>();
 const props = toRefs(_props);
 
+const effectRef = ref<ComponentPublicInstance | null>(null);
+
 const effectComponent = computeOptionalComponent(
     props.effectDisplay as Ref<CoercableComponent | undefined>
 );
@@ -39,9 +48,9 @@ const showPrefix = computed(() => {
 </script>
 
 <style>
-.main-display {
-    height: 50px;
-    line-height: 50px;
+.main-display-container {
+    vertical-align: middle;
     margin-bottom: 20px;
+    display: flex;
 }
 </style>
