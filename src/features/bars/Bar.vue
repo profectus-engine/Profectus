@@ -21,12 +21,9 @@
                 unref(borderStyle) ?? {}
             ]"
         >
-            <component
-                v-if="component"
-                class="overlayText"
-                :style="unref(textStyle)"
-                :is="component"
-            />
+            <span v-if="component" class="overlayText" :style="unref(textStyle)">
+                <component :is="component" />
+            </span>
         </div>
         <div
             class="border"
