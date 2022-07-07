@@ -270,7 +270,7 @@ export function createLinearScaling(
             }
 
             return Decimal.sub(baseAmount, unref(processedBase))
-                .sub(1)
+                // .sub(1)
                 .times(unref(processedCoefficient))
                 .add(1);
         },
