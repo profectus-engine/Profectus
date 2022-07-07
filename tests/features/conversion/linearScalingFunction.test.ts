@@ -33,6 +33,8 @@ describe("LinearScalingFunction", () => {
     it.each([
         [10, 1],
         [12, 2],
+        [14, 3],
+        [15, 3],
         [20, 6]
     ])(
         "Turns %i bugs into an expectedGain of %i",
@@ -51,8 +53,9 @@ describe("LinearScalingFunction", () => {
     it.each([
         [-1, 0],
         [9, 0],
+        [10, 10],
         [11, 10],
-        [17, 12],
+        [17, 16],
         [21, 20]
     ])(
         "Calculates for %i bugs the currentAt at %i",
@@ -73,7 +76,7 @@ describe("LinearScalingFunction", () => {
         [9, 10],
         [10, 12],
         [11, 12],
-        [14, 20]
+        [14, 16]
     ])(
         "Calculates for %i bugs the nextAt at %i",
         async (bugCount: number, expectedNextAt: number) => {
@@ -81,10 +84,10 @@ describe("LinearScalingFunction", () => {
             bugResource.value = Decimal.add(bugCount, bugResource.value);
 
             // Act
-            const nextAT = bugsToHeadachesConversion.nextAt.value;
+            const nextAt = bugsToHeadachesConversion.nextAt.value;
 
             // Assert
-            expect(nextAT).toEqual(new Decimal(expectedNextAt));
+            expect(nextAt).toEqual(new Decimal(expectedNextAt));
         }
     );
 });

@@ -270,12 +270,14 @@ export function createLinearScaling(
             }
 
             return Decimal.sub(baseAmount, unref(processedBase))
-                // .sub(1)
                 .times(unref(processedCoefficient))
                 .add(1);
         },
         currentAt(conversion) {
             let current: DecimalSource = unref(conversion.currentGain);
+            if (Decimal.lte(current, 0)) {
+                return 0;
+            }
             if (conversion.gainModifier) {
                 current = conversion.gainModifier.revert(current);
             }
