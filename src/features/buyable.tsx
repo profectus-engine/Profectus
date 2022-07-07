@@ -24,7 +24,7 @@ export type BuyableDisplay =
     | CoercableComponent
     | {
           title?: CoercableComponent;
-          description: CoercableComponent;
+          description?: CoercableComponent;
           effectDisplay?: CoercableComponent;
           showAmount?: boolean;
       };
@@ -169,7 +169,7 @@ export function createBuyable<T extends BuyableOptions>(
             if (currDisplay != null && buyable.cost != null && buyable.resource != null) {
                 const genericBuyable = buyable as GenericBuyable;
                 const Title = coerceComponent(currDisplay.title || "", "h3");
-                const Description = coerceComponent(currDisplay.description);
+                const Description = coerceComponent(currDisplay.description || "");
                 const EffectDisplay = coerceComponent(currDisplay.effectDisplay || "");
 
                 return (
@@ -179,7 +179,7 @@ export function createBuyable<T extends BuyableOptions>(
                                 <Title />
                             </div>
                         ) : null}
-                        <Description />
+                        {currDisplay.description ? <Description /> : null}
                         {currDisplay.showAmount === false ? null : (
                             <div>
                                 <br />
