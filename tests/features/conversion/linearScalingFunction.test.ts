@@ -48,6 +48,8 @@ describe("LinearScalingFunction", () => {
     );
 
     it.each([
+        [-1, 0],
+        [9, 0],
         [11, 10],
         [17, 12],
         [21, 20]
