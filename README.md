@@ -13,7 +13,7 @@ npm install
 
 ### Hosts dev server and hot-reloads modules as they're changed
 ```
-npm starts
+npm start
 ```
 
 ### Compiles and minifies for production
@@ -29,4 +29,9 @@ npm run preview
 ### Lints and fixes files
 ```
 npm run lint
+```
+
+### Runs the tests using vite-jest
+```
+npm run test
 ```
