@@ -30,3 +30,8 @@ npm run preview
 ```
 npm run lint
 ```
+
+### Runs the tests using vite-jest
+```
+npm run test
+```
