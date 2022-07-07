@@ -7,6 +7,7 @@ import {
 import { createResource, Resource } from "features/resources/resource";
 import Decimal, { DecimalSource } from "util/bignum";
 import { it, beforeEach, describe, expect } from "@jest/globals";
+
 /**
  * In this test suite `bugs` are converted to `headaches` using the default scalingFunction.
  * The example values from the documentation are tested on `currentGain()`, `currentAt()` and `nextAt()`
@@ -34,7 +35,7 @@ describe("LinearScalingFunction", () => {
         [12, 2],
         [20, 6]
     ])(
-        "Is documentation example correct for currentGain?",
+        "Turns %i bugs into an expectedGain of %i",
         async (bugCount: number, expectedGain: number) => {
             // Arrange
             bugResource.value = Decimal.add(bugCount, bugResource.value);
@@ -54,7 +55,7 @@ describe("LinearScalingFunction", () => {
         [17, 12],
         [21, 20]
     ])(
-        "Is documentation example correct for currentAt?",
+        "Calculates for %i bugs the currentAt at %i",
         async (bugCount: number, expectedAt: number) => {
             // Arrange
             bugResource.value = Decimal.add(bugCount, bugResource.value);
@@ -74,7 +75,7 @@ describe("LinearScalingFunction", () => {
         [11, 12],
         [14, 20]
     ])(
-        "Is documentation example correct for nextAt?",
+        "Calculates for %i bugs the nextAt at %i",
         async (bugCount: number, expectedNextAt: number) => {
             // Arrange
             bugResource.value = Decimal.add(bugCount, bugResource.value);
