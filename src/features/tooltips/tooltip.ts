@@ -85,13 +85,13 @@ export function addTooltip<T extends TooltipOptions>(
 
         const elementComponent = element[Component];
         element[Component] = TooltipComponent;
-        const elementGratherProps = element[GatherProps].bind(element);
+        const elementGatherProps = element[GatherProps].bind(element);
         element[GatherProps] = function gatherTooltipProps(this: GenericTooltip) {
             const { display, classes, style, direction, xoffset, yoffset, pinned } = this;
             return {
                 element: {
                     [Component]: elementComponent,
-                    [GatherProps]: elementGratherProps
+                    [GatherProps]: elementGatherProps
                 },
                 display,
                 classes,

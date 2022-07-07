@@ -34,10 +34,10 @@
     </div>
 </template>
 
-<script lang="ts">
+<script lang="tsx">
 import themes from "data/themes";
-import type { CoercableComponent, StyleValue } from "features/feature";
-import { jsx } from "features/feature";
+import type { CoercableComponent } from "features/feature";
+import { jsx, StyleValue } from "features/feature";
 import type { Persistent } from "game/persistence";
 import settings from "game/settings";
 import { Direction } from "util/common";
@@ -46,15 +46,15 @@ import {
     coerceComponent,
     computeOptionalComponent,
     processedPropType,
-    render,
+    renderJSX,
     unwrapRef
 } from "util/vue";
 import type { Component, PropType } from "vue";
-import { computed, defineComponent, ref, shallowRef, toRefs, unref, watchEffect } from "vue";
+import { computed, defineComponent, ref, shallowRef, toRefs, unref } from "vue";
 
 export default defineComponent({
     props: {
-        element: processedPropType<VueFeature>(Object),
+        element: Object as PropType<VueFeature>,
         display: {
             type: processedPropType<CoercableComponent>(Object, String, Function),
             required: true
@@ -73,14 +73,14 @@ export default defineComponent({
         const isShown = computed(() => (unwrapRef(pinned) || isHovered.value) && comp.value);
         const comp = computeOptionalComponent(display);
 
-        const elementComp = shallowRef<Component | "" | null>(null);
-        watchEffect(() => {
-            const currComponent = unwrapRef(element);
-            elementComp.value =
-                currComponent == null
-                    ? null
-                    : coerceComponent(jsx(() => render(currComponent) as JSX.Element));
-        });
+        const elementComp = shallowRef<Component | "" | null>(
+            coerceComponent(
+                jsx(() => {
+                    const currComponent = unwrapRef(element);
+                    return currComponent == null ? "" : renderJSX(currComponent);
+                })
+            )
+        );
 
         function togglePinned(e: MouseEvent) {
             const isPinned = pinned as unknown as Persistent<boolean> | undefined; // Vue typing :/
