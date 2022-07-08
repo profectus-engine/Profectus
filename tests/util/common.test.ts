@@ -1,5 +1,5 @@
-import { jest, describe, expect, test } from "@jest/globals";
 import { camelToTitle, isFunction } from "util/common";
+import { describe, expect, test, vi } from "vitest";
 
 describe("camelToTitle", () => {
     test("Capitalizes first letter in single word", () =>
@@ -10,7 +10,7 @@ describe("camelToTitle", () => {
 });
 
 describe("isFunction", () => {
-    test("Given function returns true", () => expect(isFunction(jest.fn())).toBe(true));
+    test("Given function returns true", () => expect(isFunction(vi.fn())).toBe(true));
 
     // Go through all primitives and basic types
     test("Given a string returns false", () => expect(isFunction("test")).toBe(false));
