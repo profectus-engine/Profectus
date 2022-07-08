@@ -6,6 +6,7 @@ import { globalBus } from "game/events";
 import "game/notifications";
 import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
+import player from "game/player";
 import settings, { registerSettingField } from "game/settings";
 import { camelToTitle } from "util/common";
 import type {
@@ -132,6 +133,7 @@ export function createMilestone<T extends MilestoneOptions>(
         if (milestone.shouldEarn) {
             const genericMilestone = milestone as GenericMilestone;
             watchEffect(() => {
+                if (settings.active !== player.id) return;
                 if (
                     !genericMilestone.earned.value &&
                     unref(genericMilestone.visibility) === Visibility.Visible &&

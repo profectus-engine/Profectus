@@ -13,6 +13,8 @@ import {
 import "game/notifications";
 import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
+import player from "game/player";
+import settings from "game/settings";
 import type {
     Computable,
     GetComputableType,
@@ -99,6 +101,7 @@ export function createAchievement<T extends AchievementOptions>(
         if (achievement.shouldEarn) {
             const genericAchievement = achievement as GenericAchievement;
             watchEffect(() => {
+                if (settings.active !== player.id) return;
                 if (
                     !genericAchievement.earned.value &&
                     unref(genericAchievement.visibility) === Visibility.Visible &&
