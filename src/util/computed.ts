@@ -39,6 +39,8 @@ export function processComputable<T, S extends keyof ComputableKeysOf<T>>(
         obj[key] = computed(computable.bind(obj));
     } else if (isFunction(computable)) {
         obj[key] = computable.bind(obj);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (obj[key] as any)[DoNotCache] = true;
     }
 }
 
