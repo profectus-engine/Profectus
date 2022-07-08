@@ -17,7 +17,6 @@
     "sourceMap": true,
     "baseUrl": "src",
     "types": [
-      "jest",
       "vite/client"
     ],
     "lib": [
