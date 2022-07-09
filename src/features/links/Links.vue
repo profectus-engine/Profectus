@@ -16,7 +16,7 @@
 import type { Link } from "features/links/links";
 import type { FeatureNode } from "game/layers";
 import { BoundsInjectionKey, NodesInjectionKey } from "game/layers";
-import { computed, inject, ref, toRef, watch } from "vue";
+import { computed, inject, onMounted, ref, toRef, watch } from "vue";
 import LinkVue from "./Link.vue";
 
 const _props = defineProps<{ links?: Link[] }>();
@@ -26,11 +26,12 @@ const resizeListener = ref<Element | null>(null);
 
 const nodes = inject(NodesInjectionKey, ref<Record<string, FeatureNode | undefined>>({}));
 const outerBoundingRect = inject(BoundsInjectionKey, ref<DOMRect | undefined>(undefined));
-const boundingRect = ref<DOMRect | undefined>(undefined);
+const boundingRect = ref<DOMRect | undefined>(resizeListener.value?.getBoundingClientRect());
 watch(
-    [outerBoundingRect],
+    outerBoundingRect,
     () => (boundingRect.value = resizeListener.value?.getBoundingClientRect())
 );
+onMounted(() => (boundingRect.value = resizeListener.value?.getBoundingClientRect()));
 
 const validLinks = computed(() => {
     const n = nodes.value;
