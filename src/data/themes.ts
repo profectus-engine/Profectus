@@ -1,3 +1,4 @@
+/** A object of all CSS variables determined by the current theme. */
 export interface ThemeVars {
     "--foreground": string;
     "--background": string;
@@ -19,14 +20,20 @@ export interface ThemeVars {
     "--feature-margin": string;
 }
 
+/** An object representing a theme the player can use to change the look of the game. */
 export interface Theme {
+    /** The values of the theme's CSS variables. */
     variables: ThemeVars;
+    /** Whether or not tabs should "float" in the center of their container. */
     floatingTabs: boolean;
+    /** Whether or not adjacent features should merge together - removing the margin between them, and only applying the border radius to the first and last elements in the row or column. */
     mergeAdjacent: boolean;
+    /** Whether or not to show a pin icon on pinned tooltips. */
     showPin: boolean;
 }
 
 declare module "@vue/runtime-dom" {
+    /** Make CSS properties accept any CSS variables usually controlled by a theme. */
     // eslint-disable-next-line @typescript-eslint/no-empty-interface
     interface CSSProperties extends Partial<ThemeVars> {}
 
@@ -62,6 +69,7 @@ const defaultTheme: Theme = {
     showPin: true
 };
 
+/** An enum of all available themes and their internal IDs. The keys are their display names. */
 export enum Themes {
     Classic = "classic",
     Paper = "paper",
@@ -69,6 +77,7 @@ export enum Themes {
     Aqua = "aqua"
 }
 
+/** A dictionary of all available themes. */
 export default {
     classic: defaultTheme,
     paper: {
