@@ -48,6 +48,13 @@ export interface LayerEvents {
 }
 
 export const layers: Record<string, Readonly<GenericLayer> | undefined> = shallowReactive({});
+
+declare global {
+    /** Augment the window object so the layers can be accessed from the console */
+    interface Window {
+        layers: Record<string, Readonly<GenericLayer> | undefined>;
+    }
+}
 window.layers = layers;
 
 declare module "@vue/runtime-dom" {

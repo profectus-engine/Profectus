@@ -126,6 +126,13 @@ const playerHandler: ProxyHandler<Record<PropertyKey, any>> = {
         return Object.getOwnPropertyDescriptor(target[ProxyState], key);
     }
 };
+
+declare global {
+    /** Augment the window object so the player can be accessed from the console */
+    interface Window {
+        player: Player;
+    }
+}
 export default window.player = new Proxy(
     { [ProxyState]: state, [ProxyPath]: ["player"] },
     playerHandler

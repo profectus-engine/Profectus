@@ -30,7 +30,29 @@ watch(
     },
     { deep: true }
 );
+
+declare global {
+    /**
+     * Augment the window object so the settings, and hard resetting the settings,
+     * can be accessed from the console
+     */
+    interface Window {
+        settings: Settings;
+        hardResetSettings: VoidFunction;
+    }
+}
 export default window.settings = state as Settings;
+export const hardResetSettings = (window.hardResetSettings = () => {
+    const settings = {
+        active: "",
+        saves: [],
+        showTPS: true,
+        theme: Themes.Nordic
+    };
+    globalBus.emit("loadSettings", settings);
+    Object.assign(state, settings);
+    hardReset();
+});
 
 export function loadSettings(): void {
     try {
@@ -58,18 +80,6 @@ export function loadSettings(): void {
         // eslint-disable-next-line no-empty
     } catch {}
 }
-
-export const hardResetSettings = (window.hardResetSettings = () => {
-    const settings = {
-        active: "",
-        saves: [],
-        showTPS: true,
-        theme: Themes.Nordic
-    };
-    globalBus.emit("loadSettings", settings);
-    Object.assign(state, settings);
-    hardReset();
-});
 
 export const settingFields: CoercableComponent[] = reactive([]);
 export function registerSettingField(component: CoercableComponent) {
