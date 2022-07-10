@@ -17,7 +17,8 @@
     "sourceMap": true,
     "baseUrl": "src",
     "types": [
-      "vite/client"
+      "vite/client",
+      "node"
     ],
     "lib": [
       "esnext",
@@ -29,9 +30,7 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
-    "src/**/*.vue",
-    "tests/**/*.ts",
-    "tests/**/*.tsx"
+    "src/**/*.vue"
   ],
   "exclude": [
     "node_modules"

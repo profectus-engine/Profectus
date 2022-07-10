@@ -16,6 +16,11 @@ declare global {
         vue: VueApp;
         projInfo: typeof projInfo;
     }
+
+    /** Fix for typedoc treating import functions as taking AssertOptions instead of GlobOptions */
+    interface AssertOptions {
+        as: string;
+    }
 }
 
 document.title = projInfo.title;
