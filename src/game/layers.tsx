@@ -35,7 +35,7 @@ export interface FeatureNode {
  * An injection key that a {@link Context} will use to provide a function that registers a {@link FeatureNode} with the given id and HTML element.
  */
 export const RegisterNodeInjectionKey: InjectionKey<(id: string, element: HTMLElement) => void> =
-    Symbol("RegisterNode"); 
+    Symbol("RegisterNode");
 /**
  * An injection key that a {@link Context} will use to provide a function that unregisters a {@link FeatureNode} with the given id.
  */
@@ -196,7 +196,9 @@ export function createLayer<T extends LayerOptions>(
         const layer = {} as T & Partial<BaseLayer>;
         const emitter = (layer.emitter = createNanoEvents<LayerEvents>());
         layer.on = emitter.on.bind(emitter);
-        layer.emit = emitter.emit.bind(emitter);
+        layer.emit = emitter.emit.bind(emitter) as <K extends keyof LayerEvents>(
+            ...args: [K, ...Parameters<LayerEvents[K]>]
+        ) => void;
         layer.nodes = ref({});
         layer.id = id;
 

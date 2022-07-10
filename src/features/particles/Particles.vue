@@ -46,7 +46,7 @@ export default defineComponent({
                     backgroundAlpha: 0
                 });
                 resizeListener.value?.appendChild(app.value.view);
-                props.onInit(app.value as Application);
+                props.onInit?.(app.value as Application);
             }
             updateBounds();
             if (props.onHotReload) {
