@@ -32,22 +32,22 @@ export interface FeatureNode {
 }
 
 /**
- * An injection key that a {@link Context} will use to provide a function that registers a {@link FeatureNode} with the given id and HTML element.
+ * An injection key that a {@link ContextComponent} will use to provide a function that registers a {@link FeatureNode} with the given id and HTML element.
  */
 export const RegisterNodeInjectionKey: InjectionKey<(id: string, element: HTMLElement) => void> =
     Symbol("RegisterNode");
 /**
- * An injection key that a {@link Context} will use to provide a function that unregisters a {@link FeatureNode} with the given id.
+ * An injection key that a {@link ContextComponent} will use to provide a function that unregisters a {@link FeatureNode} with the given id.
  */
 export const UnregisterNodeInjectionKey: InjectionKey<(id: string) => void> =
     Symbol("UnregisterNode");
 /**
- * An injection key that a {@link Context} will use to provide a ref to a map of all currently registered {@link FeatureNode}s.
+ * An injection key that a {@link ContextComponent} will use to provide a ref to a map of all currently registered {@link FeatureNode}s.
  */
 export const NodesInjectionKey: InjectionKey<Ref<Record<string, FeatureNode | undefined>>> =
     Symbol("Nodes");
 /**
- * An injection key that a {@link Context} will use to provide a ref to a bounding rect of the Context.
+ * An injection key that a {@link ContextComponent} will use to provide a ref to a bounding rect of the Context.
  */
 export const BoundsInjectionKey: InjectionKey<Ref<DOMRect | undefined>> = Symbol("Bounds");
 
@@ -93,14 +93,14 @@ export interface Position {
 /**
  * An object that configures a {@link Layer}.
  * Even moreso than features, the developer is expected to include extra properties in this object.
- * All {@link persistent} refs must be included somewhere within the layer object.
+ * All {@link game/persistence.Persistent} refs must be included somewhere within the layer object.
  */
 export interface LayerOptions {
     /** The color of the layer, used to theme the entire layer's display. */
     color?: Computable<string>;
     /**
      * The layout of this layer's features.
-     * When the layer is open in {@link player.tabs}, this is the content that is display.
+     * When the layer is open in {@link game/player.PlayerData.tabs}, this is the content that is display.
      */
     display: Computable<CoercableComponent>;
     /** An object of classes that should be applied to the display. */
@@ -109,7 +109,7 @@ export interface LayerOptions {
     style?: Computable<StyleValue>;
     /**
      * The name of the layer, used on minimized tabs.
-     * Defaults to {@link id}.
+     * Defaults to {@link BaseLayer.id}.
      */
     name?: Computable<string>;
     /**
@@ -119,7 +119,7 @@ export interface LayerOptions {
     minimizable?: Computable<boolean>;
     /**
      * Whether or not to force the go back button to be hidden.
-     * If true, go back will be hidden regardless of {@link projInfo.allowGoBack}.
+     * If true, go back will be hidden regardless of {@link data/projInfo.allowGoBack}.
      */
     forceHideGoBack?: Computable<boolean>;
     /**
@@ -146,7 +146,7 @@ export interface BaseLayer {
     on: OmitThisParameter<Emitter<LayerEvents>["on"]>;
     /** A function to emit a {@link LayerEvents} event to this layer. */
     emit: <K extends keyof LayerEvents>(...args: [K, ...Parameters<LayerEvents[K]>]) => void;
-    /** A map of {@link FeatureNode}s present in this layer's {@link Context} component. */
+    /** A map of {@link FeatureNode}s present in this layer's {@link ContextComponent} component. */
     nodes: Ref<Record<string, FeatureNode | undefined>>;
 }
 
@@ -230,8 +230,8 @@ export function createLayer<T extends LayerOptions>(
 /**
  * Enables a layer object, so it will be updated every tick.
  * Note that accessing a layer/its properties does NOT require it to be enabled.
- * For dynamic layers you can call this function and {@link removeLayer} as necessary. Just make sure {@link projEntry.getInitialLayers} will provide an accurate list of layers based on the player data object.
- * For static layers just make {@link projEntry.getInitialLayers} return all the layers.
+ * For dynamic layers you can call this function and {@link removeLayer} as necessary. Just make sure {@link data/projEntry.getInitialLayers} will provide an accurate list of layers based on the player data object.
+ * For static layers just make {@link data/projEntry.getInitialLayers} return all the layers.
  * @param layer The layer to add.
  * @param player The player data object, which will have a data object for this layer.
  */
@@ -291,7 +291,7 @@ export function reloadLayer(layer: GenericLayer): void {
 }
 
 /**
- * Utility function for creating a modal that display's a {@link layer.display}.
+ * Utility function for creating a modal that display's a {@link LayerOptions.display}.
  * Returns the modal itself, which can be rendered anywhere you need, as well as a function to open the modal.
  * @param layer The layer to display in the modal.
  */

@@ -5,12 +5,12 @@ import { isRef } from "vue";
 
 /**
  * A symbol to use as a key for a vue component a feature can be rendered with
- * @see {@link VueFeature}
+ * @see {@link util/vue.VueFeature}
  */
 export const Component = Symbol("Component");
 /**
  * A symbol to use as a key for a prop gathering function that a feature can use to send to its component
- * @see {@link VueFeature}
+ * @see {@link util/vue.VueFeature}
  */
 export const GatherProps = Symbol("GatherProps");
 

@@ -15,7 +15,7 @@ import { computed, unref } from "vue";
 /** An object that configures a {@link Conversion}. */
 export interface ConversionOptions {
     /**
-     * The scaling function that is used to determine the rate of conversion from one {@link Resource} to the other.
+     * The scaling function that is used to determine the rate of conversion from one {@link features/resources/resource.Resource} to the other.
      */
     scaling: ScalingFunction;
     /**
@@ -41,11 +41,11 @@ export interface ConversionOptions {
      */
     nextAt?: Computable<DecimalSource>;
     /**
-     * The input {@link Resource} for this conversion.
+     * The input {@link features/resources/resource.Resource} for this conversion.
      */
     baseResource: Resource;
     /**
-     * The output {@link Resource} for this conversion. i.e. the resource being generated.
+     * The output {@link features/resources/resource.Resource} for this conversion. i.e. the resource being generated.
      */
     gainResource: Resource;
     /**
@@ -76,7 +76,7 @@ export interface ConversionOptions {
     /**
      * An additional modifier that will be applied to the gain amounts.
      * Must be reversible in order to correctly calculate {@link nextAt}.
-     * @see {@link createSequentialModifier} if you want to apply multiple modifiers.
+     * @see {@link game/modifiers.createSequentialModifier} if you want to apply multiple modifiers.
      */
     gainModifier?: WithRequired<Modifier, "revert">;
     /**
@@ -84,7 +84,7 @@ export interface ConversionOptions {
      * That is to say, this modifier will be applied to the amount of baseResource before going into the scaling function.
      * A cost modifier of x0.5 would give gain amounts equal to the player having half the baseResource they actually have.
      * Must be reversible in order to correctly calculate {@link nextAt}.
-     * @see {@link createSequentialModifier} if you want to apply multiple modifiers.
+     * @see {@link game/modifiers.createSequentialModifier} if you want to apply multiple modifiers.
      */
     costModifier?: WithRequired<Modifier, "revert">;
 }
@@ -99,7 +99,7 @@ export interface BaseConversion {
     convert: VoidFunction;
 }
 
-/** An object that converts one {@link Resource} into another at a given rate. */
+/** An object that converts one {@link features/resources/resource.Resource} into another at a given rate. */
 export type Conversion<T extends ConversionOptions> = Replace<
     T & BaseConversion,
     {
