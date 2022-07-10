@@ -70,19 +70,19 @@ export function addTooltip<T extends TooltipOptions>(
     processComputable(options as T, "xoffset");
     processComputable(options as T, "yoffset");
 
-    nextTick(() => {
-        if (options.pinnable) {
-            if ("pinned" in element) {
-                console.error(
-                    "Cannot add pinnable tooltip to element that already has a property called 'pinned'"
-                );
-                options.pinnable = false;
-            } else {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (element as any).pinned = options.pinned = persistent<boolean>(false);
-            }
+    if (options.pinnable) {
+        if ("pinned" in element) {
+            console.error(
+                "Cannot add pinnable tooltip to element that already has a property called 'pinned'"
+            );
+            options.pinnable = false;
+        } else {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (element as any).pinned = options.pinned = persistent<boolean>(false);
         }
+    }
 
+    nextTick(() => {
         const elementComponent = element[Component];
         element[Component] = TooltipComponent;
         const elementGatherProps = element[GatherProps].bind(element);
