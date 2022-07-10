@@ -128,7 +128,7 @@ const playerHandler: ProxyHandler<Record<PropertyKey, any>> = {
 };
 
 declare global {
-    /** Augment the window object so the player can be accessed from the console */
+    /** Augment the window object so the player can be accessed from the console. */
     interface Window {
         player: Player;
     }

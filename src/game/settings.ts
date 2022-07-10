@@ -33,8 +33,7 @@ watch(
 
 declare global {
     /**
-     * Augment the window object so the settings, and hard resetting the settings,
-     * can be accessed from the console
+     * Augment the window object so the settings, and hard resetting the settings, can be accessed from the console.
      */
     interface Window {
         settings: Settings;

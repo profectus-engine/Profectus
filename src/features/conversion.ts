@@ -12,12 +12,10 @@ import { createLazyProxy } from "util/proxies";
 import type { Ref } from "vue";
 import { computed, unref } from "vue";
 
-/**
- * An object that configures a {@link conversion}.
- */
+/** An object that configures a {@link Conversion}. */
 export interface ConversionOptions {
     /**
-     * The scaling function that is used to determine the rate of conversion from one {@link resource} to the other.
+     * The scaling function that is used to determine the rate of conversion from one {@link Resource} to the other.
      */
     scaling: ScalingFunction;
     /**
@@ -43,11 +41,11 @@ export interface ConversionOptions {
      */
     nextAt?: Computable<DecimalSource>;
     /**
-     * The input {@link resource} for this conversion.
+     * The input {@link Resource} for this conversion.
      */
     baseResource: Resource;
     /**
-     * The output {@link resource} for this conversion. i.e. the resource being generated.
+     * The output {@link Resource} for this conversion. i.e. the resource being generated.
      */
     gainResource: Resource;
     /**
@@ -101,9 +99,7 @@ export interface BaseConversion {
     convert: VoidFunction;
 }
 
-/**
- * An object that converts one {@link resource} into another at a given rate.
- */
+/** An object that converts one {@link Resource} into another at a given rate. */
 export type Conversion<T extends ConversionOptions> = Replace<
     T & BaseConversion,
     {
@@ -117,9 +113,7 @@ export type Conversion<T extends ConversionOptions> = Replace<
     }
 >;
 
-/**
- * A type that matches any {@link conversion} object.
- */
+/** A type that matches any valid {@link Conversion} object. */
 export type GenericConversion = Replace<
     Conversion<ConversionOptions>,
     {

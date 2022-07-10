@@ -9,15 +9,14 @@ import { useToast } from "vue-toastification";
 
 declare global {
     /**
-     * Augment the window object so
-     * the vue app and project info can be accessed from the console
+     * Augment the window object so the vue app and project info can be accessed from the console.
      */
     interface Window {
         vue: VueApp;
         projInfo: typeof projInfo;
     }
 
-    /** Fix for typedoc treating import functions as taking AssertOptions instead of GlobOptions */
+    /** Fix for typedoc treating import functions as taking AssertOptions instead of GlobOptions. */
     interface AssertOptions {
         as: string;
     }

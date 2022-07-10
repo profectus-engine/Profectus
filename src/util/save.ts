@@ -127,8 +127,7 @@ window.onbeforeunload = () => {
 
 declare global {
     /**
-     * Augment the window object so the save function,
-     * and the hard reset function can be access from the console
+     * Augment the window object so the save function, and the hard reset function can be access from the console.
      */
     interface Window {
         save: VoidFunction;

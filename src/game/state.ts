@@ -8,7 +8,7 @@ export interface Transient {
 }
 
 declare global {
-    /** Augment the window object so the transient state can be accessed from the console */
+    /** Augment the window object so the transient state can be accessed from the console. */
     interface Window {
         state: Transient;
     }
