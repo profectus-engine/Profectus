@@ -44,11 +44,6 @@
     "vitest": "^0.17.1",
     "vue-tsc": "^0.38.1"
   },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead"
-  ],
   "engines": {
     "node": "16.x"
   }
