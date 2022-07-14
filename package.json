@@ -11,13 +11,14 @@
     "testw": "vitest"
   },
   "dependencies": {
+    "@pixi/app": "^6.4.2",
+    "@pixi/core": "^6.4.2",
     "@pixi/particle-emitter": "^5.0.4",
     "@vitejs/plugin-vue": "^2.3.3",
     "@vitejs/plugin-vue-jsx": "^1.3.10",
     "is-plain-object": "^5.0.0",
     "lz-string": "^1.4.4",
     "nanoevents": "^6.0.2",
-    "pixi.js": "^6.3.0",
     "vite": "^2.9.12",
     "vite-plugin-pwa": "^0.12.0",
     "vite-tsconfig-paths": "^3.5.0",

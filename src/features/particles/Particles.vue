@@ -9,7 +9,7 @@
 
 <script lang="tsx">
 import type { StyleValue } from "features/feature";
-import { Application } from "pixi.js";
+import { Application } from "@pixi/app";
 import { processedPropType } from "util/vue";
 import type { PropType } from "vue";
 import { defineComponent, nextTick, onBeforeUnmount, onMounted, ref, unref } from "vue";
