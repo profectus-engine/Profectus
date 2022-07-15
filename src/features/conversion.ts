@@ -306,7 +306,7 @@ export function createLinearScaling(
  * @param base The base variable in the scaling formula.
  * @param exponent The exponent variable in the scaling formula.
  * @example
- * A scaling function created via `createLinearScaling(10, 0.5)` would produce the following values:
+ * A scaling function created via `createPolynomialScaling(10, 0.5)` would produce the following values:
  * | Base Resource | Current Gain |
  * | ------------- | ------------ |
  * | 10            | 1            |
