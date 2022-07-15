@@ -53,11 +53,20 @@ export const BoundsInjectionKey: InjectionKey<Ref<DOMRect | undefined>> = Symbol
 
 /** All types of events able to be sent or emitted from a layer's emitter. */
 export interface LayerEvents {
-    /** Sent every game tick, before the update event. Intended for "generation" type actions. */
+    /**
+     * Sent every game tick, before the update event. Intended for "generation" type actions.
+     * @param diff The delta time since last tick, in ms.
+     */
     preUpdate: (diff: number) => void;
-    /** Sent every game tick. Intended for "automation" type actions. */
+    /**
+     * Sent every game tick. Intended for "automation" type actions.
+     * @param diff The delta time since last tick, in ms.
+     */
     update: (diff: number) => void;
-    /** Sent every game tick, after the update event. Intended for checking state. */
+    /**
+     * Sent every game tick, after the update event. Intended for checking state.
+     * @param diff The delta time since last tick, in ms.
+     */
     postUpdate: (diff: number) => void;
 }
 
