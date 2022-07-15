@@ -232,28 +232,30 @@ export function createLayerTreeNode<T extends LayerTreeNodeOptions>(
     }) as unknown as LayerTreeNode<T>;
 }
 
+/** An option object for a modifier display as a single section. **/
+export interface Section {
+    /** The header for this modifier. **/
+    title: string;
+    /** A subtitle for this modifier, e.g. to explain the context for the modifier. **/
+    subtitle?: string;
+    /** The modifier to be displaying in this section. **/
+    modifier: WithRequired<Modifier, "description">;
+    /** The base value being modified. **/
+    base?: Computable<DecimalSource>;
+    /** The unit of measurement for the base. **/
+    unit?: string;
+    /** The label to call the base amount. Defaults to "Base". **/
+    baseText?: Computable<CoercableComponent>;
+    /** Whether or not this section should be currently visible to the player. **/
+    visible?: Computable<boolean>;
+}
+
 /**
  * Takes an array of modifier "sections", and creates a JSXFunction that can render all those sections, and allow each section to be collapsed.
  * Also returns a list of persistent refs that are used to control which sections are currently collapsed.
- * @param sections An array of options objects for each section to display.
- * @param sections.title The header for this modifier.
- * @param sections.subtitle A subtitle for this modifier, e.g. to explain the context for the modifier.
- * @param sections.modifier The modifier to be displaying in this section.
- * @param sections.base The base value being modified.
- * @param sections.unit The unit of measurement for the base.
- * @param sections.baseText The label to call the base amount.
- * @param sections.visible Whether or not this section should be currently visible to the player.
  */
 export function createCollapsibleModifierSections(
-    sections: {
-        title: string;
-        subtitle?: string;
-        modifier: WithRequired<Modifier, "description">;
-        base?: Computable<DecimalSource>;
-        unit?: string;
-        baseText?: Computable<CoercableComponent>;
-        visible?: Computable<boolean>;
-    }[]
+    sections: Section[]
 ): [JSXFunction, Persistent<boolean>[]] {
     const processedBase = sections.map(s => convertComputable(s.base));
     const processedBaseText = sections.map(s => convertComputable(s.baseText));
