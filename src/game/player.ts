@@ -42,7 +42,7 @@ export type Player = ProxiedWithState<PlayerData>;
 /** A layer's save data. Automatically unwraps refs. */
 export type LayerData<T> = {
     [P in keyof T]?: T[P] extends (infer U)[]
-        ? LayerData<U>[]
+        ? Record<string, LayerData<U>>
         : T[P] extends Record<string, never>
         ? never
         : T[P] extends Ref<infer S>
