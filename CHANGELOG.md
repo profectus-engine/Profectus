@@ -6,6 +6,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2022-07-17
+### Added
+- Notif component that displays a jumping exclamation point
+- showAmount boolean to buyable displays
+- Tab families now take option to style the tab buttons container
+- Utility for creating text of a certain color
+### Changed
+- Improved typing of player.layers
+- Improved typing of createCollapsibleModifierSections's parameters
+- Made Particles vue component typed as GenericComponent due to issues generating documentation
+- Minimized how much of pixi.js is included in the built site
+- Split bundles into smaller bundles for faster loading
+- Updated TypeScript
+- Descriptions on buyables are now optional
+- Improved tooltips performance
+- Improved how MainDisplay displays effect strings
+- MainDisplays are now sticky
+- processComputable now binds uncached functions as well
+### Fixed
+- trackResetTime stopped working once its layer was removed and re-added
+- Runtime compilation was disabled in vite config
+- Websites had to be hosted on root directory to have assets load correctly
+- Tooltips' persistent ref was lazily created
+- In some situations Links would not update its bounding rect
+- Achievements' and milestones' onComplete callbacks were firing on load
+- Processed JSXFunctions were not considered coercable components by isCoercableComponent
+- Error from passing in overlay text to bar component
+### Removed
+- lodash.cloneDeep dependency, which hasn't been used in awhile
+- Some unused configs from vue-cli-service
+### Documented
+- Update vitepress, and updated the content of many pages
+- Rest of /game
+- Rest of /data
+- layers.tsx
+- Any type augmentations to Window object
+- Various cleanup of docs comments
+- Fixed doc generation being broken from switch to vite
+### Tests
+- Switched from jest to vitest
+
 ## [0.5.0] - 2022-06-27
 ### Added
 - Projects now cache for offline play, and show notification when an update is available
