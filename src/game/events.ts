@@ -45,6 +45,11 @@ export interface GlobalEvents {
      * @param vue The Vue App being constructed.
      */
     setupVue: (vue: App) => void;
+    /**
+     * Sent whenever a save has finished loading.
+     * Happens when the page is opened and upon switching saves in the saves manager.
+     */
+    onLoad: VoidFunction;
 }
 
 /** A global event bus for hooking into {@link GlobalEvents}. */

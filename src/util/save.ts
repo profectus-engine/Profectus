@@ -1,4 +1,5 @@
 import projInfo from "data/projInfo.json";
+import { globalBus } from "game/events";
 import type { Player, PlayerData } from "game/player";
 import player, { stringifySave } from "game/player";
 import settings, { loadSettings } from "game/settings";
@@ -112,6 +113,8 @@ export async function loadSave(playerObj: Partial<PlayerData>): Promise<void> {
 
     Object.assign(player, playerObj);
     settings.active = player.id;
+
+    globalBus.emit("onLoad");
 }
 
 setInterval(() => {
