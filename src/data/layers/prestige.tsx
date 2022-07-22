@@ -10,13 +10,13 @@ import MainDisplay from "features/resources/MainDisplay.vue";
 import { createResource } from "features/resources/resource";
 import { addTooltip } from "features/tooltips/tooltip";
 import { createResourceTooltip } from "features/trees/tree";
-import { createLayer } from "game/layers";
+import { BaseLayer, createLayer } from "game/layers";
 import type { DecimalSource } from "util/bignum";
 import { render } from "util/vue";
 import { createLayerTreeNode, createResetButton } from "../common";
 
 const id = "p";
-const layer = createLayer(id, () => {
+const layer = createLayer(id, function (this: BaseLayer) {
     const name = "Prestige";
     const color = "#4BDC13";
     const points = createResource<DecimalSource>(0, "prestige points");
