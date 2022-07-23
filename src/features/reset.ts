@@ -70,7 +70,7 @@ const listeners: Record<string, Unsubscribe | undefined> = {};
 export function trackResetTime(layer: BaseLayer, reset: GenericReset): Persistent<Decimal> {
     const resetTime = persistent<Decimal>(new Decimal(0));
     globalBus.on("addLayer", layerBeingAdded => {
-        if (layer === layerBeingAdded) {
+        if (layer.id === layerBeingAdded.id) {
             listeners[layer.id]?.();
             listeners[layer.id] = layer.on("preUpdate", diff => {
                 resetTime.value = Decimal.add(resetTime.value, diff);
