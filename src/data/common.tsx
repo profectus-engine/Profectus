@@ -323,5 +323,5 @@ export function createCollapsibleModifierSections(
  * @param color The color to change the content to look like. Defaults to the current theme's accent 2 variable.
  */
 export function colorText(textToColor: string, color = "var(--accent2)"): JSX.Element {
-    return <span style={{ color }}>${textToColor}</span>;
+    return <span style={{ color }}>{textToColor}</span>;
 }
