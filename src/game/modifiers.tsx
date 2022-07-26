@@ -206,7 +206,7 @@ export function createExponentialModifier<
  * Takes an array of modifiers and applies and reverses them in order.
  * Modifiers that are not enabled will not be applied nor reversed.
  * Also joins their descriptions together.
- * @param modifiers The modifiers to perform sequentially.
+ * @param modifiersFunc The modifiers to perform sequentially.
  * @see {@link createModifierSection}.
  */
 export function createSequentialModifier<
@@ -214,31 +214,35 @@ export function createSequentialModifier<
     S = T extends WithRequired<Modifier, "revert">[]
         ? WithRequired<Modifier, "description" | "revert">
         : Omit<WithRequired<Modifier, "description">, "revert">
->(...modifiers: T): S {
-    return {
-        apply: (gain: DecimalSource) =>
-            modifiers
-                .filter(m => unref(m.enabled) !== false)
-                .reduce((gain, modifier) => modifier.apply(gain), gain),
-        revert: modifiers.every(m => m.revert != null)
-            ? (gain: DecimalSource) =>
-                  modifiers
-                      .filter(m => unref(m.enabled) !== false)
-                      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                      .reduceRight((gain, modifier) => modifier.revert!(gain), gain)
-            : undefined,
-        enabled: computed(() => modifiers.filter(m => unref(m.enabled) !== false).length > 0),
-        description: jsx(() => (
-            <>
-                {(
-                    modifiers
-                        .filter(m => unref(m.enabled) !== false)
-                        .map(m => unref(m.description))
-                        .filter(d => d) as CoercableComponent[]
-                ).map(renderJSX)}
-            </>
-        ))
-    } as unknown as S;
+>(modifiersFunc: () => T): S {
+    return createLazyProxy(() => {
+        const modifiers = modifiersFunc();
+
+        return {
+            apply: (gain: DecimalSource) =>
+                modifiers
+                    .filter(m => unref(m.enabled) !== false)
+                    .reduce((gain, modifier) => modifier.apply(gain), gain),
+            revert: modifiers.every(m => m.revert != null)
+                ? (gain: DecimalSource) =>
+                      modifiers
+                          .filter(m => unref(m.enabled) !== false)
+                          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                          .reduceRight((gain, modifier) => modifier.revert!(gain), gain)
+                : undefined,
+            enabled: computed(() => modifiers.filter(m => unref(m.enabled) !== false).length > 0),
+            description: jsx(() => (
+                <>
+                    {(
+                        modifiers
+                            .filter(m => unref(m.enabled) !== false)
+                            .map(m => unref(m.description))
+                            .filter(d => d) as CoercableComponent[]
+                    ).map(renderJSX)}
+                </>
+            ))
+        };
+    }) as unknown as S;
 }
 
 /**
