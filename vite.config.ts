@@ -10,18 +10,18 @@ export default defineConfig({
     base: "./",
     build: {
         rollupOptions: {
-            output:{
+            output: {
                 manualChunks(id) {
-                  if (id.includes('node_modules')) {
-                      return id.toString().split('node_modules/')[1].split('/')[0].toString();
-                  }
-              }
+                    if (id.includes("node_modules")) {
+                        return id.toString().split("node_modules/")[1].split("/")[0].toString();
+                    }
+                }
             }
         }
     },
     resolve: {
         alias: {
-            vue: 'vue/dist/vue.esm-bundler.js'
+            vue: "vue/dist/vue.esm-bundler.js"
         }
     },
     plugins: [
