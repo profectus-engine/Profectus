@@ -12,6 +12,7 @@ import {
     onUnmounted,
     ref,
     shallowRef,
+    toRef,
     unref,
     watchEffect
 } from "vue";
@@ -210,4 +211,43 @@ export function processedPropType<T>(...types: PropTypes[]): PropType<ProcessedC
         types.push(Object);
     }
     return types as PropType<ProcessedComputable<T>>;
+}
+
+export function trackHover(element: VueFeature): Ref<boolean> {
+    const elementComponent = element[ComponentKey];
+    const isHovered = ref(false);
+
+    element[ComponentKey] = defineComponent({
+        props: {
+            element: {
+                type: Object as PropType<VueFeature>,
+                required: true
+            }
+        },
+        setup: function (props) {
+            const element = toRef(props, "element");
+
+            onUnmounted(() => (isHovered.value = false));
+            return () => (
+                <div
+                    style="display: inline-block"
+                    onPointerenter={() => (isHovered.value = true)}
+                    onPointerleave={() => (isHovered.value = false)}
+                >
+                    {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
+                    {unwrapRef(element) == null ? "" : renderJSX(unwrapRef(element)!)}
+                </div>
+            );
+        }
+    }) as GenericComponent;
+
+    const elementGatherProps = element[GatherProps].bind(element);
+    element[GatherProps] = () => ({
+        element: {
+            [ComponentKey]: elementComponent,
+            [GatherProps]: elementGatherProps
+        }
+    });
+
+    return isHovered;
 }
