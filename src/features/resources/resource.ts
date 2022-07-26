@@ -3,8 +3,9 @@ import type { State } from "game/persistence";
 import { persistent } from "game/persistence";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatWhole } from "util/bignum";
+import type { ProcessedComputable } from "util/computed";
 import type { ComputedRef, Ref } from "vue";
-import { computed, isRef, ref, watch } from "vue";
+import { computed, isRef, ref, unref, watch } from "vue";
 
 export interface Resource<T = DecimalSource> extends Ref<T> {
     displayName: string;
@@ -113,4 +114,11 @@ export function displayResource(resource: Resource, overrideAmount?: DecimalSour
         return formatWhole(amount);
     }
     return format(amount, resource.precision, resource.small);
+}
+
+export function unwrapResource(resource: ProcessedComputable<Resource>): Resource {
+    if ("displayName" in resource) {
+        return resource;
+    }
+    return unref(resource);
 }
