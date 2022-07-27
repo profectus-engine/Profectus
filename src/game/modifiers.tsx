@@ -46,27 +46,22 @@ export type ModifierFromOptionalParams<T, S> = T extends undefined
     : WithRequired<Modifier, "revert" | "enabled" | "description">;
 
 /** An object that configures an additive modifier via {@link createAdditiveModifier}. */
-export interface AdditiveModifierOptions<
-    T extends Computable<CoercableComponent> | undefined,
-    S extends Computable<boolean> | undefined
-> {
+export interface AdditiveModifierOptions {
     /** The amount to add to the input value. */
     addend: Computable<DecimalSource>;
     /** Description of what this modifier is doing. */
-    description?: T;
+    description?: Computable<CoercableComponent> | undefined;
     /** A computable that will be processed and passed directly into the returned modifier. */
-    enabled?: S;
+    enabled?: Computable<boolean> | undefined;
 }
 
 /**
  * Create a modifier that adds some value to the input value.
  * @param optionsFunc Additive modifier options.
  */
-export function createAdditiveModifier<
-    T extends Computable<CoercableComponent> | undefined,
-    S extends Computable<boolean> | undefined,
-    R = ModifierFromOptionalParams<T, S>
->(optionsFunc: () => AdditiveModifierOptions<T, S>): R {
+export function createAdditiveModifier<T extends AdditiveModifierOptions>(
+    optionsFunc: () => T
+): ModifierFromOptionalParams<T["description"], T["enabled"]> {
     return createLazyProxy(() => {
         const { addend, description, enabled } = optionsFunc();
 
@@ -95,31 +90,26 @@ export function createAdditiveModifier<
                           </div>
                       ))
         };
-    }) as unknown as R;
+    }) as unknown as ModifierFromOptionalParams<T["description"], T["enabled"]>;
 }
 
 /** An object that configures an multiplicative modifier via {@link createMultiplicativeModifier}. */
-export interface MultiplicativeModifierOptions<
-    T extends Computable<CoercableComponent> | undefined,
-    S extends Computable<boolean> | undefined
-> {
+export interface MultiplicativeModifierOptions {
     /** The amount to multiply the input value by. */
     multiplier: Computable<DecimalSource>;
     /** Description of what this modifier is doing. */
-    description?: T;
+    description?: Computable<CoercableComponent> | undefined;
     /** A computable that will be processed and passed directly into the returned modifier. */
-    enabled?: S;
+    enabled?: Computable<boolean> | undefined;
 }
 
 /**
  * Create a modifier that multiplies the input value by some value.
  * @param optionsFunc Multiplicative modifier options.
  */
-export function createMultiplicativeModifier<
-    T extends Computable<CoercableComponent> | undefined,
-    S extends Computable<boolean> | undefined,
-    R = ModifierFromOptionalParams<T, S>
->(optionsFunc: () => MultiplicativeModifierOptions<T, S>): R {
+export function createMultiplicativeModifier<T extends MultiplicativeModifierOptions>(
+    optionsFunc: () => T
+): ModifierFromOptionalParams<T["description"], T["enabled"]> {
     return createLazyProxy(() => {
         const { multiplier, description, enabled } = optionsFunc();
 
@@ -147,31 +137,26 @@ export function createMultiplicativeModifier<
                           </div>
                       ))
         };
-    }) as unknown as R;
+    }) as unknown as ModifierFromOptionalParams<T["description"], T["enabled"]>;
 }
 
 /** An object that configures an exponential modifier via {@link createExponentialModifier}. */
-export interface ExponentialModifierOptions<
-    T extends Computable<CoercableComponent> | undefined,
-    S extends Computable<boolean> | undefined
-> {
+export interface ExponentialModifierOptions {
     /** The amount to raise the input value to the power of. */
     exponent: Computable<DecimalSource>;
     /** Description of what this modifier is doing. */
-    description?: T;
+    description?: Computable<CoercableComponent> | undefined;
     /** A computable that will be processed and passed directly into the returned modifier. */
-    enabled?: S;
+    enabled?: Computable<boolean> | undefined;
 }
 
 /**
  * Create a modifier that raises the input value to the power of some value.
  * @param optionsFunc Exponential modifier options.
  */
-export function createExponentialModifier<
-    T extends Computable<CoercableComponent> | undefined,
-    S extends Computable<boolean> | undefined,
-    R = ModifierFromOptionalParams<T, S>
->(optionsFunc: () => ExponentialModifierOptions<T, S>): R {
+export function createExponentialModifier<T extends ExponentialModifierOptions>(
+    optionsFunc: () => T
+): ModifierFromOptionalParams<T["description"], T["enabled"]> {
     return createLazyProxy(() => {
         const { exponent, description, enabled } = optionsFunc();
 
@@ -199,7 +184,7 @@ export function createExponentialModifier<
                           </div>
                       ))
         };
-    }) as unknown as R;
+    }) as unknown as ModifierFromOptionalParams<T["description"], T["enabled"]>;
 }
 
 /**
