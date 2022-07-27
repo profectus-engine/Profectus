@@ -259,62 +259,79 @@ export interface Section {
 export function createCollapsibleModifierSections(
     sectionsFunc: () => Section[]
 ): [JSXFunction, Persistent<boolean>[]] {
-    return createLazyProxy(() => {
-        const sections = sectionsFunc();
+    const sections: Section[] = [];
+    const processed:
+        | {
+              base: ProcessedComputable<DecimalSource | undefined>[];
+              baseText: ProcessedComputable<CoercableComponent | undefined>[];
+              visible: ProcessedComputable<boolean | undefined>[];
+          }
+        | Record<string, never> = {};
+    let calculated = false;
+    function calculateSections() {
+        if (!calculated) {
+            sections.push(...sectionsFunc());
+            processed.base = sections.map(s => convertComputable(s.base));
+            processed.baseText = sections.map(s => convertComputable(s.baseText));
+            processed.visible = sections.map(s => convertComputable(s.visible));
+            calculated = true;
+        }
+        return sections;
+    }
 
-        const processedBase = sections.map(s => convertComputable(s.base));
-        const processedBaseText = sections.map(s => convertComputable(s.baseText));
-        const processedVisible = sections.map(s => convertComputable(s.visible));
-        const collapsed = sections.map(() => persistent<boolean>(false));
-        const jsxFunc = jsx(() => {
-            const sectionJSX = sections.map((s, i) => {
-                if (unref(processedVisible[i]) === false) return null;
-                const header = (
-                    <h3
-                        onClick={() => (collapsed[i].value = !collapsed[i].value)}
-                        style="cursor: pointer"
-                    >
-                        <span class={"modifier-toggle" + (unref(collapsed[i]) ? " collapsed" : "")}>
-                            ▼
-                        </span>
-                        {s.title}
-                        {s.subtitle ? <span class="subtitle"> ({s.subtitle})</span> : null}
-                    </h3>
-                );
+    const collapsed = createLazyProxy(() =>
+        calculateSections().map(() => persistent<boolean>(false))
+    ) as Persistent<boolean>[];
+    const jsxFunc = jsx(() => {
+        const sections = calculateSections();
 
-                const modifiers = unref(collapsed[i]) ? null : (
-                    <>
-                        <div class="modifier-container">
-                            <span class="modifier-amount">
-                                {format(unref(processedBase[i]) ?? 1)}
-                                {s.unit}
-                            </span>
-                            <span class="modifier-description">
-                                {renderJSX(unref(processedBaseText[i]) ?? "Base")}
-                            </span>
-                        </div>
-                        {renderJSX(unref(s.modifier.description))}
-                    </>
-                );
+        const sectionJSX = sections.map((s, i) => {
+            if (unref(processed.visible[i]) === false) return null;
+            const header = (
+                <h3
+                    onClick={() => (collapsed[i].value = !collapsed[i].value)}
+                    style="cursor: pointer"
+                >
+                    <span class={"modifier-toggle" + (unref(collapsed[i]) ? " collapsed" : "")}>
+                        ▼
+                    </span>
+                    {s.title}
+                    {s.subtitle ? <span class="subtitle"> ({s.subtitle})</span> : null}
+                </h3>
+            );
 
-                return (
-                    <>
-                        {i === 0 ? null : <br />}
-                        <div>
-                            {header}
-                            <br />
-                            {modifiers}
-                            <hr />
-                            Total: {format(s.modifier.apply(unref(processedBase[i]) ?? 1))}
+            const modifiers = unref(collapsed[i]) ? null : (
+                <>
+                    <div class="modifier-container">
+                        <span class="modifier-amount">
+                            {format(unref(processed.base[i]) ?? 1)}
                             {s.unit}
-                        </div>
-                    </>
-                );
-            });
-            return <>{sectionJSX}</>;
+                        </span>
+                        <span class="modifier-description">
+                            {renderJSX(unref(processed.baseText[i]) ?? "Base")}
+                        </span>
+                    </div>
+                    {renderJSX(unref(s.modifier.description))}
+                </>
+            );
+
+            return (
+                <>
+                    {i === 0 ? null : <br />}
+                    <div>
+                        {header}
+                        <br />
+                        {modifiers}
+                        <hr />
+                        Total: {format(s.modifier.apply(unref(processed.base[i]) ?? 1))}
+                        {s.unit}
+                    </div>
+                </>
+            );
         });
-        return [jsxFunc, collapsed];
+        return <>{sectionJSX}</>;
     });
+    return [jsxFunc, collapsed];
 }
 
 /**
