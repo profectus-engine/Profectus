@@ -258,7 +258,7 @@ export interface Section {
  */
 export function createCollapsibleModifierSections(
     sectionsFunc: () => Section[]
-): [JSXFunction, Persistent<boolean>[]] {
+): [JSXFunction, Persistent<Record<number, boolean>>] {
     const sections: Section[] = [];
     const processed:
         | {
@@ -279,9 +279,7 @@ export function createCollapsibleModifierSections(
         return sections;
     }
 
-    const collapsed = createLazyProxy(() =>
-        calculateSections().map(() => persistent<boolean>(false))
-    ) as Persistent<boolean>[];
+    const collapsed = persistent<Record<number, boolean>>({});
     const jsxFunc = jsx(() => {
         const sections = calculateSections();
 
@@ -289,10 +287,12 @@ export function createCollapsibleModifierSections(
             if (unref(processed.visible[i]) === false) return null;
             const header = (
                 <h3
-                    onClick={() => (collapsed[i].value = !collapsed[i].value)}
+                    onClick={() => (collapsed.value[i] = !collapsed.value[i])}
                     style="cursor: pointer"
                 >
-                    <span class={"modifier-toggle" + (unref(collapsed[i]) ? " collapsed" : "")}>
+                    <span
+                        class={"modifier-toggle" + (unref(collapsed.value[i]) ? " collapsed" : "")}
+                    >
                         ▼
                     </span>
                     {s.title}
@@ -300,7 +300,7 @@ export function createCollapsibleModifierSections(
                 </h3>
             );
 
-            const modifiers = unref(collapsed[i]) ? null : (
+            const modifiers = unref(collapsed.value[i]) ? null : (
                 <>
                     <div class="modifier-container">
                         <span class="modifier-amount">
