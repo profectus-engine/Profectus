@@ -1,4 +1,8 @@
 import { globalBus } from "game/events";
+import { convertComputable } from "util/computed";
+import { trackHover, VueFeature } from "util/vue";
+import { nextTick, Ref } from "vue";
+import { ref, watch } from "vue";
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
 
@@ -19,7 +23,33 @@ export function getNotifyStyle(color = "white", strength = "8px") {
     };
 }
 
-/** Utility function to call {@link getNotifyStyle} with "high importance" parameters */
+/** Utility function to call {@link getNotifyStyle} with "high importance" parameters. */
 export function getHighNotifyStyle() {
     return getNotifyStyle("red", "20px");
+}
+
+/**
+ * Create a boolean ref that will automatically be set based on the given condition, but also dismissed when hovering over a given element, typically the element where acting upon the notification would take place.
+ * @param element The element that will dismiss the notification on hover.
+ * @param shouldNotify A function or ref that determines if the notif should be active currently or not.
+ */
+export function createDismissableNotify(
+    element: VueFeature,
+    shouldNotify: Ref<boolean> | (() => boolean)
+): Ref<boolean> {
+    const processedShouldNotify = convertComputable(shouldNotify) as Ref<boolean>;
+    const notifying = ref(false);
+    nextTick(() => {
+        notifying.value = processedShouldNotify.value;
+
+        watch(trackHover(element), hovering => {
+            if (!hovering) {
+                notifying.value = false;
+            }
+        });
+        watch(processedShouldNotify, shouldNotify => {
+            notifying.value = shouldNotify;
+        });
+    });
+    return notifying;
 }
