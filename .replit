@@ -1,4 +1,4 @@
-run = "npm install; npm run serve"
+run = "npm install; npm run dev"
 
 [packager]
 language = "nodejs"

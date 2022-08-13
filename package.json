@@ -8,7 +8,8 @@
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "testw": "vitest"
+    "testw": "vitest",
+    "serve": "vite preview --host"
   },
   "dependencies": {
     "@pixi/app": "^6.4.2",
