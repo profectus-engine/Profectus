@@ -148,6 +148,8 @@ export interface ExponentialModifierOptions {
     description?: Computable<CoercableComponent> | undefined;
     /** A computable that will be processed and passed directly into the returned modifier. */
     enabled?: Computable<boolean> | undefined;
+    /** Add 1 before calculating, then remove it afterwards. This prevents low numbers from becoming lower. */
+    supportLowNumbers?: boolean;
 }
 
 /**
@@ -158,14 +160,34 @@ export function createExponentialModifier<T extends ExponentialModifierOptions>(
     optionsFunc: () => T
 ): ModifierFromOptionalParams<T["description"], T["enabled"]> {
     return createLazyProxy(() => {
-        const { exponent, description, enabled } = optionsFunc();
+        const { exponent, description, enabled, supportLowNumbers } = optionsFunc();
 
         const processedExponent = convertComputable(exponent);
         const processedDescription = convertComputable(description);
         const processedEnabled = enabled == null ? undefined : convertComputable(enabled);
         return {
-            apply: (gain: DecimalSource) => Decimal.pow(gain, unref(processedExponent)),
-            revert: (gain: DecimalSource) => Decimal.root(gain, unref(processedExponent)),
+            apply: (gain: DecimalSource) => {
+                let result = gain;
+                if (supportLowNumbers) {
+                    result = Decimal.add(result, 1);
+                }
+                result = Decimal.pow(result, unref(processedExponent));
+                if (supportLowNumbers) {
+                    result = Decimal.sub(result, 1);
+                }
+                return result;
+            },
+            revert: (gain: DecimalSource) => {
+                let result = gain;
+                if (supportLowNumbers) {
+                    result = Decimal.add(result, 1);
+                }
+                result = Decimal.root(result, unref(processedExponent));
+                if (supportLowNumbers) {
+                    result = Decimal.sub(result, 1);
+                }
+                return result;
+            },
             enabled: processedEnabled,
             description:
                 description == null
@@ -179,6 +201,7 @@ export function createExponentialModifier<T extends ExponentialModifierOptions>(
                                   <span class="modifier-description">
                                       {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
                                       {renderJSX(unref(processedDescription)!)}
+                                      {supportLowNumbers ? " (+1 effective)" : null}
                                   </span>
                               ) : null}
                           </div>
