@@ -1,5 +1,9 @@
 export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
+export type ArrayElements<T extends ReadonlyArray<unknown>> = T extends ReadonlyArray<infer S>
+    ? S
+    : never;
+
 // Reference:
 // https://stackoverflow.com/questions/7225407/convert-camelcasetext-to-sentence-case-text
 export function camelToTitle(camel: string): string {
