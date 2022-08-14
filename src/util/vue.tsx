@@ -12,7 +12,6 @@ import {
     onUnmounted,
     ref,
     shallowRef,
-    toRef,
     unref,
     watchEffect
 } from "vue";
@@ -38,10 +37,10 @@ export function coerceComponent(
     return component;
 }
 
-export type VueFeature = {
+export interface VueFeature {
     [ComponentKey]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
-};
+}
 
 export function render(object: VueFeature | CoercableComponent): JSX.Element | DefineComponent {
     if (isCoercableComponent(object)) {
@@ -84,6 +83,16 @@ export function renderRowJSX(...objects: (VueFeature | CoercableComponent)[]): J
 
 export function renderColJSX(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
     return <Col>{objects.map(renderJSX)}</Col>;
+}
+
+export function joinJSX(objects: JSX.Element[], joiner: JSX.Element): JSX.Element {
+    return objects.reduce((acc, curr) => (
+        <>
+            {acc}
+            {joiner}
+            {curr}
+        </>
+    ));
 }
 
 export function isCoercableComponent(component: unknown): component is CoercableComponent {
