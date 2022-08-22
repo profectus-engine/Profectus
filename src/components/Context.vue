@@ -56,13 +56,12 @@ provide(RegisterNodeInjectionKey, (id, element) => {
     const observer = new MutationObserver(() => updateNode(id));
     observer.observe(element, observerOptions);
     nodes.value[id] = { element, observer, rect: element.getBoundingClientRect() };
-    emit("updateNodes", nodes.value);
-    nextTick(() => updateNode(id));
+    updateBounds();
 });
 provide(UnregisterNodeInjectionKey, id => {
     nodes.value[id]?.observer.disconnect();
     nodes.value[id] = undefined;
-    emit("updateNodes", nodes.value);
+    updateBounds();
 });
 provide(NodesInjectionKey, nodes);
 provide(BoundsInjectionKey, boundingRect);
