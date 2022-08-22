@@ -50,6 +50,11 @@ export interface GlobalEvents {
      * Happens when the page is opened and upon switching saves in the saves manager.
      */
     onLoad: VoidFunction;
+    /**
+     * Using document.fonts.ready returns too early on firefox, so we use document.fonts.onloadingdone instead, which doesn't accept multiple listeners.
+     * This event fires when that callback is called.
+     */
+    fontsLoaded: VoidFunction;
 }
 
 /** A global event bus for hooking into {@link GlobalEvents}. */
@@ -152,3 +157,5 @@ export async function startGameLoop() {
         intervalID = setInterval(update, 50);
     }
 }
+
+document.fonts.onloadingdone = () => globalBus.emit("fontsLoaded");

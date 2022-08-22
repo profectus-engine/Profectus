@@ -10,6 +10,7 @@
 <script lang="tsx">
 import { Application } from "@pixi/app";
 import type { StyleValue } from "features/feature";
+import { globalBus } from "game/events";
 import "lib/pixi";
 import { processedPropType } from "util/vue";
 import type { PropType } from "vue";
@@ -63,15 +64,14 @@ export default defineComponent({
             if (isDirty) {
                 isDirty = false;
                 nextTick(() => {
-                    if (resizeListener.value != null && props.onContainerResized) {
-                        props.onContainerResized(resizeListener.value.getBoundingClientRect());
-                        app.value?.resize();
+                    if (resizeListener.value != null) {
+                        props.onContainerResized?.(resizeListener.value.getBoundingClientRect());
                     }
                     isDirty = true;
                 });
             }
         }
-        document.fonts.ready.then(updateBounds);
+        globalBus.on("fontsLoaded", updateBounds);
 
         return {
             unref,
