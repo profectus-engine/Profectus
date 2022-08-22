@@ -283,6 +283,7 @@ export function createCollapsibleModifierSections(
     const jsxFunc = jsx(() => {
         const sections = calculateSections();
 
+        let firstVisibleSection = true;
         const sectionJSX = sections.map((s, i) => {
             if (unref(processed.visible[i]) === false) return null;
             const header = (
@@ -315,9 +316,12 @@ export function createCollapsibleModifierSections(
                 </>
             );
 
+            const hasPreviousSection = !firstVisibleSection;
+            firstVisibleSection = false;
+
             return (
                 <>
-                    {i === 0 ? null : <br />}
+                    {hasPreviousSection ? <br /> : null}
                     <div>
                         {header}
                         <br />
