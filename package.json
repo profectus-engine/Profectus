@@ -12,9 +12,10 @@
     "serve": "vite preview --host"
   },
   "dependencies": {
-    "@pixi/app": "^6.4.2",
-    "@pixi/core": "^6.4.2",
+    "@pixi/app": "~6.3.2",
+    "@pixi/core": "~6.3.2",
     "@pixi/particle-emitter": "^5.0.4",
+    "@pixi/ticker": "~6.3.2",
     "@vitejs/plugin-vue": "^2.3.3",
     "@vitejs/plugin-vue-jsx": "^1.3.10",
     "is-plain-object": "^5.0.0",

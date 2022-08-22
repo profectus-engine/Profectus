@@ -8,8 +8,9 @@
 </template>
 
 <script lang="tsx">
-import type { StyleValue } from "features/feature";
 import { Application } from "@pixi/app";
+import type { StyleValue } from "features/feature";
+import "lib/pixi";
 import { processedPropType } from "util/vue";
 import type { PropType } from "vue";
 import { defineComponent, nextTick, onBeforeUnmount, onMounted, ref, unref } from "vue";
