@@ -35,7 +35,7 @@ export default defineComponent({
         const app = shallowRef<null | Application>(null);
 
         const resizeObserver = new ResizeObserver(updateBounds);
-        const resizeListener = ref<HTMLElement | null>(null);
+        const resizeListener = shallowRef<HTMLElement | null>(null);
 
         onMounted(() => {
             // ResizeListener exists because ResizeObserver's don't work when told to observe an SVG element

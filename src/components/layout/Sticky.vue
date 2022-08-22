@@ -5,11 +5,11 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onMounted, ref } from "vue";
+import { nextTick, onMounted, ref, shallowRef } from "vue";
 
 const top = ref("0");
 const observer = new ResizeObserver(updateTop);
-const element = ref<HTMLElement | null>(null);
+const element = shallowRef<HTMLElement | null>(null);
 
 function updateTop() {
     let el = element.value;

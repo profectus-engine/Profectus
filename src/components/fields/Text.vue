@@ -29,7 +29,7 @@
 import "components/common/fields.css";
 import type { CoercableComponent } from "features/feature";
 import { coerceComponent } from "util/vue";
-import { computed, onMounted, ref, toRefs, unref } from "vue";
+import { computed, onMounted, shallowRef, toRefs, unref } from "vue";
 import VueTextareaAutosize from "vue-textarea-autosize";
 
 const _props = defineProps<{
@@ -49,7 +49,7 @@ const titleComponent = computed(
     () => props.title?.value && coerceComponent(unref(props.title.value), "span")
 );
 
-const field = ref<HTMLElement | null>(null);
+const field = shallowRef<HTMLElement | null>(null);
 onMounted(() => {
     field.value?.focus();
 });
