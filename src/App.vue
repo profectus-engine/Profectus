@@ -23,6 +23,7 @@ import projInfo from "./data/projInfo.json";
 import themes from "./data/themes";
 import settings, { gameComponents } from "./game/settings";
 import "./main.css";
+import "@fontsource/roboto-mono";
 import type { CSSProperties } from "vue";
 
 const useHeader = projInfo.useHeader;

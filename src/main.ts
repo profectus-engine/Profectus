@@ -1,3 +1,4 @@
+import "@fontsource/material-icons";
 import App from "App.vue";
 import projInfo from "data/projInfo.json";
 import "game/notifications";
