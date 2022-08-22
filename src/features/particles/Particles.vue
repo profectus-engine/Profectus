@@ -13,7 +13,7 @@ import type { StyleValue } from "features/feature";
 import "lib/pixi";
 import { processedPropType } from "util/vue";
 import type { PropType } from "vue";
-import { defineComponent, nextTick, onBeforeUnmount, onMounted, ref, unref } from "vue";
+import { defineComponent, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, unref } from "vue";
 
 // TODO get typing support on the Particles component
 export default defineComponent({
@@ -32,7 +32,7 @@ export default defineComponent({
         onHotReload: Function as PropType<VoidFunction>
     },
     setup(props) {
-        const app = ref<null | Application>(null);
+        const app = shallowRef<null | Application>(null);
 
         const resizeObserver = new ResizeObserver(updateBounds);
         const resizeListener = ref<HTMLElement | null>(null);
