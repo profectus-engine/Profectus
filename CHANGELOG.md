@@ -6,6 +6,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2022-08-22
+### Added
+- onLoad event
+- fontsLoaded event
+- Dismissable notification you can add to VueFeatures when they're interactable
+- Option on exponential modifiers to better support numbers less than 1
+- Utility function to track if a VueFeature is being hovered over
+- Utility to unwrap Resources that may be in refs
+- Utility to join JSX elements together with a joiner
+- Type for converting readonly string arrays into a union of string values
+### Changed
+- The main and prestige layers no longer use arrow functions for their options functions
+- Modifiers are now lazily loaded
+- Collapsible modifier sections are now lazily loaded
+- Converted several refs into shallow refs for improved performance
+- Roboto Mono and Material Icons fonts are now bundled instead of downloaded from the web, so they work with PWAs
+- Node bounds are now updated whenever that context has a node removed or added, fixing many issues with incorrect bounds
+### Fixed
+- trackResetTime not updating
+- colorText prepending $s
+- Default .replit config was broken
+- Pixi.js canvases no longer rendering
+- Node positions being shifted on initial page load due to fonts loading on firefox
+- Modifier sections looked wrong if the topmost section wasn't visible
+
 ## [0.5.1] - 2022-07-17
 ### Added
 - Notif component that displays a jumping exclamation point
