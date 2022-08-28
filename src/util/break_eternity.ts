@@ -5,7 +5,7 @@ import Decimal from "lib/break_eternity";
 export default Decimal;
 
 const decimalOne = new Decimal(1);
-
+// yyyyy
 export function exponentialFormat(num: DecimalSource, precision: number, mantissa = true): string {
     let e = Decimal.log10(num).floor();
     let m = Decimal.div(num, Decimal.pow(10, e));
