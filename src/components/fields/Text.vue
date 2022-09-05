@@ -9,7 +9,7 @@
                 v-model="value"
                 :placeholder="placeholder"
                 :maxHeight="maxHeight"
-                @blur="submit"
+                @blur="blur"
                 ref="field"
             />
             <input
@@ -18,7 +18,7 @@
                 v-model="value"
                 :placeholder="placeholder"
                 :class="{ fullWidth: !title }"
-                @blur="submit"
+                @blur="blur"
                 ref="field"
             />
         </div>
@@ -28,26 +28,25 @@
 <script setup lang="ts">
 import "components/common/fields.css";
 import type { CoercableComponent } from "features/feature";
-import { coerceComponent } from "util/vue";
-import { computed, onMounted, shallowRef, toRefs, unref } from "vue";
+import { computeOptionalComponent } from "util/vue";
+import { computed, onMounted, shallowRef, toRef, unref } from "vue";
 import VueTextareaAutosize from "vue-textarea-autosize";
 
-const _props = defineProps<{
+const props = defineProps<{
     title?: CoercableComponent;
     modelValue?: string;
     textArea?: boolean;
     placeholder?: string;
     maxHeight?: number;
+    submitOnBlur?: boolean;
 }>();
-const props = toRefs(_props);
 const emit = defineEmits<{
     (e: "update:modelValue", value: string): void;
     (e: "submit"): void;
+    (e: "cancel"): void;
 }>();
 
-const titleComponent = computed(
-    () => props.title?.value && coerceComponent(unref(props.title.value), "span")
-);
+const titleComponent = computeOptionalComponent(toRef(props, "title"), "span");
 
 const field = shallowRef<HTMLElement | null>(null);
 onMounted(() => {
@@ -65,6 +64,14 @@ const value = computed({
 
 function submit() {
     emit("submit");
+}
+
+function blur() {
+    if (props.submitOnBlur !== false) {
+        emit("submit");
+    } else {
+        emit("cancel");
+    }
 }
 </script>
 
