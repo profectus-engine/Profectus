@@ -61,17 +61,15 @@ import type {
 import { getNodeProperty } from "features/boards/board";
 import type { StyleValue } from "features/feature";
 import { Visibility } from "features/feature";
-import { PersistentState } from "game/persistence";
 import type { ProcessedComputable } from "util/computed";
 import { computed, ref, Ref, toRefs, unref } from "vue";
-import panZoom from "vue-panzoom";
 import BoardLinkVue from "./BoardLink.vue";
 import BoardNodeVue from "./BoardNode.vue";
 
 const _props = defineProps<{
     nodes: Ref<BoardNode[]>;
     types: Record<string, GenericNodeType>;
-    [PersistentState]: Ref<BoardData>;
+    state: Ref<BoardData>;
     visibility: ProcessedComputable<Visibility>;
     width?: ProcessedComputable<string>;
     height?: ProcessedComputable<string>;
@@ -80,6 +78,7 @@ const _props = defineProps<{
     links: Ref<BoardNodeLink[] | null>;
     selectedAction: Ref<GenericBoardNodeAction | null>;
     selectedNode: Ref<BoardNode | null>;
+    mousePosition: Ref<{ x: number; y: number } | null>;
 }>();
 const props = toRefs(_props);
 
@@ -170,13 +169,13 @@ function mouseDown(e: MouseEvent | TouchEvent, nodeID: number | null = null, dra
         }
     }
     if (nodeID != null) {
-        props[PersistentState].value.selectedNode = null;
-        props[PersistentState].value.selectedAction = null;
+        props.state.value.selectedNode = null;
+        props.state.value.selectedAction = null;
     }
 }
 
 function drag(e: MouseEvent | TouchEvent) {
-    const zoom = stage.value.$panZoomInstance.getTransform().scale;
+    const { x, y, scale } = stage.value.panZoomInstance.getTransform();
 
     let clientX, clientY;
     if ("touches" in e) {
@@ -185,6 +184,7 @@ function drag(e: MouseEvent | TouchEvent) {
             clientY = e.touches[0].clientY;
         } else {
             endDragging(dragging.value);
+            props.mousePosition.value = null;
             return;
         }
     } else {
@@ -192,9 +192,14 @@ function drag(e: MouseEvent | TouchEvent) {
         clientY = e.clientY;
     }
 
+    props.mousePosition.value = {
+        x: (clientX - x) / scale,
+        y: (clientY - y) / scale
+    };
+
     dragged.value = {
-        x: dragged.value.x + (clientX - lastMousePosition.value.x) / zoom,
-        y: dragged.value.y + (clientY - lastMousePosition.value.y) / zoom
+        x: dragged.value.x + (clientX - lastMousePosition.value.x) / scale,
+        y: dragged.value.y + (clientY - lastMousePosition.value.y) / scale
     };
     lastMousePosition.value = {
         x: clientX,
@@ -229,8 +234,8 @@ function endDragging(nodeID: number | null) {
 
         dragging.value = null;
     } else if (!hasDragged.value) {
-        props[PersistentState].value.selectedNode = null;
-        props[PersistentState].value.selectedAction = null;
+        props.state.value.selectedNode = null;
+        props.state.value.selectedAction = null;
     }
 }
 </script>
@@ -239,7 +244,11 @@ function endDragging(nodeID: number | null) {
 .vue-pan-zoom-scene {
     width: 100%;
     height: 100%;
-    cursor: move;
+    cursor: grab;
+}
+
+.vue-pan-zoom-scene:active {
+    cursor: grabbing;
 }
 
 .g1 {
