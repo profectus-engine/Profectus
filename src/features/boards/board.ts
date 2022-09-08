@@ -211,7 +211,10 @@ export function createBoard<T extends BoardOptions>(
         board[Component] = BoardComponent;
 
         board.state = persistent<BoardData>({
-            nodes: [],
+            nodes: board.startNodes().map((n, i) => {
+                (n as BoardNode).id = i;
+                return n as BoardNode;
+            }),
             selectedNode: null,
             selectedAction: null
         });
