@@ -12,9 +12,10 @@ export function camelToTitle(camel: string): string {
     return title;
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export function isFunction(func: unknown): func is Function {
-    return typeof func === "function";
+export function isFunction<T, S extends ReadonlyArray<unknown>, R>(
+    functionOrValue: ((...args: S) => T) | R
+): functionOrValue is (...args: S) => T {
+    return typeof functionOrValue === "function";
 }
 
 export enum Direction {

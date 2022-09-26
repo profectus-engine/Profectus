@@ -10,7 +10,7 @@ import {
 } from "features/feature";
 import { globalBus } from "game/events";
 import type { Persistent, State } from "game/persistence";
-import { persistent, PersistentState } from "game/persistence";
+import { persistent } from "game/persistence";
 import type { Unsubscribe } from "nanoevents";
 import { isFunction } from "util/common";
 import type {
@@ -336,7 +336,7 @@ export function createBoard<T extends BoardOptions>(
 }
 
 export function getNodeProperty<T>(property: NodeComputable<T>, node: BoardNode): T {
-    return isFunction(property) ? property(node) : unref(property);
+    return isFunction<T, [BoardNode], Computable<T>>(property) ? property(node) : unref(property);
 }
 
 export function getUniqueNodeID(board: GenericBoard): number {

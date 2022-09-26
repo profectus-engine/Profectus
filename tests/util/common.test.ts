@@ -13,13 +13,15 @@ describe("isFunction", () => {
     test("Given function returns true", () => expect(isFunction(vi.fn())).toBe(true));
 
     // Go through all primitives and basic types
-    test("Given a string returns false", () => expect(isFunction("test")).toBe(false));
-    test("Given a number returns false", () => expect(isFunction(10)).toBe(false));
-    test("Given a bigint returns false", () => expect(isFunction(BigInt(10))).toBe(false));
-    test("Given a boolean returns false", () => expect(isFunction(true)).toBe(false));
-    test("Given undefined returns false", () => expect(isFunction(undefined)).toBe(false));
-    test("Given a symbol returns false", () => expect(isFunction(Symbol())).toBe(false));
-    test("Given null returns false", () => expect(isFunction(null)).toBe(false));
-    test("Given object returns false", () => expect(isFunction({})).toBe(false));
-    test("Given array returns false", () => expect(isFunction([])).toBe(false));
+    test("Given a non-function returns false", () => {
+        expect(isFunction("test")).toBe(false);
+        expect(isFunction(10)).toBe(false);
+        expect(isFunction(BigInt(10))).toBe(false);
+        expect(isFunction(true)).toBe(false);
+        expect(isFunction(undefined)).toBe(false);
+        expect(isFunction(Symbol())).toBe(false);
+        expect(isFunction(null)).toBe(false);
+        expect(isFunction({})).toBe(false);
+        expect(isFunction([])).toBe(false);
+    });
 });
