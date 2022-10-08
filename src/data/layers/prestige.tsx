@@ -5,6 +5,7 @@
 import { main } from "data/projEntry";
 import { createCumulativeConversion, createPolynomialScaling } from "features/conversion";
 import { jsx } from "features/feature";
+import { createHotkey } from "features/hotkey";
 import { createReset } from "features/reset";
 import MainDisplay from "features/resources/MainDisplay.vue";
 import { createResource } from "features/resources/resource";
@@ -48,6 +49,12 @@ const layer = createLayer(id, function (this: BaseLayer) {
         treeNode
     }));
 
+    const hotkey = createHotkey(() => ({
+        description: "Reset for prestige points",
+        key: "p",
+        onPress: resetButton.onClick
+    }));
+
     return {
         name,
         color,
@@ -58,7 +65,8 @@ const layer = createLayer(id, function (this: BaseLayer) {
                 {render(resetButton)}
             </>
         )),
-        treeNode
+        treeNode,
+        hotkey
     };
 });
 
