@@ -17,7 +17,7 @@ export type ProxiedWithState<T> = NonNullable<T> extends Record<PropertyKey, any
 
 // Takes a function that returns an object and pretends to be that object
 // Note that the object is lazily calculated
-export function createLazyProxy<T extends object, S>(
+export function createLazyProxy<T extends object, S extends T>(
     objectFunc: (baseObject: S) => T & S,
     baseObject: S = {} as S
 ): T {
