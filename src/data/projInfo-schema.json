@@ -1,0 +1,90 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "properties": {
+        "title": {
+            "type": "string",
+            "description": "The name of the project, which will appear in the info tab and the header, if enabled. The page title will also be set to this value."
+        },
+        "description": {
+            "type": "string",
+            "description": "A description of the project, which will be used when the project is installed as a Progressive Web Application."
+        },
+        "id": {
+            "type": "string",
+            "description": "This is a unique ID used when saving player data. Changing this will effectively erase all save data for all players. This ID MUST be unique to your project, and should not be left as the default value. Otherwise, your project may use the save data from another project and cause issues for both projects."
+        },
+        "author": {
+            "type": "string",
+            "description": "The author of the project, which will appear in the info tab."
+        },
+        "discordName": {
+            "type": "string",
+            "description": "The text to display for the discord server to point users to. This will appear when hovering over the discord icon, inside the info tab, the game over screen, as well as the NaN detected screen."
+        },
+        "discordLink": {
+            "type": "string",
+            "description": "The link for the discord server to point users to."
+        },
+        "versionNumber": {
+            "type": "string",
+            "description": "The current version of the project loaded. If the player data was last saved in a different version of the project, fixOldSave will be run, so you can perform any save migrations necessary. This will also appear in the nav, the info tab, and the game over screen.",
+            "markdownDescription": "The current version of the project loaded. If the player data was last saved in a different version of the project, [fixOldSave](https://moddingtree.com/guide/creating-your-project/project-entry.html#fixoldsave) will be run, so you can perform any save migrations necessary. This will also appear in the nav, the info tab, and the game over screen."
+        },
+        "versionTitle": {
+            "type": "string",
+            "description": "The display name for the current version of the project loaded. This will also appear in the nav, the info tab, and the game over screen unless set to an empty string."
+        },
+        "allowGoBack": {
+            "type": "boolean",
+            "description": "Whether or not to allow tabs (besides the first) to display a \"back\" button to close them (and any other tabs to the right of them)."
+        },
+        "defaultShowSmall": {
+            "type": "boolean",
+            "description": "Whether or not to allow resources to display small values (<.001). If false they'll just display as 0. Individual resources can also be configured to override this value."
+        },
+        "defaultDecimalsShown": {
+            "type": "number",
+            "description": "Default precision to display numbers at when passed into format. Individual format calls can override this value, and resources can be configured with a custom precision as well.",
+            "markdownDescription": "Default precision to display numbers at when passed into format. Individual format calls can override this value, and resources can be configured with a custom precision as well."
+        },
+        "useHeader": {
+            "type": "boolean",
+            "description": "Whether or not to display the nav as a header at the top of the screen. If disabled, the nav will appear on the left side of the screen laid over the first tab."
+        },
+        "banner": {
+            "type": ["boolean", "null"],
+            "description": "A path to an image file to display as the logo of the app. If null, the title will be shown instead. This will appear in the nav when useHeader is true.",
+            "markdownDescription": "A path to an image file to display as the logo of the app. If null, the title will be shown instead. This will appear in the nav when `useHeader` is true."
+        },
+        "logo": {
+            "type": "string",
+            "description": "A path to an image file to display as the logo of the app within the info tab. If left blank no logo will be shown."
+        },
+        "initialTabs": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "The list of initial tabs to display on new saves. This value must have at least one element. Each element should be the ID of the layer to display in that tab."
+        },
+        "maxTickLength": {
+            "type": "number",
+            "description": "The longest duration a single tick can be, in seconds. When calculating things like offline time, a single tick will be forced to be this amount or lower. This will make calculating offline time spread out across many ticks as necessary. The default value is 1 hour."
+        },
+        "offlineLimit": {
+            "type": "number",
+            "description": "The max amount of time that can be stored as offline time, in hours."
+        },
+        "enablePausing": {
+            "type": "boolean",
+            "description": "Whether or not to allow the player to pause the game. Turning this off disables the toggle from the options menu as well as the NaN screen. Developers can still manually pause by just setting player.devSpeed to 0 in console (or 1 to resume).",
+            "markdownDescription": "Whether or not to allow the player to pause the game. Turning this off disables the toggle from the options menu as well as the NaN screen. Developers can still manually pause by just running `player.devSpeed = 0` in console (or `= 1` to resume)."
+        },
+        "exportEncoding": {
+            "type": "string",
+            "enum": ["base64", "lz", "plain"],
+            "description": "The encoding to use when exporting to the clipboard. Plain-text is fast to generate but is easiest for the player to manipulate and cheat with. Base 64 is slightly slower and the string will be longer but will offer a small barrier to people trying to cheat. LZ-String is the slowest method, but produces the smallest strings and still offers a small barrier to those trying to cheat. Some sharing platforms like pastebin may automatically delete base64 encoded text, and some sites might not support all the characters used in lz-string exports."
+        }
+    }
+}
