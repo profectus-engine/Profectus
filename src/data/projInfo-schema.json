@@ -66,6 +66,8 @@
             "items": {
                 "type": "string"
             },
+            "minItems": 1,
+            "uniqueItems": true,
             "description": "The list of initial tabs to display on new saves. This value must have at least one element. Each element should be the ID of the layer to display in that tab."
         },
         "maxTickLength": {
