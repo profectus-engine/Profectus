@@ -12,7 +12,8 @@
         },
         "id": {
             "type": "string",
-            "description": "This is a unique ID used when saving player data. Changing this will effectively erase all save data for all players. This ID MUST be unique to your project, and should not be left as the default value. Otherwise, your project may use the save data from another project and cause issues for both projects."
+            "description": "This is a unique ID used when saving player data. Changing this will effectively erase all save data for all players. This ID MUST be unique to your project, and should not be left as the default value. Otherwise, your project may use the save data from another project and cause issues for both projects.",
+            "minLength": 1
         },
         "author": {
             "type": "string",
