@@ -2,7 +2,7 @@ import ClickableComponent from "features/clickables/Clickable.vue";
 import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
 import { Component, GatherProps, getUniqueID, jsx, setDefault, Visibility } from "features/feature";
 import type { Resource } from "features/resources/resource";
-import type { Persistent } from "game/persistence";
+import { DefaultValue, Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatWhole } from "util/bignum";
@@ -35,6 +35,7 @@ export interface BuyableOptions {
     resource?: Resource;
     canPurchase?: Computable<boolean>;
     purchaseLimit?: Computable<DecimalSource>;
+    initialValue?: DecimalSource;
     classes?: Computable<Record<string, boolean>>;
     style?: Computable<StyleValue>;
     mark?: Computable<boolean | string>;
@@ -101,6 +102,7 @@ export function createBuyable<T extends BuyableOptions>(
         buyable[Component] = ClickableComponent;
 
         buyable.amount = amount;
+        buyable.amount[DefaultValue] = buyable.initialValue ?? 0;
         buyable.canAfford = computed(() => {
             const genericBuyable = buyable as GenericBuyable;
             const cost = unref(genericBuyable.cost);
