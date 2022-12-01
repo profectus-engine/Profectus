@@ -111,7 +111,7 @@ export function trackOOMPS(
 export function displayResource(resource: Resource, overrideAmount?: DecimalSource): string {
     const amount = overrideAmount ?? resource.value;
     if (Decimal.eq(resource.precision, 0)) {
-        return formatWhole(amount);
+        return formatWhole(resource.small ? amount : Decimal.floor(amount));
     }
     return format(amount, resource.precision, resource.small);
 }
