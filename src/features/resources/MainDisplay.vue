@@ -2,7 +2,8 @@
     <Sticky>
         <div
             class="main-display-container"
-            :style="{ height: `${(effectRef?.$el.clientHeight ?? 0) + 50}px` }"
+            :class="classes ?? {}"
+            :style="[{ height: `${(effectRef?.$el.clientHeight ?? 0) + 50}px` }, style ?? {}]"
         >
             <div class="main-display">
                 <span v-if="showPrefix">You have </span>
