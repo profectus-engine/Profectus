@@ -102,9 +102,12 @@ export async function loadSave(playerObj: Partial<PlayerData>): Promise<void> {
     getInitialLayers(playerObj).forEach(layer => addLayer(layer, playerObj));
 
     playerObj = setupInitialStore(playerObj);
-    if (playerObj.offlineProd && playerObj.time) {
+    if (playerObj.offlineProd && playerObj.time && playerObj.devSpeed !== 0) {
         if (playerObj.offlineTime == undefined) playerObj.offlineTime = 0;
-        playerObj.offlineTime += (Date.now() - playerObj.time) / 1000;
+        playerObj.offlineTime += Math.min(
+            playerObj.offlineTime + (Date.now() - playerObj.time) / 1000,
+            projInfo.offlineLimit * 3600
+        );
     }
     playerObj.time = Date.now();
     if (playerObj.modVersion !== projInfo.versionNumber) {
