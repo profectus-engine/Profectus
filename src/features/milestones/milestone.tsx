@@ -46,6 +46,7 @@ export interface MilestoneOptions {
               optionsDisplay?: CoercableComponent;
           }
     >;
+    showPopups?: Computable<boolean>;
     onComplete?: VoidFunction;
 }
 
@@ -65,6 +66,7 @@ export type Milestone<T extends MilestoneOptions> = Replace<
         style: GetComputableType<T["style"]>;
         classes: GetComputableType<T["classes"]>;
         display: GetComputableType<T["display"]>;
+        showPopups: GetComputableType<T["showPopups"]>;
     }
 >;
 
@@ -87,7 +89,25 @@ export function createMilestone<T extends MilestoneOptions>(
 
         milestone.earned = earned;
         milestone.complete = function () {
+            const genericMilestone = milestone as GenericMilestone;
             earned.value = true;
+            genericMilestone.onComplete?.();
+            if (genericMilestone.display && unref(genericMilestone.showPopups) === true) {
+                const display = unref(genericMilestone.display);
+                const Display = coerceComponent(
+                    isCoercableComponent(display) ? display : display.requirement
+                );
+                toast(
+                    <>
+                        <h3>Milestone earned!</h3>
+                        <div>
+                            {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+                            {/* @ts-ignore */}
+                            <Display />
+                        </div>
+                    </>
+                );
+            }
         };
 
         processComputable(milestone as T, "visibility");
@@ -124,6 +144,7 @@ export function createMilestone<T extends MilestoneOptions>(
         processComputable(milestone as T, "style");
         processComputable(milestone as T, "classes");
         processComputable(milestone as T, "display");
+        processComputable(milestone as T, "showPopups");
 
         milestone[GatherProps] = function (this: GenericMilestone) {
             const { visibility, display, style, classes, earned, id } = this;
@@ -141,7 +162,7 @@ export function createMilestone<T extends MilestoneOptions>(
                 ) {
                     genericMilestone.earned.value = true;
                     genericMilestone.onComplete?.();
-                    if (genericMilestone.display) {
+                    if (genericMilestone.display && unref(genericMilestone.showPopups) === true) {
                         const display = unref(genericMilestone.display);
                         const Display = coerceComponent(
                             isCoercableComponent(display) ? display : display.requirement
