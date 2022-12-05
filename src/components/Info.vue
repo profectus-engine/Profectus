@@ -21,19 +21,32 @@
                 <div class="link" @click="openChangelog">Changelog</div>
                 <br />
                 <div>
-                    <a :href="discordLink" v-if="discordLink" class="info-modal-discord-link">
+                    <a
+                        :href="discordLink"
+                        v-if="discordLink"
+                        class="info-modal-discord-link"
+                        target="_blank"
+                    >
                         <span class="material-icons info-modal-discord">discord</span>
                         {{ discordName }}
                     </a>
                 </div>
                 <div>
-                    <a href="https://discord.gg/WzejVAx" class="info-modal-discord-link">
+                    <a
+                        href="https://discord.gg/WzejVAx"
+                        class="info-modal-discord-link"
+                        target="_blank"
+                    >
                         <span class="material-icons info-modal-discord">discord</span>
                         The Paper Pilot Community
                     </a>
                 </div>
                 <div>
-                    <a href="https://discord.gg/F3xveHV" class="info-modal-discord-link">
+                    <a
+                        href="https://discord.gg/F3xveHV"
+                        class="info-modal-discord-link"
+                        target="_blank"
+                    >
                         <span class="material-icons info-modal-discord">discord</span>
                         The Modding Tree
                     </a>
