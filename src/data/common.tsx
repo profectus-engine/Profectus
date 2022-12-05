@@ -1,8 +1,10 @@
+import Collapsible from "components/layout/Collapsible.vue";
 import type { Clickable, ClickableOptions, GenericClickable } from "features/clickables/clickable";
 import { createClickable } from "features/clickables/clickable";
 import type { GenericConversion } from "features/conversion";
 import type { CoercableComponent, JSXFunction, OptionsFunc, Replace } from "features/feature";
 import { jsx, setDefault } from "features/feature";
+import { GenericMilestone } from "features/milestones/milestone";
 import { displayResource } from "features/resources/resource";
 import type { GenericTree, GenericTreeNode, TreeNode, TreeNodeOptions } from "features/trees/tree";
 import { createTreeNode } from "features/trees/tree";
@@ -20,8 +22,7 @@ import type {
     ProcessedComputable
 } from "util/computed";
 import { convertComputable, processComputable } from "util/computed";
-import { createLazyProxy } from "util/proxies";
-import { renderJSX } from "util/vue";
+import { getFirstFeature, renderColJSX, renderJSX } from "util/vue";
 import type { Ref } from "vue";
 import { computed, unref } from "vue";
 import "./common.css";
@@ -345,4 +346,46 @@ export function createCollapsibleModifierSections(
  */
 export function colorText(textToColor: string, color = "var(--accent2)"): JSX.Element {
     return <span style={{ color }}>{textToColor}</span>;
+}
+
+/**
+ * Creates a collapsible display of a list of milestones
+ * @param milestones A dictionary of the milestones to display, inserted in the order from easiest to hardest
+ */
+export function createCollapsibleMilestones(milestones: Record<string, GenericMilestone>) {
+    // Milestones are typically defined from easiest to hardest, and we want to show hardest first
+    const orderedMilestones = Object.values(milestones).reverse();
+    const collapseMilestones = persistent<boolean>(true);
+    const lockedMilestones = computed(() =>
+        orderedMilestones.filter(m => m.earned.value === false)
+    );
+    const { firstFeature, collapsedContent, hasCollapsedContent } = getFirstFeature(
+        orderedMilestones,
+        m => m.earned.value
+    );
+    const display = jsx(() => {
+        const milestonesToDisplay = [...lockedMilestones.value];
+        if (firstFeature.value) {
+            milestonesToDisplay.push(firstFeature.value);
+        }
+        return renderColJSX(
+            ...milestonesToDisplay,
+            jsx(() => (
+                <Collapsible
+                    collapsed={collapseMilestones}
+                    content={collapsedContent}
+                    display={
+                        collapseMilestones.value
+                            ? "Show other completed milestones"
+                            : "Hide other completed milestones"
+                    }
+                    v-show={unref(hasCollapsedContent)}
+                />
+            ))
+        );
+    });
+    return {
+        collapseMilestones,
+        display
+    };
 }

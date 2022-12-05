@@ -38,6 +38,7 @@ const contentComponent = computeComponent(toRef(props, "content"));
     padding: var(--feature-margin);
     color: var(--foreground);
     cursor: pointer;
+    transition-duration: 0s;
 }
 
 .collapsible-toggle:last-child {
