@@ -36,7 +36,8 @@ requestAnimationFrame(async () => {
         "padding: 4px;"
     );
     await load();
-    const { globalBus, startGameLoop } = await import("./game/events");
+    const { globalBus } = await import("./game/events");
+    const { startGameLoop } = await import("./game/gameLoop");
 
     // Create Vue
     const vue = (window.vue = createApp(App));

@@ -1,3 +1,4 @@
+import { identifier } from "@babel/types";
 import { isArray } from "@vue/shared";
 import { globalBus } from "game/events";
 import type { GenericLayer } from "game/layers";
@@ -5,8 +6,8 @@ import { addingLayers, persistentRefs } from "game/layers";
 import type { DecimalSource } from "util/bignum";
 import Decimal from "util/bignum";
 import { ProxyState } from "util/proxies";
-import type { Ref } from "vue";
-import { isReactive, isRef, ref } from "vue";
+import type { Ref, WritableComputedRef } from "vue";
+import { computed, isReactive, isRef, ref } from "vue";
 
 /**
  * A symbol used in {@link Persistent} objects.
@@ -28,6 +29,16 @@ export const StackTrace = Symbol("StackTrace");
  * @see {@link Persistent[Deleted]}
  */
 export const Deleted = Symbol("Deleted");
+/**
+ * A symbol used in {@link Persistent} objects.
+ * @see {@link Persistent[NonPersistent]}
+ */
+export const NonPersistent = Symbol("NonPersistent");
+/**
+ * A symbol used in {@link Persistent} objects.
+ * @see {@link Persistent[SaveDataPath]}
+ */
+export const SaveDataPath = Symbol("SaveDataPath");
 
 /**
  * This is a union of things that should be safely stringifiable without needing special processes or knowing what to load them in as.
@@ -57,6 +68,14 @@ export type Persistent<T extends State = State> = Ref<T> & {
      * @see {@link deletePersistent} for marking a persistent ref as deleted.
      */
     [Deleted]: boolean;
+    /**
+     * A non-persistent ref that just reads and writes ot the persistent ref. Used for passing to other features without duplicating the persistent ref in the constructed save data object.
+     */
+    [NonPersistent]: WritableComputedRef<T>;
+    /**
+     * The path this persistent appears in within the save data object. Predominantly used to ensure it's only placed in there one time.
+     */
+    [SaveDataPath]: string[] | undefined;
 };
 
 function getStackTrace() {
@@ -83,6 +102,15 @@ export function persistent<T extends State>(defaultValue: T | Ref<T>): Persisten
     persistent[DefaultValue] = isRef(defaultValue) ? defaultValue.value : defaultValue;
     persistent[StackTrace] = getStackTrace();
     persistent[Deleted] = false;
+    persistent[NonPersistent] = computed({
+        get() {
+            return persistent.value;
+        },
+        set(value) {
+            persistent.value = value;
+        }
+    });
+    persistent[SaveDataPath] = undefined;
 
     if (addingLayers.length === 0) {
         console.warn(
@@ -95,6 +123,25 @@ export function persistent<T extends State>(defaultValue: T | Ref<T>): Persisten
     }
 
     return persistent as Persistent<T>;
+}
+
+/**
+ * Type guard for whether an arbitrary value is a persistent ref
+ * @param value The value that may or may not be a persistent ref
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function isPersistent(value: any): value is Persistent {
+    return value && typeof value === "object" && PersistentState in value;
+}
+
+/**
+ * Unwraps the non-persistent ref inside of persistent refs, to be passed to other features without duplicating values in the save data object.
+ * @param persistent The persistent ref to unwrap
+ */
+export function noPersist<T extends Persistent<S>, S extends State>(
+    persistent: T
+): T[typeof NonPersistent] {
+    return persistent[NonPersistent];
 }
 
 /**
@@ -117,24 +164,40 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
     const handleObject = (obj: Record<string, unknown>, path: string[] = []): boolean => {
         let foundPersistent = false;
         Object.keys(obj).forEach(key => {
-            const value = obj[key];
+            let value = obj[key];
             if (value && typeof value === "object") {
-                if (PersistentState in value) {
+                if (ProxyState in value) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    value = (value as any)[ProxyState] as object;
+                }
+                if (isPersistent(value)) {
                     foundPersistent = true;
-                    if ((value as Persistent)[Deleted]) {
+                    if (value[Deleted]) {
                         console.warn(
                             "Deleted persistent ref present in returned object. Ignoring...",
                             value,
-                            "\nCreated at:\n" + (value as Persistent)[StackTrace]
+                            "\nCreated at:\n" + value[StackTrace]
                         );
                         return;
                     }
-                    persistentRefs[layer.id].delete(
-                        ProxyState in value
-                            ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                              ((value as any)[ProxyState] as Persistent)
-                            : (value as Persistent)
-                    );
+                    persistentRefs[layer.id].delete(value);
+
+                    // Handle SaveDataPath
+                    const newPath = [layer.id, ...path, key];
+                    if (
+                        value[SaveDataPath] != undefined &&
+                        JSON.stringify(newPath) !== JSON.stringify(value[SaveDataPath])
+                    ) {
+                        console.error(
+                            `Persistent ref is being saved to \`${newPath.join(
+                                "."
+                            )}\` when it's already present at \`${value[SaveDataPath].join(
+                                "."
+                            )}\`. This can cause unexpected behavior when loading saves between updates.`,
+                            value
+                        );
+                    }
+                    value[SaveDataPath] = newPath;
 
                     // Construct save path if it doesn't exist
                     const persistentState = path.reduce<Record<string, unknown>>((acc, curr) => {
@@ -147,21 +210,19 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
                     // Cache currently saved value
                     const savedValue = persistentState[key];
                     // Add ref to save data
-                    persistentState[key] = (value as Persistent)[PersistentState];
+                    persistentState[key] = value[PersistentState];
                     // Load previously saved value
                     if (isReactive(persistentState)) {
                         if (savedValue != null) {
                             persistentState[key] = savedValue;
                         } else {
-                            persistentState[key] = (value as Persistent)[DefaultValue];
+                            persistentState[key] = value[DefaultValue];
                         }
                     } else {
                         if (savedValue != null) {
                             (persistentState[key] as Ref<unknown>).value = savedValue;
                         } else {
-                            (persistentState[key] as Ref<unknown>).value = (value as Persistent)[
-                                DefaultValue
-                            ];
+                            (persistentState[key] as Ref<unknown>).value = value[DefaultValue];
                         }
                     }
                 } else if (
@@ -200,7 +261,8 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
         });
         return foundPersistent;
     };
-    handleObject(layer);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    handleObject((layer as any)[ProxyState]);
     persistentRefs[layer.id].forEach(persistent => {
         console.error(
             `Created persistent ref in ${layer.id} without registering it to the layer! Make sure to include everything persistent in the returned object`,

@@ -1,3 +1,4 @@
+import { NonPersistent } from "game/persistence";
 import Decimal from "util/bignum";
 
 export const ProxyState = Symbol("ProxyState");
@@ -37,7 +38,11 @@ export function createLazyProxy<T extends object, S extends T>(
                 return calculateObj();
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return (calculateObj() as any)[key];
+            const val = (calculateObj() as any)[key];
+            if (val && typeof val === "object" && NonPersistent in val) {
+                return val[NonPersistent];
+            }
+            return val;
         },
         set(target, key, value) {
             // TODO give warning about this? It should only be done with caution

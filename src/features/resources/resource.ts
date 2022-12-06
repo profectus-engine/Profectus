@@ -1,5 +1,5 @@
 import { globalBus } from "game/events";
-import type { State } from "game/persistence";
+import { NonPersistent, Persistent, State } from "game/persistence";
 import { persistent } from "game/persistence";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatWhole } from "util/bignum";
@@ -14,17 +14,37 @@ export interface Resource<T = DecimalSource> extends Ref<T> {
 }
 
 export function createResource<T extends State>(
+    defaultValue: T,
+    displayName?: string,
+    precision?: number,
+    small?: boolean | undefined
+): Resource<T> & Persistent<T> & { [NonPersistent]: Resource<T> };
+export function createResource<T extends State>(
+    defaultValue: Ref<T>,
+    displayName?: string,
+    precision?: number,
+    small?: boolean | undefined
+): Resource<T>;
+export function createResource<T extends State>(
     defaultValue: T | Ref<T>,
     displayName = "points",
     precision = 0,
-    small = undefined
-): Resource<T> {
+    small: boolean | undefined = undefined
+) {
     const resource: Partial<Resource<T>> = isRef(defaultValue)
         ? defaultValue
         : persistent(defaultValue);
     resource.displayName = displayName;
     resource.precision = precision;
     resource.small = small;
+    if (!isRef(defaultValue)) {
+        const nonPersistentResource = (resource as Persistent<T>)[
+            NonPersistent
+        ] as unknown as Resource<T>;
+        nonPersistentResource.displayName = displayName;
+        nonPersistentResource.precision = precision;
+        nonPersistentResource.small = small;
+    }
     return resource as Resource<T>;
 }
 
