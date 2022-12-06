@@ -71,7 +71,7 @@ export type Persistent<T extends State = State> = Ref<T> & {
     /**
      * A non-persistent ref that just reads and writes ot the persistent ref. Used for passing to other features without duplicating the persistent ref in the constructed save data object.
      */
-    [NonPersistent]: WritableComputedRef<T>;
+    [NonPersistent]: WritableComputedRef<T> & { [DefaultValue]: T };
     /**
      * The path this persistent appears in within the save data object. Predominantly used to ensure it's only placed in there one time.
      */
@@ -102,7 +102,7 @@ export function persistent<T extends State>(defaultValue: T | Ref<T>): Persisten
     persistent[DefaultValue] = isRef(defaultValue) ? defaultValue.value : defaultValue;
     persistent[StackTrace] = getStackTrace();
     persistent[Deleted] = false;
-    persistent[NonPersistent] = computed({
+    const nonPersistent: WritableComputedRef<T> & Partial<{ [DefaultValue]: T }> = computed({
         get() {
             return persistent.value;
         },
@@ -110,6 +110,8 @@ export function persistent<T extends State>(defaultValue: T | Ref<T>): Persisten
             persistent.value = value;
         }
     });
+    nonPersistent[DefaultValue] = persistent[DefaultValue];
+    persistent[NonPersistent] = nonPersistent as WritableComputedRef<T> & { [DefaultValue]: T };
     persistent[SaveDataPath] = undefined;
 
     if (addingLayers.length === 0) {

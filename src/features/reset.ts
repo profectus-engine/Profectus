@@ -2,14 +2,14 @@ import type { OptionsFunc, Replace } from "features/feature";
 import { getUniqueID } from "features/feature";
 import { globalBus } from "game/events";
 import type { BaseLayer } from "game/layers";
-import type { Persistent } from "game/persistence";
+import type { Persistent, State } from "game/persistence";
 import { DefaultValue, persistent, PersistentState } from "game/persistence";
 import type { Unsubscribe } from "nanoevents";
 import Decimal from "util/bignum";
 import type { Computable, GetComputableType } from "util/computed";
 import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { isRef, unref } from "vue";
+import { isRef, unref, WritableComputedRef } from "vue";
 
 export const ResetType = Symbol("Reset");
 
@@ -44,10 +44,9 @@ export function createReset<T extends ResetOptions>(
         reset.reset = function () {
             const handleObject = (obj: unknown) => {
                 if (obj && typeof obj === "object") {
-                    if (PersistentState in obj) {
-                        (obj as Persistent)[PersistentState].value = (obj as Persistent)[
-                            DefaultValue
-                        ];
+                    if (DefaultValue in obj) {
+                        const persistent = obj as WritableComputedRef<T> & { [DefaultValue]: T };
+                        persistent.value = persistent[DefaultValue];
                     } else if (!(obj instanceof Decimal) && !isRef(obj)) {
                         Object.values(obj).forEach(obj =>
                             handleObject(obj as Record<string, unknown>)
