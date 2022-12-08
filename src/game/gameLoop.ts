@@ -2,6 +2,7 @@ import projInfo from "data/projInfo.json";
 import { globalBus } from "game/events";
 import settings from "game/settings";
 import Decimal from "util/bignum";
+import { loadingSave } from "util/save";
 import type { Ref } from "vue";
 import { watch } from "vue";
 import player from "./player";
@@ -38,6 +39,8 @@ function update() {
     if (player.devSpeed === 0) {
         return;
     }
+
+    loadingSave.value = false;
 
     // Add offline time if any
     if (player.offlineTime != undefined) {

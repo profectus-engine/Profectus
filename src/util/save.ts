@@ -5,6 +5,7 @@ import player, { stringifySave } from "game/player";
 import settings, { loadSettings } from "game/settings";
 import LZString from "lz-string";
 import { ProxyState } from "util/proxies";
+import { ref } from "vue";
 
 export function setupInitialStore(player: Partial<PlayerData> = {}): Player {
     return Object.assign(
@@ -88,8 +89,11 @@ export function getUniqueID(): string {
     return id;
 }
 
+export const loadingSave = ref(false);
+
 export async function loadSave(playerObj: Partial<PlayerData>): Promise<void> {
     console.info("Loading save", playerObj);
+    loadingSave.value = true;
     const { layers, removeLayer, addLayer } = await import("game/layers");
     const { fixOldSave, getInitialLayers } = await import("data/projEntry");
 

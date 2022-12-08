@@ -1,9 +1,12 @@
 import { globalBus } from "game/events";
 import { NonPersistent, Persistent, State } from "game/persistence";
 import { persistent } from "game/persistence";
+import player from "game/player";
+import settings from "game/settings";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatWhole } from "util/bignum";
 import type { ProcessedComputable } from "util/computed";
+import { loadingSave } from "util/save";
 import type { ComputedRef, Ref } from "vue";
 import { computed, isRef, ref, unref, watch } from "vue";
 
@@ -51,6 +54,9 @@ export function createResource<T extends State>(
 export function trackBest(resource: Resource): Ref<DecimalSource> {
     const best = persistent(resource.value);
     watch(resource, amount => {
+        if (loadingSave.value) {
+            return;
+        }
         if (Decimal.gt(amount, best.value)) {
             best.value = amount;
         }
@@ -61,6 +67,9 @@ export function trackBest(resource: Resource): Ref<DecimalSource> {
 export function trackTotal(resource: Resource): Ref<DecimalSource> {
     const total = persistent(resource.value);
     watch(resource, (amount, prevAmount) => {
+        if (loadingSave.value) {
+            return;
+        }
         if (Decimal.gt(amount, prevAmount)) {
             total.value = Decimal.add(total.value, Decimal.sub(amount, prevAmount));
         }

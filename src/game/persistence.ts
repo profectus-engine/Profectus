@@ -1,4 +1,3 @@
-import { identifier } from "@babel/types";
 import { isArray } from "@vue/shared";
 import { globalBus } from "game/events";
 import type { GenericLayer } from "game/layers";
