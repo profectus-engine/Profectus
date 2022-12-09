@@ -70,7 +70,8 @@ requestAnimationFrame(async () => {
             onRegisterError: console.warn,
             onRegistered(r) {
                 if (r) {
-                    setInterval(r.update, 60 * 60 * 1000);
+                    // https://stackoverflow.com/questions/65500916/typeerror-failed-to-execute-update-on-serviceworkerregistration-illegal-in
+                    setInterval(() => r.update(), 60 * 60 * 1000);
                 }
             }
         });
