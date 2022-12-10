@@ -77,16 +77,16 @@ export function createAdditiveModifier<T extends AdditiveModifierOptions>(
                     ? undefined
                     : jsx(() => (
                           <div class="modifier-container">
-                              <span class="modifier-amount">
-                                  {Decimal.gte(unref(processedAddend), 0) ? "+" : ""}
-                                  {format(unref(processedAddend))}
-                              </span>
                               {unref(processedDescription) ? (
                                   <span class="modifier-description">
                                       {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
                                       {renderJSX(unref(processedDescription)!)}
                                   </span>
                               ) : null}
+                              <span class="modifier-amount">
+                                  {Decimal.gte(unref(processedAddend), 0) ? "+" : ""}
+                                  {format(unref(processedAddend))}
+                              </span>
                           </div>
                       ))
         };
@@ -125,15 +125,15 @@ export function createMultiplicativeModifier<T extends MultiplicativeModifierOpt
                     ? undefined
                     : jsx(() => (
                           <div class="modifier-container">
-                              <span class="modifier-amount">
-                                  x{format(unref(processedMultiplier))}
-                              </span>
                               {unref(processedDescription) ? (
                                   <span class="modifier-description">
                                       {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
                                       {renderJSX(unref(processedDescription)!)}
                                   </span>
                               ) : null}
+                              <span class="modifier-amount">
+                                  ×{format(unref(processedMultiplier))}
+                              </span>
                           </div>
                       ))
         };
@@ -194,9 +194,6 @@ export function createExponentialModifier<T extends ExponentialModifierOptions>(
                     ? undefined
                     : jsx(() => (
                           <div class="modifier-container">
-                              <span class="modifier-amount">
-                                  ^{format(unref(processedExponent))}
-                              </span>
                               {unref(processedDescription) ? (
                                   <span class="modifier-description">
                                       {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
@@ -204,6 +201,9 @@ export function createExponentialModifier<T extends ExponentialModifierOptions>(
                                       {supportLowNumbers ? " (+1 effective)" : null}
                                   </span>
                               ) : null}
+                              <span class="modifier-amount">
+                                  ^{format(unref(processedExponent))}
+                              </span>
                           </div>
                       ))
         };
@@ -279,16 +279,21 @@ export function createModifierSection(
             </h3>
             <br />
             <div class="modifier-container">
+                <span class="modifier-description">{renderJSX(baseText)}</span>
                 <span class="modifier-amount">
                     {format(base)}
                     {unit}
                 </span>
-                <span class="modifier-description">{renderJSX(baseText)}</span>
             </div>
             {renderJSX(unref(modifier.description))}
             <hr />
-            Total: {format(modifier.apply(base))}
-            {unit}
+            <div class="modifier-container">
+                <span class="modifier-description">Total</span>
+                <span class="modifier-amount">
+                    {format(modifier.apply(base))}
+                    {unit}
+                </span>
+            </div>
         </div>
     );
 }

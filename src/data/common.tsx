@@ -305,12 +305,12 @@ export function createCollapsibleModifierSections(
             const modifiers = unref(collapsed.value[i]) ? null : (
                 <>
                     <div class="modifier-container">
+                        <span class="modifier-description">
+                            {renderJSX(unref(processed.baseText[i]) ?? "Base")}
+                        </span>
                         <span class="modifier-amount">
                             {format(unref(processed.base[i]) ?? 1)}
                             {s.unit}
-                        </span>
-                        <span class="modifier-description">
-                            {renderJSX(unref(processed.baseText[i]) ?? "Base")}
                         </span>
                     </div>
                     {renderJSX(unref(s.modifier.description))}
@@ -328,8 +328,15 @@ export function createCollapsibleModifierSections(
                         <br />
                         {modifiers}
                         <hr />
-                        Total: {format(s.modifier.apply(unref(processed.base[i]) ?? 1))}
-                        {s.unit}
+                        <div class="modifier-container">
+                            <span class="modifier-description">
+                                Total
+                            </span>
+                            <span class="modifier-amount">
+                                {format(s.modifier.apply(unref(processed.base[i]) ?? 1))}
+                                {s.unit}
+                            </span>
+                        </div>
                     </div>
                 </>
             );
