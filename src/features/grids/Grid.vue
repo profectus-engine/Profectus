@@ -4,9 +4,9 @@
         :style="{
             visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
         }"
-        class="table"
+        class="table-grid"
     >
-        <div v-for="row in unref(rows)" class="row" :class="{ mergeAdjacent }" :key="row">
+        <div v-for="row in unref(rows)" class="row-grid" :class="{ mergeAdjacent }" :key="row">
             <GridCell
                 v-for="col in unref(cols)"
                 :key="col"
