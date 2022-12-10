@@ -49,7 +49,7 @@ requestAnimationFrame(async () => {
         const toast = useToast();
         const { updateServiceWorker } = useRegisterSW({
             onNeedRefresh() {
-                toast.info("New content available, click or reload to update.", {
+                toast.info("New content available, click here to update.", {
                     timeout: false,
                     closeOnClick: false,
                     draggable: false,
