@@ -116,6 +116,7 @@ export async function loadSave(playerObj: Partial<PlayerData>): Promise<void> {
     playerObj.time = Date.now();
     if (playerObj.modVersion !== projInfo.versionNumber) {
         fixOldSave(playerObj.modVersion, playerObj);
+        playerObj.modVersion = projInfo.versionNumber;
     }
 
     Object.assign(player, playerObj);
