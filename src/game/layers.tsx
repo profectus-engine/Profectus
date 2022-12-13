@@ -109,7 +109,7 @@ export interface LayerOptions {
     color?: Computable<string>;
     /**
      * The layout of this layer's features.
-     * When the layer is open in {@link game/player.PlayerData.tabs}, this is the content that is display.
+     * When the layer is open in {@link game/player.PlayerData.tabs}, this is the content that is displayed.
      */
     display: Computable<CoercableComponent>;
     /** An object of classes that should be applied to the display. */
@@ -126,6 +126,11 @@ export interface LayerOptions {
      * Defaults to true.
      */
     minimizable?: Computable<boolean>;
+    /**
+     * The layout of this layer's features.
+     * When the layer is open in {@link game/player.PlayerData.tabs}, but the tab is {@link Layer.minimized} this is the content that is displayed.
+     */
+    minimizedDisplay?: Computable<CoercableComponent>;
     /**
      * Whether or not to force the go back button to be hidden.
      * If true, go back will be hidden regardless of {@link data/projInfo.allowGoBack}.
@@ -170,6 +175,7 @@ export type Layer<T extends LayerOptions> = Replace<
         name: GetComputableTypeWithDefault<T["name"], string>;
         minWidth: GetComputableTypeWithDefault<T["minWidth"], 600>;
         minimizable: GetComputableTypeWithDefault<T["minimizable"], true>;
+        minimizedDisplay: GetComputableType<T["minimizedDisplay"]>;
         forceHideGoBack: GetComputableType<T["forceHideGoBack"]>;
     }
 >;
@@ -231,6 +237,7 @@ export function createLayer<T extends LayerOptions>(
         setDefault(layer, "minWidth", 600);
         processComputable(layer as T, "minimizable");
         setDefault(layer, "minimizable", true);
+        processComputable(layer as T, "minimizedDisplay");
 
         return layer as unknown as Layer<T>;
     });

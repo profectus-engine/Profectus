@@ -2,7 +2,8 @@
     <div class="layer-container" :style="{ '--layer-color': unref(color) }">
         <button v-if="showGoBack" class="goBack" @click="goBack">←</button>
         <button class="layer-tab minimized" v-if="minimized.value" @click="minimized.value = false">
-            <div>{{ unref(name) }}</div>
+            <component v-if="minimizedComponent" :is="minimizedComponent" />
+            <div v-else>{{ unref(name) }}</div>
         </button>
         <div class="layer-tab" :class="{ showGoBack }" v-else>
             <Context @update-nodes="updateNodes">
@@ -21,7 +22,7 @@ import type { CoercableComponent } from "features/feature";
 import type { FeatureNode } from "game/layers";
 import type { Persistent } from "game/persistence";
 import player from "game/player";
-import { computeComponent, processedPropType, wrapRef } from "util/vue";
+import { computeComponent, computeOptionalComponent, processedPropType, wrapRef } from "util/vue";
 import type { PropType, Ref } from "vue";
 import { computed, defineComponent, nextTick, toRefs, unref, watch } from "vue";
 import Context from "./Context.vue";
@@ -41,6 +42,7 @@ export default defineComponent({
             type: processedPropType<CoercableComponent>(Object, String, Function),
             required: true
         },
+        minimizedDisplay: processedPropType<CoercableComponent>(Object, String, Function),
         minimized: {
             type: Object as PropType<Persistent<boolean>>,
             required: true
@@ -61,9 +63,10 @@ export default defineComponent({
         }
     },
     setup(props) {
-        const { display, index, minimized, minWidth, tab } = toRefs(props);
+        const { display, index, minimized, minWidth, tab, minimizedDisplay } = toRefs(props);
 
         const component = computeComponent(display);
+        const minimizedComponent = computeOptionalComponent(minimizedDisplay);
         const showGoBack = computed(
             () => projInfo.allowGoBack && index.value > 0 && !minimized.value
         );
@@ -106,6 +109,7 @@ export default defineComponent({
 
         return {
             component,
+            minimizedComponent,
             showGoBack,
             updateNodes,
             unref,
@@ -155,7 +159,7 @@ export default defineComponent({
     background-color: transparent;
 }
 
-.layer-tab.minimized div {
+.layer-tab.minimized > * {
     margin: 0;
     writing-mode: vertical-rl;
     padding-left: 10px;
