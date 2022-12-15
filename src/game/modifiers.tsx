@@ -2,7 +2,7 @@ import "components/common/modifiers.css";
 import type { CoercableComponent } from "features/feature";
 import { jsx } from "features/feature";
 import type { DecimalSource } from "util/bignum";
-import Decimal, { format } from "util/bignum";
+import Decimal, { formatSmall } from "util/bignum";
 import type { WithRequired } from "util/common";
 import type { Computable, ProcessedComputable } from "util/computed";
 import { convertComputable } from "util/computed";
@@ -85,7 +85,7 @@ export function createAdditiveModifier<T extends AdditiveModifierOptions>(
                               ) : null}
                               <span class="modifier-amount">
                                   {Decimal.gte(unref(processedAddend), 0) ? "+" : ""}
-                                  {format(unref(processedAddend))}
+                                  {formatSmall(unref(processedAddend))}
                               </span>
                           </div>
                       ))
@@ -132,7 +132,7 @@ export function createMultiplicativeModifier<T extends MultiplicativeModifierOpt
                                   </span>
                               ) : null}
                               <span class="modifier-amount">
-                                  ×{format(unref(processedMultiplier))}
+                                  ×{formatSmall(unref(processedMultiplier))}
                               </span>
                           </div>
                       ))
@@ -202,7 +202,7 @@ export function createExponentialModifier<T extends ExponentialModifierOptions>(
                                   </span>
                               ) : null}
                               <span class="modifier-amount">
-                                  ^{format(unref(processedExponent))}
+                                  ^{formatSmall(unref(processedExponent))}
                               </span>
                           </div>
                       ))
@@ -281,7 +281,7 @@ export function createModifierSection(
             <div class="modifier-container">
                 <span class="modifier-description">{renderJSX(baseText)}</span>
                 <span class="modifier-amount">
-                    {format(base)}
+                    {formatSmall(base)}
                     {unit}
                 </span>
             </div>
@@ -290,7 +290,7 @@ export function createModifierSection(
             <div class="modifier-container">
                 <span class="modifier-description">Total</span>
                 <span class="modifier-amount">
-                    {format(modifier.apply(base))}
+                    {formatSmall(modifier.apply(base))}
                     {unit}
                 </span>
             </div>
