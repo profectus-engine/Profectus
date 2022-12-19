@@ -102,11 +102,13 @@ registerInfoComponent(
             <div>
                 <br />
                 <h4>Hotkeys</h4>
-                {keys.map(hotkey => (
-                    <div>
-                        <Hotkey hotkey={hotkey as GenericHotkey} /> {hotkey?.description}
-                    </div>
-                ))}
+                <div style="column-count: 2">
+                    {keys.map(hotkey => (
+                        <div>
+                            <Hotkey hotkey={hotkey as GenericHotkey} /> {hotkey?.description}
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     })
