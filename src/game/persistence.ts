@@ -85,7 +85,7 @@ function getStackTrace() {
             ?.split("\n")
             .slice(3, 5)
             .map(line => line.trim())
-            .join("\n") || ""
+            .join("\n") ?? ""
     );
 }
 
@@ -134,7 +134,7 @@ export function persistent<T extends State>(defaultValue: T | Ref<T>): Persisten
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isPersistent(value: any): value is Persistent {
-    return value && typeof value === "object" && PersistentState in value;
+    return value != null && typeof value === "object" && PersistentState in value;
 }
 
 /**
@@ -168,7 +168,7 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
         let foundPersistent = false;
         Object.keys(obj).forEach(key => {
             let value = obj[key];
-            if (value && typeof value === "object") {
+            if (value != null && typeof value === "object") {
                 if (ProxyState in value) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     value = (value as any)[ProxyState] as object;

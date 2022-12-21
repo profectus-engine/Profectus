@@ -43,7 +43,7 @@ export function createReset<T extends ResetOptions>(
 
         reset.reset = function () {
             const handleObject = (obj: unknown) => {
-                if (obj && typeof obj === "object") {
+                if (obj != null && typeof obj === "object") {
                     if (DefaultValue in obj) {
                         const persistent = obj as NonPersistent;
                         persistent.value = persistent[DefaultValue];

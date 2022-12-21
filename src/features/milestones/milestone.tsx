@@ -1,5 +1,11 @@
 import Select from "components/fields/Select.vue";
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import { Component, GatherProps, getUniqueID, jsx, setDefault, Visibility } from "features/feature";
 import MilestoneComponent from "features/milestones/Milestone.vue";
 import { globalBus } from "game/events";
@@ -92,7 +98,7 @@ export function createMilestone<T extends MilestoneOptions>(
             const genericMilestone = milestone as GenericMilestone;
             earned.value = true;
             genericMilestone.onComplete?.();
-            if (genericMilestone.display && unref(genericMilestone.showPopups) === true) {
+            if (genericMilestone.display != null && unref(genericMilestone.showPopups) === true) {
                 const display = unref(genericMilestone.display);
                 const Display = coerceComponent(
                     isCoercableComponent(display) ? display : display.requirement
@@ -162,7 +168,10 @@ export function createMilestone<T extends MilestoneOptions>(
                 ) {
                     genericMilestone.earned.value = true;
                     genericMilestone.onComplete?.();
-                    if (genericMilestone.display && unref(genericMilestone.showPopups) === true) {
+                    if (
+                        genericMilestone.display != null &&
+                        unref(genericMilestone.showPopups) === true
+                    ) {
                         const display = unref(genericMilestone.display);
                         const Display = coerceComponent(
                             isCoercableComponent(display) ? display : display.requirement

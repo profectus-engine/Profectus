@@ -11,7 +11,8 @@ module.exports = {
         "@vue/eslint-config-prettier"
     ],
     parserOptions: {
-        ecmaVersion: 2020
+        ecmaVersion: 2020,
+        project: "tsconfig.json"
     },
     ignorePatterns: ["src/lib"],
     rules: {
@@ -19,7 +20,14 @@ module.exports = {
         "no-debugger": process.env.NODE_ENV === "production" ? "warn" : "off",
         "vue/script-setup-uses-vars": "warn",
         "vue/no-mutating-props": "off",
-        "vue/multi-word-component-names": "off"
+        "vue/multi-word-component-names": "off",
+        "@typescript-eslint/strict-boolean-expressions": [
+            "error",
+            {
+                allowNullableObject: true,
+                allowNullableBoolean: true
+            }
+        ]
     },
     globals: {
         defineProps: "readonly",

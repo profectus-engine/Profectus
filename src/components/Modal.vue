@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import type { FeatureNode } from "game/layers";
-import { computed, ref, toRefs } from "vue";
+import { computed, ref, toRefs, unref } from "vue";
 import Context from "./Context.vue";
 
 const _props = defineProps<{
@@ -51,7 +51,7 @@ const emit = defineEmits<{
     (e: "update:modelValue", value: boolean): void;
 }>();
 
-const isOpen = computed(() => props.modelValue || isAnimating.value);
+const isOpen = computed(() => unref(props.modelValue) || isAnimating.value);
 function close() {
     emit("update:modelValue", false);
 }

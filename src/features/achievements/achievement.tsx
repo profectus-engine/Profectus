@@ -109,7 +109,7 @@ export function createAchievement<T extends AchievementOptions>(
                 ) {
                     genericAchievement.earned.value = true;
                     genericAchievement.onComplete?.();
-                    if (genericAchievement.display) {
+                    if (genericAchievement.display != null) {
                         const Display = coerceComponent(unref(genericAchievement.display));
                         toast.info(
                             <div>

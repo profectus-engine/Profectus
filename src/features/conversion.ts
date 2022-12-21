@@ -149,7 +149,7 @@ export function createConversion<T extends ConversionOptions>(
                     : conversion.scaling.currentGain(conversion as GenericConversion);
                 gain = Decimal.floor(gain).max(0);
 
-                if (!unref(conversion.buyMax)) {
+                if (unref(conversion.buyMax) === false) {
                     gain = gain.min(1);
                 }
                 return gain;
@@ -161,14 +161,15 @@ export function createConversion<T extends ConversionOptions>(
         if (conversion.currentAt == null) {
             conversion.currentAt = computed(() => {
                 let current = conversion.scaling.currentAt(conversion as GenericConversion);
-                if (conversion.roundUpCost) current = Decimal.ceil(current);
+                if (unref((conversion as GenericConversion).roundUpCost))
+                    current = Decimal.ceil(current);
                 return current;
             });
         }
         if (conversion.nextAt == null) {
             conversion.nextAt = computed(() => {
                 let next = conversion.scaling.nextAt(conversion as GenericConversion);
-                if (conversion.roundUpCost) next = Decimal.ceil(next);
+                if (unref((conversion as GenericConversion).roundUpCost)) next = Decimal.ceil(next);
                 return next;
             });
         }
@@ -402,7 +403,7 @@ export function createIndependentConversion<S extends ConversionOptions>(
                     : conversion.scaling.currentGain(conversion as GenericConversion);
                 gain = Decimal.floor(gain).max(conversion.gainResource.value);
 
-                if (!unref(conversion.buyMax)) {
+                if (unref(conversion.buyMax) === false) {
                     gain = gain.min(Decimal.add(conversion.gainResource.value, 1));
                 }
                 return gain;
@@ -415,7 +416,7 @@ export function createIndependentConversion<S extends ConversionOptions>(
                     conversion.gainResource.value
                 ).max(0);
 
-                if (!unref(conversion.buyMax)) {
+                if (unref(conversion.buyMax) === false) {
                     gain = gain.min(1);
                 }
                 return gain;
@@ -507,8 +508,10 @@ export function addSoftcap(
 ): ScalingFunction {
     return {
         ...scaling,
-        currentAt: conversion => softcap(scaling.currentAt(conversion), unref(cap), Decimal.recip(unref(power))),
-        nextAt: conversion => softcap(scaling.nextAt(conversion), unref(cap), Decimal.recip(unref(power))),
+        currentAt: conversion =>
+            softcap(scaling.currentAt(conversion), unref(cap), Decimal.recip(unref(power))),
+        nextAt: conversion =>
+            softcap(scaling.nextAt(conversion), unref(cap), Decimal.recip(unref(power))),
         currentGain: conversion =>
             softcap(scaling.currentGain(conversion), unref(cap), unref(power))
     };

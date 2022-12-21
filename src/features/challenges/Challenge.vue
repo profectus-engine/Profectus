@@ -134,25 +134,25 @@ export default defineComponent({
             comp.value = coerceComponent(
                 jsx(() => (
                     <span>
-                        {currDisplay.title ? (
+                        {currDisplay.title != null ? (
                             <div>
                                 <Title />
                             </div>
                         ) : null}
                         <Description />
-                        {currDisplay.goal ? (
+                        {currDisplay.goal != null ? (
                             <div>
                                 <br />
                                 Goal: <Goal />
                             </div>
                         ) : null}
-                        {currDisplay.reward ? (
+                        {currDisplay.reward != null ? (
                             <div>
                                 <br />
                                 Reward: <Reward />
                             </div>
                         ) : null}
-                        {currDisplay.effectDisplay ? (
+                        {currDisplay.effectDisplay != null ? (
                             <div>
                                 Currently: <EffectDisplay />
                             </div>

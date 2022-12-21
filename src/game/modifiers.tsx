@@ -77,7 +77,7 @@ export function createAdditiveModifier<T extends AdditiveModifierOptions>(
                     ? undefined
                     : jsx(() => (
                           <div class="modifier-container">
-                              {unref(processedDescription) ? (
+                              {unref(processedDescription) != null ? (
                                   <span class="modifier-description">
                                       {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
                                       {renderJSX(unref(processedDescription)!)}
@@ -125,7 +125,7 @@ export function createMultiplicativeModifier<T extends MultiplicativeModifierOpt
                     ? undefined
                     : jsx(() => (
                           <div class="modifier-container">
-                              {unref(processedDescription) ? (
+                              {unref(processedDescription) != null ? (
                                   <span class="modifier-description">
                                       {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
                                       {renderJSX(unref(processedDescription)!)}
@@ -194,7 +194,7 @@ export function createExponentialModifier<T extends ExponentialModifierOptions>(
                     ? undefined
                     : jsx(() => (
                           <div class="modifier-container">
-                              {unref(processedDescription) ? (
+                              {unref(processedDescription) != null ? (
                                   <span class="modifier-description">
                                       {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
                                       {renderJSX(unref(processedDescription)!)}

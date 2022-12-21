@@ -176,8 +176,11 @@ export function setupAutoPurchase(
     autoActive: Computable<boolean>,
     upgrades: GenericUpgrade[] = []
 ): void {
-    upgrades = upgrades || findFeatures(layer, UpgradeType);
-    const isAutoActive = isFunction(autoActive) ? computed(autoActive) : autoActive;
+    upgrades =
+        upgrades.length === 0 ? (findFeatures(layer, UpgradeType) as GenericUpgrade[]) : upgrades;
+    const isAutoActive: ProcessedComputable<boolean> = isFunction(autoActive)
+        ? computed(autoActive)
+        : autoActive;
     layer.on("update", () => {
         if (unref(isAutoActive)) {
             upgrades.forEach(upgrade => upgrade.purchase());

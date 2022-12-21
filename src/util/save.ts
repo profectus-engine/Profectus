@@ -85,7 +85,7 @@ export function getUniqueID(): string {
         i = 0;
     do {
         id = `${projInfo.id}-${i++}`;
-    } while (localStorage.getItem(id));
+    } while (localStorage.getItem(id) != null);
     return id;
 }
 
@@ -106,7 +106,12 @@ export async function loadSave(playerObj: Partial<PlayerData>): Promise<void> {
     getInitialLayers(playerObj).forEach(layer => addLayer(layer, playerObj));
 
     playerObj = setupInitialStore(playerObj);
-    if (playerObj.offlineProd && playerObj.time && playerObj.devSpeed !== 0) {
+    if (
+        playerObj.offlineProd &&
+        playerObj.time != null &&
+        playerObj.time &&
+        playerObj.devSpeed !== 0
+    ) {
         if (playerObj.offlineTime == undefined) playerObj.offlineTime = 0;
         playerObj.offlineTime += Math.min(
             playerObj.offlineTime + (Date.now() - playerObj.time) / 1000,

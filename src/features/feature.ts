@@ -102,7 +102,7 @@ export function findFeatures(obj: Record<string, unknown>, ...types: symbol[]): 
     const handleObject = (obj: Record<string, unknown>) => {
         Object.keys(obj).forEach(key => {
             const value = obj[key];
-            if (value && typeof value === "object") {
+            if (value != null && typeof value === "object") {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 if (types.includes((value as Record<string, any>).type)) {
                     objects.push(value);
@@ -127,7 +127,7 @@ export function excludeFeatures(obj: Record<string, unknown>, ...types: symbol[]
     const handleObject = (obj: Record<string, unknown>) => {
         Object.keys(obj).forEach(key => {
             const value = obj[key];
-            if (value && typeof value === "object") {
+            if (value != null && typeof value === "object") {
                 if (
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     typeof (value as Record<string, any>).type == "symbol" &&

@@ -55,7 +55,7 @@ onMounted(() => {
 
 const value = computed({
     get() {
-        return unref(props.modelValue) || "";
+        return unref(props.modelValue) ?? "";
     },
     set(value: string) {
         emit("update:modelValue", value);

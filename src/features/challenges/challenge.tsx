@@ -126,7 +126,10 @@ export function createChallenge<T extends ChallengeOptions>(
         challenge.toggle = function () {
             const genericChallenge = challenge as GenericChallenge;
             if (genericChallenge.active.value) {
-                if (unref(genericChallenge.canComplete) && !genericChallenge.maxed.value) {
+                if (
+                    unref(genericChallenge.canComplete) !== false &&
+                    !genericChallenge.maxed.value
+                ) {
                     let completions: boolean | DecimalSource = unref(genericChallenge.canComplete);
                     if (typeof completions === "boolean") {
                         completions = 1;
@@ -264,11 +267,14 @@ export function setupAutoComplete(
     exitOnComplete = true
 ): WatchStopHandle {
     const isActive = typeof autoActive === "function" ? computed(autoActive) : autoActive;
-    return watch([challenge.canComplete, isActive], ([canComplete, isActive]) => {
-        if (canComplete && isActive) {
-            challenge.complete(!exitOnComplete);
+    return watch(
+        [challenge.canComplete as Ref<boolean>, isActive as Ref<boolean>],
+        ([canComplete, isActive]) => {
+            if (canComplete && isActive) {
+                challenge.complete(!exitOnComplete);
+            }
         }
-    });
+    );
 }
 
 export function createActiveChallenge(

@@ -88,7 +88,7 @@ export function createTreeNode<T extends TreeNodeOptions>(
         if (treeNode.onClick) {
             const onClick = treeNode.onClick.bind(treeNode);
             treeNode.onClick = function () {
-                if (unref(treeNode.canClick)) {
+                if (unref(treeNode.canClick) !== false) {
                     onClick();
                 }
             };
@@ -96,7 +96,7 @@ export function createTreeNode<T extends TreeNodeOptions>(
         if (treeNode.onHold) {
             const onHold = treeNode.onHold.bind(treeNode);
             treeNode.onHold = function () {
-                if (unref(treeNode.canClick)) {
+                if (unref(treeNode.canClick) !== false) {
                     onHold();
                 }
             };

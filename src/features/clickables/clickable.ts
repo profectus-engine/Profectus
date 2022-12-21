@@ -1,5 +1,11 @@
 import ClickableComponent from "features/clickables/Clickable.vue";
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import { Component, GatherProps, getUniqueID, setDefault, Visibility } from "features/feature";
 import type { BaseLayer } from "game/layers";
 import type { Unsubscribe } from "nanoevents";
@@ -81,7 +87,7 @@ export function createClickable<T extends ClickableOptions>(
         if (clickable.onClick) {
             const onClick = clickable.onClick.bind(clickable);
             clickable.onClick = function (e) {
-                if (unref(clickable.canClick)) {
+                if (unref(clickable.canClick) !== false) {
                     onClick(e);
                 }
             };
@@ -89,7 +95,7 @@ export function createClickable<T extends ClickableOptions>(
         if (clickable.onHold) {
             const onHold = clickable.onHold.bind(clickable);
             clickable.onHold = function () {
-                if (unref(clickable.canClick)) {
+                if (unref(clickable.canClick) !== false) {
                     onHold();
                 }
             };
@@ -131,7 +137,8 @@ export function setupAutoClick(
     clickable: GenericClickable,
     autoActive: Computable<boolean> = true
 ): Unsubscribe {
-    const isActive = typeof autoActive === "function" ? computed(autoActive) : autoActive;
+    const isActive: ProcessedComputable<boolean> =
+        typeof autoActive === "function" ? computed(autoActive) : autoActive;
     return layer.on("update", () => {
         if (unref(isActive) && unref(clickable.canClick)) {
             clickable.onClick?.();

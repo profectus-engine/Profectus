@@ -26,7 +26,7 @@ const emit = defineEmits<{
 
 const value = computed({
     get() {
-        return String(unref(props.modelValue) || 0);
+        return String(unref(props.modelValue) ?? 0);
     },
     set(value: string) {
         emit("update:modelValue", Number(value));

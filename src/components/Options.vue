@@ -46,7 +46,7 @@ const themes = Object.keys(rawThemes).map(theme => ({
 }));
 
 const settingFieldsComponent = computed(() => {
-    return coerceComponent(jsx(() => <>{settingFields.map(render)}</>));
+    return coerceComponent(jsx(() => (<>{settingFields.map(render)}</>)));
 });
 
 const { showTPS, theme, unthrottled } = toRefs(settings);

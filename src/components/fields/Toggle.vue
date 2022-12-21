@@ -19,7 +19,7 @@ const emit = defineEmits<{
     (e: "update:modelValue", value: boolean): void;
 }>();
 
-const component = computed(() => coerceComponent(unref(props.title) || "<span></span>", "span"));
+const component = computed(() => coerceComponent(unref(props.title) ?? "<span></span>", "span"));
 
 const value = computed({
     get() {

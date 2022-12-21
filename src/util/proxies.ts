@@ -39,7 +39,7 @@ export function createLazyProxy<T extends object, S extends T>(
             }
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const val = (calculateObj() as any)[key];
-            if (val && typeof val === "object" && NonPersistent in val) {
+            if (val != null && typeof val === "object" && NonPersistent in val) {
                 return val[NonPersistent];
             }
             return val;

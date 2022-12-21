@@ -74,12 +74,12 @@ export default defineComponent({
                 jsx(() => (
                     <span>
                         <Requirement />
-                        {currDisplay.effectDisplay ? (
+                        {currDisplay.effectDisplay != null ? (
                             <div>
                                 <EffectDisplay />
                             </div>
                         ) : null}
-                        {currDisplay.optionsDisplay ? (
+                        {currDisplay.optionsDisplay != null ? (
                             <div class="equal-spaced">
                                 <OptionsDisplay />
                             </div>

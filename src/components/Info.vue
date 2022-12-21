@@ -80,7 +80,7 @@ const isOpen = ref(false);
 const timePlayed = computed(() => formatTime(player.timePlayed));
 
 const infoComponent = computed(() => {
-    return coerceComponent(jsx(() => <>{infoComponents.map(render)}</>));
+    return coerceComponent(jsx(() => (<>{infoComponents.map(render)}</>)));
 });
 
 defineExpose({

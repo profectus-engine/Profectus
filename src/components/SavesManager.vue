@@ -281,7 +281,7 @@ function newFromPreset(preset: string) {
 
 function editSave(id: string, newName: string) {
     const currSave = saves.value[id];
-    if (currSave) {
+    if (currSave != null) {
         currSave.name = newName;
         if (player.id === id) {
             player.name = newName;

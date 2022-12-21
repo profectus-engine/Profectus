@@ -210,7 +210,7 @@ function drag(e: MouseEvent | TouchEvent) {
         hasDragged.value = true;
     }
 
-    if (dragging.value) {
+    if (dragging.value != null) {
         e.preventDefault();
         e.stopPropagation();
     }

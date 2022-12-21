@@ -1,5 +1,11 @@
 import ClickableComponent from "features/clickables/Clickable.vue";
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import { Component, GatherProps, getUniqueID, jsx, setDefault, Visibility } from "features/feature";
 import type { Resource } from "features/resources/resource";
 import { DefaultValue, Persistent } from "game/persistence";
@@ -170,18 +176,18 @@ export function createBuyable<T extends BuyableOptions>(
             }
             if (currDisplay != null && buyable.cost != null && buyable.resource != null) {
                 const genericBuyable = buyable as GenericBuyable;
-                const Title = coerceComponent(currDisplay.title || "", "h3");
-                const Description = coerceComponent(currDisplay.description || "");
-                const EffectDisplay = coerceComponent(currDisplay.effectDisplay || "");
+                const Title = coerceComponent(currDisplay.title ?? "", "h3");
+                const Description = coerceComponent(currDisplay.description ?? "");
+                const EffectDisplay = coerceComponent(currDisplay.effectDisplay ?? "");
 
                 return (
                     <span>
-                        {currDisplay.title ? (
+                        {currDisplay.title == null ? null : (
                             <div>
                                 <Title />
                             </div>
-                        ) : null}
-                        {currDisplay.description ? <Description /> : null}
+                        )}
+                        {currDisplay.description == null ? null : <Description />}
                         {currDisplay.showAmount === false ? null : (
                             <div>
                                 <br />
@@ -195,16 +201,16 @@ export function createBuyable<T extends BuyableOptions>(
                                 )}
                             </div>
                         )}
-                        {currDisplay.effectDisplay ? (
+                        {currDisplay.effectDisplay == null ? null : (
                             <div>
                                 <br />
                                 Currently: <EffectDisplay />
                             </div>
-                        ) : null}
-                        {genericBuyable.cost && !genericBuyable.maxed.value ? (
+                        )}
+                        {genericBuyable.cost != null && !genericBuyable.maxed.value ? (
                             <div>
                                 <br />
-                                Cost: {format(unref(genericBuyable.cost) || 0)}{" "}
+                                Cost: {format(unref(genericBuyable.cost))}{" "}
                                 {buyable.resource.displayName}
                             </div>
                         ) : null}

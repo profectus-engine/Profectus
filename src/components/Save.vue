@@ -104,11 +104,11 @@ const isEditing = ref(false);
 const isConfirming = ref(false);
 const newName = ref("");
 
-watch(isEditing, () => (newName.value = save.value.name || ""));
+watch(isEditing, () => (newName.value = save.value.name ?? ""));
 
-const isActive = computed(() => save.value && save.value.id === player.id);
+const isActive = computed(() => save.value != null && save.value.id === player.id);
 const currentTime = computed(() =>
-    isActive.value ? player.time : (save.value && save.value.time) || 0
+    isActive.value ? player.time : (save.value != null && save.value.time) ?? 0
 );
 
 function changeName() {

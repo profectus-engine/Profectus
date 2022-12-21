@@ -125,7 +125,7 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
                         )}
                     </b>{" "}
                     {resetButton.conversion.gainResource.displayName}
-                    {unref(resetButton.showNextAt) ? (
+                    {unref(resetButton.showNextAt) != null ? (
                         <div>
                             <br />
                             {unref(resetButton.conversion.buyMax) ? "Next:" : "Req:"}{" "}
@@ -154,7 +154,7 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
 
         const onClick = resetButton.onClick;
         resetButton.onClick = function () {
-            if (!unref(resetButton.canClick)) {
+            if (unref(resetButton.canClick) === false) {
                 return;
             }
             resetButton.conversion.convert();
@@ -298,7 +298,7 @@ export function createCollapsibleModifierSections(
                         ▼
                     </span>
                     {s.title}
-                    {s.subtitle ? <span class="subtitle"> ({s.subtitle})</span> : null}
+                    {s.subtitle != null ? <span class="subtitle"> ({s.subtitle})</span> : null}
                 </h3>
             );
 

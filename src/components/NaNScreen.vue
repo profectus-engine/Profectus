@@ -62,7 +62,7 @@ const savesManager = ref<ComponentPublicInstance<typeof SavesManager> | null>(nu
 const path = computed(() => state.NaNPath?.join("."));
 const property = computed(() => state.NaNPath?.slice(-1)[0]);
 const previous = computed<DecimalSource | null>(() => {
-    if (state.NaNReceiver && property.value) {
+    if (state.NaNReceiver && property.value != null) {
         return state.NaNReceiver[property.value] as DecimalSource;
     }
     return null;
@@ -77,21 +77,21 @@ const isPaused = computed({
 });
 
 function setZero() {
-    if (state.NaNReceiver && property.value) {
+    if (state.NaNReceiver && property.value != null) {
         state.NaNReceiver[property.value] = new Decimal(0);
         state.hasNaN = false;
     }
 }
 
 function setOne() {
-    if (state.NaNReceiver && property.value) {
+    if (state.NaNReceiver && property.value != null) {
         state.NaNReceiver[property.value] = new Decimal(1);
         state.hasNaN = false;
     }
 }
 
 function ignore() {
-    if (state.NaNReceiver && property.value) {
+    if (state.NaNReceiver && property.value != null) {
         state.NaNReceiver[property.value] = new Decimal(NaN);
         state.hasNaN = false;
     }

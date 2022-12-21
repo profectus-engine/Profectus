@@ -234,17 +234,17 @@ const title = computed(() => getNodeProperty(props.nodeType.value.title, unref(p
 const label = computed(() => getNodeProperty(props.nodeType.value.label, unref(props.node)));
 const size = computed(() => getNodeProperty(props.nodeType.value.size, unref(props.node)));
 const progress = computed(
-    () => getNodeProperty(props.nodeType.value.progress, unref(props.node)) || 0
+    () => getNodeProperty(props.nodeType.value.progress, unref(props.node)) ?? 0
 );
 const backgroundColor = computed(() => themes[settings.theme].variables["--background"]);
 const outlineColor = computed(
     () =>
-        getNodeProperty(props.nodeType.value.outlineColor, unref(props.node)) ||
+        getNodeProperty(props.nodeType.value.outlineColor, unref(props.node)) ??
         themes[settings.theme].variables["--outline"]
 );
 const fillColor = computed(
     () =>
-        getNodeProperty(props.nodeType.value.fillColor, unref(props.node)) ||
+        getNodeProperty(props.nodeType.value.fillColor, unref(props.node)) ??
         themes[settings.theme].variables["--raised-background"]
 );
 const progressColor = computed(() =>
@@ -252,7 +252,7 @@ const progressColor = computed(() =>
 );
 const titleColor = computed(
     () =>
-        getNodeProperty(props.nodeType.value.titleColor, unref(props.node)) ||
+        getNodeProperty(props.nodeType.value.titleColor, unref(props.node)) ??
         themes[settings.theme].variables["--foreground"]
 );
 const progressDisplay = computed(() =>

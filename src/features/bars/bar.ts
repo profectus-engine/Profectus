@@ -1,5 +1,11 @@
 import BarComponent from "features/bars/Bar.vue";
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import { Component, GatherProps, getUniqueID, setDefault, Visibility } from "features/feature";
 import type { DecimalSource } from "util/bignum";
 import { Direction } from "util/common";
