@@ -49,7 +49,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
         display: jsx(() => (
             <>
                 {player.devSpeed === 0 ? <div>Game Paused</div> : null}
-                {player.devSpeed != null && player.devSpeed !== 1 ? (
+                {player.devSpeed != null && player.devSpeed !== 0 && player.devSpeed !== 1 ? (
                     <div>Dev Speed: {format(player.devSpeed)}x</div>
                 ) : null}
                 {player.offlineTime != null && player.offlineTime !== 0 ? (
