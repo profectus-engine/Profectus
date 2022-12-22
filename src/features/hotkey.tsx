@@ -44,6 +44,8 @@ export type GenericHotkey = Replace<
     }
 >;
 
+const uppercaseNumbers = [")", "!", "@", "#", "$", "5", "^", "&", "*", "("];
+
 export function createHotkey<T extends HotkeyOptions>(
     optionsFunc: OptionsFunc<T, BaseHotkey, GenericHotkey>
 ): Hotkey<T> {
@@ -79,7 +81,9 @@ document.onkeydown = function (e) {
         return;
     }
     let key = e.key;
-    if (e.shiftKey) {
+    if (uppercaseNumbers.includes(key)) {
+        key = "shift+" + uppercaseNumbers.indexOf(key);
+    } else if (e.shiftKey) {
         key = "shift+" + key;
     }
     if (e.ctrlKey) {
