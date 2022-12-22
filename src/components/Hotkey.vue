@@ -13,22 +13,34 @@
 
 <script setup lang="ts">
 import { GenericHotkey } from "features/hotkey";
-import { reactive } from "vue";
+import { watchEffect } from "vue";
 
 const props = defineProps<{
     hotkey: GenericHotkey;
 }>();
 
-let key = reactive(props.hotkey).key;
+let key = "";
+let isCtrl = false;
+let isShift = false;
+let isAlpha = false;
+watchEffect(() => {
+    key = props.hotkey.key;
 
-let isCtrl = key.startsWith("ctrl+");
-if (isCtrl) key = key.slice(5);
+    isCtrl = key.startsWith("ctrl+");
+    if (isCtrl) {
+        key = key.slice(5);
+    }
 
-let isShift = key.startsWith("shift+");
-if (isShift) key = key.slice(6);
+    isShift = key.startsWith("shift+");
+    if (isShift) {
+        key = key.slice(6);
+    }
 
-let isAlpha = key.length == 1 && key.toLowerCase() != key.toUpperCase();
-if (isAlpha) key = key.toUpperCase();
+    isAlpha = key.length == 1 && key.toLowerCase() != key.toUpperCase();
+    if (isAlpha) {
+        key = key.toUpperCase();
+    }
+});
 </script>
 
 <style scoped>
