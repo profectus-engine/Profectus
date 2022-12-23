@@ -267,6 +267,9 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     handleObject((layer as any)[ProxyState]);
     persistentRefs[layer.id].forEach(persistent => {
+        if (persistent[Deleted]) {
+            return;
+        }
         console.error(
             `Created persistent ref in ${layer.id} without registering it to the layer! Make sure to include everything persistent in the returned object`,
             persistent,
