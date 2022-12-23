@@ -44,7 +44,7 @@ export type GenericHotkey = Replace<
     }
 >;
 
-const uppercaseNumbers = [")", "!", "@", "#", "$", "5", "^", "&", "*", "("];
+const uppercaseNumbers = [")", "!", "@", "#", "$", "%", "^", "&", "*", "("];
 
 export function createHotkey<T extends HotkeyOptions>(
     optionsFunc: OptionsFunc<T, BaseHotkey, GenericHotkey>
