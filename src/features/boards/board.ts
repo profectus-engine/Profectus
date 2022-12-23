@@ -9,7 +9,7 @@ import {
     Visibility
 } from "features/feature";
 import { globalBus } from "game/events";
-import type { Persistent, State } from "game/persistence";
+import { DefaultValue, deletePersistent, Persistent, State } from "game/persistence";
 import { persistent } from "game/persistence";
 import type { Unsubscribe } from "nanoevents";
 import { isFunction } from "util/common";
@@ -167,12 +167,12 @@ export interface BoardOptions {
     style?: Computable<StyleValue>;
     startNodes: () => Omit<BoardNode, "id">[];
     types: Record<string, NodeTypeOptions>;
+    state?: Computable<BoardData>;
+    links?: Computable<BoardNodeLink[] | null>;
 }
 
 export interface BaseBoard {
     id: string;
-    state: Persistent<BoardData>;
-    links: Ref<BoardNodeLink[] | null>;
     nodes: Ref<BoardNode[]>;
     selectedNode: Ref<BoardNode | null>;
     selectedAction: Ref<GenericBoardNodeAction | null>;
@@ -191,6 +191,8 @@ export type Board<T extends BoardOptions> = Replace<
         width: GetComputableType<T["width"]>;
         classes: GetComputableType<T["classes"]>;
         style: GetComputableType<T["style"]>;
+        state: GetComputableTypeWithDefault<T["state"], Persistent<BoardData>>;
+        links: GetComputableTypeWithDefault<T["links"], Ref<BoardNodeLink[] | null>>;
     }
 >;
 
@@ -198,31 +200,46 @@ export type GenericBoard = Replace<
     Board<BoardOptions>,
     {
         visibility: ProcessedComputable<Visibility>;
+        state: ProcessedComputable<BoardData>;
+        links: ProcessedComputable<BoardNodeLink[] | null>;
     }
 >;
 
 export function createBoard<T extends BoardOptions>(
     optionsFunc: OptionsFunc<T, BaseBoard, GenericBoard>
 ): Board<T> {
+    const state = persistent<BoardData>({
+        nodes: [],
+        selectedNode: null,
+        selectedAction: null
+    });
+
     return createLazyProxy(() => {
         const board = optionsFunc();
         board.id = getUniqueID("board-");
         board.type = BoardType;
         board[Component] = BoardComponent;
 
-        board.state = persistent<BoardData>({
-            nodes: board.startNodes().map((n, i) => {
-                (n as BoardNode).id = i;
-                return n as BoardNode;
-            }),
-            selectedNode: null,
-            selectedAction: null
-        });
-        board.nodes = computed(() => processedBoard.state.value.nodes);
+        if (board.state) {
+            deletePersistent(state);
+            processComputable(board as T, "state");
+        } else {
+            state[DefaultValue] = {
+                nodes: board.startNodes().map((n, i) => {
+                    (n as BoardNode).id = i;
+                    return n as BoardNode;
+                }),
+                selectedNode: null,
+                selectedAction: null
+            };
+            board.state = state;
+        }
+
+        board.nodes = computed(() => unref(processedBoard.state).nodes);
         board.selectedNode = computed(
             () =>
                 processedBoard.nodes.value.find(
-                    node => node.id === processedBoard.state.value.selectedNode
+                    node => node.id === unref(processedBoard.state).selectedNode
                 ) || null
         );
         board.selectedAction = computed(() => {
@@ -236,23 +253,30 @@ export function createBoard<T extends BoardOptions>(
             }
             return (
                 type.actions.find(
-                    action => action.id === processedBoard.state.value.selectedAction
+                    action => action.id === unref(processedBoard.state).selectedAction
                 ) || null
             );
         });
         board.mousePosition = ref(null);
-        board.links = computed(() => {
-            if (processedBoard.selectedAction.value == null) {
-                return null;
-            }
-            if (processedBoard.selectedAction.value.links && processedBoard.selectedNode.value) {
-                return getNodeProperty(
-                    processedBoard.selectedAction.value.links,
+        if (board.links) {
+            processComputable(board as T, "links");
+        } else {
+            board.links = computed(() => {
+                if (processedBoard.selectedAction.value == null) {
+                    return null;
+                }
+                if (
+                    processedBoard.selectedAction.value.links &&
                     processedBoard.selectedNode.value
-                );
-            }
-            return null;
-        });
+                ) {
+                    return getNodeProperty(
+                        processedBoard.selectedAction.value.links,
+                        processedBoard.selectedNode.value
+                    );
+                }
+                return null;
+            });
+        }
         processComputable(board as T, "visibility");
         setDefault(board, "visibility", Visibility.Visible);
         processComputable(board as T, "width");
@@ -286,10 +310,10 @@ export function createBoard<T extends BoardOptions>(
             processComputable(nodeType as NodeTypeOptions, "actionDistance");
             setDefault(nodeType, "actionDistance", Math.PI / 6);
             nodeType.nodes = computed(() =>
-                processedBoard.state.value.nodes.filter(node => node.type === type)
+                unref(processedBoard.state).nodes.filter(node => node.type === type)
             );
             setDefault(nodeType, "onClick", function (node: BoardNode) {
-                processedBoard.state.value.selectedNode = node.id;
+                unref(processedBoard.state).selectedNode = node.id;
             });
 
             if (nodeType.actions) {
