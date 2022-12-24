@@ -21,7 +21,7 @@ import type {
 } from "util/computed";
 import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import type { InjectionKey, Ref } from "vue";
+import { computed, InjectionKey, Ref } from "vue";
 import { ref, shallowReactive, unref } from "vue";
 
 /** A feature's node in the DOM that has its size tracked. */
@@ -231,6 +231,8 @@ export function createLayer<T extends LayerOptions>(
 
         processComputable(layer as T, "color");
         processComputable(layer as T, "display");
+        processComputable(layer as T, "classes");
+        processComputable(layer as T, "style");
         processComputable(layer as T, "name");
         setDefault(layer, "name", layer.id);
         processComputable(layer as T, "minWidth");
@@ -238,6 +240,34 @@ export function createLayer<T extends LayerOptions>(
         processComputable(layer as T, "minimizable");
         setDefault(layer, "minimizable", true);
         processComputable(layer as T, "minimizedDisplay");
+
+        const style = layer.style as ProcessedComputable<StyleValue> | undefined;
+        layer.style = computed(() => {
+            let width = unref(layer.minWidth as ProcessedComputable<number | string>);
+            if (typeof width === "number" || !Number.isNaN(parseInt(width))) {
+                width = width + "px";
+            }
+            return [
+                unref(style) ?? "",
+                layer.minimized?.value
+                    ? {
+                          flexGrow: "0",
+                          flexShrink: "0",
+                          width: "60px",
+                          minWidth: "",
+                          flexBasis: "",
+                          margin: "0"
+                      }
+                    : {
+                          flexGrow: "",
+                          flexShrink: "",
+                          width: "",
+                          minWidth: width,
+                          flexBasis: width,
+                          margin: ""
+                      }
+            ];
+        }) as Ref<StyleValue>;
 
         return layer as unknown as Layer<T>;
     });
