@@ -1,7 +1,7 @@
 <template>
     <panZoom
-        v-if="visibility !== Visibility.None"
-        v-show="visibility === Visibility.Visible"
+        v-if="unref(visibility) !== Visibility.None"
+        v-show="unref(visibility) === Visibility.Visible"
         :style="[
             {
                 width,
