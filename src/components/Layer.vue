@@ -26,11 +26,10 @@
 import projInfo from "data/projInfo.json";
 import type { CoercableComponent } from "features/feature";
 import type { FeatureNode } from "game/layers";
-import type { Persistent } from "game/persistence";
 import player from "game/player";
-import { computeComponent, computeOptionalComponent, processedPropType, wrapRef } from "util/vue";
+import { computeComponent, computeOptionalComponent, processedPropType, unwrapRef } from "util/vue";
 import type { PropType, Ref } from "vue";
-import { computed, defineComponent, nextTick, toRefs, unref, watch } from "vue";
+import { computed, defineComponent, toRefs, unref } from "vue";
 import Context from "./Context.vue";
 
 export default defineComponent({
@@ -67,7 +66,7 @@ export default defineComponent({
         const component = computeComponent(display);
         const minimizedComponent = computeOptionalComponent(minimizedDisplay);
         const showGoBack = computed(
-            () => projInfo.allowGoBack && index.value > 0 && !minimized.value
+            () => projInfo.allowGoBack && index.value > 0 && !unwrapRef(minimized)
         );
 
         function goBack() {
