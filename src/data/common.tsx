@@ -301,9 +301,9 @@ export function createCollapsibleModifierSections(
                     >
                         ▼
                     </span>
-                    {unref(processed.title)}
-                    {unref(processed.subtitle) != null ? (
-                        <span class="subtitle"> ({unref(processed.subtitle)})</span>
+                    {unref(processed.title[i])}
+                    {unref(processed.subtitle[i]) != null ? (
+                        <span class="subtitle"> ({unref(processed.subtitle[i])})</span>
                     ) : null}
                 </h3>
             );
