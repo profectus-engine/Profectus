@@ -4,7 +4,6 @@
             v-for="(tab, index) in tabs"
             :key="index"
             class="tab"
-            :ref="`tab-${index}`"
             :style="unref(layers[tab]?.style)"
             :class="unref(layers[tab]?.classes)"
         >
@@ -14,7 +13,7 @@
                     v-if="layerKeys.includes(tab)"
                     v-bind="gatherLayerProps(layers[tab]!)"
                     :index="index"
-                    :tab="() => (($refs[`tab-${index}`] as HTMLElement[] | undefined)?.[0])"
+                    @set-minimized="value => (layers[tab]!.minimized.value = value)"
                 />
                 <component :is="tab" :index="index" v-else />
             </div>
