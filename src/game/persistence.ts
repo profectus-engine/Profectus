@@ -132,8 +132,7 @@ export function persistent<T extends State>(defaultValue: T | Ref<T>): Persisten
  * Type guard for whether an arbitrary value is a persistent ref
  * @param value The value that may or may not be a persistent ref
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isPersistent(value: any): value is Persistent {
+export function isPersistent(value: unknown): value is Persistent {
     return value != null && typeof value === "object" && PersistentState in value;
 }
 
