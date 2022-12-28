@@ -7,6 +7,8 @@ import Decimal from "util/bignum";
 import { ProxyState } from "util/proxies";
 import type { Ref, WritableComputedRef } from "vue";
 import { computed, isReactive, isRef, ref } from "vue";
+import player from "./player";
+import state from "./state";
 
 /**
  * A symbol used in {@link Persistent} objects.
@@ -56,6 +58,7 @@ export type State =
  * A {@link Ref} that has been augmented with properties to allow it to be saved and loaded within the player save data object.
  */
 export type Persistent<T extends State = State> = Ref<T> & {
+    value: T;
     /** A flag that this is a persistent property. Typically a circular reference. */
     [PersistentState]: Ref<T>;
     /** The value the ref should be set to in a fresh save, or when updating an old save to the current version. */
@@ -89,31 +92,65 @@ function getStackTrace() {
     );
 }
 
+function checkNaNAndWrite<T extends State>(persistent: Persistent<T>, value: T) {
+    // Decimal is smart enough to return false on things that aren't supposed to be numbers
+    if (Decimal.isNaN(value as DecimalSource)) {
+        if (!state.hasNaN) {
+            player.autosave = false;
+            state.hasNaN = true;
+            state.NaNPath = persistent[SaveDataPath];
+            state.NaNPersistent = persistent as Persistent<DecimalSource>;
+        }
+        console.error(
+            `Attempted to save NaN value to`,
+            persistent[SaveDataPath]?.join("."),
+            persistent
+        );
+        throw "Attempted to set NaN value. See above for details";
+    }
+    persistent[PersistentState].value = value;
+}
+
 /**
  * Create a persistent ref, which can be saved and loaded.
  * All (non-deleted) persistent refs must be included somewhere within the layer object returned by that layer's options func.
  * @param defaultValue The value the persistent ref should start at on fresh saves or when reset.
  */
 export function persistent<T extends State>(defaultValue: T | Ref<T>): Persistent<T> {
-    const persistent = (
-        isRef(defaultValue) ? defaultValue : (ref<T>(defaultValue) as unknown)
-    ) as Persistent<T>;
+    const persistentState: Ref<T> = isRef(defaultValue)
+        ? defaultValue
+        : (ref<T>(defaultValue) as Ref<T>);
 
-    persistent[PersistentState] = persistent;
-    persistent[DefaultValue] = isRef(defaultValue) ? defaultValue.value : defaultValue;
-    persistent[StackTrace] = getStackTrace();
-    persistent[Deleted] = false;
-    const nonPersistent: Partial<NonPersistent<T>> = computed({
+    if (isRef(defaultValue)) {
+        defaultValue = defaultValue.value;
+    }
+
+    const nonPersistent = computed({
         get() {
-            return persistent.value;
+            return persistentState.value;
         },
         set(value) {
-            persistent.value = value;
+            checkNaNAndWrite(persistent, value);
         }
-    });
-    nonPersistent[DefaultValue] = persistent[DefaultValue];
-    persistent[NonPersistent] = nonPersistent as NonPersistent<T>;
-    persistent[SaveDataPath] = undefined;
+    }) as NonPersistent<T>;
+    nonPersistent[DefaultValue] = defaultValue;
+
+    // We're trying to mock a vue ref, which means the type expects a private [RefSymbol] property that we can't access, but the actual implementation of isRef just checks for `__v_isRef`
+    const persistent = {
+        get value() {
+            return persistentState.value as T;
+        },
+        set value(value: T) {
+            checkNaNAndWrite(persistent, value);
+        },
+        __v_isRef: true,
+        [PersistentState]: persistentState,
+        [DefaultValue]: defaultValue,
+        [StackTrace]: getStackTrace(),
+        [Deleted]: false,
+        [NonPersistent]: nonPersistent,
+        [SaveDataPath]: undefined
+    } as unknown as Persistent<T>;
 
     if (addingLayers.length === 0) {
         console.warn(
@@ -125,7 +162,7 @@ export function persistent<T extends State>(defaultValue: T | Ref<T>): Persisten
         persistentRefs[addingLayers[addingLayers.length - 1]].add(persistent);
     }
 
-    return persistent as Persistent<T>;
+    return persistent;
 }
 
 /**

@@ -6,7 +6,7 @@ import { branchedResetPropagation, createTree } from "features/trees/tree";
 import { globalBus } from "game/events";
 import type { BaseLayer, GenericLayer } from "game/layers";
 import { createLayer } from "game/layers";
-import type { PlayerData } from "game/player";
+import type { Player } from "game/player";
 import player from "game/player";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatTime } from "util/bignum";
@@ -79,7 +79,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
  */
 export const getInitialLayers = (
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
-    player: Partial<PlayerData>
+    player: Partial<Player>
 ): Array<GenericLayer> => [main, prestige];
 
 /**
@@ -97,7 +97,7 @@ export const hasWon = computed(() => {
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export function fixOldSave(
     oldVersion: string | undefined,
-    player: Partial<PlayerData>
+    player: Partial<Player>
     // eslint-disable-next-line @typescript-eslint/no-empty-function
 ): void {}
 /* eslint-enable @typescript-eslint/no-unused-vars */

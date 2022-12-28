@@ -14,9 +14,12 @@
             </div>
             <br />
             <div>
-                <a :href="discordLink" class="nan-modal-discord-link">
+                <a
+                    :href="discordLink || 'https://discord.gg/WzejVAx'"
+                    class="nan-modal-discord-link"
+                >
                     <span class="material-icons nan-modal-discord">discord</span>
-                    {{ discordName }}
+                    {{ discordName || "The Paper Pilot Community" }}
                 </a>
             </div>
             <br />
@@ -50,49 +53,51 @@ import state from "game/state";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format } from "util/bignum";
 import type { ComponentPublicInstance } from "vue";
-import { computed, ref, toRef } from "vue";
+import { computed, ref, toRef, watch } from "vue";
 import Toggle from "./fields/Toggle.vue";
 import SavesManager from "./SavesManager.vue";
 
 const { discordName, discordLink } = projInfo;
-const autosave = toRef(player, "autosave");
+const autosave = ref(true);
+const isPaused = ref(true);
 const hasNaN = toRef(state, "hasNaN");
 const savesManager = ref<ComponentPublicInstance<typeof SavesManager> | null>(null);
 
-const path = computed(() => state.NaNPath?.join("."));
-const property = computed(() => state.NaNPath?.slice(-1)[0]);
-const previous = computed<DecimalSource | null>(() => {
-    if (state.NaNReceiver && property.value != null) {
-        return state.NaNReceiver[property.value] as DecimalSource;
-    }
-    return null;
-});
-const isPaused = computed({
-    get() {
-        return player.devSpeed === 0;
-    },
-    set(value: boolean) {
-        player.devSpeed = value ? null : 0;
+watch(hasNaN, hasNaN => {
+    if (hasNaN) {
+        autosave.value = player.autosave;
+        isPaused.value = player.devSpeed === 0;
+    } else {
+        player.autosave = autosave.value;
+        player.devSpeed = isPaused.value ? 0 : null;
     }
 });
 
+const path = computed(() => state.NaNPath?.join("."));
+const previous = computed<DecimalSource | null>(() => {
+    if (state.NaNPersistent != null) {
+        return state.NaNPersistent.value;
+    }
+    return null;
+});
+
 function setZero() {
-    if (state.NaNReceiver && property.value != null) {
-        state.NaNReceiver[property.value] = new Decimal(0);
+    if (state.NaNPersistent != null) {
+        state.NaNPersistent.value = new Decimal(0);
         state.hasNaN = false;
     }
 }
 
 function setOne() {
-    if (state.NaNReceiver && property.value != null) {
-        state.NaNReceiver[property.value] = new Decimal(1);
+    if (state.NaNPersistent) {
+        state.NaNPersistent.value = new Decimal(1);
         state.hasNaN = false;
     }
 }
 
 function ignore() {
-    if (state.NaNReceiver && property.value != null) {
-        state.NaNReceiver[property.value] = new Decimal(NaN);
+    if (state.NaNPersistent) {
+        state.NaNPersistent.value = new Decimal(NaN);
         state.hasNaN = false;
     }
 }

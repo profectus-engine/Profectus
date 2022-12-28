@@ -1,6 +1,7 @@
+import type { JSXFunction } from "features/feature";
+import { isFunction } from "util/common";
 import type { Ref } from "vue";
 import { computed } from "vue";
-import { isFunction } from "util/common";
 
 export const DoNotCache = Symbol("DoNotCache");
 
@@ -32,21 +33,22 @@ export function processComputable<T, S extends keyof ComputableKeysOf<T>>(
     key: S
 ): asserts obj is T & { [K in S]: ProcessedComputable<UnwrapComputableType<T[S]>> } {
     const computable = obj[key];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (isFunction(computable) && computable.length === 0 && !(computable as any)[DoNotCache]) {
+    if (
+        isFunction(computable) &&
+        computable.length === 0 &&
+        !(computable as unknown as JSXFunction)[DoNotCache]
+    ) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         obj[key] = computed(computable.bind(obj));
     } else if (isFunction(computable)) {
         obj[key] = computable.bind(obj) as unknown as T[S];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (obj[key] as any)[DoNotCache] = true;
+        (obj[key] as unknown as JSXFunction)[DoNotCache] = true;
     }
 }
 
 export function convertComputable<T>(obj: Computable<T>): ProcessedComputable<T> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (isFunction(obj) && !(obj as any)[DoNotCache]) {
+    if (isFunction(obj) && !(obj as unknown as JSXFunction)[DoNotCache]) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         obj = computed(obj);
