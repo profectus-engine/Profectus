@@ -1,4 +1,11 @@
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import { isArray } from "@vue/shared";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import {
     Component,
     findFeatures,
@@ -7,13 +14,16 @@ import {
     setDefault,
     Visibility
 } from "features/feature";
-import type { Resource } from "features/resources/resource";
 import UpgradeComponent from "features/upgrades/Upgrade.vue";
 import type { GenericLayer } from "game/layers";
 import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
-import type { DecimalSource } from "util/bignum";
-import Decimal from "util/bignum";
+import {
+    createVisibilityRequirement,
+    payRequirements,
+    Requirements,
+    requirementsMet
+} from "game/requirements";
 import { isFunction } from "util/common";
 import type {
     Computable,
@@ -40,10 +50,8 @@ export interface UpgradeOptions {
               effectDisplay?: CoercableComponent;
           }
     >;
+    requirements: Requirements;
     mark?: Computable<boolean | string>;
-    cost?: Computable<DecimalSource>;
-    resource?: Resource;
-    canAfford?: Computable<boolean>;
     onPurchase?: VoidFunction;
 }
 
@@ -64,9 +72,8 @@ export type Upgrade<T extends UpgradeOptions> = Replace<
         classes: GetComputableType<T["classes"]>;
         style: GetComputableType<T["style"]>;
         display: GetComputableType<T["display"]>;
+        requirements: GetComputableType<T["requirements"]>;
         mark: GetComputableType<T["mark"]>;
-        cost: GetComputableType<T["cost"]>;
-        canAfford: GetComputableTypeWithDefault<T["canAfford"], Ref<boolean>>;
     }
 >;
 
@@ -74,7 +81,6 @@ export type GenericUpgrade = Replace<
     Upgrade<UpgradeOptions>,
     {
         visibility: ProcessedComputable<Visibility>;
-        canPurchase: ProcessedComputable<boolean>;
     }
 >;
 
@@ -88,46 +94,24 @@ export function createUpgrade<T extends UpgradeOptions>(
         upgrade.type = UpgradeType;
         upgrade[Component] = UpgradeComponent;
 
-        if (upgrade.canAfford == null && (upgrade.resource == null || upgrade.cost == null)) {
-            console.warn(
-                "Error: can't create upgrade without a canAfford property or a resource and cost property",
-                upgrade
-            );
-        }
-
         upgrade.bought = bought;
-        if (upgrade.canAfford == null) {
-            upgrade.canAfford = computed(() => {
-                const genericUpgrade = upgrade as GenericUpgrade;
-                return (
-                    genericUpgrade.resource != null &&
-                    genericUpgrade.cost != null &&
-                    Decimal.gte(genericUpgrade.resource.value, unref(genericUpgrade.cost))
-                );
-            });
-        } else {
-            processComputable(upgrade as T, "canAfford");
-        }
-        upgrade.canPurchase = computed(
-            () =>
-                unref((upgrade as GenericUpgrade).visibility) === Visibility.Visible &&
-                unref((upgrade as GenericUpgrade).canAfford) &&
-                !unref(upgrade.bought)
-        );
+        upgrade.canPurchase = computed(() => requirementsMet(upgrade.requirements));
         upgrade.purchase = function () {
             const genericUpgrade = upgrade as GenericUpgrade;
             if (!unref(genericUpgrade.canPurchase)) {
                 return;
             }
-            if (genericUpgrade.resource != null && genericUpgrade.cost != null) {
-                genericUpgrade.resource.value = Decimal.sub(
-                    genericUpgrade.resource.value,
-                    unref(genericUpgrade.cost)
-                );
-            }
+            payRequirements(upgrade.requirements);
             bought.value = true;
             genericUpgrade.onPurchase?.();
         };
+
+        const visibilityRequirement = createVisibilityRequirement(upgrade as GenericUpgrade);
+        if (isArray(upgrade.requirements)) {
+            upgrade.requirements.unshift(visibilityRequirement);
+        } else {
+            upgrade.requirements = [visibilityRequirement, upgrade.requirements];
+        }
 
         processComputable(upgrade as T, "visibility");
         setDefault(upgrade, "visibility", Visibility.Visible);
@@ -135,8 +119,6 @@ export function createUpgrade<T extends UpgradeOptions>(
         processComputable(upgrade as T, "style");
         processComputable(upgrade as T, "display");
         processComputable(upgrade as T, "mark");
-        processComputable(upgrade as T, "cost");
-        processComputable(upgrade as T, "resource");
 
         upgrade[GatherProps] = function (this: GenericUpgrade) {
             const {
@@ -144,8 +126,7 @@ export function createUpgrade<T extends UpgradeOptions>(
                 visibility,
                 style,
                 classes,
-                resource,
-                cost,
+                requirements,
                 canPurchase,
                 bought,
                 mark,
@@ -157,8 +138,7 @@ export function createUpgrade<T extends UpgradeOptions>(
                 visibility,
                 style: unref(style),
                 classes,
-                resource,
-                cost,
+                requirements,
                 canPurchase,
                 bought,
                 mark,

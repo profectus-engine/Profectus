@@ -14,8 +14,7 @@ import { computed, unref } from "vue";
  * An object that can be used to apply or unapply some modification to a number.
  * Being reversible requires the operation being invertible, but some features may rely on that.
  * Descriptions can be optionally included for displaying them to the player.
- * The built-in modifier creators are designed to display the modifiers using.
- * {@link createModifierSection}.
+ * The built-in modifier creators are designed to display the modifiers using {@link createModifierSection}.
  */
 export interface Modifier {
     /** Applies some operation on the input and returns the result. */
