@@ -882,6 +882,54 @@ export default class Decimal {
         return D(value).pentate(height, payload);
     }
 
+    public static sin(value: DecimalSource): Decimal {
+        return D(value).sin();
+    }
+
+    public static cos(value: DecimalSource): Decimal {
+        return D(value).cos();
+    }
+
+    public static tan(value: DecimalSource): Decimal {
+        return D(value).tan();
+    }
+
+    public static asin(value: DecimalSource): Decimal {
+        return D(value).asin();
+    }
+
+    public static acos(value: DecimalSource): Decimal {
+        return D(value).acos();
+    }
+
+    public static atan(value: DecimalSource): Decimal {
+        return D(value).atan();
+    }
+
+    public static sinh(value: DecimalSource): Decimal {
+        return D(value).sinh();
+    }
+
+    public static cosh(value: DecimalSource): Decimal {
+        return D(value).cosh();
+    }
+
+    public static tanh(value: DecimalSource): Decimal {
+        return D(value).tanh();
+    }
+
+    public static asinh(value: DecimalSource): Decimal {
+        return D(value).asinh();
+    }
+
+    public static acosh(value: DecimalSource): Decimal {
+        return D(value).acosh();
+    }
+
+    public static atanh(value: DecimalSource): Decimal {
+        return D(value).atanh();
+    }
+
     /**
      * If you're willing to spend 'resourcesAvailable' and want to buy something
      * with exponentially increasing cost each purchase (start at priceStart,
