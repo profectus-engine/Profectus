@@ -1,4 +1,7 @@
 /* eslint-disable @typescript-eslint/no-this-alias */
+/* eslint-disable @typescript-eslint/no-loss-of-precision */
+import { LRUCache } from "../lib/lru-cache";
+
 export type CompareResult = -1 | 0 | 1;
 
 const MAX_SIGNIFICANT_DIGITS = 17; //Maximum number of digits of precision to assume in Number
@@ -15,10 +18,12 @@ const NUMBER_EXP_MIN = -324; //The smallest exponent that can appear in a Number
 
 const MAX_ES_IN_A_ROW = 5; //For default toString behaviour, when to swap from eee... to (e^n) syntax.
 
+const DEFAULT_FROM_STRING_CACHE_SIZE = (1 << 10) - 1; // The default size of the LRU cache used to cache Decimal.fromString.
+
 const IGNORE_COMMAS = true;
 const COMMAS_ARE_DECIMAL_POINTS = false;
 
-const powerOf10 = (function() {
+const powerOf10 = (function () {
     // We need this lookup table because Math.pow(10, exponent)
     // when exponent's absolute value is large is slightly inaccurate.
     // You can fix it with the power of math... or just make a lookup table.
@@ -30,7 +35,7 @@ const powerOf10 = (function() {
     }
 
     const indexOf0InPowersOf10 = 323;
-    return function(power: number) {
+    return function (power: number) {
         return powersOf10[power + indexOf0InPowersOf10];
     };
 })();
@@ -40,160 +45,80 @@ const powerOf10 = (function() {
 const critical_headers = [2, Math.E, 3, 4, 5, 6, 7, 8, 9, 10];
 const critical_tetr_values = [
     [
-        // Base 2
-        1,
-        1.0891168053867777,
-        1.1789745164521264,
-        1.2701428397304229,
-        1.3632066654400328,
-        1.4587804913784246,
-        1.557523817412741,
-        1.660158301473385,
-        1.767487542936873,
-        1.8804205225512542,
-        2
+        // Base 2 (using http://myweb.astate.edu/wpaulsen/tetcalc/tetcalc.html )
+        1, 1.0891180521811202527, 1.1789767925673958433, 1.2701455431742086633,
+        1.3632090180450091941, 1.4587818160364217007, 1.5575237916251418333, 1.6601571006859253673,
+        1.7674858188369780435, 1.8804192098842727359, 2
     ],
     [
-        // Base E
+        // Base E (using http://myweb.astate.edu/wpaulsen/tetcalc/tetcalc.html )
         1, //0.0
-        1.1121114330934, //0.1
-        1.23103892493161, //0.2
-        1.35838369631113, //0.3
-        1.49605193039935, //0.4
-        1.64635423375119, //0.5
-        1.81213853570186, //0.6
-        1.99697132461829, //0.7
-        2.20538955455724, //0.8
-        2.44325744833852, //0.9
+        1.1121114330934078681, //0.1
+        1.2310389249316089299, //0.2
+        1.3583836963111376089, //0.3
+        1.4960519303993531879, //0.4
+        1.646354233751194581, //0.5
+        1.8121385357018724464, //0.6
+        1.9969713246183068478, //0.7
+        2.205389554552754433, //0.8
+        2.4432574483385252544, //0.9
         Math.E //1.0
     ],
     [
         // Base 3
-        1,
-        1.1187738849693603,
-        1.2464963939368214,
-        1.38527004705667,
-        1.5376664685821402,
-        1.7068895236551784,
-        1.897001227148399,
-        2.1132403089001035,
-        2.362480153784171,
-        2.6539010333870774,
-        3
+        1, 1.1187738849693603, 1.2464963939368214, 1.38527004705667, 1.5376664685821402,
+        1.7068895236551784, 1.897001227148399, 2.1132403089001035, 2.362480153784171,
+        2.6539010333870774, 3
     ],
     [
         // Base 4
-        1,
-        1.1367350847096405,
-        1.2889510672956703,
-        1.4606478703324786,
-        1.6570295196661111,
-        1.8850062585672889,
-        2.1539465047453485,
-        2.476829779693097,
-        2.872061932789197,
-        3.3664204535587183,
-        4
+        1, 1.1367350847096405, 1.2889510672956703, 1.4606478703324786, 1.6570295196661111,
+        1.8850062585672889, 2.1539465047453485, 2.476829779693097, 2.872061932789197,
+        3.3664204535587183, 4
     ],
     [
         // Base 5
-        1,
-        1.1494592900767588,
-        1.319708228183931,
-        1.5166291280087583,
-        1.748171114438024,
-        2.0253263297298045,
-        2.3636668498288547,
-        2.7858359149579424,
-        3.3257226212448145,
-        4.035730287722532,
-        5
+        1, 1.1494592900767588, 1.319708228183931, 1.5166291280087583, 1.748171114438024,
+        2.0253263297298045, 2.3636668498288547, 2.7858359149579424, 3.3257226212448145,
+        4.035730287722532, 5
     ],
     [
         // Base 6
-        1,
-        1.159225940787673,
-        1.343712473580932,
-        1.5611293155111927,
-        1.8221199554561318,
-        2.14183924486326,
-        2.542468319282638,
-        3.0574682501653316,
-        3.7390572020926873,
-        4.6719550537360774,
-        6
+        1, 1.159225940787673, 1.343712473580932, 1.5611293155111927, 1.8221199554561318,
+        2.14183924486326, 2.542468319282638, 3.0574682501653316, 3.7390572020926873,
+        4.6719550537360774, 6
     ],
     [
         // Base 7
-        1,
-        1.1670905356972596,
-        1.3632807444991446,
-        1.5979222279405536,
-        1.8842640123816674,
-        2.2416069644878687,
-        2.69893426559423,
-        3.3012632110403577,
-        4.121250340630164,
-        5.281493033448316,
-        7
+        1, 1.1670905356972596, 1.3632807444991446, 1.5979222279405536, 1.8842640123816674,
+        2.2416069644878687, 2.69893426559423, 3.3012632110403577, 4.121250340630164,
+        5.281493033448316, 7
     ],
     [
         // Base 8
-        1,
-        1.1736630594087796,
-        1.379783782386201,
-        1.6292821855668218,
-        1.9378971836180754,
-        2.3289975651071977,
-        2.8384347394720835,
-        3.5232708454565906,
-        4.478242031114584,
-        5.868592169644505,
-        8
+        1, 1.1736630594087796, 1.379783782386201, 1.6292821855668218, 1.9378971836180754,
+        2.3289975651071977, 2.8384347394720835, 3.5232708454565906, 4.478242031114584,
+        5.868592169644505, 8
     ],
     [
         // Base 9
-        1,
-        1.1793017514670474,
-        1.394054150657457,
-        1.65664127441059,
-        1.985170999970283,
-        2.4069682290577457,
-        2.9647310119960752,
-        3.7278665320924946,
-        4.814462547283592,
-        6.436522247411611,
-        9
+        1, 1.1793017514670474, 1.394054150657457, 1.65664127441059, 1.985170999970283,
+        2.4069682290577457, 2.9647310119960752, 3.7278665320924946, 4.814462547283592,
+        6.436522247411611, 9
     ],
     [
-        // Base 10
-        1,
-        1.18422737399915,
-        1.4066113788546144,
-        1.680911177655277,
-        2.027492094355525,
-        2.4775152854601967,
-        3.080455730250329,
-        3.918234505962507,
-        5.1332705696484595,
-        6.9878696918072905,
-        10
+        // Base 10 (using http://myweb.astate.edu/wpaulsen/tetcalc/tetcalc.html )
+        1, 1.1840100246247336579, 1.4061375836156954169, 1.6802272208863963918,
+        2.026757028388618927, 2.477005606344964758, 3.0805252717554819987, 3.9191964192627283911,
+        5.135152840833186423, 6.9899611795347148455, 10
     ]
 ];
 const critical_slog_values = [
     [
         // Base 2
-        -1,
-        -0.9194161097107025,
-        -0.8335625019330468,
-        -0.7425599821143978,
-        -0.6466611521029437,
-        -0.5462617907227869,
-        -0.4419033816638769,
-        -0.3342645487554494,
-        -0.224140440909962,
-        -0.11241087890006762,
-        0
+        -1, -0.9194161097107025, -0.8335625019330468, -0.7425599821143978, -0.6466611521029437,
+        -0.5462617907227869, -0.4419033816638769, -0.3342645487554494, -0.224140440909962,
+        -0.11241087890006762, 0
     ],
     [
         // Base E
@@ -211,135 +136,73 @@ const critical_slog_values = [
     ],
     [
         // Base 3
-        -1,
-        -0.9021579584316141,
-        -0.8005762598234203,
-        -0.6964780623319391,
-        -0.5911906810998454,
-        -0.486050182576545,
-        -0.3823089430815083,
-        -0.28106046722897615,
-        -0.1831906535795894,
-        -0.08935809204418144,
-        0
+        -1, -0.9021579584316141, -0.8005762598234203, -0.6964780623319391, -0.5911906810998454,
+        -0.486050182576545, -0.3823089430815083, -0.28106046722897615, -0.1831906535795894,
+        -0.08935809204418144, 0
     ],
     [
         // Base 4
-        -1,
-        -0.8917227442365535,
-        -0.781258746326964,
-        -0.6705130326902455,
-        -0.5612813129406509,
-        -0.4551067709033134,
-        -0.35319256652135966,
-        -0.2563741554088552,
-        -0.1651412821106526,
-        -0.0796919581982668,
-        0
+        -1, -0.8917227442365535, -0.781258746326964, -0.6705130326902455, -0.5612813129406509,
+        -0.4551067709033134, -0.35319256652135966, -0.2563741554088552, -0.1651412821106526,
+        -0.0796919581982668, 0
     ],
     [
         // Base 5
-        -1,
-        -0.8843387974366064,
-        -0.7678744063886243,
-        -0.6529563724510552,
-        -0.5415870994657841,
-        -0.4352842206588936,
-        -0.33504449124791424,
-        -0.24138853420685147,
-        -0.15445285440944467,
-        -0.07409659641336663,
-        0
+        -1, -0.8843387974366064, -0.7678744063886243, -0.6529563724510552, -0.5415870994657841,
+        -0.4352842206588936, -0.33504449124791424, -0.24138853420685147, -0.15445285440944467,
+        -0.07409659641336663, 0
     ],
     [
         // Base 6
-        -1,
-        -0.8786709358426346,
-        -0.7577735191184886,
-        -0.6399546189952064,
-        -0.527284921869926,
-        -0.4211627631006314,
-        -0.3223479611761232,
-        -0.23107655627789858,
-        -0.1472057700818259,
-        -0.07035171210706326,
-        0
+        -1, -0.8786709358426346, -0.7577735191184886, -0.6399546189952064, -0.527284921869926,
+        -0.4211627631006314, -0.3223479611761232, -0.23107655627789858, -0.1472057700818259,
+        -0.07035171210706326, 0
     ],
     [
         // Base 7
-        -1,
-        -0.8740862815291583,
-        -0.7497032990976209,
-        -0.6297119746181752,
-        -0.5161838335958787,
-        -0.41036238255751956,
-        -0.31277212146489963,
-        -0.2233976621705518,
-        -0.1418697367979619,
-        -0.06762117662323441,
-        0
+        -1, -0.8740862815291583, -0.7497032990976209, -0.6297119746181752, -0.5161838335958787,
+        -0.41036238255751956, -0.31277212146489963, -0.2233976621705518, -0.1418697367979619,
+        -0.06762117662323441, 0
     ],
     [
         // Base 8
-        -1,
-        -0.8702632331800649,
-        -0.7430366914122081,
-        -0.6213373075161548,
-        -0.5072025698095242,
-        -0.40171437727184167,
-        -0.30517930701410456,
-        -0.21736343968190863,
-        -0.137710238299109,
-        -0.06550774483471955,
-        0
+        -1, -0.8702632331800649, -0.7430366914122081, -0.6213373075161548, -0.5072025698095242,
+        -0.40171437727184167, -0.30517930701410456, -0.21736343968190863, -0.137710238299109,
+        -0.06550774483471955, 0
     ],
     [
         // Base 9
-        -1,
-        -0.8670016295947213,
-        -0.7373984232432306,
-        -0.6143173985094293,
-        -0.49973884395492807,
-        -0.394584953527678,
-        -0.2989649949848695,
-        -0.21245647317021688,
-        -0.13434688362382652,
-        -0.0638072667348083,
-        0
+        -1, -0.8670016295947213, -0.7373984232432306, -0.6143173985094293, -0.49973884395492807,
+        -0.394584953527678, -0.2989649949848695, -0.21245647317021688, -0.13434688362382652,
+        -0.0638072667348083, 0
     ],
     [
         // Base 10
-        -1,
-        -0.8641642839543857,
-        -0.732534623168535,
-        -0.6083127477059322,
-        -0.4934049257184696,
-        -0.3885773075899922,
-        -0.29376029055315767,
-        -0.2083678561173622,
-        -0.13155653399373268,
-        -0.062401588652553186,
-        0
+        -1, -0.8641642839543857, -0.732534623168535, -0.6083127477059322, -0.4934049257184696,
+        -0.3885773075899922, -0.29376029055315767, -0.2083678561173622, -0.13155653399373268,
+        -0.062401588652553186, 0
     ]
 ];
 
-const D = function D(value: DecimalSource): Decimal {
+let D = function D(value: DecimalSource): Readonly<Decimal> {
     return Decimal.fromValue_noAlloc(value);
 };
 
-const FC = function(sign: number, layer: number, mag: number) {
+let FC = function (sign: number, layer: number, mag: number) {
     return Decimal.fromComponents(sign, layer, mag);
 };
 
-const FC_NN = function FC_NN(sign: number, layer: number, mag: number) {
+let FC_NN = function FC_NN(sign: number, layer: number, mag: number) {
     return Decimal.fromComponents_noNormalize(sign, layer, mag);
 };
 
-const ME = function ME(mantissa: number, exponent: number) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let ME = function ME(mantissa: number, exponent: number) {
     return Decimal.fromMantissaExponent(mantissa, exponent);
 };
 
-const ME_NN = function ME_NN(mantissa: number, exponent: number) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+let ME_NN = function ME_NN(mantissa: number, exponent: number) {
     return Decimal.fromMantissaExponent_noNormalize(mantissa, exponent);
 };
 
@@ -351,12 +214,12 @@ const decimalPlaces = function decimalPlaces(value: number, places: number): num
     return parseFloat(rounded.toFixed(Math.max(len - numDigits, 0)));
 };
 
-const f_maglog10 = function(n: number) {
+const f_maglog10 = function (n: number) {
     return Math.sign(n) * Math.log10(Math.abs(n));
 };
 
 //from HyperCalc source code
-const f_gamma = function(n: number) {
+const f_gamma = function (n: number) {
     if (!isFinite(n)) {
         return n;
     }
@@ -403,7 +266,7 @@ const _EXPN1 = 0.36787944117144232159553; // exp(-1)
 const OMEGA = 0.56714329040978387299997; // W(1, 0)
 //from https://math.stackexchange.com/a/465183
 // The evaluation can become inaccurate very close to the branch point
-const f_lambertw = function(z: number, tol = 1e-10): number {
+const f_lambertw = function (z: number, tol = 1e-10): number {
     let w;
     let wn;
 
@@ -442,38 +305,28 @@ const f_lambertw = function(z: number, tol = 1e-10): number {
 // fail to converge, or can end up on the wrong branch.
 function d_lambertw(z: Decimal, tol = 1e-10): Decimal {
     let w;
-    let ew, wew, wewz, wn;
+    let ew, wewz, wn;
 
     if (!Number.isFinite(z.mag)) {
         return z;
     }
-    if (z === Decimal.dZero) {
+    if (z.eq(Decimal.dZero)) {
         return z;
     }
-    if (z === Decimal.dOne) {
+    if (z.eq(Decimal.dOne)) {
         //Split out this case because the asymptotic series blows up
-        return D(OMEGA);
+        return Decimal.fromNumber(OMEGA);
     }
 
-    const absz = Decimal.abs(z);
     //Get an initial guess for Halley's method
     w = Decimal.ln(z);
 
     //Halley's method; see 5.9 in [1]
 
     for (let i = 0; i < 100; ++i) {
-        ew = Decimal.exp(-w);
+        ew = w.neg().exp();
         wewz = w.sub(z.mul(ew));
-        wn = w.sub(
-            wewz.div(
-                w.add(1).sub(
-                    w
-                        .add(2)
-                        .mul(wewz)
-                        .div(Decimal.mul(2, w).add(2))
-                )
-            )
-        );
+        wn = w.sub(wewz.div(w.add(1).sub(w.add(2).mul(wewz).div(Decimal.mul(2, w).add(2)))));
         if (Decimal.abs(wn.sub(w)).lt(Decimal.abs(wn).mul(tol))) {
             return wn;
         } else {
@@ -502,21 +355,19 @@ export default class Decimal {
     public static readonly dNumberMax = FC(1, 0, Number.MAX_VALUE);
     public static readonly dNumberMin = FC(1, 0, Number.MIN_VALUE);
 
-    public sign: number = Number.NaN;
-    public mag: number = Number.NaN;
-    public layer: number = Number.NaN;
+    private static fromStringCache = new LRUCache<string, Decimal>(DEFAULT_FROM_STRING_CACHE_SIZE);
+
+    public sign = 0;
+    public mag = 0;
+    public layer = 0;
 
     constructor(value?: DecimalSource) {
-        if (value instanceof Decimal || (value != null && typeof value === "object" && "sign" in value && "mag" in value && "layer" in value)) {
+        if (value instanceof Decimal) {
             this.fromDecimal(value);
         } else if (typeof value === "number") {
             this.fromNumber(value);
         } else if (typeof value === "string") {
             this.fromString(value);
-        } else {
-            this.sign = 0;
-            this.layer = 0;
-            this.mag = 0;
         }
     }
 
@@ -549,8 +400,8 @@ export default class Decimal {
             //don't even pretend mantissa is meaningful
             this.sign = Math.sign(value);
             if (this.sign === 0) {
-                this.layer === 0;
-                this.exponent === 0;
+                this.layer = 0;
+                this.exponent = 0;
             }
         }
     }
@@ -633,8 +484,32 @@ export default class Decimal {
         return new Decimal().fromValue(value);
     }
 
-    public static fromValue_noAlloc(value: DecimalSource): Decimal {
-        return value instanceof Decimal ? value : new Decimal(value);
+    /**
+     * Converts a DecimalSource to a Decimal, without constructing a new Decimal
+     * if the provided value is already a Decimal.
+     *
+     * As the return value could be the provided value itself, this function
+     * returns a read-only Decimal to prevent accidental mutations of the value.
+     * Use `new Decimal(value)` to explicitly create a writeable copy if mutation
+     * is required.
+     */
+    public static fromValue_noAlloc(value: DecimalSource): Readonly<Decimal> {
+        if (value instanceof Decimal) {
+            return value;
+        } else if (typeof value === "string") {
+            const cached = Decimal.fromStringCache.get(value);
+            if (cached !== undefined) {
+                return cached;
+            }
+            return Decimal.fromString(value);
+        } else if (typeof value === "number") {
+            return Decimal.fromNumber(value);
+        } else {
+            // This should never happen... but some users like Prestige Tree Rewritten
+            // pass undefined values in as DecimalSources, so we should handle this
+            // case to not break them.
+            return Decimal.dZero;
+        }
     }
 
     public static abs(value: DecimalSource): Decimal {
@@ -1192,19 +1067,19 @@ export default class Decimal {
 
     public normalize(): this {
         /*
-    PSEUDOCODE:
-    Whenever we are partially 0 (sign is 0 or mag and layer is 0), make it fully 0.
-    Whenever we are at or hit layer 0, extract sign from negative mag.
-    If layer === 0 and mag < FIRST_NEG_LAYER (1/9e15), shift to 'first negative layer' (add layer, log10 mag).
-    While abs(mag) > EXP_LIMIT (9e15), layer += 1, mag = maglog10(mag).
-    While abs(mag) < LAYER_DOWN (15.954) and layer > 0, layer -= 1, mag = pow(10, mag).
-
-    When we're done, all of the following should be true OR one of the numbers is not IsFinite OR layer is not IsInteger (error state):
-    Any 0 is totally zero (0, 0, 0).
-    Anything layer 0 has mag 0 OR mag > 1/9e15 and < 9e15.
-    Anything layer 1 or higher has abs(mag) >= 15.954 and < 9e15.
-    We will assume in calculations that all Decimals are either erroneous or satisfy these criteria. (Otherwise: Garbage in, garbage out.)
-    */
+                                                                                                            PSEUDOCODE:
+                                                                                                            Whenever we are partially 0 (sign is 0 or mag and layer is 0), make it fully 0.
+                                                                                                            Whenever we are at or hit layer 0, extract sign from negative mag.
+                                                                                                            If layer === 0 and mag < FIRST_NEG_LAYER (1/9e15), shift to 'first negative layer' (add layer, log10 mag).
+                                                                                                            While abs(mag) > EXP_LIMIT (9e15), layer += 1, mag = maglog10(mag).
+                                                                                                            While abs(mag) < LAYER_DOWN (15.954) and layer > 0, layer -= 1, mag = pow(10, mag).
+                                                                                                            
+                                                                                                            When we're done, all of the following should be true OR one of the numbers is not IsFinite OR layer is not IsInteger (error state):
+                                                                                                            Any 0 is totally zero (0, 0, 0).
+                                                                                                            Anything layer 0 has mag 0 OR mag > 1/9e15 and < 9e15.
+                                                                                                            Anything layer 1 or higher has abs(mag) >= 15.954 and < 9e15.
+                                                                                                            We will assume in calculations that all Decimals are either erroneous or satisfy these criteria. (Otherwise: Garbage in, garbage out.)
+                                                                                                            */
         if (this.sign === 0 || (this.mag === 0 && this.layer === 0)) {
             this.sign = 0;
             this.mag = 0;
@@ -1306,6 +1181,11 @@ export default class Decimal {
     }
 
     public fromString(value: string): Decimal {
+        const originalValue = value;
+        const cached = Decimal.fromStringCache.get(originalValue);
+        if (cached !== undefined) {
+            return this.fromDecimal(cached);
+        }
         if (IGNORE_COMMAS) {
             value = value.replace(",", "");
         } else if (COMMAS_ARE_DECIMAL_POINTS) {
@@ -1330,6 +1210,9 @@ export default class Decimal {
                 this.sign = result.sign;
                 this.layer = result.layer;
                 this.mag = result.mag;
+                if (Decimal.fromStringCache.maxSize >= 1) {
+                    Decimal.fromStringCache.set(originalValue, Decimal.fromDecimal(this));
+                }
                 return this;
             }
         }
@@ -1352,6 +1235,9 @@ export default class Decimal {
                 this.sign = result.sign;
                 this.layer = result.layer;
                 this.mag = result.mag;
+                if (Decimal.fromStringCache.maxSize >= 1) {
+                    Decimal.fromStringCache.set(originalValue, Decimal.fromDecimal(this));
+                }
                 return this;
             }
         }
@@ -1366,6 +1252,9 @@ export default class Decimal {
                 this.sign = result.sign;
                 this.layer = result.layer;
                 this.mag = result.mag;
+                if (Decimal.fromStringCache.maxSize >= 1) {
+                    Decimal.fromStringCache.set(originalValue, Decimal.fromDecimal(this));
+                }
                 return this;
             }
         }
@@ -1391,6 +1280,9 @@ export default class Decimal {
                 this.sign = result.sign;
                 this.layer = result.layer;
                 this.mag = result.mag;
+                if (Decimal.fromStringCache.maxSize >= 1) {
+                    Decimal.fromStringCache.set(originalValue, Decimal.fromDecimal(this));
+                }
                 return this;
             }
         }
@@ -1411,6 +1303,9 @@ export default class Decimal {
                 this.sign = result.sign;
                 this.layer = result.layer;
                 this.mag = result.mag;
+                if (Decimal.fromStringCache.maxSize >= 1) {
+                    Decimal.fromStringCache.set(originalValue, Decimal.fromDecimal(this));
+                }
                 return this;
             }
         }
@@ -1422,13 +1317,21 @@ export default class Decimal {
         if (ecount === 0) {
             const numberAttempt = parseFloat(value);
             if (isFinite(numberAttempt)) {
-                return this.fromNumber(numberAttempt);
+                this.fromNumber(numberAttempt);
+                if (Decimal.fromStringCache.size >= 1) {
+                    Decimal.fromStringCache.set(originalValue, Decimal.fromDecimal(this));
+                }
+                return this;
             }
         } else if (ecount === 1) {
             //Very small numbers ("2e-3000" and so on) may look like valid floats but round to 0.
             const numberAttempt = parseFloat(value);
             if (isFinite(numberAttempt) && numberAttempt !== 0) {
-                return this.fromNumber(numberAttempt);
+                this.fromNumber(numberAttempt);
+                if (Decimal.fromStringCache.maxSize >= 1) {
+                    Decimal.fromStringCache.set(originalValue, Decimal.fromDecimal(this));
+                }
+                return this;
             }
         }
 
@@ -1450,6 +1353,9 @@ export default class Decimal {
                     this.layer = parseFloat(layerstring);
                     this.mag = parseFloat(newparts[1].substr(i + 1));
                     this.normalize();
+                    if (Decimal.fromStringCache.maxSize >= 1) {
+                        Decimal.fromStringCache.set(originalValue, Decimal.fromDecimal(this));
+                    }
                     return this;
                 }
             }
@@ -1459,6 +1365,9 @@ export default class Decimal {
             this.sign = 0;
             this.layer = 0;
             this.mag = 0;
+            if (Decimal.fromStringCache.maxSize >= 1) {
+                Decimal.fromStringCache.set(originalValue, Decimal.fromDecimal(this));
+            }
             return this;
         }
         const mantissa = parseFloat(parts[0]);
@@ -1466,6 +1375,9 @@ export default class Decimal {
             this.sign = 0;
             this.layer = 0;
             this.mag = 0;
+            if (Decimal.fromStringCache.maxSize >= 1) {
+                Decimal.fromStringCache.set(originalValue, Decimal.fromDecimal(this));
+            }
             return this;
         }
         let exponent = parseFloat(parts[parts.length - 1]);
@@ -1500,6 +1412,9 @@ export default class Decimal {
                 this.sign = result.sign;
                 this.layer = result.layer;
                 this.mag = result.mag;
+                if (Decimal.fromStringCache.maxSize >= 1) {
+                    Decimal.fromStringCache.set(originalValue, Decimal.fromDecimal(this));
+                }
                 return this;
             } else {
                 //at eee and above, mantissa is too small to be recognizable!
@@ -1508,11 +1423,14 @@ export default class Decimal {
         }
 
         this.normalize();
+        if (Decimal.fromStringCache.maxSize >= 1) {
+            Decimal.fromStringCache.set(originalValue, Decimal.fromDecimal(this));
+        }
         return this;
     }
 
     public fromValue(value: DecimalSource): Decimal {
-        if (value instanceof Decimal || (value != null && typeof value === "object" && "sign" in value && "mag" in value && "layer" in value)) {
+        if (value instanceof Decimal) {
             return this.fromDecimal(value);
         }
 
@@ -1770,7 +1688,7 @@ export default class Decimal {
         }
 
         if (a.layer === 0 && b.layer === 0) {
-            return D(a.sign * a.mag + b.sign * b.mag);
+            return Decimal.fromNumber(a.sign * a.mag + b.sign * b.mag);
         }
 
         const layera = a.layer * Math.sign(a.mag);
@@ -1869,7 +1787,7 @@ export default class Decimal {
         }
 
         if (a.layer === 0 && b.layer === 0) {
-            return D(a.sign * b.sign * a.mag * b.mag);
+            return Decimal.fromNumber(a.sign * b.sign * a.mag * b.mag);
         }
 
         //Special case: If one of the numbers is layer 3 or higher or one of the numbers is 2+ layers bigger than the other, just take the bigger number.
@@ -2225,10 +2143,7 @@ export default class Decimal {
             return a;
         }
 
-        const result = a
-            .absLog10()
-            .mul(b)
-            .pow10();
+        const result = a.absLog10().mul(b).pow10();
 
         if (this.sign === -1) {
             if (Math.abs(b.toNumber() % 2) % 2 === 1) {
@@ -2255,7 +2170,7 @@ export default class Decimal {
             return Decimal.dNaN;
         }
 
-        let a = this;
+        let a: Decimal = this;
 
         //handle layer 0 case - if no precision is lost just use Math.pow, else promote one layer
         if (a.layer === 0) {
@@ -2266,7 +2181,7 @@ export default class Decimal {
                 if (a.sign === 0) {
                     return Decimal.dOne;
                 } else {
-                    a = FC_NN(a.sign, a.layer + 1, Math.log10(a.mag)) as this;
+                    a = FC_NN(a.sign, a.layer + 1, Math.log10(a.mag));
                 }
             }
         }
@@ -2309,7 +2224,7 @@ export default class Decimal {
             return this.recip();
         } else if (this.layer === 0) {
             if (this.lt(FC_NN(1, 0, 24))) {
-                return D(f_gamma(this.sign * this.mag));
+                return Decimal.fromNumber(f_gamma(this.sign * this.mag));
             }
 
             const t = this.mag - 1;
@@ -2360,7 +2275,7 @@ export default class Decimal {
             return Decimal.dOne;
         }
         if (this.layer === 0 && this.mag <= 709.7) {
-            return D(Math.exp(this.sign * this.mag));
+            return Decimal.fromNumber(Math.exp(this.sign * this.mag));
         } else if (this.layer === 0) {
             return FC(1, 1, this.sign * Math.log10(Math.E) * this.mag);
         } else if (this.layer === 1) {
@@ -2376,7 +2291,7 @@ export default class Decimal {
 
     public sqrt(): Decimal {
         if (this.layer === 0) {
-            return D(Math.sqrt(this.sign * this.mag));
+            return Decimal.fromNumber(Math.sqrt(this.sign * this.mag));
         } else if (this.layer === 1) {
             return FC(1, 2, Math.log10(this.mag) - 0.3010299956639812);
         } else {
@@ -2422,14 +2337,15 @@ export default class Decimal {
             if (this_num <= 1.44466786100976613366 && this_num >= 0.06598803584531253708) {
                 //hotfix for the very edge of the number range not being handled properly
                 if (this_num > 1.444667861009099) {
-                    return new Decimal(Math.E);
+                    return Decimal.fromNumber(Math.E);
                 }
                 //Formula for infinite height power tower.
                 const negln = Decimal.ln(this).neg();
                 return negln.lambertw().div(negln);
             } else if (this_num > 1.44466786100976613366) {
                 //explodes to infinity
-                return new Decimal(Number.POSITIVE_INFINITY);
+                // TODO: replace this with Decimal.dInf
+                return Decimal.fromNumber(Number.POSITIVE_INFINITY);
             } else {
                 //0.06598803584531253708 > this_num >= 0: never converges
                 //this_num < 0: quickly becomes a complex number
@@ -2444,7 +2360,7 @@ export default class Decimal {
             if (result > 1) {
                 result = 2 - result;
             }
-            return new Decimal(result);
+            return Decimal.fromNumber(result);
         }
 
         if (height < 0) {
@@ -2481,14 +2397,13 @@ export default class Decimal {
                 if (this.gt(10)) {
                     payload = this.pow(fracheight);
                 } else {
-                    payload = D(Decimal.tetrate_critical(this.toNumber(), fracheight));
+                    payload = Decimal.fromNumber(
+                        Decimal.tetrate_critical(this.toNumber(), fracheight)
+                    );
                     //TODO: until the critical section grid can handle numbers below 2, scale them to the base
                     //TODO: maybe once the critical section grid has very large bases, this math can be appropriate for them too? I'll think about it
                     if (this.lt(2)) {
-                        payload = payload
-                            .sub(1)
-                            .mul(this.minus(1))
-                            .plus(1);
+                        payload = payload.sub(1).mul(this.minus(1)).plus(1);
                     }
                 }
             } else {
@@ -2531,7 +2446,7 @@ export default class Decimal {
         }
 
         base = D(base);
-        let result = D(this);
+        let result = Decimal.fromDecimal(this);
         const fulltimes = times;
         times = Math.trunc(times);
         const fraction = fulltimes - times;
@@ -2567,7 +2482,36 @@ export default class Decimal {
 
     //Super-logarithm, one of tetration's inverses, tells you what size power tower you'd have to tetrate base to to get number. By definition, will never be higher than 1.8e308 in break_eternity.js, since a power tower 1.8e308 numbers tall is the largest representable number.
     // https://en.wikipedia.org/wiki/Super-logarithm
-    public slog(base: DecimalSource = 10): Decimal {
+    // NEW: Accept a number of iterations, and use binary search to, after making an initial guess, hone in on the true value, assuming tetration as the ground truth.
+    public slog(base: DecimalSource = 10, iterations = 100): Decimal {
+        let step_size = 0.001;
+        let has_changed_directions_once = false;
+        let previously_rose = false;
+        let result = this.slog_internal(base).toNumber();
+        for (let i = 1; i < iterations; ++i) {
+            const new_decimal = new Decimal(base).tetrate(result);
+            const currently_rose = new_decimal.gt(this);
+            if (i > 1) {
+                if (previously_rose != currently_rose) {
+                    has_changed_directions_once = true;
+                }
+            }
+            previously_rose = currently_rose;
+            if (has_changed_directions_once) {
+                step_size /= 2;
+            } else {
+                step_size *= 2;
+            }
+            step_size = Math.abs(step_size) * (currently_rose ? -1 : 1);
+            result += step_size;
+            if (step_size === 0) {
+                break;
+            }
+        }
+        return Decimal.fromNumber(result);
+    }
+
+    public slog_internal(base: DecimalSource = 10): Decimal {
         base = D(base);
 
         //special cases:
@@ -2598,7 +2542,7 @@ export default class Decimal {
         }
 
         let result = 0;
-        let copy = D(this);
+        let copy = Decimal.fromDecimal(this);
         if (copy.layer - base.layer > 3) {
             const layerloss = copy.layer - base.layer - 3;
             result += layerloss;
@@ -2610,13 +2554,15 @@ export default class Decimal {
                 copy = Decimal.pow(base, copy);
                 result -= 1;
             } else if (copy.lte(Decimal.dOne)) {
-                return D(result + Decimal.slog_critical(base.toNumber(), copy.toNumber()));
+                return Decimal.fromNumber(
+                    result + Decimal.slog_critical(base.toNumber(), copy.toNumber())
+                );
             } else {
                 result += 1;
                 copy = Decimal.log(copy, base);
             }
         }
-        return D(result);
+        return Decimal.fromNumber(result);
     }
 
     //background info and tables of values for critical functions taken here: https://github.com/Patashu/break_eternity.js/issues/22
@@ -2653,6 +2599,7 @@ export default class Decimal {
         //basically, if we're between bases, we interpolate each bases' relevant values together
         //then we interpolate based on what the fractional height is.
         //accuracy could be improved by doing a non-linear interpolation (maybe), by adding more bases and heights (definitely) but this is AFAIK the best you can get without running some pari.gp or mathematica program to calculate exact values
+        //however, do note http://myweb.astate.edu/wpaulsen/tetcalc/tetcalc.html can do it for arbitrary heights but not for arbitrary bases (2, e, 10 present)
         for (let i = 0; i < critical_headers.length; ++i) {
             if (critical_headers[i] == base) {
                 // exact match
@@ -2673,15 +2620,25 @@ export default class Decimal {
             }
         }
         const frac = height - Math.floor(height);
-        const result = lower * (1 - frac) + upper * frac;
-        return result;
+        //improvement - you get more accuracy (especially around 0.9-1.0) by doing log, then frac, then powing the result
+        //(we could pre-log the lookup table, but then fractional bases would get Weird)
+        //also, use old linear for slog (values 0 or less in critical section). maybe something else is better but haven't thought about what yet
+        if (lower <= 0 || upper <= 0) {
+            return lower * (1 - frac) + upper * frac;
+        } else {
+            return Math.pow(
+                base,
+                (Math.log(lower) / Math.log(base)) * (1 - frac) +
+                    (Math.log(upper) / Math.log(base)) * frac
+            );
+        }
     }
 
     //Function for adding/removing layers from a Decimal, even fractional layers (e.g. its slog10 representation).
     //Moved this over to use the same critical section as tetrate/slog.
     public layeradd10(diff: DecimalSource): Decimal {
         diff = Decimal.fromValue_noAlloc(diff).toNumber();
-        const result = D(this);
+        const result = Decimal.fromDecimal(this);
         if (diff >= 1) {
             //bug fix: if result is very smol (mag < 0, layer > 0) turn it into 0 first
             if (result.mag < 0 && result.layer > 0) {
@@ -2767,9 +2724,9 @@ export default class Decimal {
         if (this.lt(-0.3678794411710499)) {
             throw Error("lambertw is unimplemented for results less than -1, sorry!");
         } else if (this.mag < 0) {
-            return D(f_lambertw(this.toNumber()));
+            return Decimal.fromNumber(f_lambertw(this.toNumber()));
         } else if (this.layer === 0) {
-            return D(f_lambertw(this.sign * this.mag));
+            return Decimal.fromNumber(f_lambertw(this.sign * this.mag));
         } else if (this.layer === 1) {
             return d_lambertw(this);
         } else if (this.layer === 2) {
@@ -2792,182 +2749,6 @@ export default class Decimal {
         const lnx = this.ln();
         return lnx.div(lnx.lambertw());
     }
-    /*
-
-Unit tests for tetrate/iteratedexp/iteratedlog/layeradd10/layeradd/slog:
-(note: these won't be exactly precise with the new slog implementation, but that's okay)
-
-for (var i = 0; i < 1000; ++i)
-{
-  var first = Math.random()*100;
-  var both = Math.random()*100;
-  var expected = first+both+1;
-  var result = new Decimal(10).layeradd10(first).layeradd10(both).slog();
-  if (Number.isFinite(result.mag) && !Decimal.eq_tolerance(expected, result))
-  {
-      console.log(first + ", " + both);
-  }
-}
-
-for (var i = 0; i < 1000; ++i)
-{
-  var first = Math.random()*100;
-  var both = Math.random()*100;
-  first += both;
-  var expected = first-both+1;
-  var result = new Decimal(10).layeradd10(first).layeradd10(-both).slog();
-  if (Number.isFinite(result.mag) && !Decimal.eq_tolerance(expected, result))
-  {
-      console.log(first + ", " + both);
-  }
-}
-
-for (var i = 0; i < 1000; ++i)
-{
-  var first = Math.random()*100;
-  var both = Math.random()*100;
-  var base = Math.random()*8+2;
-  var expected = first+both+1;
-  var result = new Decimal(base).layeradd(first, base).layeradd(both, base).slog(base);
-  if (Number.isFinite(result.mag) && !Decimal.eq_tolerance(expected, result))
-  {
-      console.log(first + ", " + both);
-  }
-}
-
-for (var i = 0; i < 1000; ++i)
-{
-  var first = Math.random()*100;
-  var both = Math.random()*100;
-  var base = Math.random()*8+2;
-  first += both;
-  var expected = first-both+1;
-  var result = new Decimal(base).layeradd(first, base).layeradd(-both, base).slog(base);
-  if (Number.isFinite(result.mag) && !Decimal.eq_tolerance(expected, result))
-  {
-      console.log(first + ", " + both);
-  }
-}
-
-for (var i = 0; i < 1000; ++i)
-{
-var first = Math.round((Math.random()*30))/10;
-var both = Math.round((Math.random()*30))/10;
-var tetrateonly = Decimal.tetrate(10, first);
-var tetrateandlog = Decimal.tetrate(10, first+both).iteratedlog(10, both);
-if (!Decimal.eq_tolerance(tetrateonly, tetrateandlog))
-{
-  console.log(first + ", " + both);
-}
-}
-
-for (var i = 0; i < 1000; ++i)
-{
-var first = Math.round((Math.random()*30))/10;
-var both = Math.round((Math.random()*30))/10;
-var base = Math.random()*8+2;
-var tetrateonly = Decimal.tetrate(base, first);
-var tetrateandlog = Decimal.tetrate(base, first+both).iteratedlog(base, both);
-if (!Decimal.eq_tolerance(tetrateonly, tetrateandlog))
-{
-  console.log(first + ", " + both);
-}
-}
-
-for (var i = 0; i < 1000; ++i)
-{
-var first = Math.round((Math.random()*30))/10;
-var both = Math.round((Math.random()*30))/10;
-var base = Math.random()*8+2;
-var tetrateonly = Decimal.tetrate(base, first, base);
-var tetrateandlog = Decimal.tetrate(base, first+both, base).iteratedlog(base, both);
-if (!Decimal.eq_tolerance(tetrateonly, tetrateandlog))
-{
-  console.log(first + ", " + both);
-}
-}
-
-for (var i = 0; i < 1000; ++i)
-{
-  var xex = new Decimal(-0.3678794411710499+Math.random()*100);
-  var x = Decimal.lambertw(xex);
-  if (!Decimal.eq_tolerance(xex, x.mul(Decimal.exp(x))))
-  {
-      console.log(xex);
-  }
-}
-
-for (var i = 0; i < 1000; ++i)
-{
-  var xex = new Decimal(-0.3678794411710499+Math.exp(Math.random()*100));
-  var x = Decimal.lambertw(xex);
-  if (!Decimal.eq_tolerance(xex, x.mul(Decimal.exp(x))))
-  {
-      console.log(xex);
-  }
-}
-
-for (var i = 0; i < 1000; ++i)
-{
-  var a = Decimal.randomDecimalForTesting(Math.random() > 0.5 ? 0 : 1);
-  var b = Decimal.randomDecimalForTesting(Math.random() > 0.5 ? 0 : 1);
-  if (Math.random() > 0.5) { a = a.recip(); }
-  if (Math.random() > 0.5) { b = b.recip(); }
-  var c = a.add(b).toNumber();
-  if (Number.isFinite(c) && !Decimal.eq_tolerance(c, a.toNumber()+b.toNumber()))
-  {
-      console.log(a + ", " + b);
-  }
-}
-
-for (var i = 0; i < 100; ++i)
-{
-  var a = Decimal.randomDecimalForTesting(Math.round(Math.random()*4));
-  var b = Decimal.randomDecimalForTesting(Math.round(Math.random()*4));
-  if (Math.random() > 0.5) { a = a.recip(); }
-  if (Math.random() > 0.5) { b = b.recip(); }
-  var c = a.mul(b).toNumber();
-  if (Number.isFinite(c) && Number.isFinite(a.toNumber()) && Number.isFinite(b.toNumber()) && a.toNumber() != 0 && b.toNumber() != 0 && c != 0 && !Decimal.eq_tolerance(c, a.toNumber()*b.toNumber()))
-  {
-      console.log("Test 1: " + a + ", " + b);
-  }
-  else if (!Decimal.mul(a.recip(), b.recip()).eq_tolerance(Decimal.mul(a, b).recip()))
-  {
-      console.log("Test 3: " + a + ", " + b);
-  }
-}
-
-for (var i = 0; i < 10; ++i)
-{
-  var a = Decimal.randomDecimalForTesting(Math.round(Math.random()*4));
-  var b = Decimal.randomDecimalForTesting(Math.round(Math.random()*4));
-  if (Math.random() > 0.5 && a.sign !== 0) { a = a.recip(); }
-  if (Math.random() > 0.5 && b.sign !== 0) { b = b.recip(); }
-  var c = a.pow(b);
-  var d = a.root(b.recip());
-  var e = a.pow(b.recip());
-  var f = a.root(b);
-
-  if (!c.eq_tolerance(d) && a.sign !== 0 && b.sign !== 0)
-  {
-    console.log("Test 1: " + a + ", " + b);
-  }
-  if (!e.eq_tolerance(f) && a.sign !== 0 && b.sign !== 0)
-  {
-    console.log("Test 2: " + a + ", " + b);
-  }
-}
-
-for (var i = 0; i < 10; ++i)
-{
-  var a = Math.round(Math.random()*18-9);
-  var b = Math.round(Math.random()*100-50);
-  var c = Math.round(Math.random()*18-9);
-  var d = Math.round(Math.random()*100-50);
-  console.log("Decimal.pow(Decimal.fromMantissaExponent(" + a + ", " + b + "), Decimal.fromMantissaExponent(" + c + ", " + d + ")).toString()");
-}
-
-*/
 
     //Pentation/pentate: The result of tetrating 'height' times in a row. An absurdly strong operator - Decimal.pentate(2, 4.28) and Decimal.pentate(10, 2.37) are already too huge for break_eternity.js!
     // https://en.wikipedia.org/wiki/Pentation
@@ -2981,7 +2762,7 @@ for (var i = 0; i < 10; ++i)
         if (fracheight !== 0) {
             if (payload.eq(Decimal.dOne)) {
                 ++height;
-                payload = new Decimal(fracheight);
+                payload = Decimal.fromNumber(fracheight);
             } else {
                 if (this.eq(10)) {
                     payload = payload.layeradd10(fracheight);
@@ -3012,7 +2793,7 @@ for (var i = 0; i < 10; ++i)
             return this;
         }
         if (this.layer === 0) {
-            return D(Math.sin(this.sign * this.mag));
+            return Decimal.fromNumber(Math.sin(this.sign * this.mag));
         }
         return FC_NN(0, 0, 0);
     }
@@ -3022,7 +2803,7 @@ for (var i = 0; i < 10; ++i)
             return Decimal.dOne;
         }
         if (this.layer === 0) {
-            return D(Math.cos(this.sign * this.mag));
+            return Decimal.fromNumber(Math.cos(this.sign * this.mag));
         }
         return FC_NN(0, 0, 0);
     }
@@ -3032,7 +2813,7 @@ for (var i = 0; i < 10; ++i)
             return this;
         }
         if (this.layer === 0) {
-            return D(Math.tan(this.sign * this.mag));
+            return Decimal.fromNumber(Math.tan(this.sign * this.mag));
         }
         return FC_NN(0, 0, 0);
     }
@@ -3042,17 +2823,17 @@ for (var i = 0; i < 10; ++i)
             return this;
         }
         if (this.layer === 0) {
-            return D(Math.asin(this.sign * this.mag));
+            return Decimal.fromNumber(Math.asin(this.sign * this.mag));
         }
         return FC_NN(Number.NaN, Number.NaN, Number.NaN);
     }
 
     public acos(): Decimal {
         if (this.mag < 0) {
-            return D(Math.acos(this.toNumber()));
+            return Decimal.fromNumber(Math.acos(this.toNumber()));
         }
         if (this.layer === 0) {
-            return D(Math.acos(this.sign * this.mag));
+            return Decimal.fromNumber(Math.acos(this.sign * this.mag));
         }
         return FC_NN(Number.NaN, Number.NaN, Number.NaN);
     }
@@ -3062,21 +2843,17 @@ for (var i = 0; i < 10; ++i)
             return this;
         }
         if (this.layer === 0) {
-            return D(Math.atan(this.sign * this.mag));
+            return Decimal.fromNumber(Math.atan(this.sign * this.mag));
         }
-        return D(Math.atan(this.sign * 1.8e308));
+        return Decimal.fromNumber(Math.atan(this.sign * 1.8e308));
     }
 
     public sinh(): Decimal {
-        return this.exp()
-            .sub(this.negate().exp())
-            .div(2);
+        return this.exp().sub(this.negate().exp()).div(2);
     }
 
     public cosh(): Decimal {
-        return this.exp()
-            .add(this.negate().exp())
-            .div(2);
+        return this.exp().add(this.negate().exp()).div(2);
     }
 
     public tanh(): Decimal {
@@ -3084,23 +2861,11 @@ for (var i = 0; i < 10; ++i)
     }
 
     public asinh(): Decimal {
-        return Decimal.ln(
-            this.add(
-                this.sqr()
-                    .add(1)
-                    .sqrt()
-            )
-        );
+        return Decimal.ln(this.add(this.sqr().add(1).sqrt()));
     }
 
     public acosh(): Decimal {
-        return Decimal.ln(
-            this.add(
-                this.sqr()
-                    .sub(1)
-                    .sqrt()
-            )
-        );
+        return Decimal.ln(this.add(this.sqr().sub(1).sqrt()));
     }
 
     public atanh(): Decimal {
@@ -3108,7 +2873,7 @@ for (var i = 0; i < 10; ++i)
             return FC_NN(Number.NaN, Number.NaN, Number.NaN);
         }
 
-        return Decimal.ln(this.add(1).div(D(1).sub(this))).div(2);
+        return Decimal.ln(this.add(1).div(Decimal.fromNumber(1).sub(this))).div(2);
     }
 
     /**
@@ -3149,3 +2914,13 @@ for (var i = 0; i < 10; ++i)
 }
 
 // return Decimal;
+
+// Optimise Decimal aliases.
+// We can't do this optimisation before Decimal is assigned.
+D = Decimal.fromValue_noAlloc;
+FC = Decimal.fromComponents;
+FC_NN = Decimal.fromComponents_noNormalize;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ME = Decimal.fromMantissaExponent;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ME_NN = Decimal.fromMantissaExponent_noNormalize;
