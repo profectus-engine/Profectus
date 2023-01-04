@@ -344,16 +344,16 @@ export type DecimalSource = Decimal | number | string;
  * The Decimal's value is simply mantissa * 10^exponent.
  */
 export default class Decimal {
-    public static readonly dZero = FC_NN(0, 0, 0);
-    public static readonly dOne = FC_NN(1, 0, 1);
-    public static readonly dNegOne = FC_NN(-1, 0, 1);
-    public static readonly dTwo = FC_NN(1, 0, 2);
-    public static readonly dTen = FC_NN(1, 0, 10);
-    public static readonly dNaN = FC_NN(Number.NaN, Number.NaN, Number.NaN);
-    public static readonly dInf = FC_NN(1, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
-    public static readonly dNegInf = FC_NN(-1, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
-    public static readonly dNumberMax = FC(1, 0, Number.MAX_VALUE);
-    public static readonly dNumberMin = FC(1, 0, Number.MIN_VALUE);
+    public static dZero: Decimal;
+    public static dOne: Decimal;
+    public static dNegOne: Decimal;
+    public static dTwo: Decimal;
+    public static dTen: Decimal;
+    public static dNaN: Decimal;
+    public static dInf: Decimal;
+    public static dNegInf: Decimal;
+    public static dNumberMax: Decimal;
+    public static dNumberMin: Decimal;
 
     private static fromStringCache = new LRUCache<string, Decimal>(DEFAULT_FROM_STRING_CACHE_SIZE);
 
@@ -705,7 +705,7 @@ export default class Decimal {
     public static eq_tolerance(
         value: DecimalSource,
         other: DecimalSource,
-        tolerance: number
+        tolerance?: number
     ): boolean {
         return D(value).eq_tolerance(other, tolerance);
     }
@@ -713,7 +713,7 @@ export default class Decimal {
     public static equals_tolerance(
         value: DecimalSource,
         other: DecimalSource,
-        tolerance: number
+        tolerance?: number
     ): boolean {
         return D(value).eq_tolerance(other, tolerance);
     }
@@ -858,7 +858,7 @@ export default class Decimal {
         return D(value).layeradd10(diff);
     }
 
-    public static layeradd(value: DecimalSource, diff: number, base = 10): Decimal {
+    public static layeradd(value: DecimalSource, diff: number, base: DecimalSource = 10): Decimal {
         return D(value).layeradd(diff, base);
     }
 
@@ -2037,7 +2037,7 @@ export default class Decimal {
      * For example, if you put in 1e-9, then any number closer to the
      * larger number than (larger number)*1e-9 will be considered equal.
      */
-    public eq_tolerance(value: DecimalSource, tolerance: number): boolean {
+    public eq_tolerance(value: DecimalSource, tolerance?: number): boolean {
         const decimal = D(value); // https://stackoverflow.com/a/33024979
         if (tolerance == null) {
             tolerance = 1e-7;
@@ -2960,6 +2960,19 @@ export default class Decimal {
 
     // return Decimal;
 }
+
+// Assign these after the Decimal is assigned because vitest had issues otherwise
+// If we can figure out why, we can make these readonly properties instead
+Decimal.dZero = FC_NN(0, 0, 0);
+Decimal.dOne = FC_NN(1, 0, 1);
+Decimal.dNegOne = FC_NN(-1, 0, 1);
+Decimal.dTwo = FC_NN(1, 0, 2);
+Decimal.dTen = FC_NN(1, 0, 10);
+Decimal.dNaN = FC_NN(Number.NaN, Number.NaN, Number.NaN);
+Decimal.dInf = FC_NN(1, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
+Decimal.dNegInf = FC_NN(-1, Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
+Decimal.dNumberMax = FC(1, 0, Number.MAX_VALUE);
+Decimal.dNumberMin = FC(1, 0, Number.MIN_VALUE);
 
 // return Decimal;
 
