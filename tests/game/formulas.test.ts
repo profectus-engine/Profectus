@@ -182,13 +182,12 @@ const nonInvertibleOneParamFunctionNames = [
     ["layeradd10"]
 ] as const;
 
-const invertibleTwoParamFunctionNames = [["tetrate"]] as const;
+const invertibleTwoParamFunctionNames = [["tetrate"], ["layeradd"]] as const;
 
 const nonInvertibleTwoParamFunctionNames = [
     ["clamp"],
     ["iteratedexp"],
     ["iteratedlog"],
-    ["layeradd"],
     ["pentate"]
 ] as const;
 
@@ -360,6 +359,48 @@ describe("Creating Formulas", () => {
                         checkFormula(Formula[name](variable, variable, variable)));
                 });
             });
+        });
+
+        describe("Inverting calculates the value of the variable", () => {
+            let variable: Formula;
+            let constant: Formula;
+            beforeAll(() => {
+                variable = Formula.variable(2);
+                constant = Formula.constant(3);
+            });
+            invertibleOneParamFunctionNames.flat().forEach(name =>
+                describe(name, () => {
+                    test(`${name}(var, const).invert()`, () => {
+                        const formula = Formula[name](variable, constant);
+                        const result = formula.evaluate();
+                        expect(formula.invert(result)).toSatisfy(compare_tolerance(2));
+                    });
+                    test(`${name}(const, var).invert()`, () => {
+                        const formula = Formula[name](constant, variable);
+                        const result = formula.evaluate();
+                        expect(formula.invert(result)).toSatisfy(compare_tolerance(2));
+                    });
+                })
+            );
+            invertibleTwoParamFunctionNames.flat().forEach(name =>
+                describe(name, () => {
+                    test(`${name}(var, const, const).invert()`, () => {
+                        const formula = Formula[name](variable, constant, constant);
+                        const result = formula.evaluate();
+                        expect(formula.invert(result)).toSatisfy(compare_tolerance(2));
+                    });
+                    test(`${name}(const, var, const).invert()`, () => {
+                        const formula = Formula[name](constant, variable, constant);
+                        const result = formula.evaluate();
+                        expect(formula.invert(result)).toSatisfy(compare_tolerance(2));
+                    });
+                    test(`${name}(const, const, var).invert()`, () => {
+                        const formula = Formula[name](constant, constant, variable);
+                        const result = formula.evaluate();
+                        expect(formula.invert(result)).toSatisfy(compare_tolerance(2));
+                    });
+                })
+            );
         });
     });
 });

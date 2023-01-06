@@ -27,6 +27,22 @@ function unrefFormulaSource(value: Formula | ProcessedComputable<DecimalSource>)
     return value instanceof Formula ? value.evaluate() : unref(value);
 }
 
+function isVariableFormula(value: FormulaSource): value is VariableFormula {
+    return value instanceof Formula && value.hasVariable;
+}
+
+function calculateInvertibility(...inputs: FormulaSource[]) {
+    const invertible = !inputs.some(input => input instanceof Formula && !input.invertible);
+    const hasVariable =
+        invertible &&
+        inputs.filter(input => input instanceof Formula && input.invertible && input.hasVariable)
+            .length === 1;
+    return {
+        invertible,
+        hasVariable
+    };
+}
+
 export default class Formula {
     public readonly invertible: boolean;
     public readonly hasVariable: boolean;
@@ -533,7 +549,8 @@ export default class Formula {
     public neg() {
         return new Formula(
             () => this.evaluate().neg(),
-            value => Decimal.neg(value)
+            value => Decimal.neg(value),
+            this.hasVariable
         );
     }
 
@@ -577,11 +594,17 @@ export default class Formula {
     public add(this: Formula, value: FormulaSource): Formula;
     public add(value: FormulaSource) {
         const v = processFormulaSource(value);
+        const { invertible, hasVariable } = calculateInvertibility(this, value);
         return new Formula(
             () => this.evaluate().add(unrefFormulaSource(v)),
-            (v instanceof Formula && !v.invertible) || !this.invertible
-                ? undefined
-                : value => Decimal.sub(value, unrefFormulaSource(v))
+            invertible
+                ? value =>
+                      Decimal.sub(
+                          value,
+                          isVariableFormula(this) ? unrefFormulaSource(v) : this.evaluate()
+                      )
+                : undefined,
+            hasVariable
         );
     }
 
@@ -595,11 +618,17 @@ export default class Formula {
     public sub(this: Formula, value: FormulaSource): Formula;
     public sub(value: FormulaSource) {
         const v = processFormulaSource(value);
+        const { invertible, hasVariable } = calculateInvertibility(this, value);
         return new Formula(
             () => this.evaluate().sub(unrefFormulaSource(v)),
-            (v instanceof Formula && !v.invertible) || !this.invertible
-                ? undefined
-                : value => Decimal.add(value, unrefFormulaSource(v))
+            invertible
+                ? value =>
+                      Decimal.add(
+                          value,
+                          isVariableFormula(this) ? unrefFormulaSource(v) : this.evaluate()
+                      )
+                : undefined,
+            hasVariable
         );
     }
 
@@ -619,11 +648,17 @@ export default class Formula {
     public mul(this: Formula, value: FormulaSource): Formula;
     public mul(value: FormulaSource) {
         const v = processFormulaSource(value);
+        const { invertible, hasVariable } = calculateInvertibility(this, value);
         return new Formula(
             () => this.evaluate().mul(unrefFormulaSource(v)),
-            (v instanceof Formula && !v.invertible) || !this.invertible
-                ? undefined
-                : value => Decimal.div(value, unrefFormulaSource(v))
+            invertible
+                ? value =>
+                      Decimal.div(
+                          value,
+                          isVariableFormula(this) ? unrefFormulaSource(v) : this.evaluate()
+                      )
+                : undefined,
+            hasVariable
         );
     }
 
@@ -643,11 +678,17 @@ export default class Formula {
     public div(this: Formula, value: FormulaSource): Formula;
     public div(value: FormulaSource) {
         const v = processFormulaSource(value);
+        const { invertible, hasVariable } = calculateInvertibility(this, value);
         return new Formula(
             () => this.evaluate().div(unrefFormulaSource(v)),
-            (v instanceof Formula && !v.invertible) || !this.invertible
-                ? undefined
-                : value => Decimal.mul(value, unrefFormulaSource(v))
+            invertible
+                ? value =>
+                      Decimal.mul(
+                          value,
+                          isVariableFormula(this) ? unrefFormulaSource(v) : this.evaluate()
+                      )
+                : undefined,
+            hasVariable
         );
     }
 
@@ -674,7 +715,8 @@ export default class Formula {
     public recip() {
         return new Formula(
             () => this.evaluate().recip(),
-            !this.invertible ? undefined : value => Decimal.recip(value)
+            this.invertible ? value => Decimal.recip(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -745,7 +787,8 @@ export default class Formula {
     public log10() {
         return new Formula(
             () => this.evaluate().log10(),
-            !this.invertible ? undefined : value => Decimal.pow10(value)
+            this.invertible ? value => Decimal.pow10(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -753,11 +796,16 @@ export default class Formula {
     public log(this: Formula, value: FormulaSource): Formula;
     public log(value: FormulaSource) {
         const v = processFormulaSource(value);
+        const { invertible, hasVariable } = calculateInvertibility(this, value);
         return new Formula(
             () => this.evaluate().log(unrefFormulaSource(v)),
-            (v instanceof Formula && !v.invertible) || !this.invertible
-                ? undefined
-                : value => Decimal.pow(unrefFormulaSource(v), value)
+            invertible
+                ? value =>
+                      isVariableFormula(this)
+                          ? Decimal.pow(unrefFormulaSource(v), value)
+                          : Decimal.root(this.evaluate(), value)
+                : undefined,
+            hasVariable
         );
     }
 
@@ -772,7 +820,8 @@ export default class Formula {
     public log2() {
         return new Formula(
             () => this.evaluate().log2(),
-            !this.invertible ? undefined : value => Decimal.pow(2, value)
+            this.invertible ? value => Decimal.pow(2, value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -781,7 +830,8 @@ export default class Formula {
     public ln() {
         return new Formula(
             () => this.evaluate().ln(),
-            !this.invertible ? undefined : value => Decimal.exp(value)
+            this.invertible ? value => Decimal.exp(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -789,11 +839,16 @@ export default class Formula {
     public pow(this: Formula, value: FormulaSource): Formula;
     public pow(value: FormulaSource) {
         const v = processFormulaSource(value);
+        const { invertible, hasVariable } = calculateInvertibility(this, value);
         return new Formula(
             () => this.evaluate().pow(unrefFormulaSource(v)),
-            (v instanceof Formula && !v.invertible) || !this.invertible
-                ? undefined
-                : value => Decimal.root(value, unrefFormulaSource(v))
+            invertible
+                ? value =>
+                      isVariableFormula(this)
+                          ? Decimal.root(value, unrefFormulaSource(v))
+                          : Decimal.ln(value).div(Decimal.ln(this.evaluate()))
+                : undefined,
+            hasVariable
         );
     }
 
@@ -802,7 +857,8 @@ export default class Formula {
     public pow10() {
         return new Formula(
             () => this.evaluate().pow10(),
-            !this.invertible ? undefined : value => Decimal.root(value, 10)
+            this.invertible ? value => Decimal.root(value, 10) : undefined,
+            this.hasVariable
         );
     }
 
@@ -810,11 +866,16 @@ export default class Formula {
     public pow_base(this: Formula, value: FormulaSource): Formula;
     public pow_base(value: FormulaSource) {
         const v = processFormulaSource(value);
+        const { invertible, hasVariable } = calculateInvertibility(this, value);
         return new Formula(
             () => this.evaluate().pow_base(unrefFormulaSource(v)),
-            (v instanceof Formula && !v.invertible) || !this.invertible
-                ? undefined
-                : value => Decimal.root(unrefFormulaSource(v), value)
+            invertible
+                ? value =>
+                      isVariableFormula(this)
+                          ? Decimal.ln(value).div(unrefFormulaSource(v))
+                          : Decimal.root(unrefFormulaSource(v), value)
+                : undefined,
+            hasVariable
         );
     }
 
@@ -822,11 +883,16 @@ export default class Formula {
     public root(this: Formula, value: FormulaSource): Formula;
     public root(value: FormulaSource) {
         const v = processFormulaSource(value);
+        const { invertible, hasVariable } = calculateInvertibility(this, value);
         return new Formula(
             () => this.evaluate().root(unrefFormulaSource(v)),
-            (v instanceof Formula && !v.invertible) || !this.invertible
-                ? undefined
-                : value => Decimal.pow(value, unrefFormulaSource(v))
+            invertible
+                ? value =>
+                      isVariableFormula(this)
+                          ? Decimal.root(value, Decimal.recip(unrefFormulaSource(v)))
+                          : Decimal.ln(value).div(Decimal.ln(this.evaluate()).recip())
+                : undefined,
+            hasVariable
         );
     }
 
@@ -846,7 +912,8 @@ export default class Formula {
     public exp() {
         return new Formula(
             () => this.evaluate().exp(),
-            !this.invertible ? undefined : value => Decimal.ln(value)
+            this.invertible ? value => Decimal.ln(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -886,21 +953,21 @@ export default class Formula {
     ) {
         const heightValue = processFormulaSource(height);
         const payloadValue = processFormulaSource(payload);
+        const { invertible, hasVariable } = calculateInvertibility(this, height, payload);
         return new Formula(
             () =>
                 this.evaluate().tetrate(
                     Decimal.min(1e308, unrefFormulaSource(heightValue)).toNumber(),
                     unrefFormulaSource(payloadValue)
                 ),
-            (heightValue instanceof Formula && !heightValue.invertible) ||
-            (payloadValue instanceof Formula && !payloadValue.invertible) ||
-            !this.invertible
-                ? undefined
-                : value =>
+            invertible
+                ? value =>
                       Decimal.slog(
                           value,
                           Decimal.min(1e308, unrefFormulaSource(heightValue)).toNumber()
                       )
+                : undefined,
+            hasVariable
         );
     }
 
@@ -916,22 +983,22 @@ export default class Formula {
     ) {
         const heightValue = processFormulaSource(height);
         const payloadValue = processFormulaSource(payload);
+        const { invertible, hasVariable } = calculateInvertibility(this, height, payload);
         return new Formula(
             () =>
                 this.evaluate().iteratedexp(
                     Decimal.min(1e308, unrefFormulaSource(heightValue)).toNumber(),
                     new Decimal(unrefFormulaSource(payloadValue))
                 ),
-            (heightValue instanceof Formula && !heightValue.invertible) ||
-            (payloadValue instanceof Formula && !payloadValue.invertible) ||
-            !this.invertible
-                ? undefined
-                : value =>
+            invertible
+                ? value =>
                       Decimal.iteratedlog(
                           value,
                           Math.E,
                           Decimal.min(1e308, unrefFormulaSource(heightValue)).toNumber()
                       )
+                : undefined,
+            hasVariable
         );
     }
 
@@ -948,16 +1015,18 @@ export default class Formula {
 
     public slog(base: FormulaSource = 10) {
         const baseValue = processFormulaSource(base);
+        const { invertible, hasVariable } = calculateInvertibility(this, base);
         return new Formula(
             () =>
                 this.evaluate().slog(Decimal.min(1e308, unrefFormulaSource(baseValue)).toNumber()),
-            (baseValue instanceof Formula && !baseValue.invertible) || !this.invertible
-                ? undefined
-                : value =>
+            invertible
+                ? value =>
                       Decimal.tetrate(
                           value,
                           Decimal.min(1e308, unrefFormulaSource(baseValue)).toNumber()
                       )
+                : undefined,
+            hasVariable
         );
     }
 
@@ -975,22 +1044,22 @@ export default class Formula {
     public layeradd(diff: FormulaSource, base: FormulaSource) {
         const diffValue = processFormulaSource(diff);
         const baseValue = processFormulaSource(base);
+        const { invertible, hasVariable } = calculateInvertibility(this, diff, base);
         return new Formula(
             () =>
                 this.evaluate().layeradd(
                     Decimal.min(1e308, unrefFormulaSource(diffValue)).toNumber(),
                     unrefFormulaSource(baseValue)
                 ),
-            (diffValue instanceof Formula && !diffValue.invertible) ||
-            (diffValue instanceof Formula && !diffValue.invertible) ||
-            !this.invertible
-                ? undefined
-                : value =>
+            invertible
+                ? value =>
                       Decimal.layeradd(
                           value,
                           Decimal.min(1e308, unrefFormulaSource(diffValue)).negate().toNumber(),
                           unrefFormulaSource(baseValue)
                       )
+                : undefined,
+            hasVariable
         );
     }
 
@@ -999,7 +1068,8 @@ export default class Formula {
     public lambertw() {
         return new Formula(
             () => this.evaluate().lambertw(),
-            !this.invertible ? undefined : value => Decimal.pow(Math.E, value).times(value)
+            this.invertible ? value => Decimal.pow(Math.E, value).times(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -1008,7 +1078,8 @@ export default class Formula {
     public ssqrt() {
         return new Formula(
             () => this.evaluate().ssqrt(),
-            !this.invertible ? undefined : value => Decimal.tetrate(value, 2)
+            this.invertible ? value => Decimal.tetrate(value, 2) : undefined,
+            this.hasVariable
         );
     }
 
@@ -1031,7 +1102,8 @@ export default class Formula {
     public sin() {
         return new Formula(
             () => this.evaluate().sin(),
-            !this.invertible ? undefined : value => Decimal.asin(value)
+            this.invertible ? value => Decimal.asin(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -1040,7 +1112,8 @@ export default class Formula {
     public cos() {
         return new Formula(
             () => this.evaluate().cos(),
-            !this.invertible ? undefined : value => Decimal.acos(value)
+            this.invertible ? value => Decimal.acos(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -1049,7 +1122,8 @@ export default class Formula {
     public tan() {
         return new Formula(
             () => this.evaluate().tan(),
-            !this.invertible ? undefined : value => Decimal.atan(value)
+            this.invertible ? value => Decimal.atan(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -1058,7 +1132,8 @@ export default class Formula {
     public asin() {
         return new Formula(
             () => this.evaluate().asin(),
-            !this.invertible ? undefined : value => Decimal.sin(value)
+            this.invertible ? value => Decimal.sin(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -1067,7 +1142,8 @@ export default class Formula {
     public acos() {
         return new Formula(
             () => this.evaluate().acos(),
-            !this.invertible ? undefined : value => Decimal.cos(value)
+            this.invertible ? value => Decimal.cos(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -1076,7 +1152,8 @@ export default class Formula {
     public atan() {
         return new Formula(
             () => this.evaluate().atan(),
-            !this.invertible ? undefined : value => Decimal.tan(value)
+            this.invertible ? value => Decimal.tan(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -1085,7 +1162,8 @@ export default class Formula {
     public sinh() {
         return new Formula(
             () => this.evaluate().sinh(),
-            !this.invertible ? undefined : value => Decimal.asinh(value)
+            this.invertible ? value => Decimal.asinh(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -1094,7 +1172,8 @@ export default class Formula {
     public cosh() {
         return new Formula(
             () => this.evaluate().cosh(),
-            !this.invertible ? undefined : value => Decimal.acosh(value)
+            this.invertible ? value => Decimal.acosh(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -1103,7 +1182,8 @@ export default class Formula {
     public tanh() {
         return new Formula(
             () => this.evaluate().tanh(),
-            !this.invertible ? undefined : value => Decimal.atanh(value)
+            this.invertible ? value => Decimal.atanh(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -1112,7 +1192,8 @@ export default class Formula {
     public asinh() {
         return new Formula(
             () => this.evaluate().asinh(),
-            !this.invertible ? undefined : value => Decimal.sinh(value)
+            this.invertible ? value => Decimal.sinh(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -1121,7 +1202,8 @@ export default class Formula {
     public acosh() {
         return new Formula(
             () => this.evaluate().acosh(),
-            !this.invertible ? undefined : value => Decimal.cosh(value)
+            this.invertible ? value => Decimal.cosh(value) : undefined,
+            this.hasVariable
         );
     }
 
@@ -1130,7 +1212,8 @@ export default class Formula {
     public atanh() {
         return new Formula(
             () => this.evaluate().atanh(),
-            !this.invertible ? undefined : value => Decimal.tanh(value)
+            this.invertible ? value => Decimal.tanh(value) : undefined,
+            this.hasVariable
         );
     }
 }
