@@ -32,14 +32,18 @@ function isVariableFormula(value: FormulaSource): value is VariableFormula {
 }
 
 function calculateInvertibility(...inputs: FormulaSource[]) {
-    const invertible = !inputs.some(input => input instanceof Formula && !input.invertible);
-    const hasVariable =
-        invertible &&
-        inputs.filter(input => input instanceof Formula && input.invertible && input.hasVariable)
-            .length === 1;
+    if (inputs.some(input => input instanceof Formula && !input.invertible)) {
+        return {
+            invertible: false,
+            hasVariable: false
+        };
+    }
+    const numVariables = inputs.filter(
+        input => input instanceof Formula && input.invertible && input.hasVariable
+    ).length;
     return {
-        invertible,
-        hasVariable
+        invertible: numVariables <= 1,
+        hasVariable: numVariables === 1
     };
 }
 
@@ -622,11 +626,9 @@ export default class Formula {
         return new Formula(
             () => this.evaluate().sub(unrefFormulaSource(v)),
             invertible
-                ? value =>
-                      Decimal.add(
-                          value,
-                          isVariableFormula(this) ? unrefFormulaSource(v) : this.evaluate()
-                      )
+                ? isVariableFormula(this)
+                    ? value => Decimal.add(value, unrefFormulaSource(v))
+                    : value => Decimal.sub(this.evaluate(), value)
                 : undefined,
             hasVariable
         );
