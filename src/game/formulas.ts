@@ -1,384 +1,689 @@
 import Decimal, { DecimalSource } from "util/bignum";
-import { convertComputable, ProcessedComputable } from "util/computed";
-import { unref } from "vue";
+import { ProcessedComputable } from "util/computed";
+import { ref, Ref, unref } from "vue";
 
-export type FormulaSource = ProcessedComputable<DecimalSource> | Formula;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type GenericFormula = Formula<any>;
+export type FormulaSource = ProcessedComputable<DecimalSource> | GenericFormula;
 export type InvertibleFormulaSource = ProcessedComputable<DecimalSource> | InvertibleFormula;
+export type InvertibleFormula = GenericFormula & {
+    invert: (value: DecimalSource) => Decimal;
+};
 
-export type InvertibleFormula = Formula & { invertible: true };
-export type VariableFormula = InvertibleFormula & { hasVariable: true };
-
-function F(value: InvertibleFormulaSource): InvertibleFormula;
-function F(value: FormulaSource): Formula;
-function F(value: FormulaSource) {
-    return value instanceof Formula
-        ? value
-        : new Formula(
-              () => new Decimal(unref(value)),
-              value => new Decimal(value)
-          );
+function hasVariable(value: FormulaSource): value is InvertibleFormula {
+    return value instanceof Formula && value.hasVariable();
 }
 
-function processFormulaSource(value: FormulaSource) {
-    return value instanceof Formula ? value : convertComputable(value);
-}
+// It's really hard to type mapped tuples, but these classes seem to manage
+type FormulasToDecimals<T extends FormulaSource[]> = {
+    [K in keyof T]: DecimalSource;
+};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type TupleGuard<T extends any[]> = T extends any[] ? FormulasToDecimals<T> : never;
+type GuardedFormulasToDecimals<T extends FormulaSource[]> = TupleGuard<T>;
 
-function unrefFormulaSource(value: Formula | ProcessedComputable<DecimalSource>) {
+export function unrefFormulaSource(value: FormulaSource) {
     return value instanceof Formula ? value.evaluate() : unref(value);
 }
 
-function isVariableFormula(value: FormulaSource): value is VariableFormula {
-    return value instanceof Formula && value.hasVariable;
-}
-
-function calculateInvertibility(...inputs: FormulaSource[]) {
-    if (inputs.some(input => input instanceof Formula && !input.invertible)) {
-        return {
-            invertible: false,
-            hasVariable: false
-        };
+function invertNeg(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.neg(value));
     }
-    const numVariables = inputs.filter(
-        input => input instanceof Formula && input.invertible && input.hasVariable
-    ).length;
-    return {
-        invertible: numVariables <= 1,
-        hasVariable: numVariables === 1
-    };
+    throw "Could not invert due to no input being a variable";
 }
 
-export default class Formula {
-    public readonly invertible: boolean;
-    public readonly hasVariable: boolean;
-    public readonly evaluate: () => Decimal;
-    public readonly invert: (value: DecimalSource) => Decimal;
+function invertAdd(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.sub(value, unrefFormulaSource(rhs)));
+    } else if (hasVariable(rhs)) {
+        return rhs.invert(Decimal.sub(value, unrefFormulaSource(lhs)));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertSub(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.add(value, unrefFormulaSource(rhs)));
+    } else if (hasVariable(rhs)) {
+        return rhs.invert(Decimal.sub(unrefFormulaSource(lhs), value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertMul(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.div(value, unrefFormulaSource(rhs)));
+    } else if (hasVariable(rhs)) {
+        return rhs.invert(Decimal.div(value, unrefFormulaSource(lhs)));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertDiv(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.mul(value, unrefFormulaSource(rhs)));
+    } else if (hasVariable(rhs)) {
+        return rhs.invert(Decimal.div(unrefFormulaSource(lhs), value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertRecip(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.recip(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertLog10(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.pow10(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertLog(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.pow(unrefFormulaSource(rhs), value));
+    } else if (hasVariable(rhs)) {
+        return rhs.invert(Decimal.root(unrefFormulaSource(lhs), value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertLog2(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.pow(2, value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertLn(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.exp(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertPow(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.root(value, unrefFormulaSource(rhs)));
+    } else if (hasVariable(rhs)) {
+        return rhs.invert(Decimal.ln(value).div(Decimal.ln(unrefFormulaSource(lhs))));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertPow10(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.root(value, 10));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertPowBase(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.ln(value).div(unrefFormulaSource(rhs)));
+    } else if (hasVariable(rhs)) {
+        return rhs.invert(Decimal.root(unrefFormulaSource(lhs), value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertRoot(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.root(value, Decimal.recip(unrefFormulaSource(rhs))));
+    } else if (hasVariable(rhs)) {
+        return rhs.invert(Decimal.ln(unrefFormulaSource(lhs)).div(Decimal.ln(value)));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertExp(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.ln(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function tetrate(
+    value: DecimalSource,
+    height: DecimalSource = 2,
+    payload: DecimalSource = Decimal.fromComponents_noNormalize(1, 0, 1)
+) {
+    const heightNumber = Decimal.minabs(height, 1e308).toNumber();
+    return Decimal.tetrate(value, heightNumber, payload);
+}
+
+function invertTetrate(
+    value: DecimalSource,
+    base: FormulaSource,
+    height: FormulaSource,
+    payload: FormulaSource
+) {
+    if (hasVariable(base)) {
+        return base.invert(
+            Decimal.slog(value, Decimal.minabs(1e308, unrefFormulaSource(height)).toNumber())
+        );
+    }
+    // Other params can't be inverted ATM
+    throw "Could not invert due to no input being a variable";
+}
+
+function iteratedexp(
+    value: DecimalSource,
+    height: DecimalSource = 2,
+    payload: DecimalSource = Decimal.fromComponents_noNormalize(1, 0, 1)
+) {
+    const heightNumber = Decimal.minabs(height, 1e308).toNumber();
+    return Decimal.iteratedexp(value, heightNumber, new Decimal(payload));
+}
+
+function invertIteratedExp(
+    value: DecimalSource,
+    lhs: FormulaSource,
+    height: FormulaSource,
+    payload: FormulaSource
+) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(
+            Decimal.iteratedlog(
+                value,
+                Math.E,
+                Decimal.minabs(1e308, unrefFormulaSource(height)).toNumber()
+            )
+        );
+    }
+    // Other params can't be inverted ATM
+    throw "Could not invert due to no input being a variable";
+}
+
+function iteratedLog(value: DecimalSource, lhs: DecimalSource = 10, times: DecimalSource = 2) {
+    const timesNumber = Decimal.minabs(times, 1e308).toNumber();
+    return Decimal.iteratedlog(value, lhs, timesNumber);
+}
+
+function slog(value: DecimalSource, lhs: DecimalSource = 10) {
+    const baseNumber = Decimal.minabs(lhs, 1e308).toNumber();
+    return Decimal.slog(value, baseNumber);
+}
+
+function invertSlog(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(
+            Decimal.tetrate(value, Decimal.minabs(1e308, unrefFormulaSource(rhs)).toNumber())
+        );
+    }
+    // Other params can't be inverted ATM
+    throw "Could not invert due to no input being a variable";
+}
+
+function layeradd(value: DecimalSource, diff: DecimalSource, base: DecimalSource) {
+    const diffNumber = Decimal.minabs(diff, 1e308).toNumber();
+    return Decimal.layeradd(value, diffNumber, base);
+}
+
+function invertLayeradd(
+    value: DecimalSource,
+    lhs: FormulaSource,
+    diff: FormulaSource,
+    base: FormulaSource
+) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(
+            Decimal.layeradd(
+                value,
+                Decimal.minabs(1e308, unrefFormulaSource(diff)).negate().toNumber()
+            )
+        );
+    }
+    // Other params can't be inverted ATM
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertLambertw(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.pow(Math.E, value).times(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertSsqrt(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.tetrate(value, 2));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function pentate(value: DecimalSource, height: DecimalSource, payload: DecimalSource) {
+    const heightNumber = Decimal.minabs(height, 1e308).toNumber();
+    return Decimal.pentate(value, heightNumber, payload);
+}
+
+function invertSin(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.asin(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertCos(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.acos(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertTan(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.atan(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertAsin(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.sin(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertAcos(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.cos(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertAtan(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.tan(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertSinh(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.asinh(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertCosh(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.acosh(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertTanh(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.atanh(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertAsinh(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.sinh(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertAcosh(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.cosh(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+function invertAtanh(value: DecimalSource, lhs: FormulaSource) {
+    if (hasVariable(lhs)) {
+        return lhs.invert(Decimal.tanh(value));
+    }
+    throw "Could not invert due to no input being a variable";
+}
+
+export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
+    readonly inputs: T;
+
+    private readonly internalEvaluate:
+        | ((...inputs: GuardedFormulasToDecimals<T>) => DecimalSource)
+        | undefined;
+    private readonly internalInvert:
+        | ((value: DecimalSource, ...inputs: T) => DecimalSource)
+        | undefined;
+    private readonly internalHasVariable: boolean;
 
     constructor(
-        evaluate: () => Decimal,
-        invert?: (value: DecimalSource) => Decimal,
+        inputs: T,
+        evaluate?: (this: Formula<T>, ...inputs: GuardedFormulasToDecimals<T>) => DecimalSource,
+        invert?: (
+            this: Formula<T>,
+            value: DecimalSource,
+            ...inputs: [...T, ...unknown[]]
+        ) => DecimalSource,
         hasVariable = false
     ) {
-        this.invertible = invert != null;
-        this.hasVariable = hasVariable;
-        this.evaluate = evaluate;
-        this.invert = invert ?? (() => Decimal.dNaN);
+        if (inputs.length !== 1 && evaluate == null) {
+            throw "Evaluate function is required if inputs is not length 1";
+        }
+        if (inputs.length !== 1 && invert == null && hasVariable) {
+            throw "A formula cannot be marked as having a variable if it is not invertible and inputs is not length 1";
+        }
+
+        this.inputs = inputs;
+        this.internalEvaluate = evaluate;
+
+        if (
+            inputs.some(input => input instanceof Formula && !input.isInvertible()) ||
+            (hasVariable === false && evaluate != null && invert == null)
+        ) {
+            this.internalHasVariable = false;
+            return;
+        }
+
+        const numVariables = inputs.filter(
+            input => input instanceof Formula && input.hasVariable()
+        ).length;
+
+        // ???
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        this.internalInvert = numVariables <= 1 ? invert : undefined;
+        this.internalHasVariable = numVariables === 1 || (numVariables === 0 && hasVariable);
+    }
+
+    isInvertible(): this is InvertibleFormula {
+        return this.internalInvert != null || this.internalEvaluate == null;
+    }
+
+    hasVariable(): boolean {
+        return this.internalHasVariable;
+    }
+
+    evaluate(): DecimalSource {
+        return (
+            this.internalEvaluate?.call(
+                this,
+                ...(this.inputs.map(unrefFormulaSource) as GuardedFormulasToDecimals<T>)
+            ) ?? unrefFormulaSource(this.inputs[0])
+        );
+    }
+
+    invert(value: DecimalSource): DecimalSource {
+        return this.internalInvert?.call(this, value, ...this.inputs) ?? value;
+    }
+
+    equals(other: GenericFormula): boolean {
+        return (
+            this.inputs.length === other.inputs.length &&
+            this.inputs.every((input, i) =>
+                input instanceof Formula && other.inputs[i] instanceof Formula
+                    ? input.equals(other.inputs[i])
+                    : !(input instanceof Formula) &&
+                      !(other.inputs[i] instanceof Formula) &&
+                      Decimal.eq(unref(input), unref(other.inputs[i]))
+            ) &&
+            this.internalEvaluate === other.internalEvaluate &&
+            this.internalInvert === other.internalInvert &&
+            this.internalHasVariable === other.internalHasVariable
+        );
     }
 
     public static constant(value: InvertibleFormulaSource): InvertibleFormula {
-        return F(value);
+        return new Formula([value]) as InvertibleFormula;
     }
 
-    public static variable(value: ProcessedComputable<DecimalSource>): VariableFormula {
-        return new Formula(
-            () => new Decimal(unref(value)),
-            value => new Decimal(value),
-            true
-        ) as VariableFormula;
+    public static variable(value: ProcessedComputable<DecimalSource>): InvertibleFormula {
+        return new Formula([value], undefined, undefined, true) as InvertibleFormula;
     }
 
-    public static abs(value: FormulaSource) {
-        return F(value).abs();
+    public static abs(value: FormulaSource): GenericFormula {
+        return new Formula([value], Decimal.abs);
     }
 
     public static neg(value: InvertibleFormulaSource): InvertibleFormula;
-    public static neg(value: FormulaSource): Formula;
+    public static neg(value: FormulaSource): GenericFormula;
     public static neg(value: FormulaSource) {
-        return F(value).neg();
+        return new Formula([value], Decimal.neg, invertNeg);
     }
-
-    public static negate(value: InvertibleFormulaSource): InvertibleFormula;
-    public static negate(value: FormulaSource): Formula;
     public static negate(value: FormulaSource) {
-        return F(value).neg();
+        return Formula.neg(value);
     }
-
-    public static negated(value: InvertibleFormulaSource): InvertibleFormula;
-    public static negated(value: FormulaSource): Formula;
     public static negated(value: FormulaSource) {
-        return F(value).neg();
+        return Formula.neg(value);
     }
 
-    public static sign(value: FormulaSource) {
-        return F(value).sign();
+    public static sign(value: FormulaSource): GenericFormula {
+        return new Formula([value], Decimal.sign);
     }
-
     public static sgn(value: FormulaSource) {
-        return F(value).sign();
+        return Formula.sign(value);
     }
 
-    public static round(value: FormulaSource) {
-        return F(value).round();
+    public static round(value: FormulaSource): GenericFormula {
+        return new Formula([value], Decimal.round);
     }
 
-    public static floor(value: FormulaSource) {
-        return F(value).floor();
+    public static floor(value: FormulaSource): GenericFormula {
+        return new Formula([value], Decimal.floor);
     }
 
-    public static ceil(value: FormulaSource) {
-        return F(value).ceil();
+    public static ceil(value: FormulaSource): GenericFormula {
+        return new Formula([value], Decimal.ceil);
     }
 
-    public static trunc(value: FormulaSource) {
-        return F(value).trunc();
+    public static trunc(value: FormulaSource): GenericFormula {
+        return new Formula([value], Decimal.trunc);
     }
 
     public static add(
         value: InvertibleFormulaSource,
         other: InvertibleFormulaSource
     ): InvertibleFormula;
-    public static add(value: FormulaSource, other: FormulaSource): Formula;
+    public static add(value: FormulaSource, other: FormulaSource): GenericFormula;
     public static add(value: FormulaSource, other: FormulaSource) {
-        return F(value).add(other);
+        return new Formula([value, other], Decimal.add, invertAdd);
     }
-
-    public static plus(
-        value: InvertibleFormulaSource,
-        other: InvertibleFormulaSource
-    ): InvertibleFormula;
-    public static plus(value: FormulaSource, other: FormulaSource): Formula;
     public static plus(value: FormulaSource, other: FormulaSource) {
-        return F(value).add(other);
+        return Formula.add(value, other);
     }
 
     public static sub(
         value: InvertibleFormulaSource,
         other: InvertibleFormulaSource
     ): InvertibleFormula;
-    public static sub(value: FormulaSource, other: FormulaSource): Formula;
+    public static sub(value: FormulaSource, other: FormulaSource): GenericFormula;
     public static sub(value: FormulaSource, other: FormulaSource) {
-        return F(value).sub(other);
+        return new Formula([value, other], Decimal.sub, invertSub);
     }
-
-    public static subtract(
-        value: InvertibleFormulaSource,
-        other: InvertibleFormulaSource
-    ): InvertibleFormula;
-    public static subtract(value: FormulaSource, other: FormulaSource): Formula;
     public static subtract(value: FormulaSource, other: FormulaSource) {
-        return F(value).sub(other);
+        return Formula.sub(value, other);
     }
-
-    public static minus(
-        value: InvertibleFormulaSource,
-        other: InvertibleFormulaSource
-    ): InvertibleFormula;
-    public static minus(value: FormulaSource, other: FormulaSource): Formula;
     public static minus(value: FormulaSource, other: FormulaSource) {
-        return F(value).sub(other);
+        return Formula.sub(value, other);
     }
 
     public static mul(
         value: InvertibleFormulaSource,
         other: InvertibleFormulaSource
     ): InvertibleFormula;
-    public static mul(value: FormulaSource, other: FormulaSource): Formula;
+    public static mul(value: FormulaSource, other: FormulaSource): GenericFormula;
     public static mul(value: FormulaSource, other: FormulaSource) {
-        return F(value).mul(other);
+        return new Formula([value, other], Decimal.mul, invertMul);
     }
-
-    public static multiply(
-        value: InvertibleFormulaSource,
-        other: InvertibleFormulaSource
-    ): InvertibleFormula;
-    public static multiply(value: FormulaSource, other: FormulaSource): Formula;
     public static multiply(value: FormulaSource, other: FormulaSource) {
-        return F(value).mul(other);
+        return Formula.mul(value, other);
     }
-
-    public static times(
-        value: InvertibleFormulaSource,
-        other: InvertibleFormulaSource
-    ): InvertibleFormula;
-    public static times(value: FormulaSource, other: FormulaSource): Formula;
     public static times(value: FormulaSource, other: FormulaSource) {
-        return F(value).mul(other);
+        return Formula.mul(value, other);
     }
 
     public static div(
         value: InvertibleFormulaSource,
         other: InvertibleFormulaSource
     ): InvertibleFormula;
-    public static div(value: FormulaSource, other: FormulaSource): Formula;
+    public static div(value: FormulaSource, other: FormulaSource): GenericFormula;
     public static div(value: FormulaSource, other: FormulaSource) {
-        return F(value).div(other);
+        return new Formula([value, other], Decimal.div, invertDiv);
     }
-
-    public static divide(
-        value: InvertibleFormulaSource,
-        other: InvertibleFormulaSource
-    ): InvertibleFormula;
-    public static divide(value: FormulaSource, other: FormulaSource): Formula;
     public static divide(value: FormulaSource, other: FormulaSource) {
-        return F(value).div(other);
+        return Formula.div(value, other);
     }
 
     public static recip(value: InvertibleFormulaSource): InvertibleFormula;
-    public static recip(value: FormulaSource): Formula;
+    public static recip(value: FormulaSource): GenericFormula;
     public static recip(value: FormulaSource) {
-        return F(value).recip();
+        return new Formula([value], Decimal.recip, invertRecip);
     }
-
-    public static reciprocal(value: InvertibleFormulaSource): InvertibleFormula;
-    public static reciprocal(value: FormulaSource): Formula;
-    public static reciprocal(value: FormulaSource) {
-        return F(value).recip();
+    public static reciprocal(value: FormulaSource): GenericFormula {
+        return Formula.recip(value);
     }
-
-    public static reciprocate(value: InvertibleFormulaSource): InvertibleFormula;
-    public static reciprocate(value: FormulaSource): Formula;
     public static reciprocate(value: FormulaSource) {
-        return F(value).reciprocate();
+        return Formula.recip(value);
     }
 
-    public static max(value: FormulaSource, other: FormulaSource) {
-        return F(value).max(other);
+    public static max(value: FormulaSource, other: FormulaSource): GenericFormula {
+        return new Formula([value, other], Decimal.max);
     }
 
-    public static min(value: FormulaSource, other: FormulaSource) {
-        return F(value).min(other);
+    public static min(value: FormulaSource, other: FormulaSource): GenericFormula {
+        return new Formula([value, other], Decimal.min);
     }
 
-    public static minabs(value: FormulaSource, other: FormulaSource) {
-        return F(value).minabs(other);
+    public static minabs(value: FormulaSource, other: FormulaSource): GenericFormula {
+        return new Formula([value, other], Decimal.minabs);
     }
 
-    public static maxabs(value: FormulaSource, other: FormulaSource) {
-        return F(value).maxabs(other);
+    public static maxabs(value: FormulaSource, other: FormulaSource): GenericFormula {
+        return new Formula([value, other], Decimal.maxabs);
     }
 
-    public static clamp(value: FormulaSource, min: FormulaSource, max: FormulaSource) {
-        return F(value).clamp(min, max);
+    public static clamp(
+        value: FormulaSource,
+        min: FormulaSource,
+        max: FormulaSource
+    ): GenericFormula {
+        return new Formula([value, min, max], Decimal.clamp);
     }
 
-    public static clampMin(value: FormulaSource, min: FormulaSource) {
-        return F(value).clampMin(min);
+    public static clampMin(value: FormulaSource, min: FormulaSource): GenericFormula {
+        return new Formula([value, min], Decimal.clampMin);
     }
 
-    public static clampMax(value: FormulaSource, max: FormulaSource) {
-        return F(value).clampMax(max);
+    public static clampMax(value: FormulaSource, max: FormulaSource): GenericFormula {
+        return new Formula([value, max], Decimal.clampMax);
     }
 
     public static pLog10(value: InvertibleFormulaSource): InvertibleFormula;
-    public static pLog10(value: FormulaSource): Formula;
+    public static pLog10(value: FormulaSource): GenericFormula;
     public static pLog10(value: FormulaSource) {
-        return F(value).pLog10();
+        return new Formula([value], Decimal.pLog10);
     }
 
     public static absLog10(value: InvertibleFormulaSource): InvertibleFormula;
-    public static absLog10(value: FormulaSource): Formula;
+    public static absLog10(value: FormulaSource): GenericFormula;
     public static absLog10(value: FormulaSource) {
-        return F(value).absLog10();
+        return new Formula([value], Decimal.absLog10);
     }
 
     public static log10(value: InvertibleFormulaSource): InvertibleFormula;
-    public static log10(value: FormulaSource): Formula;
+    public static log10(value: FormulaSource): GenericFormula;
     public static log10(value: FormulaSource) {
-        return F(value).log10();
+        return new Formula([value], Decimal.log10, invertLog10);
     }
 
     public static log(
         value: InvertibleFormulaSource,
         base: InvertibleFormulaSource
     ): InvertibleFormula;
-    public static log(value: FormulaSource, base: FormulaSource): Formula;
+    public static log(value: FormulaSource, base: FormulaSource): GenericFormula;
     public static log(value: FormulaSource, base: FormulaSource) {
-        return F(value).log(base);
+        return new Formula([value, base], Decimal.log, invertLog);
     }
-
-    public static logarithm(
-        value: InvertibleFormulaSource,
-        base: InvertibleFormulaSource
-    ): InvertibleFormula;
-    public static logarithm(value: FormulaSource, base: FormulaSource): Formula;
     public static logarithm(value: FormulaSource, base: FormulaSource) {
-        return F(value).log(base);
+        return Formula.log(value, base);
     }
 
     public static log2(value: InvertibleFormulaSource): InvertibleFormula;
-    public static log2(value: FormulaSource): Formula;
+    public static log2(value: FormulaSource): GenericFormula;
     public static log2(value: FormulaSource) {
-        return F(value).log2();
+        return new Formula([value], Decimal.log2, invertLog2);
     }
 
     public static ln(value: InvertibleFormulaSource): InvertibleFormula;
-    public static ln(value: FormulaSource): Formula;
+    public static ln(value: FormulaSource): GenericFormula;
     public static ln(value: FormulaSource) {
-        return F(value).ln();
+        return new Formula([value], Decimal.ln, invertLn);
     }
 
     public static pow(
         value: InvertibleFormulaSource,
         other: InvertibleFormulaSource
     ): InvertibleFormula;
-    public static pow(value: FormulaSource, other: FormulaSource): Formula;
+    public static pow(value: FormulaSource, other: FormulaSource): GenericFormula;
     public static pow(value: FormulaSource, other: FormulaSource) {
-        return F(value).pow(other);
+        return new Formula([value, other], Decimal.pow, invertPow);
     }
 
     public static pow10(value: InvertibleFormulaSource): InvertibleFormula;
-    public static pow10(value: FormulaSource): Formula;
+    public static pow10(value: FormulaSource): GenericFormula;
     public static pow10(value: FormulaSource) {
-        return F(value).pow10();
+        return new Formula([value], Decimal.pow10, invertPow10);
     }
 
     public static pow_base(
         value: InvertibleFormulaSource,
         other: InvertibleFormulaSource
     ): InvertibleFormula;
-    public static pow_base(value: FormulaSource, other: FormulaSource): Formula;
+    public static pow_base(value: FormulaSource, other: FormulaSource): GenericFormula;
     public static pow_base(value: FormulaSource, other: FormulaSource) {
-        return F(value).pow_base(other);
+        return new Formula([value, other], Decimal.pow_base, invertPowBase);
     }
 
     public static root(
         value: InvertibleFormulaSource,
         other: InvertibleFormulaSource
     ): InvertibleFormula;
-    public static root(value: FormulaSource, other: FormulaSource): Formula;
+    public static root(value: FormulaSource, other: FormulaSource): GenericFormula;
     public static root(value: FormulaSource, other: FormulaSource) {
-        return F(value).root(other);
+        return new Formula([value, other], Decimal.root, invertRoot);
     }
 
     public static factorial(value: FormulaSource) {
-        return F(value).factorial();
+        return new Formula([value], Decimal.factorial);
     }
 
     public static gamma(value: FormulaSource) {
-        return F(value).gamma();
+        return new Formula([value], Decimal.gamma);
     }
 
     public static lngamma(value: FormulaSource) {
-        return F(value).lngamma();
+        return new Formula([value], Decimal.lngamma);
     }
 
     public static exp(value: InvertibleFormulaSource): InvertibleFormula;
-    public static exp(value: FormulaSource): Formula;
+    public static exp(value: FormulaSource): GenericFormula;
     public static exp(value: FormulaSource) {
-        return F(value).exp();
+        return new Formula([value], Decimal.exp, invertExp);
     }
 
-    public static sqr(value: InvertibleFormulaSource): InvertibleFormula;
-    public static sqr(value: FormulaSource): Formula;
     public static sqr(value: FormulaSource) {
-        return F(value).sqr();
+        return Formula.pow(value, 2);
     }
 
-    public static sqrt(value: InvertibleFormulaSource): InvertibleFormula;
-    public static sqrt(value: FormulaSource): Formula;
     public static sqrt(value: FormulaSource) {
-        return F(value).sqrt();
+        return Formula.root(value, 2);
     }
 
-    public static cube(value: InvertibleFormulaSource): InvertibleFormula;
-    public static cube(value: FormulaSource): Formula;
     public static cube(value: FormulaSource) {
-        return F(value).cube();
+        return Formula.pow(value, 3);
     }
 
-    public static cbrt(value: InvertibleFormulaSource): InvertibleFormula;
-    public static cbrt(value: FormulaSource): Formula;
     public static cbrt(value: FormulaSource) {
-        return F(value).cbrt();
+        return Formula.root(value, 3);
     }
 
     public static tetrate(
@@ -390,13 +695,13 @@ export default class Formula {
         value: FormulaSource,
         height?: FormulaSource,
         payload?: FormulaSource
-    ): Formula;
+    ): GenericFormula;
     public static tetrate(
         value: FormulaSource,
         height: FormulaSource = 2,
         payload: FormulaSource = Decimal.fromComponents_noNormalize(1, 0, 1)
     ) {
-        return F(value).tetrate(height, payload);
+        return new Formula([value, height, payload], tetrate, invertTetrate);
     }
 
     public static iteratedexp(
@@ -408,34 +713,34 @@ export default class Formula {
         value: FormulaSource,
         height?: FormulaSource,
         payload?: FormulaSource
-    ): Formula;
+    ): GenericFormula;
     public static iteratedexp(
         value: FormulaSource,
         height: FormulaSource = 2,
         payload: FormulaSource = Decimal.fromComponents_noNormalize(1, 0, 1)
     ) {
-        return F(value).iteratedexp(height, payload);
+        return new Formula([value, height, payload], iteratedexp, invertIteratedExp);
     }
 
     public static iteratedlog(
         value: FormulaSource,
         base: FormulaSource = 10,
         times: FormulaSource = 1
-    ) {
-        return F(value).iteratedlog(base, times);
+    ): GenericFormula {
+        return new Formula([value, base, times], iteratedLog);
     }
 
     public static slog(
         value: InvertibleFormulaSource,
         base?: InvertibleFormulaSource
     ): InvertibleFormula;
-    public static slog(value: FormulaSource, base?: FormulaSource): Formula;
+    public static slog(value: FormulaSource, base?: FormulaSource): GenericFormula;
     public static slog(value: FormulaSource, base: FormulaSource = 10) {
-        return F(value).slog(base);
+        return new Formula([value, base], slog, invertSlog);
     }
 
-    public static layeradd10(value: FormulaSource, diff: FormulaSource) {
-        return F(value).layeradd10(diff);
+    public static layeradd10(value: FormulaSource, diff: FormulaSource): GenericFormula {
+        return new Formula([value, diff], Decimal.layeradd10);
     }
 
     public static layeradd(
@@ -447,21 +752,21 @@ export default class Formula {
         value: FormulaSource,
         diff: FormulaSource,
         base?: FormulaSource
-    ): Formula;
+    ): GenericFormula;
     public static layeradd(value: FormulaSource, diff: FormulaSource, base: FormulaSource = 10) {
-        return F(value).layeradd(diff, base);
+        return new Formula([value, diff, base], layeradd, invertLayeradd);
     }
 
     public static lambertw(value: InvertibleFormulaSource): InvertibleFormula;
-    public static lambertw(value: FormulaSource): Formula;
+    public static lambertw(value: FormulaSource): GenericFormula;
     public static lambertw(value: FormulaSource) {
-        return F(value).lambertw();
+        return new Formula([value], Decimal.lambertw, invertLambertw);
     }
 
     public static ssqrt(value: InvertibleFormulaSource): InvertibleFormula;
-    public static ssqrt(value: FormulaSource): Formula;
+    public static ssqrt(value: FormulaSource): GenericFormula;
     public static ssqrt(value: FormulaSource) {
-        return F(value).ssqrt();
+        return new Formula([value], Decimal.ssqrt, invertSsqrt);
     }
 
     public static pentate(
@@ -469,753 +774,359 @@ export default class Formula {
         height: FormulaSource = 2,
         payload: FormulaSource = Decimal.fromComponents_noNormalize(1, 0, 1)
     ) {
-        return F(value).pentate(height, payload);
+        return new Formula([value, height, payload], pentate);
     }
 
     public static sin(value: InvertibleFormulaSource): InvertibleFormula;
-    public static sin(value: FormulaSource): Formula;
+    public static sin(value: FormulaSource): GenericFormula;
     public static sin(value: FormulaSource) {
-        return F(value).sin();
+        return new Formula([value], Decimal.sin, invertAsin);
     }
 
     public static cos(value: InvertibleFormulaSource): InvertibleFormula;
-    public static cos(value: FormulaSource): Formula;
+    public static cos(value: FormulaSource): GenericFormula;
     public static cos(value: FormulaSource) {
-        return F(value).cos();
+        return new Formula([value], Decimal.cos, invertAcos);
     }
 
     public static tan(value: InvertibleFormulaSource): InvertibleFormula;
-    public static tan(value: FormulaSource): Formula;
+    public static tan(value: FormulaSource): GenericFormula;
     public static tan(value: FormulaSource) {
-        return F(value).tan();
+        return new Formula([value], Decimal.tan, invertAtan);
     }
 
     public static asin(value: InvertibleFormulaSource): InvertibleFormula;
-    public static asin(value: FormulaSource): Formula;
+    public static asin(value: FormulaSource): GenericFormula;
     public static asin(value: FormulaSource) {
-        return F(value).asin();
+        return new Formula([value], Decimal.asin, invertSin);
     }
 
     public static acos(value: InvertibleFormulaSource): InvertibleFormula;
-    public static acos(value: FormulaSource): Formula;
+    public static acos(value: FormulaSource): GenericFormula;
     public static acos(value: FormulaSource) {
-        return F(value).acos();
+        return new Formula([value], Decimal.acos, invertCos);
     }
 
     public static atan(value: InvertibleFormulaSource): InvertibleFormula;
-    public static atan(value: FormulaSource): Formula;
+    public static atan(value: FormulaSource): GenericFormula;
     public static atan(value: FormulaSource) {
-        return F(value).atan();
+        return new Formula([value], Decimal.atan, invertTan);
     }
 
     public static sinh(value: InvertibleFormulaSource): InvertibleFormula;
-    public static sinh(value: FormulaSource): Formula;
+    public static sinh(value: FormulaSource): GenericFormula;
     public static sinh(value: FormulaSource) {
-        return F(value).sinh();
+        return new Formula([value], Decimal.sinh, invertAsinh);
     }
 
     public static cosh(value: InvertibleFormulaSource): InvertibleFormula;
-    public static cosh(value: FormulaSource): Formula;
+    public static cosh(value: FormulaSource): GenericFormula;
     public static cosh(value: FormulaSource) {
-        return F(value).cosh();
+        return new Formula([value], Decimal.cosh, invertAcosh);
     }
 
     public static tanh(value: InvertibleFormulaSource): InvertibleFormula;
-    public static tanh(value: FormulaSource): Formula;
+    public static tanh(value: FormulaSource): GenericFormula;
     public static tanh(value: FormulaSource) {
-        return F(value).tanh();
+        return new Formula([value], Decimal.tanh, invertAtanh);
     }
 
     public static asinh(value: InvertibleFormulaSource): InvertibleFormula;
-    public static asinh(value: FormulaSource): Formula;
+    public static asinh(value: FormulaSource): GenericFormula;
     public static asinh(value: FormulaSource) {
-        return F(value).asinh();
+        return new Formula([value], Decimal.asinh, invertSinh);
     }
 
     public static acosh(value: InvertibleFormulaSource): InvertibleFormula;
-    public static acosh(value: FormulaSource): Formula;
+    public static acosh(value: FormulaSource): GenericFormula;
     public static acosh(value: FormulaSource) {
-        return F(value).acosh();
+        return new Formula([value], Decimal.acosh, invertCosh);
     }
 
     public static atanh(value: InvertibleFormulaSource): InvertibleFormula;
-    public static atanh(value: FormulaSource): Formula;
+    public static atanh(value: FormulaSource): GenericFormula;
     public static atanh(value: FormulaSource) {
-        return F(value).atanh();
+        return new Formula([value], Decimal.atanh, invertTanh);
     }
 
     public abs() {
-        return new Formula(() => this.evaluate().abs());
+        return Formula.abs(this);
     }
 
-    public neg(this: InvertibleFormula): InvertibleFormula;
-    public neg(this: Formula): Formula;
     public neg() {
-        return new Formula(
-            () => this.evaluate().neg(),
-            value => Decimal.neg(value),
-            this.hasVariable
-        );
+        return Formula.neg(this);
     }
-
-    public negate(this: InvertibleFormula): InvertibleFormula;
-    public negate(this: Formula): Formula;
     public negate() {
-        return this.neg();
+        return Formula.neg(this);
     }
-
-    public negated(this: InvertibleFormula): InvertibleFormula;
-    public negated(this: Formula): Formula;
     public negated() {
-        return this.neg();
+        return Formula.neg(this);
     }
 
     public sign() {
-        return new Formula(() => new Decimal(this.evaluate().sign));
+        return Formula.sign(this);
     }
-
     public sgn() {
         return this.sign();
     }
 
     public round() {
-        return new Formula(() => this.evaluate().round());
+        return Formula.round(this);
     }
 
     public floor() {
-        return new Formula(() => this.evaluate().floor());
+        return Formula.floor(this);
     }
 
     public ceil() {
-        return new Formula(() => this.evaluate().ceil());
+        return Formula.ceil(this);
     }
 
     public trunc() {
-        return new Formula(() => this.evaluate().trunc());
+        return Formula.trunc(this);
     }
 
-    public add(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public add(this: Formula, value: FormulaSource): Formula;
     public add(value: FormulaSource) {
-        const v = processFormulaSource(value);
-        const { invertible, hasVariable } = calculateInvertibility(this, value);
-        return new Formula(
-            () => this.evaluate().add(unrefFormulaSource(v)),
-            invertible
-                ? value =>
-                      Decimal.sub(
-                          value,
-                          isVariableFormula(this) ? unrefFormulaSource(v) : this.evaluate()
-                      )
-                : undefined,
-            hasVariable
-        );
+        return Formula.add(this, value);
     }
-
-    public plus(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public plus(this: Formula, value: FormulaSource): Formula;
     public plus(value: FormulaSource) {
-        return this.add(value);
+        return Formula.add(this, value);
     }
 
-    public sub(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public sub(this: Formula, value: FormulaSource): Formula;
     public sub(value: FormulaSource) {
-        const v = processFormulaSource(value);
-        const { invertible, hasVariable } = calculateInvertibility(this, value);
-        return new Formula(
-            () => this.evaluate().sub(unrefFormulaSource(v)),
-            invertible
-                ? isVariableFormula(this)
-                    ? value => Decimal.add(value, unrefFormulaSource(v))
-                    : value => Decimal.sub(this.evaluate(), value)
-                : undefined,
-            hasVariable
-        );
+        return Formula.sub(this, value);
     }
-
-    public subtract(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public subtract(this: Formula, value: FormulaSource): Formula;
     public subtract(value: FormulaSource) {
-        return this.sub(value);
+        return Formula.sub(this, value);
     }
-
-    public minus(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public minus(this: Formula, value: FormulaSource): Formula;
     public minus(value: FormulaSource) {
-        return this.sub(value);
+        return Formula.sub(this, value);
     }
 
-    public mul(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public mul(this: Formula, value: FormulaSource): Formula;
     public mul(value: FormulaSource) {
-        const v = processFormulaSource(value);
-        const { invertible, hasVariable } = calculateInvertibility(this, value);
-        return new Formula(
-            () => this.evaluate().mul(unrefFormulaSource(v)),
-            invertible
-                ? value =>
-                      Decimal.div(
-                          value,
-                          isVariableFormula(this) ? unrefFormulaSource(v) : this.evaluate()
-                      )
-                : undefined,
-            hasVariable
-        );
+        return Formula.mul(this, value);
     }
-
-    public multiply(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public multiply(this: Formula, value: FormulaSource): Formula;
     public multiply(value: FormulaSource) {
-        return this.mul(value);
+        return Formula.mul(this, value);
     }
-
-    public times(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public times(this: Formula, value: FormulaSource): Formula;
     public times(value: FormulaSource) {
-        return this.mul(value);
+        return Formula.mul(this, value);
     }
 
-    public div(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public div(this: Formula, value: FormulaSource): Formula;
     public div(value: FormulaSource) {
-        const v = processFormulaSource(value);
-        const { invertible, hasVariable } = calculateInvertibility(this, value);
-        return new Formula(
-            () => this.evaluate().div(unrefFormulaSource(v)),
-            invertible
-                ? value =>
-                      Decimal.mul(
-                          value,
-                          isVariableFormula(this) ? unrefFormulaSource(v) : this.evaluate()
-                      )
-                : undefined,
-            hasVariable
-        );
+        return Formula.div(this, value);
     }
-
-    public divide(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public divide(this: Formula, value: FormulaSource): Formula;
     public divide(value: FormulaSource) {
-        return this.div(value);
+        return Formula.div(this, value);
     }
-
-    public divideBy(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public divideBy(this: Formula, value: FormulaSource): Formula;
     public divideBy(value: FormulaSource) {
-        return this.div(value);
+        return Formula.div(this, value);
     }
-
-    public dividedBy(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public dividedBy(this: Formula, value: FormulaSource): Formula;
     public dividedBy(value: FormulaSource) {
-        return this.div(value);
+        return Formula.div(this, value);
     }
 
-    public recip(this: InvertibleFormula): InvertibleFormula;
-    public recip(this: Formula): Formula;
     public recip() {
-        return new Formula(
-            () => this.evaluate().recip(),
-            this.invertible ? value => Decimal.recip(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.recip(this);
     }
-
-    public reciprocal(this: InvertibleFormula): InvertibleFormula;
-    public reciprocal(this: Formula): Formula;
     public reciprocal() {
-        return this.recip();
+        return Formula.recip(this);
     }
-
-    public reciprocate(this: InvertibleFormula): InvertibleFormula;
-    public reciprocate(this: Formula): Formula;
     public reciprocate() {
-        return this.recip();
+        return Formula.recip(this);
     }
 
     public max(value: FormulaSource) {
-        const v = processFormulaSource(value);
-        return new Formula(() => this.evaluate().max(unrefFormulaSource(v)));
+        return Formula.max(this, value);
     }
 
     public min(value: FormulaSource) {
-        const v = processFormulaSource(value);
-        return new Formula(() => this.evaluate().min(unrefFormulaSource(v)));
+        return Formula.min(this, value);
     }
 
     public maxabs(value: FormulaSource) {
-        const v = processFormulaSource(value);
-        return new Formula(() => this.evaluate().maxabs(unrefFormulaSource(v)));
+        return Formula.maxabs(this, value);
     }
 
     public minabs(value: FormulaSource) {
-        const v = processFormulaSource(value);
-        return new Formula(() => this.evaluate().minabs(unrefFormulaSource(v)));
+        return Formula.minabs(this, value);
     }
 
     public clamp(min: FormulaSource, max: FormulaSource) {
-        const minValue = processFormulaSource(min);
-        const maxValue = processFormulaSource(max);
-        return new Formula(() =>
-            this.evaluate().clamp(unrefFormulaSource(minValue), unrefFormulaSource(maxValue))
-        );
+        return Formula.clamp(this, min, max);
     }
 
     public clampMin(value: FormulaSource) {
-        const v = processFormulaSource(value);
-        return new Formula(() => this.evaluate().clampMin(unrefFormulaSource(v)));
+        return Formula.clampMin(this, value);
     }
 
     public clampMax(value: FormulaSource) {
-        const v = processFormulaSource(value);
-        return new Formula(() => this.evaluate().clampMax(unrefFormulaSource(v)));
+        return Formula.clampMax(this, value);
     }
 
-    public pLog10(this: InvertibleFormula): InvertibleFormula;
-    public pLog10(this: Formula): Formula;
     public pLog10() {
-        return new Formula(() => this.evaluate().pLog10());
+        return Formula.pLog10(this);
     }
 
-    public absLog10(this: InvertibleFormula): InvertibleFormula;
-    public absLog10(this: Formula): Formula;
     public absLog10() {
-        return new Formula(() => this.evaluate().absLog10());
+        return Formula.absLog10(this);
     }
 
-    public log10(this: InvertibleFormula): InvertibleFormula;
-    public log10(this: Formula): Formula;
     public log10() {
-        return new Formula(
-            () => this.evaluate().log10(),
-            this.invertible ? value => Decimal.pow10(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.log10(this);
     }
 
-    public log(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public log(this: Formula, value: FormulaSource): Formula;
     public log(value: FormulaSource) {
-        const v = processFormulaSource(value);
-        const { invertible, hasVariable } = calculateInvertibility(this, value);
-        return new Formula(
-            () => this.evaluate().log(unrefFormulaSource(v)),
-            invertible
-                ? value =>
-                      isVariableFormula(this)
-                          ? Decimal.pow(unrefFormulaSource(v), value)
-                          : Decimal.root(this.evaluate(), value)
-                : undefined,
-            hasVariable
-        );
+        return Formula.log(this, value);
     }
-
-    public logarithm(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public logarithm(this: Formula, value: FormulaSource): Formula;
     public logarithm(value: FormulaSource) {
-        return this.log(value);
+        return Formula.log(this, value);
     }
 
-    public log2(this: InvertibleFormula): InvertibleFormula;
-    public log2(this: Formula): Formula;
     public log2() {
-        return new Formula(
-            () => this.evaluate().log2(),
-            this.invertible ? value => Decimal.pow(2, value) : undefined,
-            this.hasVariable
-        );
+        return Formula.log2(this);
     }
 
-    public ln(this: InvertibleFormula): InvertibleFormula;
-    public ln(this: Formula): Formula;
     public ln() {
-        return new Formula(
-            () => this.evaluate().ln(),
-            this.invertible ? value => Decimal.exp(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.ln(this);
     }
 
-    public pow(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public pow(this: Formula, value: FormulaSource): Formula;
     public pow(value: FormulaSource) {
-        const v = processFormulaSource(value);
-        const { invertible, hasVariable } = calculateInvertibility(this, value);
-        return new Formula(
-            () => this.evaluate().pow(unrefFormulaSource(v)),
-            invertible
-                ? value =>
-                      isVariableFormula(this)
-                          ? Decimal.root(value, unrefFormulaSource(v))
-                          : Decimal.ln(value).div(Decimal.ln(this.evaluate()))
-                : undefined,
-            hasVariable
-        );
+        return Formula.pow(this, value);
     }
 
-    public pow10(this: InvertibleFormula): InvertibleFormula;
-    public pow10(this: Formula): Formula;
     public pow10() {
-        return new Formula(
-            () => this.evaluate().pow10(),
-            this.invertible ? value => Decimal.root(value, 10) : undefined,
-            this.hasVariable
-        );
+        return Formula.pow10(this);
     }
 
-    public pow_base(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public pow_base(this: Formula, value: FormulaSource): Formula;
     public pow_base(value: FormulaSource) {
-        const v = processFormulaSource(value);
-        const { invertible, hasVariable } = calculateInvertibility(this, value);
-        return new Formula(
-            () => this.evaluate().pow_base(unrefFormulaSource(v)),
-            invertible
-                ? value =>
-                      isVariableFormula(this)
-                          ? Decimal.ln(value).div(unrefFormulaSource(v))
-                          : Decimal.root(unrefFormulaSource(v), value)
-                : undefined,
-            hasVariable
-        );
+        return Formula.pow_base(this, value);
     }
 
-    public root(this: InvertibleFormula, value: FormulaSource): InvertibleFormula;
-    public root(this: Formula, value: FormulaSource): Formula;
     public root(value: FormulaSource) {
-        const v = processFormulaSource(value);
-        const { invertible, hasVariable } = calculateInvertibility(this, value);
-        return new Formula(
-            () => this.evaluate().root(unrefFormulaSource(v)),
-            invertible
-                ? value =>
-                      isVariableFormula(this)
-                          ? Decimal.root(value, Decimal.recip(unrefFormulaSource(v)))
-                          : Decimal.ln(value).div(Decimal.ln(this.evaluate()).recip())
-                : undefined,
-            hasVariable
-        );
+        return Formula.root(this, value);
     }
 
     public factorial() {
-        return new Formula(() => this.evaluate().factorial());
+        return Formula.factorial(this);
     }
 
     public gamma() {
-        return new Formula(() => this.evaluate().gamma());
+        return Formula.gamma(this);
     }
     public lngamma() {
-        return new Formula(() => this.evaluate().lngamma());
+        return Formula.lngamma(this);
     }
 
-    public exp(this: InvertibleFormula): InvertibleFormula;
-    public exp(this: Formula): Formula;
     public exp() {
-        return new Formula(
-            () => this.evaluate().exp(),
-            this.invertible ? value => Decimal.ln(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.exp(this);
     }
 
-    public sqr(this: InvertibleFormula): InvertibleFormula;
-    public sqr(this: Formula): Formula;
     public sqr() {
-        return this.pow(2);
+        return Formula.pow(this, 2);
     }
 
-    public sqrt(this: InvertibleFormula): InvertibleFormula;
-    public sqrt(this: Formula): Formula;
     public sqrt() {
-        return this.root(2);
+        return Formula.root(this, 2);
     }
-
-    public cube(this: InvertibleFormula): InvertibleFormula;
-    public cube(this: Formula): Formula;
     public cube() {
-        return this.pow(3);
+        return Formula.pow(this, 3);
     }
 
-    public cbrt(this: InvertibleFormula): InvertibleFormula;
-    public cbrt(this: Formula): Formula;
     public cbrt() {
-        return this.pow(1 / 3);
+        return Formula.root(this, 3);
     }
 
-    public tetrate(
-        this: InvertibleFormula,
-        height?: FormulaSource,
-        payload?: FormulaSource
-    ): InvertibleFormula;
-    public tetrate(this: Formula, height?: FormulaSource, payload?: FormulaSource): Formula;
     public tetrate(
         height: FormulaSource = 2,
         payload: FormulaSource = Decimal.fromComponents_noNormalize(1, 0, 1)
     ) {
-        const heightValue = processFormulaSource(height);
-        const payloadValue = processFormulaSource(payload);
-        const { invertible, hasVariable } = calculateInvertibility(this, height, payload);
-        return new Formula(
-            () =>
-                this.evaluate().tetrate(
-                    Decimal.min(1e308, unrefFormulaSource(heightValue)).toNumber(),
-                    unrefFormulaSource(payloadValue)
-                ),
-            invertible
-                ? value =>
-                      Decimal.slog(
-                          value,
-                          Decimal.min(1e308, unrefFormulaSource(heightValue)).toNumber()
-                      )
-                : undefined,
-            hasVariable
-        );
+        return Formula.tetrate(this, height, payload);
     }
 
-    public iteratedexp(
-        this: InvertibleFormula,
-        height?: FormulaSource,
-        payload?: FormulaSource
-    ): InvertibleFormula;
-    public iteratedexp(this: Formula, height?: FormulaSource, payload?: FormulaSource): Formula;
     public iteratedexp(
         height: FormulaSource = 2,
         payload: FormulaSource = Decimal.fromComponents_noNormalize(1, 0, 1)
     ) {
-        const heightValue = processFormulaSource(height);
-        const payloadValue = processFormulaSource(payload);
-        const { invertible, hasVariable } = calculateInvertibility(this, height, payload);
-        return new Formula(
-            () =>
-                this.evaluate().iteratedexp(
-                    Decimal.min(1e308, unrefFormulaSource(heightValue)).toNumber(),
-                    new Decimal(unrefFormulaSource(payloadValue))
-                ),
-            invertible
-                ? value =>
-                      Decimal.iteratedlog(
-                          value,
-                          Math.E,
-                          Decimal.min(1e308, unrefFormulaSource(heightValue)).toNumber()
-                      )
-                : undefined,
-            hasVariable
-        );
+        return Formula.iteratedexp(this, height, payload);
     }
 
     public iteratedlog(base: FormulaSource = 10, times: FormulaSource = 1) {
-        const baseValue = processFormulaSource(base);
-        const timesValue = processFormulaSource(times);
-        return new Formula(() =>
-            this.evaluate().iteratedlog(
-                unrefFormulaSource(baseValue),
-                Decimal.min(1e308, unrefFormulaSource(timesValue)).toNumber()
-            )
-        );
+        return Formula.iteratedlog(this, base, times);
     }
 
     public slog(base: FormulaSource = 10) {
-        const baseValue = processFormulaSource(base);
-        const { invertible, hasVariable } = calculateInvertibility(this, base);
-        return new Formula(
-            () =>
-                this.evaluate().slog(Decimal.min(1e308, unrefFormulaSource(baseValue)).toNumber()),
-            invertible
-                ? value =>
-                      Decimal.tetrate(
-                          value,
-                          Decimal.min(1e308, unrefFormulaSource(baseValue)).toNumber()
-                      )
-                : undefined,
-            hasVariable
-        );
+        return Formula.slog(this, base);
     }
 
     public layeradd10(diff: FormulaSource) {
-        const diffValue = processFormulaSource(diff);
-        return new Formula(() => this.evaluate().layeradd10(unrefFormulaSource(diffValue)));
+        return Formula.layeradd10(this, diff);
     }
 
-    public layeradd(
-        this: InvertibleFormula,
-        diff: FormulaSource,
-        base: FormulaSource
-    ): InvertibleFormula;
-    public layeradd(this: Formula, diff: FormulaSource, base: FormulaSource): Formula;
     public layeradd(diff: FormulaSource, base: FormulaSource) {
-        const diffValue = processFormulaSource(diff);
-        const baseValue = processFormulaSource(base);
-        const { invertible, hasVariable } = calculateInvertibility(this, diff, base);
-        return new Formula(
-            () =>
-                this.evaluate().layeradd(
-                    Decimal.min(1e308, unrefFormulaSource(diffValue)).toNumber(),
-                    unrefFormulaSource(baseValue)
-                ),
-            invertible
-                ? value =>
-                      Decimal.layeradd(
-                          value,
-                          Decimal.min(1e308, unrefFormulaSource(diffValue)).negate().toNumber(),
-                          unrefFormulaSource(baseValue)
-                      )
-                : undefined,
-            hasVariable
-        );
+        return Formula.layeradd(this, diff, base);
     }
 
-    public lambertw(this: InvertibleFormula): InvertibleFormula;
-    public lambertw(this: Formula): Formula;
     public lambertw() {
-        return new Formula(
-            () => this.evaluate().lambertw(),
-            this.invertible ? value => Decimal.pow(Math.E, value).times(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.lambertw(this);
     }
 
-    public ssqrt(this: InvertibleFormula): InvertibleFormula;
-    public ssqrt(this: Formula): Formula;
     public ssqrt() {
-        return new Formula(
-            () => this.evaluate().ssqrt(),
-            this.invertible ? value => Decimal.tetrate(value, 2) : undefined,
-            this.hasVariable
-        );
+        return Formula.ssqrt(this);
     }
 
     public pentate(
         height: FormulaSource = 2,
         payload: FormulaSource = Decimal.fromComponents_noNormalize(1, 0, 1)
     ) {
-        const heightValue = processFormulaSource(height);
-        const payloadValue = processFormulaSource(payload);
-        return new Formula(() =>
-            this.evaluate().pentate(
-                Decimal.min(1e308, unrefFormulaSource(heightValue)).toNumber(),
-                unrefFormulaSource(payloadValue)
-            )
-        );
+        return Formula.pentate(this, height, payload);
     }
 
-    public sin(this: InvertibleFormula): InvertibleFormula;
-    public sin(this: Formula): Formula;
     public sin() {
-        return new Formula(
-            () => this.evaluate().sin(),
-            this.invertible ? value => Decimal.asin(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.sin(this);
     }
 
-    public cos(this: InvertibleFormula): InvertibleFormula;
-    public cos(this: Formula): Formula;
     public cos() {
-        return new Formula(
-            () => this.evaluate().cos(),
-            this.invertible ? value => Decimal.acos(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.cos(this);
     }
 
-    public tan(this: InvertibleFormula): InvertibleFormula;
-    public tan(this: Formula): Formula;
     public tan() {
-        return new Formula(
-            () => this.evaluate().tan(),
-            this.invertible ? value => Decimal.atan(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.tan(this);
     }
 
-    public asin(this: InvertibleFormula): InvertibleFormula;
-    public asin(this: Formula): Formula;
     public asin() {
-        return new Formula(
-            () => this.evaluate().asin(),
-            this.invertible ? value => Decimal.sin(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.asin(this);
     }
 
-    public acos(this: InvertibleFormula): InvertibleFormula;
-    public acos(this: Formula): Formula;
     public acos() {
-        return new Formula(
-            () => this.evaluate().acos(),
-            this.invertible ? value => Decimal.cos(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.acos(this);
     }
 
-    public atan(this: InvertibleFormula): InvertibleFormula;
-    public atan(this: Formula): Formula;
     public atan() {
-        return new Formula(
-            () => this.evaluate().atan(),
-            this.invertible ? value => Decimal.tan(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.atan(this);
     }
 
-    public sinh(this: InvertibleFormula): InvertibleFormula;
-    public sinh(this: Formula): Formula;
     public sinh() {
-        return new Formula(
-            () => this.evaluate().sinh(),
-            this.invertible ? value => Decimal.asinh(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.sinh(this);
     }
 
-    public cosh(this: InvertibleFormula): InvertibleFormula;
-    public cosh(this: Formula): Formula;
     public cosh() {
-        return new Formula(
-            () => this.evaluate().cosh(),
-            this.invertible ? value => Decimal.acosh(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.cosh(this);
     }
 
-    public tanh(this: InvertibleFormula): InvertibleFormula;
-    public tanh(this: Formula): Formula;
     public tanh() {
-        return new Formula(
-            () => this.evaluate().tanh(),
-            this.invertible ? value => Decimal.atanh(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.tanh(this);
     }
 
-    public asinh(this: InvertibleFormula): InvertibleFormula;
-    public asinh(this: Formula): Formula;
     public asinh() {
-        return new Formula(
-            () => this.evaluate().asinh(),
-            this.invertible ? value => Decimal.sinh(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.asinh(this);
     }
 
-    public acosh(this: InvertibleFormula): InvertibleFormula;
-    public acosh(this: Formula): Formula;
     public acosh() {
-        return new Formula(
-            () => this.evaluate().acosh(),
-            this.invertible ? value => Decimal.cosh(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.acosh(this);
     }
 
-    public atanh(this: InvertibleFormula): InvertibleFormula;
-    public atanh(this: Formula): Formula;
     public atanh() {
-        return new Formula(
-            () => this.evaluate().atanh(),
-            this.invertible ? value => Decimal.tanh(value) : undefined,
-            this.hasVariable
-        );
+        return Formula.atanh(this);
     }
 }

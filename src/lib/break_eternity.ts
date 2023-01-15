@@ -802,6 +802,10 @@ export default class Decimal {
         return D(value).pow10();
     }
 
+    public static pow_base(value: DecimalSource, other: DecimalSource): Decimal {
+        return D(value).pow_base(other);
+    }
+
     public static root(value: DecimalSource, other: DecimalSource): Decimal {
         return D(value).root(other);
     }

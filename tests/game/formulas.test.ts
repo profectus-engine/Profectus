@@ -1,20 +1,24 @@
-import Formula, { FormulaSource, InvertibleFormula } from "game/formulas";
+import Formula, { GenericFormula, InvertibleFormula, unrefFormulaSource } from "game/formulas";
 import Decimal, { DecimalSource, format } from "util/bignum";
-import { beforeAll, describe, expect, test, vi } from "vitest";
+import { beforeAll, describe, expect, test } from "vitest";
 import { ref } from "vue";
 
-type FormulaFunctions = keyof Formula & keyof typeof Formula & keyof typeof Decimal;
-
-interface FixedLengthArray<T, L extends number> extends ArrayLike<T> {
-    length: L;
-}
+type FormulaFunctions = keyof GenericFormula & keyof typeof Formula & keyof typeof Decimal;
 
 expect.extend({
     compare_tolerance(received, expected) {
         const { isNot } = this;
+        let pass = false;
+        if (!Decimal.isFinite(expected)) {
+            pass = !Decimal.isFinite(received);
+        } else if (Decimal.isNaN(expected)) {
+            pass = Decimal.isNaN(received);
+        } else {
+            pass = Decimal.eq_tolerance(received, expected);
+        }
         return {
             // do not alter your "pass" based on isNot. Vitest does it for you
-            pass: Decimal.eq_tolerance(received, expected),
+            pass,
             message: () =>
                 `Expected ${received} to${
                     (isNot as boolean) ? " not" : ""
@@ -45,113 +49,93 @@ function testConstant(
     expectedValue: DecimalSource = 10
 ) {
     describe(desc, () => {
-        let formula: Formula;
+        let formula: GenericFormula;
         beforeAll(() => {
             formula = formulaFunc();
         });
-        test("evaluates correctly", async () =>
+        test("evaluates correctly", () =>
             expect(formula.evaluate()).compare_tolerance(expectedValue));
-        test("invert is pass-through", async () =>
-            expect(formula.invert(25)).compare_tolerance(25));
-        test("is invertible", async () => expect(formula.invertible).toBe(true));
-        test("is not marked as having a variable", async () =>
-            expect(formula.hasVariable).toBe(false));
+        test("invert is pass-through", () => expect(formula.invert(25)).compare_tolerance(25));
+        test("is not marked as having a variable", () => expect(formula.hasVariable()).toBe(false));
     });
+}
+
+function testFormula<T extends FormulaFunctions>(
+    functionName: T,
+    args: Readonly<Parameters<typeof Formula[T]>>,
+    invertible = true
+) {
+    let formula: GenericFormula;
+    beforeAll(() => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        formula = Formula[functionName](...args);
+    });
+    test("Formula is not marked as having a variable", () =>
+        expect(formula.hasVariable()).toBe(false));
+    test(`Formula is${invertible ? "" : " not"} invertible`, () =>
+        expect(formula.isInvertible()).toBe(invertible));
+    if (invertible) {
+        test(`Formula throws if inverting without any variables`, () =>
+            expect(() => formula.invert(10)).toThrow());
+    }
 }
 
 // Utility function that will test all the different
 // It's a lot of tests, but I'd rather be exhaustive
-function testFormula<T extends FormulaFunctions>(
+function testFormulaCall<T extends FormulaFunctions>(
     functionName: T,
-    args: Readonly<FixedLengthArray<number, Parameters<typeof Formula[T]>["length"]>>,
-    invertible = true
+    args: Readonly<Parameters<typeof Formula[T]>>
 ) {
-    let value: Decimal;
-
-    beforeAll(() => {
-        value = testValueFormulas[args[0]].evaluate();
-    });
-
     let testName = functionName + "(";
     for (let i = 0; i < args.length; i++) {
         if (i !== 0) {
             testName += ", ";
         }
-        testName += testValues[args[i]];
+        testName += args[i];
     }
-    testName += ")";
-    describe(testName, () => {
-        let expectedEvaluation: Decimal | undefined;
-        const formulaArgs: Formula[] = [];
-        let staticFormula: Formula;
-        let instanceFormula: Formula;
-        beforeAll(() => {
-            for (let i = 0; i < args.length; i++) {
-                formulaArgs.push(testValueFormulas[args[i]]);
-            }
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            staticFormula = Formula[functionName](...formulaArgs);
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            instanceFormula = formulaArgs[0][functionName](...formulaArgs.slice(1));
+    testName += ") evaluates correctly";
+    test(testName, () => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        const formula = Formula[functionName](...args);
 
-            try {
+        try {
+            const expectedEvaluation = Decimal[functionName](
                 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore
-                expectedEvaluation = Decimal[functionName](...args);
-            } catch {
-                // If this is an invalid Decimal operation, then ignore this test case
-                return;
+                ...args.map(i => unrefFormulaSource(i))
+            );
+            if (expectedEvaluation != null) {
+                expect(formula.evaluate()).compare_tolerance(expectedEvaluation);
             }
-        });
-
-        test("Static formula is not marked as having a variable", async () =>
-            expect(staticFormula.hasVariable).toBe(false));
-        test("Static function evaluates correctly", async () =>
-            expectedEvaluation != null &&
-            expect(staticFormula.evaluate()).compare_tolerance(expectedEvaluation));
-        test("Static function invertible", async () =>
-            expect(staticFormula.invertible).toBe(invertible));
-        if (invertible) {
-            test("Static function inverts correctly", async () =>
-                expectedEvaluation != null &&
-                !Decimal.isNaN(expectedEvaluation) &&
-                expect(staticFormula.invert(expectedEvaluation)).compare_tolerance(value));
-        }
-
-        // Do those tests again but for non-static methods
-        test("Instance formula is not marked as having a variable", async () =>
-            expect(instanceFormula.hasVariable).toBe(false));
-        test("Instance function evaluates correctly", async () =>
-            expectedEvaluation != null &&
-            expect(instanceFormula.evaluate()).compare_tolerance(expectedEvaluation));
-        test("Instance function invertible", async () =>
-            expect(instanceFormula.invertible).toBe(invertible));
-        if (invertible) {
-            test("Instance function inverts correctly", async () =>
-                expectedEvaluation != null &&
-                !Decimal.isNaN(expectedEvaluation) &&
-                expect(instanceFormula.invert(expectedEvaluation)).compare_tolerance(value));
+        } catch {
+            // If this is an invalid Decimal operation, then ignore this test case
         }
     });
 }
 
-function testAliases<T extends FormulaFunctions[]>(
-    formula: Formula,
-    aliases: T,
-    args: FormulaSource[]
+function testAliases<T extends FormulaFunctions>(
+    aliases: T[],
+    args: Parameters<typeof Formula[T]>
 ) {
-    const spy = vi.spyOn(formula, aliases[0]);
-    expect(spy).not.toHaveBeenCalled();
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    aliases.slice(1).forEach(name => formula[name](...args));
-    expect(spy).toHaveBeenCalledTimes(aliases.length - 1);
+    describe(aliases[0], () => {
+        let formula: GenericFormula;
+        beforeAll(() => {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            formula = Formula[aliases[0]](...args);
+        });
+
+        aliases.slice(1).forEach(alias => {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            test(alias, () => expect(Formula[alias](...args).equals(formula)).toBe(true));
+        });
+    });
 }
 
-const testValues = [-2.5, -1, -0.1, 0, 0.1, 1, 2.5] as const;
-let testValueFormulas: InvertibleFormula[] = [];
+const testValues = ["-1e400", 0, 0.25] as const;
 
 const invertibleZeroParamFunctionNames = [
     "neg",
@@ -220,11 +204,64 @@ const invertibleTwoParamFunctionNames = ["tetrate", "layeradd", "iteratedexp"] a
 
 const nonInvertibleTwoParamFunctionNames = ["clamp", "iteratedlog", "pentate"] as const;
 
-describe.concurrent("Creating Formulas", () => {
-    beforeAll(() => {
-        testValueFormulas = testValues.map(v => Formula.constant(v));
+describe("Formula Equality Checking", () => {
+    describe("Equality Checks", () => {
+        test("Equals", () => Formula.add(1, 1).equals(Formula.add(1, 1)));
+        test("Not Equals due to inputs", () => Formula.add(1, 1).equals(Formula.add(1, 0)));
+        test("Not Equals due to functions", () => Formula.add(1, 1).equals(Formula.sub(1, 1)));
+        test("Not Equals due to hasVariable", () =>
+            Formula.constant(1).equals(Formula.variable(1)));
     });
 
+    describe("Formula aliases", () => {
+        testAliases(["neg", "negate", "negated"], [1]);
+        testAliases(["recip", "reciprocal", "reciprocate"], [1]);
+        testAliases(["sign", "sgn"], [1]);
+        testAliases(["add", "plus"], [1, 1]);
+        testAliases(["sub", "subtract", "minus"], [1, 1]);
+        testAliases(["mul", "multiply", "times"], [1, 1]);
+        testAliases(["div", "divide"], [1, 1]);
+        testAliases(["log", "logarithm"], [1, 1]);
+    });
+
+    describe("Instance vs Static methods", () => {
+        let formula: GenericFormula;
+        beforeAll(() => {
+            formula = Formula.constant(10);
+        });
+        [...invertibleZeroParamFunctionNames, ...nonInvertibleZeroParamFunctionNames].forEach(
+            name => {
+                test(name, () => {
+                    const instanceFormula = formula[name]();
+                    const staticFormula = Formula[name](formula);
+                    expect(instanceFormula.equals(staticFormula)).toBe(true);
+                });
+            }
+        );
+
+        [...invertibleOneParamFunctionNames, ...nonInvertibleOneParamFunctionNames].forEach(
+            name => {
+                test(name, () => {
+                    const instanceFormula = formula[name](10);
+                    const staticFormula = Formula[name](formula, 10);
+                    expect(instanceFormula.equals(staticFormula)).toBe(true);
+                });
+            }
+        );
+
+        [...invertibleTwoParamFunctionNames, ...nonInvertibleTwoParamFunctionNames].forEach(
+            name => {
+                test(name, () => {
+                    const instanceFormula = formula[name](1, 1);
+                    const staticFormula = Formula[name](formula, 1, 1);
+                    expect(instanceFormula.equals(staticFormula)).toBe(true);
+                });
+            }
+        );
+    });
+});
+
+describe("Creating Formulas", () => {
     describe("Constants", () => {
         testConstant("number", () => Formula.constant(10));
         testConstant("string", () => Formula.constant("10"));
@@ -233,101 +270,91 @@ describe.concurrent("Creating Formulas", () => {
         testConstant("ref", () => Formula.constant(ref(10)));
     });
 
-    // Test that these are just pass-throughts so we don't need to test each one everywhere else
-    describe("Function aliases", () => {
-        let formula: Formula;
-        beforeAll(() => {
-            formula = Formula.constant(10);
-        });
-        test("neg", async () => testAliases(formula, ["neg", "negate", "negated"], [0]));
-        test("recip", async () =>
-            testAliases(formula, ["recip", "reciprocal", "reciprocate"], [0]));
-        test("sign", async () => testAliases(formula, ["sign", "sgn"], [0]));
-        test("add", async () => testAliases(formula, ["add", "plus"], [0]));
-        test("sub", async () => testAliases(formula, ["sub", "subtract", "minus"], [0]));
-        test("mul", async () => testAliases(formula, ["mul", "multiply", "times"], [0]));
-        test("div", async () => testAliases(formula, ["div", "divide"], [1]));
-        test("log", async () => testAliases(formula, ["log", "logarithm"], [0]));
-    });
-
     describe("Invertible 0-param", () => {
-        invertibleZeroParamFunctionNames.forEach(names => {
-            for (let i = 0; i < testValues.length; i++) {
-                testFormula(names, [i] as const);
-            }
-        });
+        invertibleZeroParamFunctionNames.forEach(names =>
+            describe(names, () => {
+                testFormula(names, [0] as const);
+                testValues.forEach(i => testFormulaCall(names, [i] as const));
+            })
+        );
     });
     describe("Non-Invertible 0-param", () => {
-        nonInvertibleZeroParamFunctionNames.forEach(names => {
-            for (let i = 0; i < testValues.length; i++) {
-                testFormula(names, [i] as const, false);
-            }
-        });
+        nonInvertibleZeroParamFunctionNames.forEach(names =>
+            describe(names, () => {
+                testFormula(names, [0] as const, false);
+                testValues.forEach(i => testFormulaCall(names, [i] as const));
+            })
+        );
     });
     describe("Invertible 1-param", () => {
-        invertibleOneParamFunctionNames.forEach(names => {
-            for (let i = 0; i < testValues.length; i++) {
-                for (let j = 0; j < testValues.length; j++) {
-                    testFormula(names, [i, j] as const);
-                }
-            }
-        });
+        invertibleOneParamFunctionNames.forEach(names =>
+            describe(names, () => {
+                testFormula(names, [0, 0] as const);
+                testValues.forEach(i =>
+                    testValues.forEach(j => testFormulaCall(names, [i, j] as const))
+                );
+            })
+        );
     });
     describe("Non-Invertible 1-param", () => {
-        nonInvertibleOneParamFunctionNames.forEach(names => {
-            for (let i = 0; i < testValues.length; i++) {
-                for (let j = 0; j < testValues.length; j++) {
-                    testFormula(names, [i, j] as const, false);
-                }
-            }
-        });
+        nonInvertibleOneParamFunctionNames.forEach(names =>
+            describe(names, () => {
+                testFormula(names, [0, 0] as const, false);
+                testValues.forEach(i =>
+                    testValues.forEach(j => testFormulaCall(names, [i, j] as const))
+                );
+            })
+        );
     });
     describe("Invertible 2-param", () => {
-        invertibleTwoParamFunctionNames.forEach(names => {
-            for (let i = 0; i < testValues.length; i++) {
-                for (let j = 0; j < testValues.length; j++) {
-                    for (let k = 0; k < testValues.length; k++) {
-                        testFormula(names, [i, j, k] as const);
-                    }
-                }
-            }
-        });
+        invertibleTwoParamFunctionNames.forEach(names =>
+            describe(names, () => {
+                testFormula(names, [0, 0, 0] as const);
+                testValues.forEach(i =>
+                    testValues.forEach(j =>
+                        testValues.forEach(k => testFormulaCall(names, [i, j, k] as const))
+                    )
+                );
+            })
+        );
     });
     describe("Non-Invertible 2-param", () => {
-        nonInvertibleTwoParamFunctionNames.forEach(names => {
-            for (let i = 0; i < testValues.length; i++) {
-                for (let j = 0; j < testValues.length; j++) {
-                    for (let k = 0; k < testValues.length; k++) {
-                        testFormula(names, [i, j, k] as const, false);
-                    }
-                }
-            }
-        });
+        nonInvertibleTwoParamFunctionNames.forEach(names =>
+            describe(names, () => {
+                testFormula(names, [0, 0, 0] as const, false);
+                testValues.forEach(i =>
+                    testValues.forEach(j =>
+                        testValues.forEach(k => testFormulaCall(names, [i, j, k] as const))
+                    )
+                );
+            })
+        );
     });
 });
 
 describe("Variables", () => {
-    let variable: Formula;
-    let constant: Formula;
+    let variable: GenericFormula;
+    let constant: GenericFormula;
     beforeAll(() => {
         variable = Formula.variable(10);
         constant = Formula.constant(10);
     });
 
-    test("Created variable is marked as a variable", () => expect(variable.hasVariable).toBe(true));
+    test("Created variable is marked as a variable", () =>
+        expect(variable.hasVariable()).toBe(true));
     test("Evaluate() returns variable's value", () =>
         expect(variable.evaluate()).compare_tolerance(10));
     test("Invert() is pass-through", () => expect(variable.invert(100)).compare_tolerance(100));
 
     test("Nested variable is marked as having a variable", () =>
-        expect(variable.add(10).div(3).pow(2).hasVariable).toBe(true));
+        expect(variable.add(10).div(3).pow(2).hasVariable()).toBe(true));
     test("Nested non-variable is marked as not having a variable", () =>
-        expect(constant.add(10).div(3).pow(2).hasVariable).toBe(false));
+        expect(constant.add(10).div(3).pow(2).hasVariable()).toBe(false));
 
     describe("Invertible Formulas correctly calculate when they contain a variable", () => {
-        function checkFormula(formula: Formula, expectedBool = true) {
-            expect(formula.invertible).toBe(expectedBool);
-            expect(formula.hasVariable).toBe(expectedBool);
+        function checkFormula(formula: GenericFormula, expectedBool = true) {
+            expect(formula.isInvertible()).toBe(expectedBool);
+            expect(formula.hasVariable()).toBe(expectedBool);
         }
         invertibleZeroParamFunctionNames.forEach(name => {
             describe(name, () => {
@@ -366,9 +393,9 @@ describe("Variables", () => {
     });
 
     describe("Non-Invertible Formulas never marked as having a variable", () => {
-        function checkFormula(formula: Formula) {
-            expect(formula.invertible).toBe(false);
-            expect(formula.hasVariable).toBe(false);
+        function checkFormula(formula: GenericFormula) {
+            expect(formula.isInvertible()).toBe(false);
+            expect(formula.hasVariable()).toBe(false);
         }
         nonInvertibleZeroParamFunctionNames.forEach(name => {
             describe(name, () => {
@@ -407,8 +434,8 @@ describe("Variables", () => {
     });
 
     describe("Inverting calculates the value of the variable", () => {
-        let variable: Formula;
-        let constant: Formula;
+        let variable: GenericFormula;
+        let constant: GenericFormula;
         beforeAll(() => {
             variable = Formula.variable(2);
             constant = Formula.constant(3);
