@@ -1,5 +1,5 @@
 import Decimal, { DecimalSource } from "util/bignum";
-import { ProcessedComputable } from "util/computed";
+import { Computable, convertComputable, ProcessedComputable } from "util/computed";
 import { ref, Ref, unref } from "vue";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -439,26 +439,27 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
      * @param start The value at which to start applying the step
      * @param formulaModifier How this step should modify the formula. The incoming value will be the unmodified formula value _minus the start value_. So for example if an incoming formula evaluates to 200 and has a step that starts at 150, the formulaModifier would be given 50 as the parameter
      */
-    public static step<T extends FormulaSource>(
-        value: T,
-        start: ProcessedComputable<DecimalSource>,
+    public static step(
+        value: FormulaSource,
+        start: Computable<DecimalSource>,
         formulaModifier: (value: Ref<DecimalSource>) => GenericFormula
     ) {
         const lhsRef = ref<DecimalSource>(0);
         const formula = formulaModifier(lhsRef);
+        const processedStart = convertComputable(start);
         function evalStep(lhs: DecimalSource) {
-            if (Decimal.lt(lhs, unref(start))) {
+            if (Decimal.lt(lhs, unref(processedStart))) {
                 return lhs;
             }
-            lhsRef.value = Decimal.sub(lhs, unref(start));
-            return Decimal.add(formula.evaluate(), unref(start));
+            lhsRef.value = Decimal.sub(lhs, unref(processedStart));
+            return Decimal.add(formula.evaluate(), unref(processedStart));
         }
         function invertStep(value: DecimalSource, lhs: FormulaSource) {
             if (hasVariable(lhs)) {
-                if (Decimal.gt(value, unref(start))) {
+                if (Decimal.gt(value, unref(processedStart))) {
                     value = Decimal.add(
-                        formula.invert(Decimal.sub(value, unref(start))),
-                        unref(start)
+                        formula.invert(Decimal.sub(value, unref(processedStart))),
+                        unref(processedStart)
                     );
                 }
                 return lhs.invert(value);
@@ -470,6 +471,46 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             evalStep,
             formula.isInvertible() && !formula.hasVariable() ? invertStep : undefined
         );
+    }
+
+    public static if(
+        value: FormulaSource,
+        condition: Computable<boolean>,
+        formulaModifier: (value: Ref<DecimalSource>) => GenericFormula
+    ) {
+        const lhsRef = ref<DecimalSource>(0);
+        const formula = formulaModifier(lhsRef);
+        const processedCondition = convertComputable(condition);
+        function evalStep(lhs: DecimalSource) {
+            if (unref(processedCondition)) {
+                lhsRef.value = lhs;
+                return formula.evaluate();
+            } else {
+                return lhs;
+            }
+        }
+        function invertStep(value: DecimalSource, lhs: FormulaSource) {
+            if (!hasVariable(lhs)) {
+                throw "Could not invert due to no input being a variable";
+            }
+            if (unref(processedCondition)) {
+                return lhs.invert(formula.invert(value));
+            } else {
+                return lhs.invert(value);
+            }
+        }
+        return new Formula(
+            [value],
+            evalStep,
+            formula.isInvertible() && !formula.hasVariable() ? invertStep : undefined
+        );
+    }
+    public static conditional(
+        value: FormulaSource,
+        condition: Computable<boolean>,
+        formulaModifier: (value: Ref<DecimalSource>) => GenericFormula
+    ) {
+        return Formula.if(value, condition, formulaModifier);
     }
 
     public static constant(value: InvertibleFormulaSource): InvertibleFormula {

@@ -530,3 +530,58 @@ describe("Step-wise", () => {
             ).compare_tolerance(10));
     });
 });
+
+describe("Conditionals", () => {
+    let variable: GenericFormula;
+    let constant: GenericFormula;
+    beforeAll(() => {
+        variable = Formula.variable(10);
+        constant = Formula.constant(10);
+    });
+
+    test("Formula without variable is marked as such", () => {
+        expect(Formula.if(constant, true, value => Formula.sqrt(value)).isInvertible()).toBe(true);
+        expect(Formula.if(constant, true, value => Formula.sqrt(value)).hasVariable()).toBe(false);
+    });
+
+    test("Formula with variable is marked as such", () => {
+        expect(Formula.if(variable, true, value => Formula.sqrt(value)).isInvertible()).toBe(true);
+        expect(Formula.if(variable, true, value => Formula.sqrt(value)).hasVariable()).toBe(true);
+    });
+
+    test("Non-invertible formula modifier marks formula as such", () => {
+        expect(Formula.if(constant, true, value => Formula.abs(value)).isInvertible()).toBe(false);
+        expect(Formula.if(constant, true, value => Formula.abs(value)).hasVariable()).toBe(false);
+    });
+
+    test("Formula modifiers with variables mark formula as non-invertible", () => {
+        expect(
+            Formula.if(constant, true, value => Formula.add(value, variable)).isInvertible()
+        ).toBe(false);
+        expect(
+            Formula.if(constant, true, value => Formula.add(value, variable)).hasVariable()
+        ).toBe(false);
+    });
+
+    describe("Pass-through with condition false", () => {
+        test("Evaluates correctly", () =>
+            expect(
+                Formula.if(constant, false, value => Formula.sqrt(value)).evaluate()
+            ).compare_tolerance(10));
+        test("Inverts correctly with variable in input", () =>
+            expect(
+                Formula.if(variable, false, value => Formula.sqrt(value)).invert(10)
+            ).compare_tolerance(10));
+    });
+
+    describe("Evaluates correctly with condition true", () => {
+        test("Evaluates correctly", () =>
+            expect(
+                Formula.if(variable, true, value => Formula.add(value, 2)).evaluate()
+            ).compare_tolerance(12));
+        test("Inverts correctly", () =>
+            expect(
+                Formula.if(variable, true, value => Formula.add(value, 2)).invert(12)
+            ).compare_tolerance(10));
+    });
+});
