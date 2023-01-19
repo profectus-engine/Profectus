@@ -1,7 +1,7 @@
 import Formula, { GenericFormula, InvertibleFormula, unrefFormulaSource } from "game/formulas";
 import Decimal, { DecimalSource, format } from "util/bignum";
 import { beforeAll, describe, expect, test } from "vitest";
-import { ref } from "vue";
+import { Ref, ref } from "vue";
 
 type FormulaFunctions = keyof GenericFormula & keyof typeof Formula & keyof typeof Decimal;
 
@@ -53,10 +53,10 @@ function testConstant(
         beforeAll(() => {
             formula = formulaFunc();
         });
-        test("evaluates correctly", () =>
+        test("Evaluates correctly", () =>
             expect(formula.evaluate()).compare_tolerance(expectedValue));
-        test("invert is pass-through", () => expect(formula.invert(25)).compare_tolerance(25));
-        test("is not marked as having a variable", () => expect(formula.hasVariable()).toBe(false));
+        test("Invert is pass-through", () => expect(formula.invert(25)).compare_tolerance(25));
+        test("Is not marked as having a variable", () => expect(formula.hasVariable()).toBe(false));
     });
 }
 
@@ -473,5 +473,60 @@ describe("Variables", () => {
                 });
             })
         );
+    });
+});
+
+describe("Step-wise", () => {
+    let variable: GenericFormula;
+    let constant: GenericFormula;
+    beforeAll(() => {
+        variable = Formula.variable(10);
+        constant = Formula.constant(10);
+    });
+
+    test("Formula without variable is marked as such", () => {
+        expect(Formula.step(constant, 10, value => Formula.sqrt(value)).isInvertible()).toBe(true);
+        expect(Formula.step(constant, 10, value => Formula.sqrt(value)).hasVariable()).toBe(false);
+    });
+
+    test("Formula with variable is marked as such", () => {
+        expect(Formula.step(variable, 10, value => Formula.sqrt(value)).isInvertible()).toBe(true);
+        expect(Formula.step(variable, 10, value => Formula.sqrt(value)).hasVariable()).toBe(true);
+    });
+
+    test("Non-invertible formula modifier marks formula as such", () => {
+        expect(Formula.step(constant, 10, value => Formula.abs(value)).isInvertible()).toBe(false);
+        expect(Formula.step(constant, 10, value => Formula.abs(value)).hasVariable()).toBe(false);
+    });
+
+    test("Formula modifiers with variables mark formula as non-invertible", () => {
+        expect(
+            Formula.step(constant, 10, value => Formula.add(value, variable)).isInvertible()
+        ).toBe(false);
+        expect(
+            Formula.step(constant, 10, value => Formula.add(value, variable)).hasVariable()
+        ).toBe(false);
+    });
+
+    describe("Pass-through underneath start", () => {
+        test("Evaluates correctly", () =>
+            expect(
+                Formula.step(constant, 20, value => Formula.sqrt(value)).evaluate()
+            ).compare_tolerance(10));
+        test("Inverts correctly with variable in input", () =>
+            expect(
+                Formula.step(variable, 20, value => Formula.sqrt(value)).invert(10)
+            ).compare_tolerance(10));
+    });
+
+    describe("Evaluates correctly beyond start", () => {
+        test("Evaluates correctly", () =>
+            expect(
+                Formula.step(variable, 8, value => Formula.add(value, 2)).evaluate()
+            ).compare_tolerance(12));
+        test("Inverts correctly", () =>
+            expect(
+                Formula.step(variable, 8, value => Formula.add(value, 2)).invert(12)
+            ).compare_tolerance(10));
     });
 });

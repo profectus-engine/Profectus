@@ -432,6 +432,46 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         );
     }
 
+    /**
+     * Creates a step-wise formula. After {@ref start} the formula will have an additional modifier.
+     * This function assumes the incoming {@ref value} will be continuous and monotonically increasing.
+     * @param value The value before applying the step
+     * @param start The value at which to start applying the step
+     * @param formulaModifier How this step should modify the formula. The incoming value will be the unmodified formula value _minus the start value_. So for example if an incoming formula evaluates to 200 and has a step that starts at 150, the formulaModifier would be given 50 as the parameter
+     */
+    public static step<T extends FormulaSource>(
+        value: T,
+        start: ProcessedComputable<DecimalSource>,
+        formulaModifier: (value: Ref<DecimalSource>) => GenericFormula
+    ) {
+        const lhsRef = ref<DecimalSource>(0);
+        const formula = formulaModifier(lhsRef);
+        function evalStep(lhs: DecimalSource) {
+            if (Decimal.lt(lhs, unref(start))) {
+                return lhs;
+            }
+            lhsRef.value = Decimal.sub(lhs, unref(start));
+            return Decimal.add(formula.evaluate(), unref(start));
+        }
+        function invertStep(value: DecimalSource, lhs: FormulaSource) {
+            if (hasVariable(lhs)) {
+                if (Decimal.gt(value, unref(start))) {
+                    value = Decimal.add(
+                        formula.invert(Decimal.sub(value, unref(start))),
+                        unref(start)
+                    );
+                }
+                return lhs.invert(value);
+            }
+            throw "Could not invert due to no input being a variable";
+        }
+        return new Formula(
+            [value],
+            evalStep,
+            formula.isInvertible() && !formula.hasVariable() ? invertStep : undefined
+        );
+    }
+
     public static constant(value: InvertibleFormulaSource): InvertibleFormula {
         return new Formula([value]) as InvertibleFormula;
     }
