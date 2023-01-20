@@ -585,3 +585,55 @@ describe("Conditionals", () => {
             ).compare_tolerance(10));
     });
 });
+
+describe("Custom Formulas", () => {
+    describe("Formula with just one input", () => {
+        let formula: GenericFormula;
+        beforeAll(() => {
+            formula = new Formula([10]);
+        });
+        test("Is not invertible", () => expect(formula.isInvertible()).toBe(false));
+        test("Is not marked as having a variable", () => expect(formula.hasVariable()).toBe(false));
+        test("Evaluates correctly", () => expect(formula.evaluate()).compare_tolerance(10));
+        test("Invert is pass-through", () => expect(formula.invert(20)).compare_tolerance(20));
+    });
+
+    describe("Formula with non-one inputs without required other params", () => {
+        test("Zero inputs throws", () => expect(() => new Formula([])).toThrow());
+        test("Two inputs throws", () => expect(() => new Formula([1, 2])).toThrow());
+        test("Zero inputs and invert throws", () =>
+            expect(() => new Formula([], undefined, value => value)).toThrow());
+        test("Two inputs and invert throws", () =>
+            expect(() => new Formula([1, 2], undefined, value => value)).toThrow());
+        test("Zero inputs and evaluate and hasVariable throws", () =>
+            expect(() => new Formula([], () => 10, undefined, true)).toThrow());
+        test("Two inputs and evaluate and hasVariable throws", () =>
+            expect(() => new Formula([1, 2], () => 10, undefined, true)).toThrow());
+    });
+
+    describe("Formula with evaluate", () => {
+        test("Zero input evaluates correctly", () =>
+            expect(new Formula([], () => 10).evaluate()).compare_tolerance(10));
+        test("One input evaluates correctly", () =>
+            expect(new Formula([1], value => value).evaluate()).compare_tolerance(1));
+        test("Two inputs evaluates correctly", () =>
+            expect(new Formula([1, 2], (v1, v2) => v1).evaluate()).compare_tolerance(1));
+    });
+
+    describe("Formula with invert", () => {
+        test("Zero input inverts correctly", () =>
+            expect(new Formula([], undefined, value => value).invert(10)).compare_tolerance(10));
+        test("One input inverts correctly", () =>
+            expect(new Formula([1], undefined, (value, v1) => v1).invert(10)).compare_tolerance(1));
+        test("Two inputs inverts correctly", () =>
+            expect(
+                new Formula([1, 2], undefined, (value, v1, v2) => v2).invert(10)
+            ).compare_tolerance(2));
+    });
+
+    test("Formula with hasVariable", () => {
+        const formula = new Formula([], undefined, value => value, true);
+        expect(formula.isInvertible()).toBe(true);
+        expect(formula.hasVariable()).toBe(true);
+    });
+});
