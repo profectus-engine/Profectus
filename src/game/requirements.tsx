@@ -1,5 +1,5 @@
 import { isArray } from "@vue/shared";
-import { CoercableComponent, jsx, JSXFunction, setDefault, Visibility } from "features/feature";
+import { CoercableComponent, jsx, setDefault, Visibility } from "features/feature";
 import { displayResource, Resource } from "features/resources/resource";
 import Decimal, { DecimalSource } from "lib/break_eternity";
 import {
@@ -18,30 +18,84 @@ import Formula, { calculateCost, calculateMaxAffordable, GenericFormula } from "
  * @see {@link createCostRequirement}
  */
 export interface Requirement {
-    /** The display for this specific requirement. This is used for displays multiple requirements condensed. Required if {@link visibility} can be {@link Visibility.Visible}. */
+    /**
+     * The display for this specific requirement. This is used for displays multiple requirements condensed. Required if {@link visibility} can be {@link Visibility.Visible}.
+     */
     partialDisplay?: (amount?: DecimalSource) => JSX.Element;
-    /** The display for this specific requirement. Required if {@link visibility} can be {@link Visibility.Visible}. */
+    /**
+     * The display for this specific requirement. Required if {@link visibility} can be {@link Visibility.Visible}.
+     */
     display?: (amount?: DecimalSource) => JSX.Element;
+    /**
+     * Whether or not this requirement should be displayed in Vue Features. {@link displayRequirements} will respect this property.
+     */
     visibility: ProcessedComputable<Visibility.Visible | Visibility.None>;
+    /**
+     * Whether or not this requirement has been met.
+     */
     requirementMet: ProcessedComputable<DecimalSource | boolean>;
+    /**
+     * Whether or not this requirement will need to affect the game state when whatever is using this requirement gets triggered.
+     */
     requiresPay: ProcessedComputable<boolean>;
+    /**
+     * Whether or not this requirement can have multiple levels of requirements that can be completed at once.
+     */
     buyMax?: ProcessedComputable<boolean>;
+    /**
+     * Perform any effects to the game state that should happen when the requirement gets triggered.
+     * @param amount The amount of levels of requirements to pay for.
+     */
     pay?: (amount?: DecimalSource) => void;
 }
 
+/**
+ * Utility type for accepting 1 or more {@link Requirement}s.
+ */
 export type Requirements = Requirement | Requirement[];
 
+/** An object that configures a {@link Requirement} based on a resource cost. */
 export interface CostRequirementOptions {
+    /**
+     * The resource that will be checked for meeting the {@link cost}.
+     */
     resource: Resource;
+    /**
+     * The amount of {@link resource} that must be met for this requirement. You can pass a formula, in which case {@link buyMax} will work out of the box (assuming its invertible and, for more accurate calculations, its integral is invertible). If you don't pass a formula then you can still support buyMax by passing a custom {@link pay} function.
+     */
     cost: Computable<DecimalSource> | GenericFormula;
+    /**
+     * Pass-through to {@link Requirement.visibility}.
+     */
     visibility?: Computable<Visibility.Visible | Visibility.None>;
+    /**
+     * Pass-through to {@link Requirement.requiresPay}. If not set to false, the default {@link pay} function will remove {@link cost} from {@link resource}.
+     */
     requiresPay?: Computable<boolean>;
+    /**
+     * Pass-through to {@link Requirement.buyMax}.
+     * @see {@link cost} for restrictions on buying max support.
+     */
     buyMax?: Computable<boolean>;
+    /**
+     * When calculating multiple levels to be handled at once, whether it should consider resources used for each level as spent. Setting this to false causes calculations to be faster with larger numbers and supports more math functions.
+     * @see {Formula}
+     */
     spendResources?: Computable<boolean>;
+    /**
+     * Pass-through to {@link Requirement.pay}. May be required for buying max support.
+     * @see {@link cost} for restrictions on buying max support.
+     */
     pay?: (amount?: DecimalSource) => void;
 }
 
-export function createCostRequirement<T extends CostRequirementOptions>(optionsFunc: () => T) {
+/**
+ * Lazily creates a requirement with the given options, that is based on meeting an amount of a resource.
+ * @param optionsFunc Cost requirement options.
+ */
+export function createCostRequirement<T extends CostRequirementOptions>(
+    optionsFunc: () => T
+): Requirement {
     return createLazyProxy(() => {
         const req = optionsFunc() as T & Partial<Requirement>;
 
@@ -135,6 +189,10 @@ export function createCostRequirement<T extends CostRequirementOptions>(optionsF
     });
 }
 
+/**
+ * Utility function for creating a requirement that a specified vue feature is visible
+ * @param feature The feature to check the visibility of
+ */
 export function createVisibilityRequirement(feature: {
     visibility: ProcessedComputable<Visibility>;
 }): Requirement {
@@ -145,6 +203,11 @@ export function createVisibilityRequirement(feature: {
     }));
 }
 
+/**
+ * Creates a requirement based on a true/false value
+ * @param requirement The boolean requirement to use
+ * @param display How to display this requirement to the user
+ */
 export function createBooleanRequirement(
     requirement: Computable<boolean>,
     display?: CoercableComponent
@@ -158,6 +221,10 @@ export function createBooleanRequirement(
     }));
 }
 
+/**
+ * Utility for checking if 1+ requirements are all met
+ * @param requirements The 1+ requirements to check
+ */
 export function requirementsMet(requirements: Requirements): boolean {
     if (isArray(requirements)) {
         return requirements.every(requirementsMet);
@@ -166,6 +233,10 @@ export function requirementsMet(requirements: Requirements): boolean {
     return typeof reqsMet === "boolean" ? reqsMet : Decimal.gt(reqsMet, 0);
 }
 
+/**
+ * Calculates the maximum number of levels that could be acquired with the current requirement states. True/false requirements will be counted as Infinity or 0.
+ * @param requirements The 1+ requirements to check
+ */
 export function maxRequirementsMet(requirements: Requirements): DecimalSource {
     if (isArray(requirements)) {
         return requirements.map(maxRequirementsMet).reduce(Decimal.min);
@@ -177,6 +248,11 @@ export function maxRequirementsMet(requirements: Requirements): DecimalSource {
     return reqsMet;
 }
 
+/**
+ * Utility function for display 1+ requirements compactly.
+ * @param requirements The 1+ requirements to display
+ * @param amount The amount of levels earned to be displayed
+ */
 export function displayRequirements(requirements: Requirements, amount: DecimalSource = 1) {
     if (isArray(requirements)) {
         requirements = requirements.filter(r => unref(r.visibility) === Visibility.Visible);
@@ -214,6 +290,11 @@ export function displayRequirements(requirements: Requirements, amount: DecimalS
     return requirements.display?.() ?? <></>;
 }
 
+/**
+ * Utility function for paying the costs for 1+ requirements
+ * @param requirements The 1+ requirements to pay
+ * @param amount How many levels to pay for
+ */
 export function payRequirements(requirements: Requirements, amount: DecimalSource = 1) {
     if (isArray(requirements)) {
         requirements.filter(r => unref(r.requiresPay)).forEach(r => r.pay?.(amount));
