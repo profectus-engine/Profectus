@@ -875,6 +875,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     }
 
     invertIntegral(value: DecimalSource): DecimalSource {
+        // This is nearly completely non-functional
+        // Proper nesting will require somehow using integration by substitution or integration by parts
         return this.internalInvertIntegral?.call(this, value, ...this.inputs) ?? value;
     }
 

@@ -563,6 +563,11 @@ describe("Inverting", () => {
             })
         );
     });
+
+    test("Inverting nested formulas", () => {
+        const formula = Formula.add(variable, constant).times(constant);
+        expect(formula.invert(100)).compare_tolerance(0);
+    });
 });
 
 describe("Integrating", () => {
@@ -643,6 +648,11 @@ describe("Integrating", () => {
 
     // TODO I think these tests will require writing at least one known example for every function
     describe.todo("Integrable formulas integrate correctly");
+
+    test("Integrating nested formulas", () => {
+        const formula = Formula.add(variable, constant).times(constant);
+        expect(formula.evaluateIntegral()).compare_tolerance(1500);
+    });
 });
 
 describe("Inverting integrals", () => {
@@ -721,6 +731,11 @@ describe("Inverting integrals", () => {
 
     // TODO I think these tests will require writing at least one known example for every function
     describe.todo("Invertible Integral formulas invert correctly");
+
+    test("Inverting integral of nested formulas", () => {
+        const formula = Formula.add(variable, constant).times(constant);
+        expect(formula.invertIntegral(1500)).compare_tolerance(10);
+    });
 });
 
 describe("Step-wise", () => {
