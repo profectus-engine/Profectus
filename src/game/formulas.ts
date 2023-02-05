@@ -1,7 +1,7 @@
 import { Resource } from "features/resources/resource";
 import Decimal, { DecimalSource } from "util/bignum";
 import { Computable, convertComputable, ProcessedComputable } from "util/computed";
-import { computed, ref, Ref, unref } from "vue";
+import { computed, ComputedRef, ref, Ref, unref } from "vue";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type GenericFormula = Formula<any>;
@@ -776,11 +776,14 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         | undefined;
     private readonly internalHasVariable: boolean;
 
+    public readonly innermostVariable: ProcessedComputable<DecimalSource> | undefined;
+
     constructor(options: FormulaOptions<T>) {
         // Variable case
         if ("variable" in options) {
             this.inputs = [options.variable] as T;
             this.internalHasVariable = true;
+            this.innermostVariable = options.variable;
             return;
         }
         // Constant case
@@ -811,6 +814,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
 
         this.internalHasVariable =
             numVariables === 1 || (numVariables === 0 && hasVariable === true);
+        if (this.internalHasVariable) {
+            this.innermostVariable = variable?.innermostVariable;
+        }
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         this.internalInvert =
@@ -2004,7 +2010,7 @@ export function calculateMaxAffordable(
             }
             return Decimal.floor(
                 formula.invertIntegral(Decimal.add(resource.value, formula.evaluateIntegral()))
-            );
+            ).sub(unref(formula.innermostVariable) ?? 0);
         } else {
             if (!formula.isInvertible()) {
                 throw "Cannot calculate max affordable of non-invertible formula";
@@ -2013,13 +2019,11 @@ export function calculateMaxAffordable(
         }
     });
     const cost = computed(() => {
+        const newValue = maxAffordable.value.add(unref(formula.innermostVariable) ?? 0);
         if (unref(computedSpendResources)) {
-            return Decimal.sub(
-                formula.evaluateIntegral(maxAffordable.value),
-                formula.evaluateIntegral()
-            );
+            return Decimal.sub(formula.evaluateIntegral(newValue), formula.evaluateIntegral());
         } else {
-            return formula.evaluate(maxAffordable.value);
+            return formula.evaluate(newValue);
         }
     });
     return { maxAffordable, cost };
