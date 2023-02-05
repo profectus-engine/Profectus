@@ -979,7 +979,7 @@ describe("Custom Formulas", () => {
 describe("Buy Max", () => {
     let resource: Resource;
     beforeAll(() => {
-        resource = createResource(10);
+        resource = createResource(ref(10));
     });
     describe("With spending", () => {
         test("Throws on formula with non-invertible integral", () => {
