@@ -1,5 +1,6 @@
 import { createResource, Resource } from "features/resources/resource";
 import Formula, {
+    calculateCost,
     calculateMaxAffordable,
     GenericFormula,
     InvertibleFormula,
@@ -983,45 +984,32 @@ describe("Buy Max", () => {
     });
     describe("With spending", () => {
         test("Throws on formula with non-invertible integral", () => {
-            const { maxAffordable, cost } = calculateMaxAffordable(
-                Formula.neg(10),
-                resource,
-                false
-            );
+            const maxAffordable = calculateMaxAffordable(Formula.neg(10), resource, false);
             expect(() => maxAffordable.value).toThrow();
-            expect(() => cost.value).toThrow();
         });
         // https://www.desmos.com/calculator/5vgletdc1p
         test("Calculates max affordable and cost correctly", () => {
             const variable = Formula.variable(10);
-            const { maxAffordable, cost } = calculateMaxAffordable(
-                Formula.pow(1.05, variable),
-                resource,
-                false
-            );
+            const formula = Formula.pow(1.05, variable);
+            const maxAffordable = calculateMaxAffordable(formula, resource, false);
             expect(maxAffordable.value).compare_tolerance(47);
-            expect(cost.value).compare_tolerance(Decimal.pow(1.05, 47));
+            expect(calculateCost(formula, maxAffordable.value, false)).compare_tolerance(
+                Decimal.pow(1.05, 47)
+            );
         });
     });
     describe("Without spending", () => {
         test("Throws on non-invertible formula", () => {
-            const { maxAffordable, cost } = calculateMaxAffordable(
-                Formula.abs(10),
-                resource,
-                false
-            );
+            const maxAffordable = calculateMaxAffordable(Formula.abs(10), resource, false);
             expect(() => maxAffordable.value).toThrow();
-            expect(() => cost.value).toThrow();
         });
         // https://www.desmos.com/calculator/5vgletdc1p
         test("Calculates max affordable and cost correctly", () => {
             const variable = Formula.variable(10);
-            const { maxAffordable, cost } = calculateMaxAffordable(
-                Formula.pow(1.05, variable),
-                resource
-            );
+            const formula = Formula.pow(1.05, variable);
+            const maxAffordable = calculateMaxAffordable(formula, resource);
             expect(maxAffordable.value).compare_tolerance(7);
-            expect(cost.value).compare_tolerance(7.35);
+            expect(calculateCost(formula, maxAffordable.value)).compare_tolerance(7.35);
         });
     });
 });

@@ -1992,7 +1992,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
 }
 
 /**
- * Utility for calculating the maximum amount of purchases possible with a given formula and resource. If {@ref spendResources} is changed to false, the calculation will be much faster with higher numbers. Returns a ref of how many can be bought, as well as how much that will cost.
+ * Utility for calculating the maximum amount of purchases possible with a given formula and resource. If {@ref spendResources} is changed to false, the calculation will be much faster with higher numbers.
  * @param formula The formula to use for calculating buy max from
  * @param resource The resource used when purchasing (is only read from)
  * @param spendResources Whether or not to count spent resources on each purchase or not
@@ -2001,19 +2001,19 @@ export function calculateMaxAffordable(
     formula: InvertibleFormula,
     resource: Resource,
     spendResources?: true
-): { maxAffordable: ComputedRef<DecimalSource>; cost: ComputedRef<DecimalSource> };
+): ComputedRef<DecimalSource>;
 export function calculateMaxAffordable(
     formula: InvertibleIntegralFormula,
     resource: Resource,
     spendResources: Computable<boolean>
-): { maxAffordable: ComputedRef<DecimalSource>; cost: ComputedRef<DecimalSource> };
+): ComputedRef<DecimalSource>;
 export function calculateMaxAffordable(
     formula: InvertibleFormula,
     resource: Resource,
     spendResources: Computable<boolean> = true
 ) {
     const computedSpendResources = convertComputable(spendResources);
-    const maxAffordable = computed(() => {
+    return computed(() => {
         if (unref(computedSpendResources)) {
             if (!formula.isIntegrable() || !formula.isIntegralInvertible()) {
                 throw "Cannot calculate max affordable of formula with non-invertible integral";
@@ -2028,13 +2028,33 @@ export function calculateMaxAffordable(
             return Decimal.floor((formula as InvertibleFormula).invert(resource.value));
         }
     });
-    const cost = computed(() => {
-        const newValue = maxAffordable.value.add(unref(formula.innermostVariable) ?? 0);
-        if (unref(computedSpendResources)) {
-            return Decimal.sub(formula.evaluateIntegral(newValue), formula.evaluateIntegral());
-        } else {
-            return formula.evaluate(newValue);
-        }
-    });
-    return { maxAffordable, cost };
+}
+
+/**
+ * Utility for calculating the cost of a formula for a given amount of purchases. If {@ref spendResources} is changed to false, the calculation will be much faster with higher numbers.
+ * @param formula The formula to use for calculating buy max from
+ * @param amountToBuy The amount of purchases to calculate the cost for
+ * @param spendResources Whether or not to count spent resources on each purchase or not
+ */
+export function calculateCost(
+    formula: InvertibleFormula,
+    amountToBuy: DecimalSource,
+    spendResources?: true
+): DecimalSource;
+export function calculateCost(
+    formula: InvertibleIntegralFormula,
+    amountToBuy: DecimalSource,
+    spendResources: boolean
+): DecimalSource;
+export function calculateCost(
+    formula: InvertibleFormula,
+    amountToBuy: DecimalSource,
+    spendResources = true
+) {
+    const newValue = Decimal.add(amountToBuy, unref(formula.innermostVariable) ?? 0);
+    if (spendResources) {
+        return Decimal.sub(formula.evaluateIntegral(newValue), formula.evaluateIntegral());
+    } else {
+        return formula.evaluate(newValue);
+    }
 }

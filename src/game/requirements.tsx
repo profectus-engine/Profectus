@@ -11,6 +11,7 @@ import {
 import { createLazyProxy } from "util/proxies";
 import { joinJSX, renderJSX } from "util/vue";
 import { computed, unref } from "vue";
+import Formula, { calculateCost, calculateMaxAffordable, GenericFormula } from "./formulas";
 
 /**
  * An object that can be used to describe a requirement to perform some purchase or other action.
@@ -18,36 +19,33 @@ import { computed, unref } from "vue";
  */
 export interface Requirement {
     /** The display for this specific requirement. This is used for displays multiple requirements condensed. Required if {@link visibility} can be {@link Visibility.Visible}. */
-    partialDisplay?: JSXFunction;
+    partialDisplay?: (amount?: DecimalSource) => JSX.Element;
     /** The display for this specific requirement. Required if {@link visibility} can be {@link Visibility.Visible}. */
-    display?: JSXFunction;
+    display?: (amount?: DecimalSource) => JSX.Element;
     visibility: ProcessedComputable<Visibility.Visible | Visibility.None>;
-    requirementMet: ProcessedComputable<boolean>;
+    requirementMet: ProcessedComputable<DecimalSource | boolean>;
     requiresPay: ProcessedComputable<boolean>;
-    pay?: VoidFunction;
+    buyMax?: ProcessedComputable<boolean>;
+    pay?: (amount?: DecimalSource) => void;
 }
 
 export type Requirements = Requirement | Requirement[];
 
 export interface CostRequirementOptions {
     resource: Resource;
-    cost: Computable<DecimalSource>;
+    cost: Computable<DecimalSource> | GenericFormula;
     visibility?: Computable<Visibility.Visible | Visibility.None>;
-    requiresPay?: ProcessedComputable<boolean>;
-    pay?: VoidFunction;
+    requiresPay?: Computable<boolean>;
+    buyMax?: Computable<boolean>;
+    spendResources?: Computable<boolean>;
+    pay?: (amount?: DecimalSource) => void;
 }
 
-export function createCostRequirement<T extends CostRequirementOptions>(
-    optionsFunc: () => T
-): Requirement {
+export function createCostRequirement<T extends CostRequirementOptions>(optionsFunc: () => T) {
     return createLazyProxy(() => {
         const req = optionsFunc() as T & Partial<Requirement>;
 
-        req.requirementMet = computed(() =>
-            Decimal.gte(req.resource.value, unref(req.cost as ProcessedComputable<DecimalSource>))
-        );
-
-        req.partialDisplay = jsx(() => (
+        req.partialDisplay = amount => (
             <span
                 style={
                     unref(req.requirementMet as ProcessedComputable<boolean>)
@@ -57,33 +55,81 @@ export function createCostRequirement<T extends CostRequirementOptions>(
             >
                 {displayResource(
                     req.resource,
-                    unref(req.cost as ProcessedComputable<DecimalSource>)
+                    req.cost instanceof Formula
+                        ? calculateCost(
+                              req.cost,
+                              amount ?? 1,
+                              unref(
+                                  req.spendResources as ProcessedComputable<boolean> | undefined
+                              ) ?? true
+                          )
+                        : unref(req.cost as ProcessedComputable<DecimalSource>)
                 )}{" "}
                 {req.resource.displayName}
             </span>
-        ));
-        req.display = jsx(() => (
+        );
+        req.display = amount => (
             <div>
                 {unref(req.requiresPay as ProcessedComputable<boolean>) ? "Costs: " : "Requires: "}
                 {displayResource(
                     req.resource,
-                    unref(req.cost as ProcessedComputable<DecimalSource>)
+                    req.cost instanceof Formula
+                        ? calculateCost(
+                              req.cost,
+                              amount ?? 1,
+                              unref(
+                                  req.spendResources as ProcessedComputable<boolean> | undefined
+                              ) ?? true
+                          )
+                        : unref(req.cost as ProcessedComputable<DecimalSource>)
                 )}{" "}
                 {req.resource.displayName}
             </div>
-        ));
+        );
 
         processComputable(req as T, "visibility");
         setDefault(req, "visibility", Visibility.Visible);
         processComputable(req as T, "cost");
         processComputable(req as T, "requiresPay");
+        processComputable(req as T, "spendResources");
         setDefault(req, "requiresPay", true);
-        setDefault(req, "pay", function () {
-            req.resource.value = Decimal.sub(
-                req.resource.value,
-                unref(req.cost as ProcessedComputable<DecimalSource>)
-            ).max(0);
+        setDefault(req, "pay", function (amount?: DecimalSource) {
+            const cost =
+                req.cost instanceof Formula
+                    ? calculateCost(
+                          req.cost,
+                          amount ?? 1,
+                          unref(req.spendResources as ProcessedComputable<boolean> | undefined) ??
+                              true
+                      )
+                    : unref(req.cost as ProcessedComputable<DecimalSource>);
+            req.resource.value = Decimal.sub(req.resource.value, cost).max(0);
         });
+        processComputable(req as T, "buyMax");
+
+        if (
+            "buyMax" in req &&
+            req.buyMax !== false &&
+            req.cost instanceof Formula &&
+            req.cost.isInvertible()
+        ) {
+            req.requirementMet = calculateMaxAffordable(
+                req.cost,
+                req.resource,
+                unref(req.spendResources as ProcessedComputable<boolean> | undefined) ?? true
+            );
+        } else {
+            req.requirementMet = computed(() => {
+                if (req.cost instanceof Formula) {
+                    return Decimal.gte(req.resource.value, req.cost.evaluate());
+                } else {
+                    return Decimal.gte(
+                        req.resource.value,
+                        unref(req.cost as ProcessedComputable<DecimalSource>)
+                    );
+                }
+            });
+        }
 
         return req as Requirement;
     });
@@ -112,14 +158,26 @@ export function createBooleanRequirement(
     }));
 }
 
-export function requirementsMet(requirements: Requirements) {
+export function requirementsMet(requirements: Requirements): boolean {
     if (isArray(requirements)) {
-        return requirements.every(r => unref(r.requirementMet));
+        return requirements.every(requirementsMet);
     }
-    return unref(requirements.requirementMet);
+    const reqsMet = unref(requirements.requirementMet);
+    return typeof reqsMet === "boolean" ? reqsMet : Decimal.gt(reqsMet, 0);
 }
 
-export function displayRequirements(requirements: Requirements) {
+export function maxRequirementsMet(requirements: Requirements): DecimalSource {
+    if (isArray(requirements)) {
+        return requirements.map(maxRequirementsMet).reduce(Decimal.min);
+    }
+    const reqsMet = unref(requirements.requirementMet);
+    if (typeof reqsMet === "boolean") {
+        return reqsMet ? Infinity : 0;
+    }
+    return reqsMet;
+}
+
+export function displayRequirements(requirements: Requirements, amount: DecimalSource = 1) {
     if (isArray(requirements)) {
         requirements = requirements.filter(r => unref(r.visibility) === Visibility.Visible);
         if (requirements.length === 1) {
@@ -136,7 +194,7 @@ export function displayRequirements(requirements: Requirements) {
                     <div>
                         Costs:{" "}
                         {joinJSX(
-                            withCosts.map(r => r.partialDisplay!()),
+                            withCosts.map(r => r.partialDisplay!(amount)),
                             <>, </>
                         )}
                     </div>
@@ -145,7 +203,7 @@ export function displayRequirements(requirements: Requirements) {
                     <div>
                         Requires:{" "}
                         {joinJSX(
-                            withoutCosts.map(r => r.partialDisplay!()),
+                            withoutCosts.map(r => r.partialDisplay!(amount)),
                             <>, </>
                         )}
                     </div>
@@ -156,10 +214,11 @@ export function displayRequirements(requirements: Requirements) {
     return requirements.display?.() ?? <></>;
 }
 
-export function payRequirements(requirements: Requirements) {
+export function payRequirements(requirements: Requirements, buyMax = false) {
+    const amount = buyMax ? maxRequirementsMet(requirements) : 1;
     if (isArray(requirements)) {
-        requirements.filter(r => unref(r.requiresPay)).forEach(r => r.pay?.());
+        requirements.filter(r => unref(r.requiresPay)).forEach(r => r.pay?.(amount));
     } else if (unref(requirements.requiresPay)) {
-        requirements.pay?.();
+        requirements.pay?.(amount);
     }
 }
