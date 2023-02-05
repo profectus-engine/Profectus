@@ -11,8 +11,22 @@ import { ref } from "vue";
 
 type FormulaFunctions = keyof GenericFormula & keyof typeof Formula & keyof typeof Decimal;
 
+interface CustomMatchers<R = unknown> {
+    compare_tolerance(expected: DecimalSource): R;
+}
+
+declare global {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
+    namespace Vi {
+        // eslint-disable-next-line @typescript-eslint/no-empty-interface
+        interface Assertion extends CustomMatchers {}
+        // eslint-disable-next-line @typescript-eslint/no-empty-interface
+        interface AsymmetricMatchersContaining extends CustomMatchers {}
+    }
+}
+
 expect.extend({
-    compare_tolerance(received, expected) {
+    compare_tolerance(received: DecimalSource, expected: DecimalSource) {
         const { isNot } = this;
         let pass = false;
         if (!Decimal.isFinite(expected)) {
@@ -34,20 +48,6 @@ expect.extend({
         };
     }
 });
-
-interface CustomMatchers<R = unknown> {
-    compare_tolerance(expected: DecimalSource): R;
-}
-
-declare global {
-    // eslint-disable-next-line @typescript-eslint/no-namespace
-    namespace Vi {
-        // eslint-disable-next-line @typescript-eslint/no-empty-interface
-        interface Assertion extends CustomMatchers {}
-        // eslint-disable-next-line @typescript-eslint/no-empty-interface
-        interface AsymmetricMatchersContaining extends CustomMatchers {}
-    }
-}
 
 const testValues = ["-1e400", 0, 0.25] as const;
 
