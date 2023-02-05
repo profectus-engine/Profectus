@@ -1998,7 +1998,17 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
  * @param spendResources Whether or not to count spent resources on each purchase or not
  */
 export function calculateMaxAffordable(
-    formula: GenericFormula,
+    formula: InvertibleFormula,
+    resource: Resource,
+    spendResources?: true
+): { maxAffordable: ComputedRef<DecimalSource>; cost: ComputedRef<DecimalSource> };
+export function calculateMaxAffordable(
+    formula: InvertibleIntegralFormula,
+    resource: Resource,
+    spendResources: Computable<boolean>
+): { maxAffordable: ComputedRef<DecimalSource>; cost: ComputedRef<DecimalSource> };
+export function calculateMaxAffordable(
+    formula: InvertibleFormula,
     resource: Resource,
     spendResources: Computable<boolean> = true
 ) {
