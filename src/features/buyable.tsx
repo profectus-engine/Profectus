@@ -6,6 +6,7 @@ import { DefaultValue, Persistent, persistent } from "game/persistence";
 import {
     createVisibilityRequirement,
     displayRequirements,
+    maxRequirementsMet,
     payRequirements,
     Requirements,
     requirementsMet
@@ -44,6 +45,7 @@ export interface BuyableOptions {
     style?: Computable<StyleValue>;
     mark?: Computable<boolean | string>;
     small?: Computable<boolean>;
+    buyMax?: Computable<boolean>;
     display?: Computable<BuyableDisplay>;
     onPurchase?: VoidFunction;
 }
@@ -70,6 +72,7 @@ export type Buyable<T extends BuyableOptions> = Replace<
         style: GetComputableType<T["style"]>;
         mark: GetComputableType<T["mark"]>;
         small: GetComputableType<T["small"]>;
+        buyMax: GetComputableType<T["buyMax"]>;
         display: Ref<CoercableComponent>;
     }
 >;
@@ -98,9 +101,9 @@ export function createBuyable<T extends BuyableOptions>(
 
         const limitRequirement = {
             requirementMet: computed(() =>
-                Decimal.lt(
-                    (buyable as GenericBuyable).amount.value,
-                    unref((buyable as GenericBuyable).purchaseLimit)
+                Decimal.sub(
+                    unref((buyable as GenericBuyable).purchaseLimit),
+                    (buyable as GenericBuyable).amount.value
                 )
             ),
             requiresPay: false,
@@ -138,7 +141,12 @@ export function createBuyable<T extends BuyableOptions>(
                 if (!unref(genericBuyable.canClick)) {
                     return;
                 }
-                payRequirements(buyable.requirements);
+                payRequirements(
+                    buyable.requirements,
+                    unref(genericBuyable.buyMax)
+                        ? maxRequirementsMet(genericBuyable.requirements)
+                        : 1
+                );
                 genericBuyable.amount.value = Decimal.add(genericBuyable.amount.value, 1);
                 genericBuyable.onPurchase?.();
             };
@@ -187,7 +195,12 @@ export function createBuyable<T extends BuyableOptions>(
                         {genericBuyable.maxed.value ? null : (
                             <div>
                                 <br />
-                                {displayRequirements(genericBuyable.requirements)}
+                                {displayRequirements(
+                                    genericBuyable.requirements,
+                                    unref(genericBuyable.buyMax)
+                                        ? maxRequirementsMet(genericBuyable.requirements)
+                                        : 1
+                                )}
                             </div>
                         )}
                     </span>
@@ -203,6 +216,7 @@ export function createBuyable<T extends BuyableOptions>(
         processComputable(buyable as T, "style");
         processComputable(buyable as T, "mark");
         processComputable(buyable as T, "small");
+        processComputable(buyable as T, "buyMax");
 
         buyable[GatherProps] = function (this: GenericBuyable) {
             const { display, visibility, style, classes, onClick, canClick, small, mark, id } =

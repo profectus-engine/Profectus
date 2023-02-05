@@ -214,8 +214,7 @@ export function displayRequirements(requirements: Requirements, amount: DecimalS
     return requirements.display?.() ?? <></>;
 }
 
-export function payRequirements(requirements: Requirements, buyMax = false) {
-    const amount = buyMax ? maxRequirementsMet(requirements) : 1;
+export function payRequirements(requirements: Requirements, amount: DecimalSource = 1) {
     if (isArray(requirements)) {
         requirements.filter(r => unref(r.requiresPay)).forEach(r => r.pay?.(amount));
     } else if (unref(requirements.requiresPay)) {
