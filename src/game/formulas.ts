@@ -759,6 +759,12 @@ function integrateAtanh(variable: DecimalSource | undefined, lhs: FormulaSource)
     throw "Could not integrate due to no input being a variable";
 }
 
+/**
+ * A class that can be used for cost/goal functions. It can be evaluated similar to a cost function, but also provides extra features for supported formulas. For example, a lot of math functions can be inverted.
+ * Typically, the use of these extra features is to support cost/goal functions that have multiple levels purchased/completed at once efficiently.
+ * @see {@link calculateMaxAffordable}
+ * @see {@link game/requirements.createCostRequirement}
+ */
 export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     readonly inputs: T;
 
@@ -827,6 +833,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             this.internalHasVariable && variable?.isIntegralInvertible() ? invert : undefined;
     }
 
+    /** Type predicate that this formula can be inverted. */
     isInvertible(): this is InvertibleFormula {
         return (
             this.internalHasVariable &&
@@ -834,14 +841,17 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         );
     }
 
+    /** Type predicate that this formula can be integrated. */
     isIntegrable(): this is IntegrableFormula {
         return this.internalHasVariable && this.internalIntegrate != null;
     }
 
+    /** Type predicate that this formula has an integral function that can be inverted. */
     isIntegralInvertible(): this is InvertibleIntegralFormula {
         return this.internalHasVariable && this.internalInvertIntegral != null;
     }
 
+    /** Whether or not this formula has a singular variable inside it, which can be accessed via {@link innermostVariable}. */
     hasVariable(): boolean {
         return this.internalHasVariable;
     }
@@ -863,6 +873,11 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         );
     }
 
+    /**
+     * Takes a potential result of the formula, and calculates what value the variable inside the formula would have to be for that result to occur. Only works if there's a single variable and if the formula is invertible.
+     * @param value The result of the formula
+     * @see {@link isInvertible}
+     */
     invert(value: DecimalSource): DecimalSource {
         if (this.internalInvert) {
             return this.internalInvert.call(this, value, ...this.inputs);
@@ -872,6 +887,11 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         throw "Cannot invert non-invertible formula";
     }
 
+    /**
+     * Evaluate the result of the indefinite integral (sans the constant of integration). Only works if there's a single variable and the formula is integrable
+     * @param variable Optionally override the value of the variable while evaluating
+     * @see {@link isIntegrable}
+     */
     evaluateIntegral(variable?: DecimalSource): DecimalSource {
         return (
             this.internalIntegrate?.call(this, variable, ...this.inputs) ??
@@ -880,12 +900,21 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         );
     }
 
+    /**
+     * Given the potential result of the formula's integral (sand the constant of integration), calculate what value the variable inside the formula would have to be for that result to occur. Only works if there's a single variable and if the formula's integral is invertible.
+     * @param value The result of the integral.
+     * @see {@link isIntegralInvertible}
+     */
     invertIntegral(value: DecimalSource): DecimalSource {
         // This is nearly completely non-functional
         // Proper nesting will require somehow using integration by substitution or integration by parts
         return this.internalInvertIntegral?.call(this, value, ...this.inputs) ?? value;
     }
 
+    /**
+     * Compares if two formulas are equivalent to each other. Note that function contexts can lead to false negatives.
+     * @param other The formula to compare to this one.
+     */
     equals(other: GenericFormula): boolean {
         return (
             this.inputs.length === other.inputs.length &&
@@ -904,12 +933,20 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         );
     }
 
+    /**
+     * Creates a formula that evaluates to a constant value.
+     * @param value The constant value for this formula.
+     */
     public static constant(
         value: InvertibleFormulaSource
     ): InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula {
         return new Formula({ inputs: [value] }) as InvertibleFormula;
     }
 
+    /**
+     * Creates a formula that is marked as the variable for an outer formula. Typically used for inverting and integrating.
+     * @param value The variable for this formula.
+     */
     public static variable(
         value: ProcessedComputable<DecimalSource>
     ): InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula {
@@ -957,6 +994,12 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         });
     }
 
+    /**
+     * Applies a modifier to a formula under a given condition.
+     * @param value The incoming formula value
+     * @param condition Whether or not to apply the modifier
+     * @param formulaModifier The modifier to apply to the incoming formula if the condition is true
+     */
     public static if(
         value: FormulaSource,
         condition: Computable<boolean>,
@@ -989,6 +1032,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             invert: formula.isInvertible() && !formula.hasVariable() ? invertStep : undefined
         });
     }
+    /** @see {@link if} */
     public static conditional(
         value: FormulaSource,
         condition: Computable<boolean>,
