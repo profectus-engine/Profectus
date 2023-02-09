@@ -250,7 +250,6 @@ describe("Creating Formulas", () => {
         }
         testConstant("number", () => Formula.constant(10));
         testConstant("string", () => Formula.constant("10"));
-        testConstant("formula", () => Formula.constant(Formula.constant(10)));
         testConstant("decimal", () => Formula.constant(new Decimal("1e400")), "1e400");
         testConstant("ref", () => Formula.constant(ref(10)));
     });
@@ -531,6 +530,12 @@ describe("Inverting", () => {
     test("Inverting nested formulas", () => {
         const formula = Formula.add(variable, constant).times(constant);
         expect(formula.invert(100)).compare_tolerance(0);
+    });
+
+    test("Inverting with non-invertible sections", () => {
+        const formula = Formula.add(variable, constant.ceil());
+        expect(formula.isInvertible()).toBe(true);
+        expect(formula.invert(10)).compare_tolerance(7);
     });
 });
 
