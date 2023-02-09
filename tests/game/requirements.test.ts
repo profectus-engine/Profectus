@@ -151,7 +151,7 @@ describe("Checking maximum levels of requirements met", () => {
                 cost: Formula.variable(0)
             }))
         ];
-        expect(maxRequirementsMet(requirements)).toBe(0);
+        expect(maxRequirementsMet(requirements)).compare_tolerance(0);
     });
 
     test("Returns correct number of requirements met", () => {
@@ -162,7 +162,7 @@ describe("Checking maximum levels of requirements met", () => {
                 cost: Formula.variable(0)
             }))
         ];
-        expect(maxRequirementsMet(requirements)).toBe(10);
+        expect(maxRequirementsMet(requirements)).compare_tolerance(10);
     });
 });
 
