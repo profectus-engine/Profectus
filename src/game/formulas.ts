@@ -1006,7 +1006,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: evalStep,
-            invert: formula.isInvertible() && !formula.hasVariable() ? invertStep : undefined
+            invert: formula.isInvertible() && formula.hasVariable() ? invertStep : undefined
         });
     }
 
@@ -1047,7 +1047,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: evalStep,
-            invert: formula.isInvertible() && !formula.hasVariable() ? invertStep : undefined
+            invert: formula.isInvertible() && formula.hasVariable() ? invertStep : undefined
         });
     }
     /** @see {@link if} */

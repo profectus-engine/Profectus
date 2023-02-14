@@ -647,8 +647,11 @@ describe("Inverting integrals", () => {
                     checkFormula(Formula[name](variable, constant)));
                 test(`${name}(const, var) is marked as having an invertible integral`, () =>
                     checkFormula(Formula[name](constant, variable)));
-                test(`${name}(var, var) is marked as having an invertible integral`, () =>
-                    checkFormula(Formula[name](variable, variable)));
+                test(`${name}(var, var) is marked as not having an invertible integral`, () => {
+                    const formula = Formula[name](variable, variable);
+                    expect(formula.isIntegralInvertible()).toBe(false);
+                    expect(() => formula.invertIntegral(10)).to.throw();
+                });
             });
         });
     });
@@ -659,35 +662,35 @@ describe("Inverting integrals", () => {
         }
         nonInvertibleIntegralZeroPramFunctionNames.forEach(name => {
             describe(name, () => {
-                test(`${name}(var) is marked as not integrable`, () =>
+                test(`${name}(var) is marked as not having an invertible integral`, () =>
                     checkFormula(Formula[name](variable)));
             });
         });
         nonInvertibleIntegralOneParamFunctionNames.forEach(name => {
             describe(name, () => {
-                test(`${name}(var, const) is marked as not integrable`, () =>
+                test(`${name}(var, const) is marked as not having an invertible integral`, () =>
                     checkFormula(Formula[name](variable, constant)));
-                test(`${name}(const, var) is marked as not integrable`, () =>
+                test(`${name}(const, var) is marked as not having an invertible integral`, () =>
                     checkFormula(Formula[name](constant, variable)));
-                test(`${name}(var, var) is marked as not integrable`, () =>
+                test(`${name}(var, var) is marked as not having an invertible integral`, () =>
                     checkFormula(Formula[name](variable, variable)));
             });
         });
         nonInvertibleIntegralTwoParamFunctionNames.forEach(name => {
             describe(name, () => {
-                test(`${name}(var, const, const) is marked as not integrable`, () =>
+                test(`${name}(var, const, const) is marked as not having an invertible integral`, () =>
                     checkFormula(Formula[name](variable, constant, constant)));
-                test(`${name}(const, var, const) is marked as not integrable`, () =>
+                test(`${name}(const, var, const) is marked as not having an invertible integral`, () =>
                     checkFormula(Formula[name](constant, variable, constant)));
-                test(`${name}(const, const, var) is marked as not integrable`, () =>
+                test(`${name}(const, const, var) is marked as not having an invertible integral`, () =>
                     checkFormula(Formula[name](constant, constant, variable)));
-                test(`${name}(var, var, const) is marked as not integrable`, () =>
+                test(`${name}(var, var, const) is marked as not having an invertible integral`, () =>
                     checkFormula(Formula[name](variable, variable, constant)));
-                test(`${name}(var, const, var) is marked as not integrable`, () =>
+                test(`${name}(var, const, var) is marked as not having an invertible integral`, () =>
                     checkFormula(Formula[name](variable, constant, variable)));
-                test(`${name}(const, var, var) is marked as not integrable`, () =>
+                test(`${name}(const, var, var) is marked as not having an invertible integral`, () =>
                     checkFormula(Formula[name](constant, variable, variable)));
-                test(`${name}(var, var, var) is marked as not integrable`, () =>
+                test(`${name}(var, var, var) is marked as not having an invertible integral`, () =>
                     checkFormula(Formula[name](variable, variable, variable)));
             });
         });
@@ -890,7 +893,7 @@ describe("Custom Formulas", () => {
                     inputs: [],
                     evaluate: () => 6,
                     invert: value => value,
-                    variable: ref(10)
+                    hasVariable: true
                 }).invert(10)
             ).compare_tolerance(10));
         test("One input inverts correctly", () =>
@@ -899,7 +902,7 @@ describe("Custom Formulas", () => {
                     inputs: [1],
                     evaluate: () => 10,
                     invert: (value, v1) => v1,
-                    variable: ref(10)
+                    hasVariable: true
                 }).invert(10)
             ).compare_tolerance(1));
         test("Two inputs inverts correctly", () =>
@@ -908,7 +911,7 @@ describe("Custom Formulas", () => {
                     inputs: [1, 2],
                     evaluate: () => 10,
                     invert: (value, v1, v2) => v2,
-                    variable: ref(10)
+                    hasVariable: true
                 }).invert(10)
             ).compare_tolerance(2));
     });
@@ -947,7 +950,7 @@ describe("Custom Formulas", () => {
                     inputs: [],
                     evaluate: () => 10,
                     invertIntegral: () => 1,
-                    variable: ref(10)
+                    hasVariable: true
                 }).invertIntegral(8)
             ).compare_tolerance(1));
         test("One input inverts integral correctly", () =>
@@ -956,7 +959,7 @@ describe("Custom Formulas", () => {
                     inputs: [1],
                     evaluate: () => 10,
                     invertIntegral: val => 1,
-                    variable: ref(10)
+                    hasVariable: true
                 }).invertIntegral(8)
             ).compare_tolerance(1));
         test("Two inputs inverts integral correctly", () =>
@@ -965,7 +968,7 @@ describe("Custom Formulas", () => {
                     inputs: [1, 2],
                     evaluate: (v1, v2) => 10,
                     invertIntegral: (v1, v2) => 1,
-                    variable: ref(10)
+                    hasVariable: true
                 }).invertIntegral(8)
             ).compare_tolerance(1));
     });
