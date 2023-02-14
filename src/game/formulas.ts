@@ -56,6 +56,10 @@ export function unrefFormulaSource(value: FormulaSource, variable?: DecimalSourc
     return value instanceof Formula ? value.evaluate(variable) : unref(value);
 }
 
+function passthrough(value: DecimalSource) {
+    return value;
+}
+
 function invertNeg(value: DecimalSource, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
         return lhs.invert(Decimal.neg(value));
@@ -1216,19 +1220,63 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     }
 
     public static max(value: FormulaSource, other: FormulaSource): GenericFormula {
-        return new Formula({ inputs: [value, other], evaluate: Decimal.max });
+        return new Formula({
+            inputs: [value, other],
+            evaluate: Decimal.max,
+            invert: passthrough as (
+                value: DecimalSource,
+                ...inputs: [FormulaSource, FormulaSource]
+            ) => DecimalSource,
+            invertIntegral: passthrough as (
+                value: DecimalSource,
+                ...inputs: [FormulaSource, FormulaSource]
+            ) => DecimalSource
+        });
     }
 
     public static min(value: FormulaSource, other: FormulaSource): GenericFormula {
-        return new Formula({ inputs: [value, other], evaluate: Decimal.min });
+        return new Formula({
+            inputs: [value, other],
+            evaluate: Decimal.min,
+            invert: passthrough as (
+                value: DecimalSource,
+                ...inputs: [FormulaSource, FormulaSource]
+            ) => DecimalSource,
+            invertIntegral: passthrough as (
+                value: DecimalSource,
+                ...inputs: [FormulaSource, FormulaSource]
+            ) => DecimalSource
+        });
     }
 
     public static minabs(value: FormulaSource, other: FormulaSource): GenericFormula {
-        return new Formula({ inputs: [value, other], evaluate: Decimal.minabs });
+        return new Formula({
+            inputs: [value, other],
+            evaluate: Decimal.minabs,
+            invert: passthrough as (
+                value: DecimalSource,
+                ...inputs: [FormulaSource, FormulaSource]
+            ) => DecimalSource,
+            invertIntegral: passthrough as (
+                value: DecimalSource,
+                ...inputs: [FormulaSource, FormulaSource]
+            ) => DecimalSource
+        });
     }
 
     public static maxabs(value: FormulaSource, other: FormulaSource): GenericFormula {
-        return new Formula({ inputs: [value, other], evaluate: Decimal.maxabs });
+        return new Formula({
+            inputs: [value, other],
+            evaluate: Decimal.maxabs,
+            invert: passthrough as (
+                value: DecimalSource,
+                ...inputs: [FormulaSource, FormulaSource]
+            ) => DecimalSource,
+            invertIntegral: passthrough as (
+                value: DecimalSource,
+                ...inputs: [FormulaSource, FormulaSource]
+            ) => DecimalSource
+        });
     }
 
     public static clamp(
@@ -1236,15 +1284,48 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         min: FormulaSource,
         max: FormulaSource
     ): GenericFormula {
-        return new Formula({ inputs: [value, min, max], evaluate: Decimal.clamp });
+        return new Formula({
+            inputs: [value, min, max],
+            evaluate: Decimal.clamp,
+            invert: passthrough as (
+                value: DecimalSource,
+                ...inputs: [FormulaSource, FormulaSource, FormulaSource]
+            ) => DecimalSource,
+            invertIntegral: passthrough as (
+                value: DecimalSource,
+                ...inputs: [FormulaSource, FormulaSource, FormulaSource]
+            ) => DecimalSource
+        });
     }
 
     public static clampMin(value: FormulaSource, min: FormulaSource): GenericFormula {
-        return new Formula({ inputs: [value, min], evaluate: Decimal.clampMin });
+        return new Formula({
+            inputs: [value, min],
+            evaluate: Decimal.clampMin,
+            invert: passthrough as (
+                value: DecimalSource,
+                ...inputs: [FormulaSource, FormulaSource]
+            ) => DecimalSource,
+            invertIntegral: passthrough as (
+                value: DecimalSource,
+                ...inputs: [FormulaSource, FormulaSource]
+            ) => DecimalSource
+        });
     }
 
     public static clampMax(value: FormulaSource, max: FormulaSource): GenericFormula {
-        return new Formula({ inputs: [value, max], evaluate: Decimal.clampMax });
+        return new Formula({
+            inputs: [value, max],
+            evaluate: Decimal.clampMax,
+            invert: passthrough as (
+                value: DecimalSource,
+                ...inputs: [FormulaSource, FormulaSource]
+            ) => DecimalSource,
+            invertIntegral: passthrough as (
+                value: DecimalSource,
+                ...inputs: [FormulaSource, FormulaSource]
+            ) => DecimalSource
+        });
     }
 
     public static pLog10(value: FormulaSource): GenericFormula {

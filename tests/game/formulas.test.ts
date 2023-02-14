@@ -124,22 +124,14 @@ const invertibleOneParamFunctionNames = [
     "root",
     "slog"
 ] as const;
-const nonInvertibleOneParamFunctionNames = [
-    "max",
-    "min",
-    "maxabs",
-    "minabs",
-    "clampMin",
-    "clampMax",
-    "layeradd10"
-] as const;
+const nonInvertibleOneParamFunctionNames = ["layeradd10"] as const;
 const integrableOneParamFunctionNames = ["add", "sub", "mul", "div", "log", "pow", "root"] as const;
 const nonIntegrableOneParamFunctionNames = [...nonInvertibleOneParamFunctionNames, "slog"] as const;
 const invertibleIntegralOneParamFunctionNames = integrableOneParamFunctionNames;
 const nonInvertibleIntegralOneParamFunctionNames = nonIntegrableOneParamFunctionNames;
 
 const invertibleTwoParamFunctionNames = ["tetrate", "layeradd", "iteratedexp"] as const;
-const nonInvertibleTwoParamFunctionNames = ["clamp", "iteratedlog", "pentate"] as const;
+const nonInvertibleTwoParamFunctionNames = ["iteratedlog", "pentate"] as const;
 const nonIntegrableTwoParamFunctionNames = [
     ...invertibleTwoParamFunctionNames,
     ...nonInvertibleZeroParamFunctionNames
@@ -308,34 +300,28 @@ describe("Creating Formulas", () => {
         });
     }
 
-    describe("Invertible 0-param", () => {
-        invertibleZeroParamFunctionNames.forEach(names =>
-            describe(names, () => {
-                checkFormula(names, [0] as const);
-                testValues.forEach(i => testFormulaCall(names, [i] as const));
-            })
+    describe("0-param", () => {
+        [...invertibleZeroParamFunctionNames, ...nonInvertibleZeroParamFunctionNames].forEach(
+            names =>
+                describe(names, () => {
+                    checkFormula(names, [0] as const);
+                    testValues.forEach(i => testFormulaCall(names, [i] as const));
+                })
         );
     });
-    describe("Non-Invertible 0-param", () => {
-        nonInvertibleZeroParamFunctionNames.forEach(names =>
-            describe(names, () => {
-                checkFormula(names, [0] as const);
-                testValues.forEach(i => testFormulaCall(names, [i] as const));
-            })
-        );
-    });
-    describe("Invertible 1-param", () => {
-        invertibleOneParamFunctionNames.forEach(names =>
-            describe(names, () => {
-                checkFormula(names, [0, 0] as const);
-                testValues.forEach(i =>
-                    testValues.forEach(j => testFormulaCall(names, [i, j] as const))
-                );
-            })
-        );
-    });
-    describe("Non-Invertible 1-param", () => {
-        nonInvertibleOneParamFunctionNames.forEach(names =>
+    describe("1-param", () => {
+        (
+            [
+                ...invertibleOneParamFunctionNames,
+                ...nonInvertibleOneParamFunctionNames,
+                "max",
+                "min",
+                "maxabs",
+                "minabs",
+                "clampMin",
+                "clampMax"
+            ] as const
+        ).forEach(names =>
             describe(names, () => {
                 checkFormula(names, [0, 0] as const);
                 testValues.forEach(i =>
@@ -344,20 +330,14 @@ describe("Creating Formulas", () => {
             })
         );
     });
-    describe("Invertible 2-param", () => {
-        invertibleTwoParamFunctionNames.forEach(names =>
-            describe(names, () => {
-                checkFormula(names, [0, 0, 0] as const);
-                testValues.forEach(i =>
-                    testValues.forEach(j =>
-                        testValues.forEach(k => testFormulaCall(names, [i, j, k] as const))
-                    )
-                );
-            })
-        );
-    });
-    describe("Non-Invertible 2-param", () => {
-        nonInvertibleTwoParamFunctionNames.forEach(names =>
+    describe("2-param", () => {
+        (
+            [
+                ...invertibleTwoParamFunctionNames,
+                ...nonInvertibleTwoParamFunctionNames,
+                "clamp"
+            ] as const
+        ).forEach(names =>
             describe(names, () => {
                 checkFormula(names, [0, 0, 0] as const);
                 testValues.forEach(i =>
@@ -525,6 +505,21 @@ describe("Inverting", () => {
                 });
             })
         );
+    });
+
+    describe("Inverting pass-throughs", () => {
+        test("max", () => expect(Formula.max(variable, constant).invert(10)).compare_tolerance(10));
+        test("min", () => expect(Formula.min(variable, constant).invert(10)).compare_tolerance(10));
+        test("minabs", () =>
+            expect(Formula.minabs(variable, constant).invert(10)).compare_tolerance(10));
+        test("maxabs", () =>
+            expect(Formula.maxabs(variable, constant).invert(10)).compare_tolerance(10));
+        test("clampMax", () =>
+            expect(Formula.clampMax(variable, constant).invert(10)).compare_tolerance(10));
+        test("clampMin", () =>
+            expect(Formula.clampMin(variable, constant).invert(10)).compare_tolerance(10));
+        test("clamp", () =>
+            expect(Formula.clamp(variable, constant, constant).invert(10)).compare_tolerance(10));
     });
 
     test("Inverting nested formulas", () => {
@@ -704,6 +699,25 @@ describe("Inverting integrals", () => {
     test("Inverting integral of nested formulas", () => {
         const formula = Formula.add(variable, constant).times(constant);
         expect(formula.invertIntegral(1500)).compare_tolerance(10);
+    });
+
+    describe("Inverting integral pass-throughs", () => {
+        test("max", () =>
+            expect(Formula.max(variable, constant).invertIntegral(10)).compare_tolerance(10));
+        test("min", () =>
+            expect(Formula.min(variable, constant).invertIntegral(10)).compare_tolerance(10));
+        test("minabs", () =>
+            expect(Formula.minabs(variable, constant).invertIntegral(10)).compare_tolerance(10));
+        test("maxabs", () =>
+            expect(Formula.maxabs(variable, constant).invertIntegral(10)).compare_tolerance(10));
+        test("clampMax", () =>
+            expect(Formula.clampMax(variable, constant).invertIntegral(10)).compare_tolerance(10));
+        test("clampMin", () =>
+            expect(Formula.clampMin(variable, constant).invertIntegral(10)).compare_tolerance(10));
+        test("clamp", () =>
+            expect(
+                Formula.clamp(variable, constant, constant).invertIntegral(10)
+            ).compare_tolerance(10));
     });
 });
 
@@ -980,7 +994,7 @@ describe("Buy Max", () => {
     });
     describe("Without spending", () => {
         test("Throws on non-invertible formula", () => {
-            const maxAffordable = calculateMaxAffordable(Formula.abs(10), resource, false);
+            const maxAffordable = calculateMaxAffordable(Formula.abs(10), resource);
             expect(() => maxAffordable.value).toThrow();
         });
         // https://www.desmos.com/calculator/5vgletdc1p
