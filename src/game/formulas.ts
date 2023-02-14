@@ -829,7 +829,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         this.internalInvertIntegral =
-            this.internalHasVariable && variable?.isIntegralInvertible() ? invert : undefined;
+            this.internalHasVariable && variable?.isIntegralInvertible()
+                ? invertIntegral
+                : undefined;
     }
 
     /** Type predicate that this formula can be inverted. */
@@ -847,7 +849,10 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
 
     /** Type predicate that this formula has an integral function that can be inverted. */
     isIntegralInvertible(): this is InvertibleIntegralFormula {
-        return this.internalHasVariable && this.internalInvertIntegral != null;
+        return (
+            this.internalHasVariable &&
+            (this.internalInvertIntegral != null || this.internalEvaluate == null)
+        );
     }
 
     /** Whether or not this formula has a singular variable inside it, which can be accessed via {@link innermostVariable}. */
@@ -892,11 +897,12 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
      * @see {@link isIntegrable}
      */
     evaluateIntegral(variable?: DecimalSource): DecimalSource {
-        return (
-            this.internalIntegrate?.call(this, variable, ...this.inputs) ??
-            variable ??
-            unrefFormulaSource(this.inputs[0])
-        );
+        if (this.internalIntegrate) {
+            return this.internalIntegrate.call(this, variable, ...this.inputs);
+        } else if (this.inputs.length === 1 && this.internalHasVariable) {
+            return variable ?? unrefFormulaSource(this.inputs[0]);
+        }
+        throw "Cannot integrate formula without variable";
     }
 
     /**
@@ -907,7 +913,12 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     invertIntegral(value: DecimalSource): DecimalSource {
         // This is nearly completely non-functional
         // Proper nesting will require somehow using integration by substitution or integration by parts
-        return this.internalInvertIntegral?.call(this, value, ...this.inputs) ?? value;
+        if (this.internalInvertIntegral) {
+            return this.internalInvertIntegral.call(this, value, ...this.inputs);
+        } else if (this.inputs.length === 1 && this.internalHasVariable) {
+            return value;
+        }
+        throw "Cannot invert integral of formula without invertible integral";
     }
 
     /**
@@ -962,10 +973,12 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     public static step(
         value: FormulaSource,
         start: Computable<DecimalSource>,
-        formulaModifier: (value: Ref<DecimalSource>) => GenericFormula
+        formulaModifier: (
+            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
+        ) => GenericFormula
     ): GenericFormula {
         const lhsRef = ref<DecimalSource>(0);
-        const formula = formulaModifier(lhsRef);
+        const formula = formulaModifier(Formula.variable(lhsRef));
         const processedStart = convertComputable(start);
         function evalStep(lhs: DecimalSource) {
             if (Decimal.lt(lhs, unref(processedStart))) {
@@ -1002,10 +1015,12 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     public static if(
         value: FormulaSource,
         condition: Computable<boolean>,
-        formulaModifier: (value: Ref<DecimalSource>) => GenericFormula
+        formulaModifier: (
+            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
+        ) => GenericFormula
     ): GenericFormula {
         const lhsRef = ref<DecimalSource>(0);
-        const formula = formulaModifier(lhsRef);
+        const formula = formulaModifier(Formula.variable(lhsRef));
         const processedCondition = convertComputable(condition);
         function evalStep(lhs: DecimalSource) {
             if (unref(processedCondition)) {
@@ -1035,7 +1050,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     public static conditional(
         value: FormulaSource,
         condition: Computable<boolean>,
-        formulaModifier: (value: Ref<DecimalSource>) => GenericFormula
+        formulaModifier: (
+            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
+        ) => GenericFormula
     ) {
         return Formula.if(value, condition, formulaModifier);
     }
@@ -1632,20 +1649,26 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
 
     public step(
         start: Computable<DecimalSource>,
-        formulaModifier: (value: Ref<DecimalSource>) => GenericFormula
+        formulaModifier: (
+            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
+        ) => GenericFormula
     ) {
         return Formula.step(this, start, formulaModifier);
     }
 
     public if(
         condition: Computable<boolean>,
-        formulaModifier: (value: Ref<DecimalSource>) => GenericFormula
+        formulaModifier: (
+            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
+        ) => GenericFormula
     ) {
         return Formula.if(this, condition, formulaModifier);
     }
     public conditional(
         condition: Computable<boolean>,
-        formulaModifier: (value: Ref<DecimalSource>) => GenericFormula
+        formulaModifier: (
+            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
+        ) => GenericFormula
     ) {
         return Formula.if(this, condition, formulaModifier);
     }

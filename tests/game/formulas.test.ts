@@ -569,8 +569,8 @@ describe("Integrating", () => {
                     checkFormula(Formula[name](variable, constant)));
                 test(`${name}(const, var) is marked as integrable`, () =>
                     checkFormula(Formula[name](constant, variable)));
-                test(`${name}(var, var) is marked as integrable`, () =>
-                    checkFormula(Formula[name](variable, variable)));
+                test(`${name}(var, var) is marked as not integrable`, () =>
+                    expect(Formula[name](variable, variable).isIntegrable()).toBe(false));
             });
         });
     });
@@ -872,20 +872,29 @@ describe("Custom Formulas", () => {
     describe("Formula with invert", () => {
         test("Zero input inverts correctly", () =>
             expect(
-                new Formula({ inputs: [], evaluate: () => 6, invert: value => value }).invert(10)
+                new Formula({
+                    inputs: [],
+                    evaluate: () => 6,
+                    invert: value => value,
+                    variable: ref(10)
+                }).invert(10)
             ).compare_tolerance(10));
         test("One input inverts correctly", () =>
             expect(
-                new Formula({ inputs: [1], evaluate: () => 10, invert: (value, v1) => v1 }).invert(
-                    10
-                )
+                new Formula({
+                    inputs: [1],
+                    evaluate: () => 10,
+                    invert: (value, v1) => v1,
+                    variable: ref(10)
+                }).invert(10)
             ).compare_tolerance(1));
         test("Two inputs inverts correctly", () =>
             expect(
                 new Formula({
                     inputs: [1, 2],
                     evaluate: () => 10,
-                    invert: (value, v1, v2) => v2
+                    invert: (value, v1, v2) => v2,
+                    variable: ref(10)
                 }).invert(10)
             ).compare_tolerance(2));
     });
@@ -923,7 +932,8 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [],
                     evaluate: () => 10,
-                    invertIntegral: () => 1
+                    invertIntegral: () => 1,
+                    variable: ref(10)
                 }).invertIntegral(8)
             ).compare_tolerance(1));
         test("One input inverts integral correctly", () =>
@@ -931,7 +941,8 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [1],
                     evaluate: () => 10,
-                    invertIntegral: val => 1
+                    invertIntegral: val => 1,
+                    variable: ref(10)
                 }).invertIntegral(8)
             ).compare_tolerance(1));
         test("Two inputs inverts integral correctly", () =>
@@ -939,7 +950,8 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [1, 2],
                     evaluate: (v1, v2) => 10,
-                    invertIntegral: (v1, v2) => 1
+                    invertIntegral: (v1, v2) => 1,
+                    variable: ref(10)
                 }).invertIntegral(8)
             ).compare_tolerance(1));
     });
