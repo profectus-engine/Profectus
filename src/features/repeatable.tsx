@@ -25,9 +25,9 @@ import { coerceComponent, isCoercableComponent } from "util/vue";
 import type { Ref } from "vue";
 import { computed, unref } from "vue";
 
-export const BuyableType = Symbol("Buyable");
+export const RepeatableType = Symbol("Repeatable");
 
-export type BuyableDisplay =
+export type RepeatableDisplay =
     | CoercableComponent
     | {
           title?: CoercableComponent;
@@ -36,7 +36,7 @@ export type BuyableDisplay =
           showAmount?: boolean;
       };
 
-export interface BuyableOptions {
+export interface RepeatableOptions {
     visibility?: Computable<Visibility>;
     requirements: Requirements;
     purchaseLimit?: Computable<DecimalSource>;
@@ -46,24 +46,24 @@ export interface BuyableOptions {
     mark?: Computable<boolean | string>;
     small?: Computable<boolean>;
     buyMax?: Computable<boolean>;
-    display?: Computable<BuyableDisplay>;
+    display?: Computable<RepeatableDisplay>;
     onPurchase?: VoidFunction;
 }
 
-export interface BaseBuyable {
+export interface BaseRepeatable {
     id: string;
     amount: Persistent<DecimalSource>;
     maxed: Ref<boolean>;
     canClick: ProcessedComputable<boolean>;
     onClick: VoidFunction;
     purchase: VoidFunction;
-    type: typeof BuyableType;
+    type: typeof RepeatableType;
     [Component]: typeof ClickableComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
-export type Buyable<T extends BuyableOptions> = Replace<
-    T & BaseBuyable,
+export type Repeatable<T extends RepeatableOptions> = Replace<
+    T & BaseRepeatable,
     {
         visibility: GetComputableTypeWithDefault<T["visibility"], Visibility.Visible>;
         requirements: GetComputableType<T["requirements"]>;
@@ -77,90 +77,96 @@ export type Buyable<T extends BuyableOptions> = Replace<
     }
 >;
 
-export type GenericBuyable = Replace<
-    Buyable<BuyableOptions>,
+export type GenericRepeatable = Replace<
+    Repeatable<RepeatableOptions>,
     {
         visibility: ProcessedComputable<Visibility>;
         purchaseLimit: ProcessedComputable<DecimalSource>;
     }
 >;
 
-export function createBuyable<T extends BuyableOptions>(
-    optionsFunc: OptionsFunc<T, BaseBuyable, GenericBuyable>
-): Buyable<T> {
+export function createRepeatable<T extends RepeatableOptions>(
+    optionsFunc: OptionsFunc<T, BaseRepeatable, GenericRepeatable>
+): Repeatable<T> {
     const amount = persistent<DecimalSource>(0);
     return createLazyProxy(() => {
-        const buyable = optionsFunc();
+        const repeatable = optionsFunc();
 
-        buyable.id = getUniqueID("buyable-");
-        buyable.type = BuyableType;
-        buyable[Component] = ClickableComponent;
+        repeatable.id = getUniqueID("repeatable-");
+        repeatable.type = RepeatableType;
+        repeatable[Component] = ClickableComponent;
 
-        buyable.amount = amount;
-        buyable.amount[DefaultValue] = buyable.initialValue ?? 0;
+        repeatable.amount = amount;
+        repeatable.amount[DefaultValue] = repeatable.initialValue ?? 0;
 
         const limitRequirement = {
             requirementMet: computed(() =>
                 Decimal.sub(
-                    unref((buyable as GenericBuyable).purchaseLimit),
-                    (buyable as GenericBuyable).amount.value
+                    unref((repeatable as GenericRepeatable).purchaseLimit),
+                    (repeatable as GenericRepeatable).amount.value
                 )
             ),
             requiresPay: false,
             visibility: Visibility.None
         } as const;
-        const visibilityRequirement = createVisibilityRequirement(buyable as GenericBuyable);
-        if (isArray(buyable.requirements)) {
-            buyable.requirements.unshift(visibilityRequirement);
-            buyable.requirements.push(limitRequirement);
+        const visibilityRequirement = createVisibilityRequirement(repeatable as GenericRepeatable);
+        if (isArray(repeatable.requirements)) {
+            repeatable.requirements.unshift(visibilityRequirement);
+            repeatable.requirements.push(limitRequirement);
         } else {
-            buyable.requirements = [visibilityRequirement, buyable.requirements, limitRequirement];
+            repeatable.requirements = [
+                visibilityRequirement,
+                repeatable.requirements,
+                limitRequirement
+            ];
         }
 
-        buyable.maxed = computed(() =>
+        repeatable.maxed = computed(() =>
             Decimal.gte(
-                (buyable as GenericBuyable).amount.value,
-                unref((buyable as GenericBuyable).purchaseLimit)
+                (repeatable as GenericRepeatable).amount.value,
+                unref((repeatable as GenericRepeatable).purchaseLimit)
             )
         );
-        processComputable(buyable as T, "classes");
-        const classes = buyable.classes as ProcessedComputable<Record<string, boolean>> | undefined;
-        buyable.classes = computed(() => {
+        processComputable(repeatable as T, "classes");
+        const classes = repeatable.classes as
+            | ProcessedComputable<Record<string, boolean>>
+            | undefined;
+        repeatable.classes = computed(() => {
             const currClasses = unref(classes) || {};
-            if ((buyable as GenericBuyable).maxed.value) {
+            if ((repeatable as GenericRepeatable).maxed.value) {
                 currClasses.bought = true;
             }
             return currClasses;
         });
-        buyable.canClick = computed(() => requirementsMet(buyable.requirements));
-        buyable.onClick = buyable.purchase =
-            buyable.onClick ??
-            buyable.purchase ??
-            function (this: GenericBuyable) {
-                const genericBuyable = buyable as GenericBuyable;
-                if (!unref(genericBuyable.canClick)) {
+        repeatable.canClick = computed(() => requirementsMet(repeatable.requirements));
+        repeatable.onClick = repeatable.purchase =
+            repeatable.onClick ??
+            repeatable.purchase ??
+            function (this: GenericRepeatable) {
+                const genericRepeatable = repeatable as GenericRepeatable;
+                if (!unref(genericRepeatable.canClick)) {
                     return;
                 }
                 payRequirements(
-                    buyable.requirements,
-                    unref(genericBuyable.buyMax)
-                        ? maxRequirementsMet(genericBuyable.requirements)
+                    repeatable.requirements,
+                    unref(genericRepeatable.buyMax)
+                        ? maxRequirementsMet(genericRepeatable.requirements)
                         : 1
                 );
-                genericBuyable.amount.value = Decimal.add(genericBuyable.amount.value, 1);
-                genericBuyable.onPurchase?.();
+                genericRepeatable.amount.value = Decimal.add(genericRepeatable.amount.value, 1);
+                genericRepeatable.onPurchase?.();
             };
-        processComputable(buyable as T, "display");
-        const display = buyable.display;
-        buyable.display = jsx(() => {
+        processComputable(repeatable as T, "display");
+        const display = repeatable.display;
+        repeatable.display = jsx(() => {
             // TODO once processComputable types correctly, remove this "as X"
-            const currDisplay = unref(display) as BuyableDisplay;
+            const currDisplay = unref(display) as RepeatableDisplay;
             if (isCoercableComponent(currDisplay)) {
                 const CurrDisplay = coerceComponent(currDisplay);
                 return <CurrDisplay />;
             }
             if (currDisplay != null) {
-                const genericBuyable = buyable as GenericBuyable;
+                const genericRepeatable = repeatable as GenericRepeatable;
                 const Title = coerceComponent(currDisplay.title ?? "", "h3");
                 const Description = coerceComponent(currDisplay.description ?? "");
                 const EffectDisplay = coerceComponent(currDisplay.effectDisplay ?? "");
@@ -176,12 +182,12 @@ export function createBuyable<T extends BuyableOptions>(
                         {currDisplay.showAmount === false ? null : (
                             <div>
                                 <br />
-                                {unref(genericBuyable.purchaseLimit) === Decimal.dInf ? (
-                                    <>Amount: {formatWhole(genericBuyable.amount.value)}</>
+                                {unref(genericRepeatable.purchaseLimit) === Decimal.dInf ? (
+                                    <>Amount: {formatWhole(genericRepeatable.amount.value)}</>
                                 ) : (
                                     <>
-                                        Amount: {formatWhole(genericBuyable.amount.value)} /{" "}
-                                        {formatWhole(unref(genericBuyable.purchaseLimit))}
+                                        Amount: {formatWhole(genericRepeatable.amount.value)} /{" "}
+                                        {formatWhole(unref(genericRepeatable.purchaseLimit))}
                                     </>
                                 )}
                             </div>
@@ -192,13 +198,13 @@ export function createBuyable<T extends BuyableOptions>(
                                 Currently: <EffectDisplay />
                             </div>
                         )}
-                        {genericBuyable.maxed.value ? null : (
+                        {genericRepeatable.maxed.value ? null : (
                             <div>
                                 <br />
                                 {displayRequirements(
-                                    genericBuyable.requirements,
-                                    unref(genericBuyable.buyMax)
-                                        ? maxRequirementsMet(genericBuyable.requirements)
+                                    genericRepeatable.requirements,
+                                    unref(genericRepeatable.buyMax)
+                                        ? maxRequirementsMet(genericRepeatable.requirements)
                                         : 1
                                 )}
                             </div>
@@ -209,16 +215,16 @@ export function createBuyable<T extends BuyableOptions>(
             return "";
         });
 
-        processComputable(buyable as T, "visibility");
-        setDefault(buyable, "visibility", Visibility.Visible);
-        processComputable(buyable as T, "purchaseLimit");
-        setDefault(buyable, "purchaseLimit", Decimal.dInf);
-        processComputable(buyable as T, "style");
-        processComputable(buyable as T, "mark");
-        processComputable(buyable as T, "small");
-        processComputable(buyable as T, "buyMax");
+        processComputable(repeatable as T, "visibility");
+        setDefault(repeatable, "visibility", Visibility.Visible);
+        processComputable(repeatable as T, "purchaseLimit");
+        setDefault(repeatable, "purchaseLimit", Decimal.dInf);
+        processComputable(repeatable as T, "style");
+        processComputable(repeatable as T, "mark");
+        processComputable(repeatable as T, "small");
+        processComputable(repeatable as T, "buyMax");
 
-        buyable[GatherProps] = function (this: GenericBuyable) {
+        repeatable[GatherProps] = function (this: GenericRepeatable) {
             const { display, visibility, style, classes, onClick, canClick, small, mark, id } =
                 this;
             return {
@@ -234,6 +240,6 @@ export function createBuyable<T extends BuyableOptions>(
             };
         };
 
-        return buyable as unknown as Buyable<T>;
+        return repeatable as unknown as Repeatable<T>;
     });
 }
