@@ -140,14 +140,22 @@ window.onbeforeunload = () => {
 
 declare global {
     /**
-     * Augment the window object so the save function, and the hard reset function can be accessed from the console.
+     * Augment the window object so the save, hard reset, and deleteLowerSaves functions can be accessed from the console.
      */
     interface Window {
         save: VoidFunction;
         hardReset: VoidFunction;
+        deleteLowerSaves: VoidFunction;
     }
 }
 window.save = save;
 export const hardReset = (window.hardReset = async () => {
     await loadSave(newSave());
+});
+export const deleteLowerSaves = (window.deleteLowerSaves = () => {
+    const index = Object.values(settings.saves).indexOf(player.id) + 1;
+    Object.values(settings.saves)
+        .slice(index)
+        .forEach(id => localStorage.removeItem(id));
+    settings.saves = settings.saves.slice(0, index);
 });
