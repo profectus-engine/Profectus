@@ -47,7 +47,6 @@ export interface RepeatableOptions {
     small?: Computable<boolean>;
     maximize?: Computable<boolean>;
     display?: Computable<RepeatableDisplay>;
-    onPurchase?: VoidFunction;
 }
 
 export interface BaseRepeatable {
@@ -56,7 +55,6 @@ export interface BaseRepeatable {
     maxed: Ref<boolean>;
     canClick: ProcessedComputable<boolean>;
     onClick: VoidFunction;
-    purchase: VoidFunction;
     type: typeof RepeatableType;
     [Component]: typeof ClickableComponent;
     [GatherProps]: () => Record<string, unknown>;
@@ -139,23 +137,21 @@ export function createRepeatable<T extends RepeatableOptions>(
             return currClasses;
         });
         repeatable.canClick = computed(() => requirementsMet(repeatable.requirements));
-        repeatable.onClick = repeatable.purchase =
-            repeatable.onClick ??
-            repeatable.purchase ??
-            function (this: GenericRepeatable) {
-                const genericRepeatable = repeatable as GenericRepeatable;
-                if (!unref(genericRepeatable.canClick)) {
-                    return;
-                }
-                payRequirements(
-                    repeatable.requirements,
-                    unref(genericRepeatable.maximize)
-                        ? maxRequirementsMet(genericRepeatable.requirements)
-                        : 1
-                );
-                genericRepeatable.amount.value = Decimal.add(genericRepeatable.amount.value, 1);
-                genericRepeatable.onPurchase?.();
-            };
+        const onClick = repeatable.onClick;
+        repeatable.onClick = function (this: GenericRepeatable) {
+            const genericRepeatable = repeatable as GenericRepeatable;
+            if (!unref(genericRepeatable.canClick)) {
+                return;
+            }
+            payRequirements(
+                repeatable.requirements,
+                unref(genericRepeatable.maximize)
+                    ? maxRequirementsMet(genericRepeatable.requirements)
+                    : 1
+            );
+            genericRepeatable.amount.value = Decimal.add(genericRepeatable.amount.value, 1);
+            onClick?.();
+        };
         processComputable(repeatable as T, "display");
         const display = repeatable.display;
         repeatable.display = jsx(() => {
