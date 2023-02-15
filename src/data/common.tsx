@@ -256,9 +256,11 @@ export interface Section {
  * Takes an array of modifier "sections", and creates a JSXFunction that can render all those sections, and allow each section to be collapsed.
  * Also returns a list of persistent refs that are used to control which sections are currently collapsed.
  * @param sectionsFunc A function that returns the sections to display.
+ * @param smallerIsBetter Determines whether numbers larger or smaller than the base should be displayed as red.
  */
 export function createCollapsibleModifierSections(
-    sectionsFunc: () => Section[]
+    sectionsFunc: () => Section[],
+    smallerIsBetter = false
 ): [JSXFunction, Persistent<Record<number, boolean>>] {
     const sections: Section[] = [];
     const processed:
@@ -326,6 +328,9 @@ export function createCollapsibleModifierSections(
             const hasPreviousSection = !firstVisibleSection;
             firstVisibleSection = false;
 
+            const base = unref(processed.base[i]) ?? 1;
+            const total = s.modifier.apply(base);
+
             return (
                 <>
                     {hasPreviousSection ? <br /> : null}
@@ -335,11 +340,20 @@ export function createCollapsibleModifierSections(
                         {modifiers}
                         <hr />
                         <div class="modifier-container">
-                            <span class="modifier-description">
-                                Total
-                            </span>
-                            <span class="modifier-amount">
-                                {format(s.modifier.apply(unref(processed.base[i]) ?? 1))}
+                            <span class="modifier-description">Total</span>
+                            <span
+                                class="modifier-amount"
+                                style={
+                                    (
+                                        smallerIsBetter === true
+                                            ? Decimal.gt(total, base ?? 1)
+                                            : Decimal.lt(total, base ?? 1)
+                                    )
+                                        ? "color: var(--danger)"
+                                        : ""
+                                }
+                            >
+                                {formatSmall(total)}
                                 {s.unit}
                             </span>
                         </div>
