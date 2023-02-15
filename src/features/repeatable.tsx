@@ -39,8 +39,8 @@ export type RepeatableDisplay =
 export interface RepeatableOptions {
     visibility?: Computable<Visibility>;
     requirements: Requirements;
-    purchaseLimit?: Computable<DecimalSource>;
-    initialValue?: DecimalSource;
+    limit?: Computable<DecimalSource>;
+    initialAmount?: DecimalSource;
     classes?: Computable<Record<string, boolean>>;
     style?: Computable<StyleValue>;
     mark?: Computable<boolean | string>;
@@ -67,7 +67,7 @@ export type Repeatable<T extends RepeatableOptions> = Replace<
     {
         visibility: GetComputableTypeWithDefault<T["visibility"], Visibility.Visible>;
         requirements: GetComputableType<T["requirements"]>;
-        purchaseLimit: GetComputableTypeWithDefault<T["purchaseLimit"], Decimal>;
+        limit: GetComputableTypeWithDefault<T["limit"], Decimal>;
         classes: GetComputableType<T["classes"]>;
         style: GetComputableType<T["style"]>;
         mark: GetComputableType<T["mark"]>;
@@ -81,7 +81,7 @@ export type GenericRepeatable = Replace<
     Repeatable<RepeatableOptions>,
     {
         visibility: ProcessedComputable<Visibility>;
-        purchaseLimit: ProcessedComputable<DecimalSource>;
+        limit: ProcessedComputable<DecimalSource>;
     }
 >;
 
@@ -97,12 +97,12 @@ export function createRepeatable<T extends RepeatableOptions>(
         repeatable[Component] = ClickableComponent;
 
         repeatable.amount = amount;
-        repeatable.amount[DefaultValue] = repeatable.initialValue ?? 0;
+        repeatable.amount[DefaultValue] = repeatable.initialAmount ?? 0;
 
         const limitRequirement = {
             requirementMet: computed(() =>
                 Decimal.sub(
-                    unref((repeatable as GenericRepeatable).purchaseLimit),
+                    unref((repeatable as GenericRepeatable).limit),
                     (repeatable as GenericRepeatable).amount.value
                 )
             ),
@@ -124,7 +124,7 @@ export function createRepeatable<T extends RepeatableOptions>(
         repeatable.maxed = computed(() =>
             Decimal.gte(
                 (repeatable as GenericRepeatable).amount.value,
-                unref((repeatable as GenericRepeatable).purchaseLimit)
+                unref((repeatable as GenericRepeatable).limit)
             )
         );
         processComputable(repeatable as T, "classes");
@@ -182,12 +182,12 @@ export function createRepeatable<T extends RepeatableOptions>(
                         {currDisplay.showAmount === false ? null : (
                             <div>
                                 <br />
-                                {unref(genericRepeatable.purchaseLimit) === Decimal.dInf ? (
+                                {unref(genericRepeatable.limit) === Decimal.dInf ? (
                                     <>Amount: {formatWhole(genericRepeatable.amount.value)}</>
                                 ) : (
                                     <>
                                         Amount: {formatWhole(genericRepeatable.amount.value)} /{" "}
-                                        {formatWhole(unref(genericRepeatable.purchaseLimit))}
+                                        {formatWhole(unref(genericRepeatable.limit))}
                                     </>
                                 )}
                             </div>
@@ -217,8 +217,8 @@ export function createRepeatable<T extends RepeatableOptions>(
 
         processComputable(repeatable as T, "visibility");
         setDefault(repeatable, "visibility", Visibility.Visible);
-        processComputable(repeatable as T, "purchaseLimit");
-        setDefault(repeatable, "purchaseLimit", Decimal.dInf);
+        processComputable(repeatable as T, "limit");
+        setDefault(repeatable, "limit", Decimal.dInf);
         processComputable(repeatable as T, "style");
         processComputable(repeatable as T, "mark");
         processComputable(repeatable as T, "small");
