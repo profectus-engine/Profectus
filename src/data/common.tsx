@@ -13,7 +13,7 @@ import type { Persistent } from "game/persistence";
 import { DefaultValue, persistent } from "game/persistence";
 import player from "game/player";
 import type { DecimalSource } from "util/bignum";
-import Decimal, { format } from "util/bignum";
+import Decimal, { format, formatSmall, formatTime } from "util/bignum";
 import type { WithRequired } from "util/common";
 import type {
     Computable,
@@ -415,4 +415,29 @@ export function createCollapsibleMilestones(milestones: Record<string, GenericMi
         collapseMilestones,
         display
     };
+}
+
+/**
+ * Utility function for getting an ETA for when a target will be reached by a resource with a known (and assumed consistent) gain.
+ * @param resource The resource that will be increasing over time.
+ * @param rate The rate at which the resource is increasing.
+ * @param target The target amount of the resource to estimate the duration until.
+ */
+export function estimateTime(
+    resource: Resource,
+    rate: Computable<DecimalSource>,
+    target: Computable<DecimalSource>
+) {
+    const processedRate = convertComputable(rate);
+    const processedTarget = convertComputable(target);
+    return computed(() => {
+        const currRate = unref(processedRate);
+        const currTarget = unref(processedTarget);
+        if (Decimal.gte(resource.value, currTarget)) {
+            return "Now";
+        } else if (Decimal.lt(currRate, 0)) {
+            return "Never";
+        }
+        return formatTime(Decimal.sub(currTarget, resource.value).div(currRate));
+    });
 }
