@@ -11,7 +11,12 @@ import {
 import { createLazyProxy } from "util/proxies";
 import { joinJSX, renderJSX } from "util/vue";
 import { computed, unref } from "vue";
-import Formula, { calculateCost, calculateMaxAffordable, GenericFormula } from "./formulas";
+import Formula, {
+    calculateCost,
+    calculateMaxAffordable,
+    GenericFormula,
+    InvertibleFormula
+} from "./formulas";
 
 /**
  * An object that can be used to describe a requirement to perform some purchase or other action.
@@ -39,9 +44,9 @@ export interface Requirement {
      */
     requiresPay: ProcessedComputable<boolean>;
     /**
-     * Whether or not this requirement can have multiple levels of requirements that can be completed at once.
+     * Whether or not this requirement can have multiple levels of requirements that can be met at once. Requirement is assumed to not have multiple levels if this property not present.
      */
-    buyMax?: ProcessedComputable<boolean>;
+    canMaximize?: ProcessedComputable<boolean>;
     /**
      * Perform any effects to the game state that should happen when the requirement gets triggered.
      * @param amount The amount of levels of requirements to pay for.
@@ -61,7 +66,7 @@ export interface CostRequirementOptions {
      */
     resource: Resource;
     /**
-     * The amount of {@link resource} that must be met for this requirement. You can pass a formula, in which case {@link buyMax} will work out of the box (assuming its invertible and, for more accurate calculations, its integral is invertible). If you don't pass a formula then you can still support buyMax by passing a custom {@link pay} function.
+     * The amount of {@link resource} that must be met for this requirement. You can pass a formula, in which case maximizing will work out of the box (assuming its invertible and, for more accurate calculations, its integral is invertible). If you don't pass a formula then you can still support maximizing by passing a custom {@link pay} function.
      */
     cost: Computable<DecimalSource> | GenericFormula;
     /**
@@ -73,18 +78,13 @@ export interface CostRequirementOptions {
      */
     requiresPay?: Computable<boolean>;
     /**
-     * Pass-through to {@link Requirement.buyMax}.
-     * @see {@link cost} for restrictions on buying max support.
-     */
-    buyMax?: Computable<boolean>;
-    /**
      * When calculating multiple levels to be handled at once, whether it should consider resources used for each level as spent. Setting this to false causes calculations to be faster with larger numbers and supports more math functions.
      * @see {Formula}
      */
     spendResources?: Computable<boolean>;
     /**
-     * Pass-through to {@link Requirement.pay}. May be required for buying max support.
-     * @see {@link cost} for restrictions on buying max support.
+     * Pass-through to {@link Requirement.pay}. May be required for maximizing support.
+     * @see {@link cost} for restrictions on maximizing support.
      */
     pay?: (amount?: DecimalSource) => void;
 }
@@ -159,16 +159,12 @@ export function createCostRequirement<T extends CostRequirementOptions>(
                     : unref(req.cost as ProcessedComputable<DecimalSource>);
             req.resource.value = Decimal.sub(req.resource.value, cost).max(0);
         });
-        processComputable(req as T, "buyMax");
 
-        if (
-            "buyMax" in req &&
-            req.buyMax !== false &&
-            req.cost instanceof Formula &&
-            req.cost.isInvertible()
-        ) {
+        req.canMaximize = req.cost instanceof Formula && req.cost.isInvertible();
+
+        if (req.canMaximize) {
             req.requirementMet = calculateMaxAffordable(
-                req.cost,
+                req.cost as InvertibleFormula,
                 req.resource,
                 unref(req.spendResources as ProcessedComputable<boolean> | undefined) ?? true
             );
@@ -244,6 +240,8 @@ export function maxRequirementsMet(requirements: Requirements): DecimalSource {
     const reqsMet = unref(requirements.requirementMet);
     if (typeof reqsMet === "boolean") {
         return reqsMet ? Infinity : 0;
+    } else if (Decimal.gt(reqsMet, 1) && unref(requirements.canMaximize) !== true) {
+        return 1;
     }
     return reqsMet;
 }

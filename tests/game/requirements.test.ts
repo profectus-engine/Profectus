@@ -27,23 +27,23 @@ describe("Creating cost requirement", () => {
         });
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        test("resource pass-through", () => (requirement as any).resource === resource);
+        test("resource pass-through", () => expect((requirement as any).resource).toBe(resource));
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        test("cost pass-through", () => (requirement as any).cost === 10);
+        test("cost pass-through", () => expect((requirement as any).cost).toBe(10));
 
         test("partialDisplay exists", () =>
-            requirement.partialDisplay != null && typeof requirement.partialDisplay === "function");
-        test("display exists", () =>
-            requirement.display != null && typeof requirement.display === "function");
-        test("pay exists", () => requirement.pay != null && typeof requirement.pay === "function");
-        test("requirementMet exists", () =>
-            requirement.requirementMet != null && isRef(requirement.requirementMet));
-        test("is visible", () => requirement.visibility === Visibility.Visible);
-        test("requires pay", () => requirement.requiresPay === true);
+            expect(typeof requirement.partialDisplay).toBe("function"));
+        test("display exists", () => expect(typeof requirement.display).toBe("function"));
+        test("pay exists", () => expect(typeof requirement.pay).toBe("function"));
+        test("requirementMet exists", () => {
+            expect(requirement.requirementMet).not.toBeNull();
+            expect(isRef(requirement.requirementMet)).toBe(true);
+        });
+        test("is visible", () => expect(requirement.visibility).toBe(Visibility.Visible));
+        test("requires pay", () => expect(requirement.requiresPay).toBe(true));
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        test("spends resources", () => (requirement as any).spendResources !== false);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        test("does not buy max", () => (requirement as any).buyMax !== true);
+        test("spends resources", () => expect((requirement as any).spendResources).toBe(true));
+        test("cannot maximize", () => expect(unref(requirement.canMaximize)).toBe(false));
     });
 
     describe("Fully customized", () => {
@@ -56,7 +56,7 @@ describe("Creating cost requirement", () => {
                 cost: 10,
                 visibility: Visibility.None,
                 requiresPay: false,
-                buyMax: true,
+                maximize: true,
                 spendResources: false,
                 // eslint-disable-next-line @typescript-eslint/no-empty-function
                 pay() {}
@@ -67,12 +67,12 @@ describe("Creating cost requirement", () => {
             requirement.pay != null &&
             typeof requirement.pay === "function" &&
             requirement.pay.length === 1);
-        test("is not visible", () => requirement.visibility === Visibility.None);
-        test("does not require pay", () => requirement.requiresPay === false);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        test("does not spend resources", () => (requirement as any).spendResources);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        test("buys max", () => (requirement as any).buyMax);
+        test("is not visible", () => expect(requirement.visibility).toBe(Visibility.None));
+        test("does not require pay", () => expect(requirement.requiresPay).toBe(false));
+        test("does not spend resources", () =>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            expect((requirement as any).spendResources).toBe(false));
+        test("can maximize", () => expect(unref(requirement.canMaximize)).toBe(true));
     });
 
     test("Requirement met when meeting the cost", () => {
