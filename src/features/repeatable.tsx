@@ -25,41 +25,70 @@ import { coerceComponent, isCoercableComponent } from "util/vue";
 import type { Ref } from "vue";
 import { computed, unref } from "vue";
 
+/** A symbol used to identify {@link Repeatable} features. */
 export const RepeatableType = Symbol("Repeatable");
 
+/** A type that can be used to customize the {@link Repeatable} display. */
 export type RepeatableDisplay =
     | CoercableComponent
     | {
+          /** A header to appear at the top of the display. */
           title?: CoercableComponent;
+          /** The main text that appears in the display. */
           description?: CoercableComponent;
+          /** A description of the current effect of this repeatable, bsed off its amount. */
           effectDisplay?: CoercableComponent;
+          /** Whether or not to show the current amount of this repeatable at the bottom of the display. */
           showAmount?: boolean;
       };
 
+/** An object that configures a {@link Repeatable}. */
 export interface RepeatableOptions {
+    /** Whether this repeatable should be visible. */
     visibility?: Computable<Visibility>;
+    /** The requirement(s) to increase this repeatable. */
     requirements: Requirements;
+    /** The maximum amount obtainable for this repeatable. */
     limit?: Computable<DecimalSource>;
+    /** The initial amount this repeatable has on a new save / after reset. */
     initialAmount?: DecimalSource;
+    /** Dictionary of CSS classes to apply to this feature. */
     classes?: Computable<Record<string, boolean>>;
+    /** CSS to apply to this feature. */
     style?: Computable<StyleValue>;
+    /** Shows a marker on the corner of the feature. */
     mark?: Computable<boolean | string>;
+    /** Toggles a smaller design for the feature. */
     small?: Computable<boolean>;
+    /** Whether or not clicking this repeatable should attempt to maximize amount based on the requirements met. Requires {@link requirements} to be a requirement or array of requirements with {@link Requirement.canMaximize} true. */
     maximize?: Computable<boolean>;
+    /** The display to use for this repeatable. */
     display?: Computable<RepeatableDisplay>;
 }
 
+/**
+ * The properties that are added onto a processed {@link RepeatableOptions} to create a {@link Repeatable}.
+ */
 export interface BaseRepeatable {
+    /** An auto-generated ID for identifying features that appear in the DOM. Will not persistent between refreshes or updates. */
     id: string;
+    /** The current amount this repeatable has. */
     amount: Persistent<DecimalSource>;
+    /** Whether or not this repeatable's amount is at it's limit. */
     maxed: Ref<boolean>;
+    /** Whether or not this repeatable can be clicked. */
     canClick: ProcessedComputable<boolean>;
+    /** A function that gets called when this repeatable is clicked. */
     onClick: VoidFunction;
+    /** A symbol that helps identify features of the same type. */
     type: typeof RepeatableType;
+    /** The Vue component used to render this feature. */
     [Component]: typeof ClickableComponent;
+    /** A function to gather the props the vue component requires for this feature. */
     [GatherProps]: () => Record<string, unknown>;
 }
 
+/** An object that represents a feature with multiple "levels" with scaling requirements. */
 export type Repeatable<T extends RepeatableOptions> = Replace<
     T & BaseRepeatable,
     {
@@ -75,6 +104,7 @@ export type Repeatable<T extends RepeatableOptions> = Replace<
     }
 >;
 
+/** A type that matches any valid {@link Repeatable} object. */
 export type GenericRepeatable = Replace<
     Repeatable<RepeatableOptions>,
     {
@@ -83,6 +113,10 @@ export type GenericRepeatable = Replace<
     }
 >;
 
+/**
+ * Lazily creates a repeatable with the given options.
+ * @param optionsFunc Repeatable options.
+ */
 export function createRepeatable<T extends RepeatableOptions>(
     optionsFunc: OptionsFunc<T, BaseRepeatable, GenericRepeatable>
 ): Repeatable<T> {
