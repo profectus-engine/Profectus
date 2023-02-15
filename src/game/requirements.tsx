@@ -17,6 +17,7 @@ import Formula, {
     GenericFormula,
     InvertibleFormula
 } from "./formulas";
+import { DefaultValue, Persistent } from "./persistence";
 
 /**
  * An object that can be used to describe a requirement to perform some purchase or other action.
@@ -89,13 +90,15 @@ export interface CostRequirementOptions {
     pay?: (amount?: DecimalSource) => void;
 }
 
+export type CostRequirement = Requirement & CostRequirementOptions;
+
 /**
  * Lazily creates a requirement with the given options, that is based on meeting an amount of a resource.
  * @param optionsFunc Cost requirement options.
  */
 export function createCostRequirement<T extends CostRequirementOptions>(
     optionsFunc: () => T
-): Requirement {
+): CostRequirement {
     return createLazyProxy(() => {
         const req = optionsFunc() as T & Partial<Requirement>;
 
@@ -181,7 +184,7 @@ export function createCostRequirement<T extends CostRequirementOptions>(
             });
         }
 
-        return req as Requirement;
+        return req as CostRequirement;
     });
 }
 
@@ -299,4 +302,25 @@ export function payRequirements(requirements: Requirements, amount: DecimalSourc
     } else if (unref(requirements.requiresPay)) {
         requirements.pay?.(amount);
     }
+}
+
+export function payByDivision(this: CostRequirement, amount?: DecimalSource) {
+    const cost =
+        this.cost instanceof Formula
+            ? calculateCost(
+                  this.cost,
+                  amount ?? 1,
+                  unref(this.spendResources as ProcessedComputable<boolean> | undefined) ?? true
+              )
+            : unref(this.cost as ProcessedComputable<DecimalSource>);
+    this.resource.value = Decimal.div(this.resource.value, cost);
+}
+
+export function payByReset(overrideDefaultValue?: DecimalSource) {
+    return function (this: CostRequirement) {
+        this.resource.value =
+            overrideDefaultValue ??
+            (this.resource as Resource & Persistent<DecimalSource>)[DefaultValue] ??
+            0;
+    };
 }
