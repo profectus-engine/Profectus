@@ -87,9 +87,9 @@ export function createTreeNode<T extends TreeNodeOptions>(
 
         if (treeNode.onClick) {
             const onClick = treeNode.onClick.bind(treeNode);
-            treeNode.onClick = function () {
+            treeNode.onClick = function (e) {
                 if (unref(treeNode.canClick) !== false) {
-                    onClick();
+                    onClick(e);
                 }
             };
         }

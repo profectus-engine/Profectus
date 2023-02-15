@@ -277,9 +277,9 @@ export function createGrid<T extends GridOptions>(
 
         if (grid.onClick) {
             const onClick = grid.onClick.bind(grid);
-            grid.onClick = function (id, state) {
+            grid.onClick = function (id, state, e) {
                 if (unref((grid as GenericGrid).cells[id].canClick)) {
-                    onClick(id, state);
+                    onClick(id, state, e);
                 }
             };
         }

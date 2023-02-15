@@ -79,7 +79,7 @@ export interface BaseRepeatable {
     /** Whether or not this repeatable can be clicked. */
     canClick: ProcessedComputable<boolean>;
     /** A function that gets called when this repeatable is clicked. */
-    onClick: VoidFunction;
+    onClick: (event?: MouseEvent | TouchEvent) => void;
     /** A symbol that helps identify features of the same type. */
     type: typeof RepeatableType;
     /** The Vue component used to render this feature. */
@@ -172,7 +172,7 @@ export function createRepeatable<T extends RepeatableOptions>(
         });
         repeatable.canClick = computed(() => requirementsMet(repeatable.requirements));
         const onClick = repeatable.onClick;
-        repeatable.onClick = function (this: GenericRepeatable) {
+        repeatable.onClick = function (this: GenericRepeatable, event?: MouseEvent | TouchEvent) {
             const genericRepeatable = repeatable as GenericRepeatable;
             if (!unref(genericRepeatable.canClick)) {
                 return;
@@ -184,7 +184,7 @@ export function createRepeatable<T extends RepeatableOptions>(
                     : 1
             );
             genericRepeatable.amount.value = Decimal.add(genericRepeatable.amount.value, 1);
-            onClick?.();
+            onClick?.(event);
         };
         processComputable(repeatable as T, "display");
         const display = repeatable.display;
