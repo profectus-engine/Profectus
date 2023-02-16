@@ -54,4 +54,8 @@ export interface GlobalEvents {
 /** A global event bus for hooking into {@link GlobalEvents}. */
 export const globalBus = createNanoEvents<GlobalEvents>();
 
-document.fonts.onloadingdone = () => globalBus.emit("fontsLoaded");
+if ("fonts" in document) {
+    // This line breaks tests
+    // JSDom doesn't add document.fonts, and Object.defineProperty doesn't seem to work on document
+    document.fonts.onloadingdone = () => globalBus.emit("fontsLoaded");
+}
