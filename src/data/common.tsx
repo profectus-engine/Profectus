@@ -5,9 +5,10 @@ import type { GenericConversion } from "features/conversion";
 import type { CoercableComponent, JSXFunction, OptionsFunc, Replace } from "features/feature";
 import { jsx, setDefault } from "features/feature";
 import { GenericMilestone } from "features/milestones/milestone";
-import { displayResource } from "features/resources/resource";
+import { displayResource, Resource } from "features/resources/resource";
 import type { GenericTree, GenericTreeNode, TreeNode, TreeNodeOptions } from "features/trees/tree";
 import { createTreeNode } from "features/trees/tree";
+import { GenericFormula } from "game/formulas";
 import type { Modifier } from "game/modifiers";
 import type { Persistent } from "game/persistence";
 import { DefaultValue, persistent } from "game/persistence";
@@ -25,7 +26,6 @@ import { convertComputable, processComputable } from "util/computed";
 import { getFirstFeature, renderColJSX, renderJSX } from "util/vue";
 import type { ComputedRef, Ref } from "vue";
 import { computed, unref } from "vue";
-import Formula, { GenericFormula } from "game/formulas";
 import "./common.css";
 
 /** An object that configures a {@link ResetButton} */

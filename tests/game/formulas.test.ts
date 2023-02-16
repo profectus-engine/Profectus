@@ -930,7 +930,7 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [1],
                     evaluate: () => 10,
-                    integrate: val => val ?? 20
+                    integrate: (val, v1) => val ?? 20
                 }).evaluateIntegral()
             ).compare_tolerance(20));
         test("Two inputs integrates correctly", () =>
@@ -958,7 +958,7 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [1],
                     evaluate: () => 10,
-                    invertIntegral: val => 1,
+                    invertIntegral: (val, v1) => 1,
                     hasVariable: true
                 }).invertIntegral(8)
             ).compare_tolerance(1));

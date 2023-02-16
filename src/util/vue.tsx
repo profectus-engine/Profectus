@@ -8,7 +8,6 @@ import {
     jsx,
     Visibility
 } from "features/feature";
-import settings from "game/settings";
 import type { ProcessedComputable } from "util/computed";
 import { DoNotCache } from "util/computed";
 import type { Component, ComputedRef, DefineComponent, PropType, Ref, ShallowRef } from "vue";
