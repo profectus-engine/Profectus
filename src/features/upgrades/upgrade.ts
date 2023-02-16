@@ -39,7 +39,7 @@ import { computed, unref } from "vue";
 export const UpgradeType = Symbol("Upgrade");
 
 export interface UpgradeOptions {
-    visibility?: Computable<Visibility>;
+    visibility?: Computable<Visibility | boolean>;
     classes?: Computable<Record<string, boolean>>;
     style?: Computable<StyleValue>;
     display?: Computable<
@@ -80,7 +80,7 @@ export type Upgrade<T extends UpgradeOptions> = Replace<
 export type GenericUpgrade = Replace<
     Upgrade<UpgradeOptions>,
     {
-        visibility: ProcessedComputable<Visibility>;
+        visibility: ProcessedComputable<Visibility | boolean>;
     }
 >;
 

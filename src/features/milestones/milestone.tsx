@@ -6,7 +6,15 @@ import type {
     Replace,
     StyleValue
 } from "features/feature";
-import { Component, GatherProps, getUniqueID, jsx, setDefault, Visibility } from "features/feature";
+import {
+    Component,
+    GatherProps,
+    getUniqueID,
+    isVisible,
+    jsx,
+    setDefault,
+    Visibility
+} from "features/feature";
 import MilestoneComponent from "features/milestones/Milestone.vue";
 import { globalBus } from "game/events";
 import "game/notifications";
@@ -40,7 +48,7 @@ export enum MilestoneDisplay {
 }
 
 export interface MilestoneOptions {
-    visibility?: Computable<Visibility>;
+    visibility?: Computable<Visibility | boolean>;
     shouldEarn?: () => boolean;
     style?: Computable<StyleValue>;
     classes?: Computable<Record<string, boolean>>;
@@ -79,7 +87,7 @@ export type Milestone<T extends MilestoneOptions> = Replace<
 export type GenericMilestone = Replace<
     Milestone<MilestoneOptions>,
     {
-        visibility: ProcessedComputable<Visibility>;
+        visibility: ProcessedComputable<Visibility | boolean>;
     }
 >;
 
@@ -118,7 +126,7 @@ export function createMilestone<T extends MilestoneOptions>(
 
         processComputable(milestone as T, "visibility");
         setDefault(milestone, "visibility", Visibility.Visible);
-        const visibility = milestone.visibility as ProcessedComputable<Visibility>;
+        const visibility = milestone.visibility as ProcessedComputable<Visibility | boolean>;
         milestone.visibility = computed(() => {
             const display = unref((milestone as GenericMilestone).display);
             switch (settings.msDisplay) {
@@ -163,7 +171,7 @@ export function createMilestone<T extends MilestoneOptions>(
                 if (settings.active !== player.id) return;
                 if (
                     !genericMilestone.earned.value &&
-                    unref(genericMilestone.visibility) === Visibility.Visible &&
+                    isVisible(genericMilestone.visibility) &&
                     genericMilestone.shouldEarn?.()
                 ) {
                     genericMilestone.earned.value = true;

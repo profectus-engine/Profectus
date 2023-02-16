@@ -23,7 +23,7 @@ export const TreeNodeType = Symbol("TreeNode");
 export const TreeType = Symbol("Tree");
 
 export interface TreeNodeOptions {
-    visibility?: Computable<Visibility>;
+    visibility?: Computable<Visibility | boolean>;
     canClick?: Computable<boolean>;
     color?: Computable<string>;
     display?: Computable<CoercableComponent>;
@@ -60,7 +60,7 @@ export type TreeNode<T extends TreeNodeOptions> = Replace<
 export type GenericTreeNode = Replace<
     TreeNode<TreeNodeOptions>,
     {
-        visibility: ProcessedComputable<Visibility>;
+        visibility: ProcessedComputable<Visibility | boolean>;
         canClick: ProcessedComputable<boolean>;
     }
 >;
@@ -141,7 +141,7 @@ export interface TreeBranch extends Omit<Link, "startNode" | "endNode"> {
 }
 
 export interface TreeOptions {
-    visibility?: Computable<Visibility>;
+    visibility?: Computable<Visibility | boolean>;
     nodes: Computable<GenericTreeNode[][]>;
     leftSideNodes?: Computable<GenericTreeNode[]>;
     rightSideNodes?: Computable<GenericTreeNode[]>;
@@ -175,7 +175,7 @@ export type Tree<T extends TreeOptions> = Replace<
 export type GenericTree = Replace<
     Tree<TreeOptions>,
     {
-        visibility: ProcessedComputable<Visibility>;
+        visibility: ProcessedComputable<Visibility | boolean>;
     }
 >;
 

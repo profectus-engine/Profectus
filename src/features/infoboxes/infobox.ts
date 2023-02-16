@@ -16,7 +16,7 @@ import { unref } from "vue";
 export const InfoboxType = Symbol("Infobox");
 
 export interface InfoboxOptions {
-    visibility?: Computable<Visibility>;
+    visibility?: Computable<Visibility | boolean>;
     color?: Computable<string>;
     style?: Computable<StyleValue>;
     titleStyle?: Computable<StyleValue>;
@@ -51,7 +51,7 @@ export type Infobox<T extends InfoboxOptions> = Replace<
 export type GenericInfobox = Replace<
     Infobox<InfoboxOptions>,
     {
-        visibility: ProcessedComputable<Visibility>;
+        visibility: ProcessedComputable<Visibility | boolean>;
     }
 >;
 

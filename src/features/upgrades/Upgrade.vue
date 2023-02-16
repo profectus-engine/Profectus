@@ -1,9 +1,9 @@
 <template>
     <button
-        v-if="unref(visibility) !== Visibility.None"
+        v-if="isVisible(visibility)"
         :style="[
             {
-                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+                visibility: isHidden(visibility) ? 'hidden' : undefined
             },
             unref(style) ?? {}
         ]"
@@ -29,7 +29,7 @@ import "components/common/features.css";
 import MarkNode from "components/MarkNode.vue";
 import Node from "components/Node.vue";
 import type { StyleValue } from "features/feature";
-import { jsx, Visibility } from "features/feature";
+import { isHidden, isVisible, jsx, Visibility } from "features/feature";
 import type { GenericUpgrade } from "features/upgrades/upgrade";
 import { displayRequirements, Requirements } from "game/requirements";
 import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "util/vue";
@@ -43,7 +43,7 @@ export default defineComponent({
             required: true
         },
         visibility: {
-            type: processedPropType<Visibility>(Number),
+            type: processedPropType<Visibility | boolean>(Number, Boolean),
             required: true
         },
         style: processedPropType<StyleValue>(String, Object, Array),
@@ -115,7 +115,9 @@ export default defineComponent({
         return {
             component,
             unref,
-            Visibility
+            Visibility,
+            isVisible,
+            isHidden
         };
     }
 });

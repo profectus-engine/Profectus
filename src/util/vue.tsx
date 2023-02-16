@@ -1,7 +1,14 @@
 import Col from "components/layout/Column.vue";
 import Row from "components/layout/Row.vue";
 import type { CoercableComponent, GenericComponent, JSXFunction } from "features/feature";
-import { Component as ComponentKey, GatherProps, jsx, Visibility } from "features/feature";
+import {
+    Component as ComponentKey,
+    GatherProps,
+    isVisible,
+    jsx,
+    Visibility
+} from "features/feature";
+import settings from "game/settings";
 import type { ProcessedComputable } from "util/computed";
 import { DoNotCache } from "util/computed";
 import type { Component, ComputedRef, DefineComponent, PropType, Ref, ShallowRef } from "vue";
@@ -147,7 +154,7 @@ export function setupHoldToClick(
 }
 
 export function getFirstFeature<
-    T extends VueFeature & { visibility: ProcessedComputable<Visibility> }
+    T extends VueFeature & { visibility: ProcessedComputable<Visibility | boolean> }
 >(
     features: T[],
     filter: (feature: T) => boolean
@@ -157,9 +164,7 @@ export function getFirstFeature<
     hasCollapsedContent: Ref<boolean>;
 } {
     const filteredFeatures = computed(() =>
-        features.filter(
-            feature => unref(feature.visibility) === Visibility.Visible && filter(feature)
-        )
+        features.filter(feature => isVisible(feature.visibility) && filter(feature))
     );
     return {
         firstFeature: computed(() => filteredFeatures.value[0]),

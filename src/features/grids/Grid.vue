@@ -1,8 +1,8 @@
 <template>
     <div
-        v-if="unref(visibility) !== Visibility.None"
+        v-if="isVisible(visibility)"
         :style="{
-            visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+            visibility: isHidden(visibility) ? 'hidden' : undefined
         }"
         class="table-grid"
     >
@@ -19,7 +19,7 @@
 <script lang="ts">
 import "components/common/table.css";
 import themes from "data/themes";
-import { Visibility } from "features/feature";
+import { isHidden, isVisible, Visibility } from "features/feature";
 import type { GridCell } from "features/grids/grid";
 import settings from "game/settings";
 import { processedPropType } from "util/vue";
@@ -29,7 +29,7 @@ import GridCellVue from "./GridCell.vue";
 export default defineComponent({
     props: {
         visibility: {
-            type: processedPropType<Visibility>(Number),
+            type: processedPropType<Visibility | boolean>(Number, Boolean),
             required: true
         },
         rows: {
@@ -54,7 +54,7 @@ export default defineComponent({
             return { visibility, onClick, onHold, display, title, style, canClick, id };
         }
 
-        return { unref, gatherCellProps, Visibility, mergeAdjacent };
+        return { unref, gatherCellProps, Visibility, mergeAdjacent, isVisible, isHidden };
     }
 });
 </script>

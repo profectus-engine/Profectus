@@ -2,7 +2,15 @@ import { isArray } from "@vue/shared";
 import Toggle from "components/fields/Toggle.vue";
 import ChallengeComponent from "features/challenges/Challenge.vue";
 import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
-import { Component, GatherProps, getUniqueID, jsx, setDefault, Visibility } from "features/feature";
+import {
+    Component,
+    GatherProps,
+    getUniqueID,
+    isVisible,
+    jsx,
+    setDefault,
+    Visibility
+} from "features/feature";
 import type { GenericReset } from "features/reset";
 import type { Resource } from "features/resources/resource";
 import { globalBus } from "game/events";
@@ -25,7 +33,7 @@ import { computed, unref, watch } from "vue";
 export const ChallengeType = Symbol("ChallengeType");
 
 export interface ChallengeOptions {
-    visibility?: Computable<Visibility>;
+    visibility?: Computable<Visibility | boolean>;
     canStart?: Computable<boolean>;
     reset?: GenericReset;
     canComplete?: Computable<boolean | DecimalSource>;
@@ -81,7 +89,7 @@ export type Challenge<T extends ChallengeOptions> = Replace<
 export type GenericChallenge = Replace<
     Challenge<ChallengeOptions>,
     {
-        visibility: ProcessedComputable<Visibility>;
+        visibility: ProcessedComputable<Visibility | boolean>;
         canStart: ProcessedComputable<boolean>;
         canComplete: ProcessedComputable<boolean | DecimalSource>;
         completionLimit: ProcessedComputable<DecimalSource>;
@@ -145,7 +153,7 @@ export function createChallenge<T extends ChallengeOptions>(
                 genericChallenge.reset?.reset();
             } else if (
                 unref(genericChallenge.canStart) &&
-                unref(genericChallenge.visibility) === Visibility.Visible &&
+                isVisible(genericChallenge.visibility) &&
                 !genericChallenge.maxed.value
             ) {
                 genericChallenge.reset?.reset();
@@ -179,7 +187,7 @@ export function createChallenge<T extends ChallengeOptions>(
         };
         processComputable(challenge as T, "visibility");
         setDefault(challenge, "visibility", Visibility.Visible);
-        const visibility = challenge.visibility as ProcessedComputable<Visibility>;
+        const visibility = challenge.visibility as ProcessedComputable<Visibility | boolean>;
         challenge.visibility = computed(() => {
             if (settings.hideChallenges === true && unref(challenge.maxed)) {
                 return Visibility.None;

@@ -171,7 +171,7 @@ function getCellHandler(id: string): ProxyHandler<GenericGrid> {
 
 export interface GridCell {
     id: string;
-    visibility: Visibility;
+    visibility: Visibility | boolean;
     canClick: boolean;
     startState: State;
     state: State;
@@ -184,10 +184,10 @@ export interface GridCell {
 }
 
 export interface GridOptions {
-    visibility?: Computable<Visibility>;
+    visibility?: Computable<Visibility | boolean>;
     rows: Computable<number>;
     cols: Computable<number>;
-    getVisibility?: CellComputable<Visibility>;
+    getVisibility?: CellComputable<Visibility | boolean>;
     getCanClick?: CellComputable<boolean>;
     getStartState: Computable<State> | ((id: string | number) => State);
     getStyle?: CellComputable<StyleValue>;
@@ -229,8 +229,8 @@ export type Grid<T extends GridOptions> = Replace<
 export type GenericGrid = Replace<
     Grid<GridOptions>,
     {
-        visibility: ProcessedComputable<Visibility>;
-        getVisibility: ProcessedComputable<Visibility>;
+        visibility: ProcessedComputable<Visibility | boolean>;
+        getVisibility: ProcessedComputable<Visibility | boolean>;
         getCanClick: ProcessedComputable<boolean>;
     }
 >;

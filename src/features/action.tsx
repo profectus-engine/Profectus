@@ -71,7 +71,7 @@ export type GenericAction = Replace<
     Action<ActionOptions>,
     {
         autoStart: ProcessedComputable<boolean>;
-        visibility: ProcessedComputable<Visibility>;
+        visibility: ProcessedComputable<Visibility | boolean>;
         canClick: ProcessedComputable<boolean>;
     }
 >;

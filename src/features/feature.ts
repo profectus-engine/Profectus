@@ -1,7 +1,7 @@
 import Decimal from "util/bignum";
-import { DoNotCache } from "util/computed";
+import { DoNotCache, ProcessedComputable } from "util/computed";
 import type { CSSProperties, DefineComponent } from "vue";
-import { isRef } from "vue";
+import { isRef, unref } from "vue";
 
 /**
  * A symbol to use as a key for a vue component a feature can be rendered with
@@ -67,6 +67,16 @@ export enum Visibility {
     None
 }
 
+export function isVisible(visibility: ProcessedComputable<Visibility | boolean>) {
+    const currVisibility = unref(visibility);
+    return currVisibility !== Visibility.None && currVisibility !== false;
+}
+
+export function isHidden(visibility: ProcessedComputable<Visibility | boolean>) {
+    const currVisibility = unref(visibility);
+    return currVisibility === Visibility.Hidden;
+}
+
 /**
  * Takes a function and marks it as JSX so it won't get auto-wrapped into a ComputedRef.
  * The function may also return empty string as empty JSX tags cause issues.
@@ -74,11 +84,6 @@ export enum Visibility {
 export function jsx(func: () => JSX.Element | ""): JSXFunction {
     (func as Partial<JSXFunction>)[DoNotCache] = true;
     return func as JSXFunction;
-}
-
-/** Utility function to convert a boolean value into a Visbility value */
-export function showIf(condition: boolean, otherwise = Visibility.None): Visibility {
-    return condition ? Visibility.Visible : otherwise;
 }
 
 /** Utility function to set a property on an object if and only if it doesn't already exist */

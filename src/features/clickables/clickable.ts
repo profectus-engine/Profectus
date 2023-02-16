@@ -22,7 +22,7 @@ import { computed, unref } from "vue";
 export const ClickableType = Symbol("Clickable");
 
 export interface ClickableOptions {
-    visibility?: Computable<Visibility>;
+    visibility?: Computable<Visibility | boolean>;
     canClick?: Computable<boolean>;
     classes?: Computable<Record<string, boolean>>;
     style?: Computable<StyleValue>;
@@ -61,7 +61,7 @@ export type Clickable<T extends ClickableOptions> = Replace<
 export type GenericClickable = Replace<
     Clickable<ClickableOptions>,
     {
-        visibility: ProcessedComputable<Visibility>;
+        visibility: ProcessedComputable<Visibility | boolean>;
         canClick: ProcessedComputable<boolean>;
     }
 >;

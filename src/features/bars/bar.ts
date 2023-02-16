@@ -22,7 +22,7 @@ import { unref } from "vue";
 export const BarType = Symbol("Bar");
 
 export interface BarOptions {
-    visibility?: Computable<Visibility>;
+    visibility?: Computable<Visibility | boolean>;
     width: Computable<number>;
     height: Computable<number>;
     direction: Computable<Direction>;
@@ -66,7 +66,7 @@ export type Bar<T extends BarOptions> = Replace<
 export type GenericBar = Replace<
     Bar<BarOptions>,
     {
-        visibility: ProcessedComputable<Visibility>;
+        visibility: ProcessedComputable<Visibility | boolean>;
     }
 >;
 

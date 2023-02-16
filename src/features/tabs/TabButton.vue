@@ -1,11 +1,11 @@
 <template>
     <button
-        v-if="unref(visibility) !== Visibility.None"
+        v-if="isVisible(visibility)"
         @click="selectTab"
         class="tabButton"
         :style="[
             {
-                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+                visibility: isHidden(visibility) ? 'hidden' : undefined
             },
             glowColorStyle,
             unref(style) ?? {}
@@ -21,7 +21,7 @@
 
 <script lang="ts">
 import type { CoercableComponent, StyleValue } from "features/feature";
-import { Visibility } from "features/feature";
+import { isHidden, isVisible, Visibility } from "features/feature";
 import { getNotifyStyle } from "game/notifications";
 import { computeComponent, processedPropType, unwrapRef } from "util/vue";
 import { computed, defineComponent, toRefs, unref } from "vue";
@@ -29,7 +29,7 @@ import { computed, defineComponent, toRefs, unref } from "vue";
 export default defineComponent({
     props: {
         visibility: {
-            type: processedPropType<Visibility>(Number),
+            type: processedPropType<Visibility | boolean>(Number, Boolean),
             required: true
         },
         display: {
@@ -50,7 +50,7 @@ export default defineComponent({
 
         const glowColorStyle = computed(() => {
             const color = unwrapRef(glowColor);
-            if (!color) {
+            if (color != null) {
                 return {};
             }
             if (unref(floating)) {
@@ -68,7 +68,9 @@ export default defineComponent({
             component,
             glowColorStyle,
             unref,
-            Visibility
+            Visibility,
+            isVisible,
+            isHidden
         };
     }
 });

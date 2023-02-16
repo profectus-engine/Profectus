@@ -1,5 +1,5 @@
 import { isArray } from "@vue/shared";
-import { CoercableComponent, jsx, setDefault, Visibility } from "features/feature";
+import { CoercableComponent, isVisible, jsx, setDefault, Visibility } from "features/feature";
 import { displayResource, Resource } from "features/resources/resource";
 import Decimal, { DecimalSource } from "lib/break_eternity";
 import {
@@ -35,7 +35,7 @@ export interface Requirement {
     /**
      * Whether or not this requirement should be displayed in Vue Features. {@link displayRequirements} will respect this property.
      */
-    visibility: ProcessedComputable<Visibility.Visible | Visibility.None>;
+    visibility: ProcessedComputable<Visibility.Visible | Visibility.None | boolean>;
     /**
      * Whether or not this requirement has been met.
      */
@@ -73,7 +73,7 @@ export interface CostRequirementOptions {
     /**
      * Pass-through to {@link Requirement.visibility}.
      */
-    visibility?: Computable<Visibility.Visible | Visibility.None>;
+    visibility?: Computable<Visibility.Visible | Visibility.None | boolean>;
     /**
      * Pass-through to {@link Requirement.requiresPay}. If not set to false, the default {@link pay} function will remove {@link cost} from {@link resource}.
      */
@@ -193,10 +193,10 @@ export function createCostRequirement<T extends CostRequirementOptions>(
  * @param feature The feature to check the visibility of
  */
 export function createVisibilityRequirement(feature: {
-    visibility: ProcessedComputable<Visibility>;
+    visibility: ProcessedComputable<Visibility | boolean>;
 }): Requirement {
     return createLazyProxy(() => ({
-        requirementMet: computed(() => unref(feature.visibility) === Visibility.Visible),
+        requirementMet: computed(() => isVisible(feature.visibility)),
         visibility: Visibility.None,
         requiresPay: false
     }));
@@ -256,7 +256,7 @@ export function maxRequirementsMet(requirements: Requirements): DecimalSource {
  */
 export function displayRequirements(requirements: Requirements, amount: DecimalSource = 1) {
     if (isArray(requirements)) {
-        requirements = requirements.filter(r => unref(r.visibility) === Visibility.Visible);
+        requirements = requirements.filter(r => isVisible(r.visibility));
         if (requirements.length === 1) {
             requirements = requirements[0];
         }

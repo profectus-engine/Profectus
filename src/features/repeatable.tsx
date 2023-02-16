@@ -45,7 +45,7 @@ export type RepeatableDisplay =
 /** An object that configures a {@link Repeatable}. */
 export interface RepeatableOptions {
     /** Whether this repeatable should be visible. */
-    visibility?: Computable<Visibility>;
+    visibility?: Computable<Visibility | boolean>;
     /** The requirement(s) to increase this repeatable. */
     requirements: Requirements;
     /** The maximum amount obtainable for this repeatable. */
@@ -108,7 +108,7 @@ export type Repeatable<T extends RepeatableOptions> = Replace<
 export type GenericRepeatable = Replace<
     Repeatable<RepeatableOptions>,
     {
-        visibility: ProcessedComputable<Visibility>;
+        visibility: ProcessedComputable<Visibility | boolean>;
         limit: ProcessedComputable<DecimalSource>;
     }
 >;

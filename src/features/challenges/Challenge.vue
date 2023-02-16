@@ -1,9 +1,9 @@
 <template>
     <div
-        v-if="unref(visibility) !== Visibility.None"
+        v-if="isVisible(visibility)"
         :style="[
             {
-                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+                visibility: isHidden(visibility) ? 'hidden' : undefined
             },
             notifyStyle,
             unref(style) ?? {}
@@ -36,7 +36,7 @@ import MarkNode from "components/MarkNode.vue";
 import Node from "components/Node.vue";
 import type { GenericChallenge } from "features/challenges/challenge";
 import type { StyleValue } from "features/feature";
-import { jsx, Visibility } from "features/feature";
+import { isHidden, isVisible, jsx, Visibility } from "features/feature";
 import { getHighNotifyStyle, getNotifyStyle } from "game/notifications";
 import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "util/vue";
 import type { Component, PropType, UnwrapRef } from "vue";
@@ -62,7 +62,7 @@ export default defineComponent({
             Function
         ),
         visibility: {
-            type: processedPropType<Visibility>(Number),
+            type: processedPropType<Visibility | boolean>(Number, Boolean),
             required: true
         },
         style: processedPropType<StyleValue>(String, Object, Array),
@@ -167,6 +167,8 @@ export default defineComponent({
             notifyStyle,
             comp,
             Visibility,
+            isVisible,
+            isHidden,
             unref
         };
     }

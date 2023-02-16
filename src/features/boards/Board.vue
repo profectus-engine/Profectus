@@ -1,7 +1,7 @@
 <template>
     <panZoom
-        v-if="unref(visibility) !== Visibility.None"
-        v-show="unref(visibility) === Visibility.Visible"
+        v-if="isVisible(visibility)"
+        v-show="isHidden(visibility)"
         :style="[
             {
                 width,
@@ -60,7 +60,7 @@ import type {
 } from "features/boards/board";
 import { getNodeProperty } from "features/boards/board";
 import type { StyleValue } from "features/feature";
-import { Visibility } from "features/feature";
+import { isHidden, isVisible, Visibility } from "features/feature";
 import type { ProcessedComputable } from "util/computed";
 import { computed, ref, Ref, toRefs, unref } from "vue";
 import BoardLinkVue from "./BoardLink.vue";
@@ -70,7 +70,7 @@ const _props = defineProps<{
     nodes: Ref<BoardNode[]>;
     types: Record<string, GenericNodeType>;
     state: Ref<BoardData>;
-    visibility: ProcessedComputable<Visibility>;
+    visibility: ProcessedComputable<Visibility | boolean>;
     width?: ProcessedComputable<string>;
     height?: ProcessedComputable<string>;
     style?: ProcessedComputable<StyleValue>;
