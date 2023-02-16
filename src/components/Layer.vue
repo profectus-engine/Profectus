@@ -73,6 +73,10 @@ export default defineComponent({
             player.tabs.splice(unref(props.index), Infinity);
         }
 
+        function setMinimized(min: boolean) {
+            minimized.value = min;
+        }
+
         function updateNodes(nodes: Record<string, FeatureNode | undefined>) {
             props.nodes.value = nodes;
         }
@@ -90,6 +94,15 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.layer-container {
+    min-width: 100%;
+    min-height: 100%;
+    margin: 0;
+    flex-grow: 1;
+    display: flex;
+    isolation: isolate;
+}
+
 .layer-tab:not(.minimized) {
     padding-top: 20px;
     padding-bottom: 20px;
@@ -123,6 +136,7 @@ export default defineComponent({
 .layer-tab.minimized > * {
     margin: 0;
     writing-mode: vertical-rl;
+    text-align: left;
     padding-left: 10px;
     width: 50px;
 }
@@ -166,8 +180,8 @@ export default defineComponent({
 
 .goBack {
     position: sticky;
-    top: 6px;
-    left: 20px;
+    top: 10px;
+    left: 10px;
     line-height: 30px;
     margin-top: -50px;
     margin-left: -35px;
@@ -176,7 +190,7 @@ export default defineComponent({
     box-shadow: var(--background) 0 2px 3px 5px;
     border-radius: 50%;
     color: var(--foreground);
-    font-size: 40px;
+    font-size: 30px;
     cursor: pointer;
     z-index: 7;
 }
@@ -184,5 +198,12 @@ export default defineComponent({
 .goBack:hover {
     transform: scale(1.1, 1.1);
     text-shadow: 0 0 7px var(--foreground);
+}
+</style>
+
+<style>
+.layer-tab.minimized > * > .desc {
+    color: var(--accent1);
+    font-size: 30px;
 }
 </style>
