@@ -23,8 +23,9 @@ import type {
 } from "util/computed";
 import { convertComputable, processComputable } from "util/computed";
 import { getFirstFeature, renderColJSX, renderJSX } from "util/vue";
-import type { Ref } from "vue";
+import type { ComputedRef, Ref } from "vue";
 import { computed, unref } from "vue";
+import Formula, { GenericFormula } from "game/formulas";
 import "./common.css";
 
 /** An object that configures a {@link ResetButton} */
@@ -439,5 +440,47 @@ export function estimateTime(
             return "Never";
         }
         return formatTime(Decimal.sub(currTarget, resource.value).div(currRate));
+    });
+}
+
+/**
+ * Utility function for displaying the result of a formula such that it will, when told to, preview how the formula's result will change.
+ * Requires a formula with a single variable inside.
+ * @param formula The formula to display the result of.
+ * @param showPreview Whether or not to preview how the formula's result will change.
+ * @param previewAmount The amount to _add_ to the current formula's variable amount to preview the change in result.
+ */
+export function createFormulaPreview(
+    formula: GenericFormula,
+    showPreview: Computable<boolean>,
+    previewAmount: Computable<DecimalSource> = 1
+): ComputedRef<CoercableComponent> {
+    const processedShowPreview = convertComputable(showPreview);
+    const processedPreviewAmount = convertComputable(previewAmount);
+    if (!formula.hasVariable()) {
+        throw "Cannot create formula preview if the formula does not have a variable";
+    }
+    return computed(() => {
+        if (unref(processedShowPreview)) {
+            const curr = formatSmall(formula.evaluate());
+            const preview = formatSmall(
+                formula.evaluate(
+                    Decimal.add(
+                        unref(formula.innermostVariable ?? 0),
+                        unref(processedPreviewAmount)
+                    )
+                )
+            );
+            return jsx(() => (
+                <>
+                    <b>
+                        <i>
+                            {curr}→{preview}
+                        </i>
+                    </b>
+                </>
+            ));
+        }
+        return formatSmall(formula.evaluate());
     });
 }
