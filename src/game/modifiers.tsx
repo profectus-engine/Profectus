@@ -1,6 +1,7 @@
 import "components/common/modifiers.css";
 import type { CoercableComponent } from "features/feature";
 import { jsx } from "features/feature";
+import settings from "game/settings";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { formatSmall } from "util/bignum";
 import type { WithRequired } from "util/common";
@@ -326,7 +327,7 @@ export function createModifierSection({
 }: ModifierSectionOptions) {
     const total = modifier.apply(base ?? 1);
     return (
-        <div>
+        <div style={{ "--unit": settings.alignUnits && unit != null ? "'" + unit + "'" : "" }}>
             <h3>
                 {title}
                 {subtitle == null ? null : <span class="subtitle"> ({subtitle})</span>}

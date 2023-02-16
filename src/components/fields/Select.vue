@@ -87,6 +87,10 @@ function onUpdate(value: SelectOption) {
     background-color: var(--bought);
 }
 
+.vue-input input {
+    font-size: inherit;
+}
+
 .vue-input input::placeholder {
     color: var(--link);
 }

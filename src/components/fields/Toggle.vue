@@ -43,14 +43,16 @@ input {
 
 span {
     width: 100%;
+    padding-right: 41px;
     position: relative;
 }
 
 /* track */
 input + span::before {
     content: "";
-    float: right;
-    margin: 5px 0 5px 10px;
+    position: absolute;
+    top: calc(50% - 7px);
+    right: 0px;
     border-radius: 7px;
     width: 36px;
     height: 14px;
@@ -64,7 +66,7 @@ input + span::before {
 input + span::after {
     content: "";
     position: absolute;
-    top: 2px;
+    top: calc(50% - 10px);
     right: 16px;
     border-radius: 50%;
     width: 20px;

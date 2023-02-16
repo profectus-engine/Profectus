@@ -221,7 +221,12 @@ const msDisplayOptions = Object.values(MilestoneDisplay).map(option => ({
 registerSettingField(
     jsx(() => (
         <Select
-            title="Show Milestones"
+            title={jsx(() => (
+                <span class="option-title">
+                    Show milestones
+                    <desc>Select which milestones to display based on criterias.</desc>
+                </span>
+            ))}
             options={msDisplayOptions}
             onUpdate:modelValue={value => (settings.msDisplay = value as MilestoneDisplay)}
             modelValue={settings.msDisplay}

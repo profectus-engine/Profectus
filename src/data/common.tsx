@@ -13,6 +13,7 @@ import type { Modifier } from "game/modifiers";
 import type { Persistent } from "game/persistence";
 import { DefaultValue, persistent } from "game/persistence";
 import player from "game/player";
+import settings from "game/settings";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatSmall, formatTime } from "util/bignum";
 import type { WithRequired } from "util/common";
@@ -335,7 +336,12 @@ export function createCollapsibleModifierSections(
             return (
                 <>
                     {hasPreviousSection ? <br /> : null}
-                    <div>
+                    <div
+                        style={{
+                            "--unit":
+                                settings.alignUnits && s.unit != null ? "'" + s.unit + "'" : ""
+                        }}
+                    >
                         {header}
                         <br />
                         {modifiers}
