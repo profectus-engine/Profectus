@@ -23,6 +23,7 @@ import { createLazyProxy } from "util/proxies";
 import { coerceComponent, isCoercableComponent } from "util/vue";
 import type { Ref } from "vue";
 import { computed, unref } from "vue";
+import { Decorator } from "./decorators";
 
 export const BuyableType = Symbol("Buyable");
 
@@ -89,9 +90,13 @@ export type GenericBuyable = Replace<
 >;
 
 export function createBuyable<T extends BuyableOptions>(
-    optionsFunc: OptionsFunc<T, BaseBuyable, GenericBuyable>
+    optionsFunc: OptionsFunc<T, BaseBuyable, GenericBuyable>,
+    ...decorators: Decorator<T, BaseBuyable, GenericBuyable>[]
 ): Buyable<T> {
     const amount = persistent<DecimalSource>(0);
+
+    const persistents = decorators.reduce((current, next) => Object.assign(current, next.getPersistents?.()), {});
+
     return createLazyProxy(() => {
         const buyable = optionsFunc();
 
@@ -107,8 +112,15 @@ export function createBuyable<T extends BuyableOptions>(
         buyable.type = BuyableType;
         buyable[Component] = ClickableComponent;
 
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(buyable);
+        }
+
         buyable.amount = amount;
         buyable.amount[DefaultValue] = buyable.initialValue ?? 0;
+
+        Object.assign(buyable, persistents);
+
         buyable.canAfford = computed(() => {
             const genericBuyable = buyable as GenericBuyable;
             const cost = unref(genericBuyable.cost);
@@ -230,6 +242,7 @@ export function createBuyable<T extends BuyableOptions>(
         processComputable(buyable as T, "mark");
         processComputable(buyable as T, "small");
 
+        const gatheredProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(buyable)), {});
         buyable[GatherProps] = function (this: GenericBuyable) {
             const { display, visibility, style, classes, onClick, canClick, small, mark, id } =
                 this;
@@ -242,9 +255,14 @@ export function createBuyable<T extends BuyableOptions>(
                 canClick,
                 small,
                 mark,
-                id
+                id,
+                ...gatheredProps
             };
         };
+
+        for (const decorator of decorators) {
+            decorator.postConstruct?.(buyable);
+        }
 
         return buyable as unknown as Buyable<T>;
     });
