@@ -42,7 +42,7 @@
             </Tooltip>
         </div>
         <div @click="options?.open()">
-            <Tooltip display="Options" :direction="Direction.Down" xoffset="-66px">
+            <Tooltip display="Settings" :direction="Direction.Down" xoffset="-66px">
                 <span class="material-icons">settings</span>
             </Tooltip>
         </div>
@@ -59,7 +59,7 @@
             </Tooltip>
         </div>
         <div @click="options?.open()">
-            <Tooltip display="Options" :direction="Direction.Right">
+            <Tooltip display="Settings" :direction="Direction.Right">
                 <span class="material-icons">settings</span>
             </Tooltip>
         </div>

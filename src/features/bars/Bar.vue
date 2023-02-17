@@ -1,11 +1,11 @@
 <template>
     <div
-        v-if="unref(visibility) !== Visibility.None"
+        v-if="isVisible(visibility)"
         :style="[
             {
                 width: unref(width) + 'px',
                 height: unref(height) + 'px',
-                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+                visibility: isHidden(visibility) ? 'hidden' : undefined
             },
             unref(style) ?? {}
         ]"
@@ -44,7 +44,7 @@
 <script lang="ts">
 import MarkNode from "components/MarkNode.vue";
 import Node from "components/Node.vue";
-import { CoercableComponent, Visibility } from "features/feature";
+import { CoercableComponent, isHidden, isVisible, Visibility } from "features/feature";
 import type { DecimalSource } from "util/bignum";
 import Decimal from "util/bignum";
 import { Direction } from "util/common";
@@ -72,7 +72,7 @@ export default defineComponent({
         },
         display: processedPropType<CoercableComponent>(Object, String, Function),
         visibility: {
-            type: processedPropType<Visibility>(Number),
+            type: processedPropType<Visibility | boolean>(Number, Boolean),
             required: true
         },
         style: processedPropType<StyleValue>(Object, String, Array),
@@ -136,7 +136,9 @@ export default defineComponent({
             barStyle,
             component,
             unref,
-            Visibility
+            Visibility,
+            isVisible,
+            isHidden
         };
     }
 });

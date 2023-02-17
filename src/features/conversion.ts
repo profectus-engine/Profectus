@@ -460,7 +460,9 @@ export function setupPassiveGeneration(
             conversion.gainResource.value = Decimal.add(
                 conversion.gainResource.value,
                 Decimal.times(currRate, diff).times(Decimal.ceil(unref(conversion.actualGain)))
-            ).min(unref(processedCap) ?? Decimal.dInf);
+            )
+                .min(unref(processedCap) ?? Decimal.dInf)
+                .max(conversion.gainResource.value);
         }
     });
 }

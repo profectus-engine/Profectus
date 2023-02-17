@@ -1,11 +1,11 @@
 <template>
     <div
-        v-if="unref(visibility) !== Visibility.None"
+        v-if="isVisible(visibility)"
         class="tab-family-container"
         :class="{ ...unref(classes), ...tabClasses }"
         :style="[
             {
-                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+                visibility: isHidden(visibility) ? 'hidden' : undefined
             },
             unref(style) ?? [],
             tabStyle ?? []
@@ -37,7 +37,7 @@
 import Sticky from "components/layout/Sticky.vue";
 import themes from "data/themes";
 import type { CoercableComponent, StyleValue } from "features/feature";
-import { Visibility } from "features/feature";
+import { isHidden, isVisible, Visibility } from "features/feature";
 import type { GenericTab } from "features/tabs/tab";
 import TabButton from "features/tabs/TabButton.vue";
 import type { GenericTabButton } from "features/tabs/tabFamily";
@@ -49,7 +49,7 @@ import { computed, defineComponent, shallowRef, toRefs, unref, watchEffect } fro
 export default defineComponent({
     props: {
         visibility: {
-            type: processedPropType<Visibility>(Number),
+            type: processedPropType<Visibility | boolean>(Number, Boolean),
             required: true
         },
         activeTab: {
@@ -123,7 +123,9 @@ export default defineComponent({
             Visibility,
             component,
             gatherButtonProps,
-            unref
+            unref,
+            isVisible,
+            isHidden
         };
     }
 });

@@ -4,6 +4,7 @@ import {
     Component,
     GatherProps,
     getUniqueID,
+    isVisible,
     OptionsFunc,
     Replace,
     setDefault,
@@ -32,7 +33,7 @@ const toast = useToast();
 export const AchievementType = Symbol("Achievement");
 
 export interface AchievementOptions {
-    visibility?: Computable<Visibility>;
+    visibility?: Computable<Visibility | boolean>;
     shouldEarn?: () => boolean;
     display?: Computable<CoercableComponent>;
     mark?: Computable<boolean | string>;
@@ -66,7 +67,7 @@ export type Achievement<T extends AchievementOptions> = Replace<
 export type GenericAchievement = Replace<
     Achievement<AchievementOptions>,
     {
-        visibility: ProcessedComputable<Visibility>;
+        visibility: ProcessedComputable<Visibility | boolean>;
     }
 >;
 
@@ -104,7 +105,7 @@ export function createAchievement<T extends AchievementOptions>(
                 if (settings.active !== player.id) return;
                 if (
                     !genericAchievement.earned.value &&
-                    unref(genericAchievement.visibility) === Visibility.Visible &&
+                    isVisible(genericAchievement.visibility) &&
                     genericAchievement.shouldEarn?.()
                 ) {
                     genericAchievement.earned.value = true;

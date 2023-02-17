@@ -1,5 +1,12 @@
 import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
-import { Component, GatherProps, getUniqueID, setDefault, Visibility } from "features/feature";
+import {
+    Component,
+    GatherProps,
+    getUniqueID,
+    isVisible,
+    setDefault,
+    Visibility
+} from "features/feature";
 import TabButtonComponent from "features/tabs/TabButton.vue";
 import TabFamilyComponent from "features/tabs/TabFamily.vue";
 import type { Persistent } from "game/persistence";
@@ -20,7 +27,7 @@ export const TabButtonType = Symbol("TabButton");
 export const TabFamilyType = Symbol("TabFamily");
 
 export interface TabButtonOptions {
-    visibility?: Computable<Visibility>;
+    visibility?: Computable<Visibility | boolean>;
     tab: Computable<GenericTab | CoercableComponent>;
     display: Computable<CoercableComponent>;
     classes?: Computable<Record<string, boolean>>;
@@ -48,12 +55,12 @@ export type TabButton<T extends TabButtonOptions> = Replace<
 export type GenericTabButton = Replace<
     TabButton<TabButtonOptions>,
     {
-        visibility: ProcessedComputable<Visibility>;
+        visibility: ProcessedComputable<Visibility | boolean>;
     }
 >;
 
 export interface TabFamilyOptions {
-    visibility?: Computable<Visibility>;
+    visibility?: Computable<Visibility | boolean>;
     classes?: Computable<Record<string, boolean>>;
     style?: Computable<StyleValue>;
     buttonContainerClasses?: Computable<Record<string, boolean>>;
@@ -81,7 +88,7 @@ export type TabFamily<T extends TabFamilyOptions> = Replace<
 export type GenericTabFamily = Replace<
     TabFamily<TabFamilyOptions>,
     {
-        visibility: ProcessedComputable<Visibility>;
+        visibility: ProcessedComputable<Visibility | boolean>;
     }
 >;
 
@@ -123,15 +130,10 @@ export function createTabFamily<T extends TabFamilyOptions>(
         tabFamily.selected = selected;
         tabFamily.activeTab = computed(() => {
             const tabs = unref(processedTabFamily.tabs);
-            if (
-                selected.value in tabs &&
-                unref(tabs[selected.value].visibility) === Visibility.Visible
-            ) {
+            if (selected.value in tabs && isVisible(tabs[selected.value].visibility)) {
                 return unref(tabs[selected.value].tab);
             }
-            const firstTab = Object.values(tabs).find(
-                tab => unref(tab.visibility) === Visibility.Visible
-            );
+            const firstTab = Object.values(tabs).find(tab => isVisible(tab.visibility));
             if (firstTab) {
                 return unref(firstTab.tab);
             }

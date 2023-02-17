@@ -1,4 +1,6 @@
+import type { DecimalSource } from "util/bignum";
 import { shallowReactive } from "vue";
+import type { Persistent } from "./persistence";
 
 /** An object of global data that is not persistent. */
 export interface Transient {
@@ -8,8 +10,8 @@ export interface Transient {
     hasNaN: boolean;
     /** The location within the player save data object of the NaN value. */
     NaNPath?: string[];
-    /** The parent object of the NaN value. */
-    NaNReceiver?: Record<string, unknown>;
+    /** The ref that was being set to NaN. */
+    NaNPersistent?: Persistent<DecimalSource>;
 }
 
 declare global {

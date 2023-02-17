@@ -18,7 +18,7 @@ export const {
 export type DecimalSource = RawDecimalSource;
 
 declare global {
-    /** Augment the window object so the big num functions can be access from the console. */
+    /** Augment the window object so the big num functions can be accessed from the console. */
     interface Window {
         Decimal: typeof Decimal;
         exponentialFormat: (num: DecimalSource, precision: number, mantissa: boolean) => string;

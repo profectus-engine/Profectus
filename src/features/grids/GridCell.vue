@@ -1,10 +1,10 @@
 <template>
     <button
-        v-if="unref(visibility) !== Visibility.None"
+        v-if="isVisible(visibility)"
         :class="{ feature: true, tile: true, can: unref(canClick), locked: !unref(canClick) }"
         :style="[
             {
-                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined
+                visibility: isHidden(visibility) ? 'hidden' : undefined
             },
             unref(style) ?? {}
         ]"
@@ -26,7 +26,7 @@
 import "components/common/features.css";
 import Node from "components/Node.vue";
 import type { CoercableComponent, StyleValue } from "features/feature";
-import { Visibility } from "features/feature";
+import { isHidden, isVisible, Visibility } from "features/feature";
 import {
     computeComponent,
     computeOptionalComponent,
@@ -39,7 +39,7 @@ import { defineComponent, toRefs, unref } from "vue";
 export default defineComponent({
     props: {
         visibility: {
-            type: processedPropType<Visibility>(Number),
+            type: processedPropType<Visibility | boolean>(Number, Boolean),
             required: true
         },
         onClick: Function as PropType<(e?: MouseEvent | TouchEvent) => void>,
@@ -76,7 +76,9 @@ export default defineComponent({
             titleComponent,
             component,
             Visibility,
-            unref
+            unref,
+            isVisible,
+            isHidden
         };
     }
 });

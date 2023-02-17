@@ -21,7 +21,7 @@ import type {
 } from "util/computed";
 import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import type { InjectionKey, Ref } from "vue";
+import { computed, InjectionKey, Ref } from "vue";
 import { ref, shallowReactive, unref } from "vue";
 
 /** A feature's node in the DOM that has its size tracked. */
@@ -109,7 +109,7 @@ export interface LayerOptions {
     color?: Computable<string>;
     /**
      * The layout of this layer's features.
-     * When the layer is open in {@link game/player.PlayerData.tabs}, this is the content that is display.
+     * When the layer is open in {@link game/player.PlayerData.tabs}, this is the content that is displayed.
      */
     display: Computable<CoercableComponent>;
     /** An object of classes that should be applied to the display. */
@@ -126,6 +126,11 @@ export interface LayerOptions {
      * Defaults to true.
      */
     minimizable?: Computable<boolean>;
+    /**
+     * The layout of this layer's features.
+     * When the layer is open in {@link game/player.PlayerData.tabs}, but the tab is {@link Layer.minimized} this is the content that is displayed.
+     */
+    minimizedDisplay?: Computable<CoercableComponent>;
     /**
      * Whether or not to force the go back button to be hidden.
      * If true, go back will be hidden regardless of {@link data/projInfo.allowGoBack}.
@@ -170,6 +175,7 @@ export type Layer<T extends LayerOptions> = Replace<
         name: GetComputableTypeWithDefault<T["name"], string>;
         minWidth: GetComputableTypeWithDefault<T["minWidth"], 600>;
         minimizable: GetComputableTypeWithDefault<T["minimizable"], true>;
+        minimizedDisplay: GetComputableType<T["minimizedDisplay"]>;
         forceHideGoBack: GetComputableType<T["forceHideGoBack"]>;
     }
 >;
@@ -225,12 +231,43 @@ export function createLayer<T extends LayerOptions>(
 
         processComputable(layer as T, "color");
         processComputable(layer as T, "display");
+        processComputable(layer as T, "classes");
+        processComputable(layer as T, "style");
         processComputable(layer as T, "name");
         setDefault(layer, "name", layer.id);
         processComputable(layer as T, "minWidth");
         setDefault(layer, "minWidth", 600);
         processComputable(layer as T, "minimizable");
         setDefault(layer, "minimizable", true);
+        processComputable(layer as T, "minimizedDisplay");
+
+        const style = layer.style as ProcessedComputable<StyleValue> | undefined;
+        layer.style = computed(() => {
+            let width = unref(layer.minWidth as ProcessedComputable<number | string>);
+            if (typeof width === "number" || !Number.isNaN(parseInt(width))) {
+                width = width + "px";
+            }
+            return [
+                unref(style) ?? "",
+                layer.minimized?.value
+                    ? {
+                          flexGrow: "0",
+                          flexShrink: "0",
+                          width: "60px",
+                          minWidth: "",
+                          flexBasis: "",
+                          margin: "0"
+                      }
+                    : {
+                          flexGrow: "",
+                          flexShrink: "",
+                          width: "",
+                          minWidth: width,
+                          flexBasis: width,
+                          margin: ""
+                      }
+            ];
+        }) as Ref<StyleValue>;
 
         return layer as unknown as Layer<T>;
     });

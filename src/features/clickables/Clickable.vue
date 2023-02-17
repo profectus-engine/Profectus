@@ -1,8 +1,8 @@
 <template>
     <button
-        v-if="unref(visibility) !== Visibility.None"
+        v-if="isVisible(visibility)"
         :style="[
-            { visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined },
+            { visibility: isHidden(visibility) ? 'hidden' : undefined },
             unref(style) ?? []
         ]"
         @click="onClick"
@@ -33,7 +33,7 @@ import MarkNode from "components/MarkNode.vue";
 import Node from "components/Node.vue";
 import type { GenericClickable } from "features/clickables/clickable";
 import type { StyleValue } from "features/feature";
-import { jsx, Visibility } from "features/feature";
+import { isHidden, isVisible, jsx, Visibility } from "features/feature";
 import {
     coerceComponent,
     isCoercableComponent,
@@ -55,7 +55,7 @@ export default defineComponent({
             required: true
         },
         visibility: {
-            type: processedPropType<Visibility>(Number),
+            type: processedPropType<Visibility | boolean>(Number, Boolean),
             required: true
         },
         style: processedPropType<StyleValue>(Object, String, Array),
@@ -92,7 +92,7 @@ export default defineComponent({
                 comp.value = coerceComponent(currDisplay);
                 return;
             }
-            const Title = coerceComponent(currDisplay.title || "", "h3");
+            const Title = coerceComponent(currDisplay.title ?? "", "h3");
             const Description = coerceComponent(currDisplay.description, "div");
             comp.value = coerceComponent(
                 jsx(() => (
@@ -115,6 +115,8 @@ export default defineComponent({
             stop,
             comp,
             Visibility,
+            isVisible,
+            isHidden,
             unref
         };
     }

@@ -59,11 +59,10 @@
 <script setup lang="ts">
 import Modal from "components/Modal.vue";
 import projInfo from "data/projInfo.json";
-import type { PlayerData } from "game/player";
+import type { Player } from "game/player";
 import player, { stringifySave } from "game/player";
 import settings from "game/settings";
 import LZString from "lz-string";
-import { ProxyState } from "util/proxies";
 import { getUniqueID, loadSave, newSave, save } from "util/save";
 import type { ComponentPublicInstance } from "vue";
 import { computed, nextTick, ref, shallowReactive, watch } from "vue";
@@ -72,7 +71,7 @@ import Select from "./fields/Select.vue";
 import Text from "./fields/Text.vue";
 import Save from "./Save.vue";
 
-export type LoadablePlayerData = Omit<Partial<PlayerData>, "id"> & { id: string; error?: unknown };
+export type LoadablePlayerData = Omit<Partial<Player>, "id"> & { id: string; error?: unknown };
 
 const isOpen = ref(false);
 const modal = ref<ComponentPublicInstance<typeof Modal> | null>(null);
@@ -195,7 +194,7 @@ const saves = computed(() =>
 function exportSave(id: string) {
     let saveToExport;
     if (player.id === id) {
-        saveToExport = stringifySave(player[ProxyState]);
+        saveToExport = stringifySave(player);
     } else {
         saveToExport = JSON.stringify(saves.value[id]);
     }
@@ -228,7 +227,7 @@ function duplicateSave(id: string) {
     }
 
     const playerData = { ...saves.value[id], id: getUniqueID() };
-    save(playerData as PlayerData);
+    save(playerData as Player);
 
     settings.saves.push(playerData.id);
 }
@@ -272,7 +271,7 @@ function newFromPreset(preset: string) {
     }
     const playerData = JSON.parse(preset);
     playerData.id = getUniqueID();
-    save(playerData as PlayerData);
+    save(playerData as Player);
 
     settings.saves.push(playerData.id);
 
@@ -287,7 +286,7 @@ function editSave(id: string, newName: string) {
             player.name = newName;
             save();
         } else {
-            save(currSave as PlayerData);
+            save(currSave as Player);
             cachedSaves[id] = undefined;
         }
     }

@@ -1,9 +1,9 @@
 <template>
     <div
-        v-if="unref(visibility) !== Visibility.None"
+        v-if="isVisible(visibility)"
         :style="[
             {
-                visibility: unref(visibility) === Visibility.Hidden ? 'hidden' : undefined,
+                visibility: isHidden(visibility) ? 'hidden' : undefined,
                 backgroundImage: (earned && image && `url(${image})`) || ''
             },
             unref(style) ?? []
@@ -27,7 +27,7 @@ import "components/common/features.css";
 import MarkNode from "components/MarkNode.vue";
 import Node from "components/Node.vue";
 import type { CoercableComponent } from "features/feature";
-import { Visibility } from "features/feature";
+import { Visibility, isHidden, isVisible } from "features/feature";
 import { computeOptionalComponent, processedPropType } from "util/vue";
 import type { StyleValue } from "vue";
 import { defineComponent, toRefs, unref } from "vue";
@@ -35,7 +35,7 @@ import { defineComponent, toRefs, unref } from "vue";
 export default defineComponent({
     props: {
         visibility: {
-            type: processedPropType<Visibility>(Number),
+            type: processedPropType<Visibility | boolean>(Number, Boolean),
             required: true
         },
         display: processedPropType<CoercableComponent>(Object, String, Function),
@@ -62,7 +62,9 @@ export default defineComponent({
         return {
             component: computeOptionalComponent(display),
             unref,
-            Visibility
+            Visibility,
+            isVisible,
+            isHidden
         };
     }
 });
