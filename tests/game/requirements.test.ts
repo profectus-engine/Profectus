@@ -103,7 +103,7 @@ describe("Creating visibility requirement", () => {
     test("Requirement not met when not visible", () => {
         let requirement = createVisibilityRequirement({ visibility: Visibility.None });
         expect(unref(requirement.requirementMet)).toBe(false);
-        requirement = createVisibilityRequirement({ visibility: Visibility.Hidden });
+        requirement = createVisibilityRequirement({ visibility: false });
         expect(unref(requirement.requirementMet)).toBe(false);
     });
 });
