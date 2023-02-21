@@ -49,5 +49,6 @@ const gameComponent = computed(() => {
     position: absolute;
     min-height: 100%;
     height: 100%;
+    color: var(--foreground);
 }
 </style>
