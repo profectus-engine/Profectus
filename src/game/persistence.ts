@@ -94,7 +94,10 @@ function getStackTrace() {
 
 function checkNaNAndWrite<T extends State>(persistent: Persistent<T>, value: T) {
     // Decimal is smart enough to return false on things that aren't supposed to be numbers
-    if (Decimal.isNaN(value as DecimalSource)) {
+    if (
+        Decimal.isNaN(value as DecimalSource) &&
+        !Decimal.isNaN(persistent.value as DecimalSource)
+    ) {
         if (!state.hasNaN) {
             player.autosave = false;
             state.hasNaN = true;
