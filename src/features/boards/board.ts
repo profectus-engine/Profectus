@@ -208,11 +208,14 @@ export type GenericBoard = Replace<
 export function createBoard<T extends BoardOptions>(
     optionsFunc: OptionsFunc<T, BaseBoard, GenericBoard>
 ): Board<T> {
-    const state = persistent<BoardData>({
-        nodes: [],
-        selectedNode: null,
-        selectedAction: null
-    });
+    const state = persistent<BoardData>(
+        {
+            nodes: [],
+            selectedNode: null,
+            selectedAction: null
+        },
+        false
+    );
 
     return createLazyProxy(() => {
         const board = optionsFunc();

@@ -94,7 +94,7 @@ export type GenericMilestone = Replace<
 export function createMilestone<T extends MilestoneOptions>(
     optionsFunc?: OptionsFunc<T, BaseMilestone, GenericMilestone>
 ): Milestone<T> {
-    const earned = persistent<boolean>(false);
+    const earned = persistent<boolean>(false, false);
     return createLazyProxy(() => {
         const milestone = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         milestone.id = getUniqueID("milestone-");

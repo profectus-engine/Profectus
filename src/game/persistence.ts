@@ -40,6 +40,11 @@ export const NonPersistent = Symbol("NonPersistent");
  * @see {@link Persistent[SaveDataPath]}
  */
 export const SaveDataPath = Symbol("SaveDataPath");
+/**
+ * A symbol used in {@link Persistent} objects.
+ * @see {@link Persistent[CheckNaN]}
+ */
+export const CheckNaN = Symbol("CheckNaN");
 
 /**
  * This is a union of things that should be safely stringifiable without needing special processes or knowing what to load them in as.
@@ -78,6 +83,10 @@ export type Persistent<T extends State = State> = Ref<T> & {
      * The path this persistent appears in within the save data object. Predominantly used to ensure it's only placed in there one time.
      */
     [SaveDataPath]: string[] | undefined;
+    /**
+     * Whether or not to NaN-check this ref. Should only be true on values expected to always be DecimalSources.
+     */
+    [CheckNaN]: boolean;
 };
 
 export type NonPersistent<T extends State = State> = WritableComputedRef<T> & { [DefaultValue]: T };
@@ -94,10 +103,7 @@ function getStackTrace() {
 
 function checkNaNAndWrite<T extends State>(persistent: Persistent<T>, value: T) {
     // Decimal is smart enough to return false on things that aren't supposed to be numbers
-    if (
-        Decimal.isNaN(value as DecimalSource) &&
-        !Decimal.isNaN(persistent.value as DecimalSource)
-    ) {
+    if (Decimal.isNaN(value as DecimalSource)) {
         if (!state.hasNaN) {
             player.autosave = false;
             state.hasNaN = true;
@@ -118,8 +124,12 @@ function checkNaNAndWrite<T extends State>(persistent: Persistent<T>, value: T) 
  * Create a persistent ref, which can be saved and loaded.
  * All (non-deleted) persistent refs must be included somewhere within the layer object returned by that layer's options func.
  * @param defaultValue The value the persistent ref should start at on fresh saves or when reset.
+ * @param checkNaN Whether or not to check this ref for being NaN on set. Only use on refs that should always be DecimalSources.
  */
-export function persistent<T extends State>(defaultValue: T | Ref<T>): Persistent<T> {
+export function persistent<T extends State>(
+    defaultValue: T | Ref<T>,
+    checkNaN = true
+): Persistent<T> {
     const persistentState: Ref<T> = isRef(defaultValue)
         ? defaultValue
         : (ref<T>(defaultValue) as Ref<T>);
@@ -133,7 +143,11 @@ export function persistent<T extends State>(defaultValue: T | Ref<T>): Persisten
             return persistentState.value;
         },
         set(value) {
-            checkNaNAndWrite(persistent, value);
+            if (checkNaN) {
+                checkNaNAndWrite(persistent, value);
+            } else {
+                persistent[PersistentState].value = value;
+            }
         }
     }) as NonPersistent<T>;
     nonPersistent[DefaultValue] = defaultValue;
@@ -144,7 +158,11 @@ export function persistent<T extends State>(defaultValue: T | Ref<T>): Persisten
             return persistentState.value as T;
         },
         set value(value: T) {
-            checkNaNAndWrite(persistent, value);
+            if (checkNaN) {
+                checkNaNAndWrite(persistent, value);
+            } else {
+                persistent[PersistentState].value = value;
+            }
         },
         __v_isRef: true,
         [PersistentState]: persistentState,

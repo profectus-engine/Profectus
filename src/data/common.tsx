@@ -288,7 +288,7 @@ export function createCollapsibleModifierSections(
         return sections;
     }
 
-    const collapsed = persistent<Record<number, boolean>>({});
+    const collapsed = persistent<Record<number, boolean>>({}, false);
     const jsxFunc = jsx(() => {
         const sections = calculateSections();
 
@@ -389,7 +389,7 @@ export function colorText(textToColor: string, color = "var(--accent2)"): JSX.El
 export function createCollapsibleMilestones(milestones: Record<string, GenericMilestone>) {
     // Milestones are typically defined from easiest to hardest, and we want to show hardest first
     const orderedMilestones = Object.values(milestones).reverse();
-    const collapseMilestones = persistent<boolean>(true);
+    const collapseMilestones = persistent<boolean>(true, false);
     const lockedMilestones = computed(() =>
         orderedMilestones.filter(m => m.earned.value === false)
     );

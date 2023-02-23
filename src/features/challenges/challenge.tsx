@@ -101,7 +101,7 @@ export function createChallenge<T extends ChallengeOptions>(
     optionsFunc: OptionsFunc<T, BaseChallenge, GenericChallenge>
 ): Challenge<T> {
     const completions = persistent(0);
-    const active = persistent(false);
+    const active = persistent(false, false);
     return createLazyProxy(() => {
         const challenge = optionsFunc();
 
