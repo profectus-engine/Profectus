@@ -1,49 +1,35 @@
 import { Replace, OptionsObject } from "./feature";
 import Decimal, { DecimalSource } from "util/bignum";
 import { Computable, GetComputableType, processComputable, ProcessedComputable } from "util/computed";
-import { AchievementOptions, BaseAchievement, GenericAchievement } from "./achievements/achievement";
-import { BarOptions, BaseBar, GenericBar } from "./bars/bar";
-import { BaseBuyable, BuyableOptions, GenericBuyable } from "./buyable";
-import { BaseChallenge, ChallengeOptions, GenericChallenge } from "./challenges/challenge";
-import { BaseClickable, ClickableOptions, GenericClickable } from "./clickables/clickable";
-import { BaseMilestone, GenericMilestone, MilestoneOptions } from "./milestones/milestone";
-import { BaseUpgrade, GenericUpgrade, UpgradeOptions } from "./upgrades/upgrade";
 import { Persistent, State } from "game/persistence";
 import { computed, Ref, unref } from "vue";
 
-type FeatureOptions = AchievementOptions | BarOptions | BuyableOptions | ChallengeOptions | ClickableOptions | MilestoneOptions | UpgradeOptions;
-
-type BaseFeature = BaseAchievement | BaseBar | BaseBuyable | BaseChallenge | BaseClickable | BaseMilestone | BaseUpgrade;
-
-type GenericFeature = GenericAchievement | GenericBar | GenericBuyable | GenericChallenge | GenericClickable | GenericMilestone | GenericUpgrade;
-
 /*----====----*/
 
-export type Decorator<Options extends FeatureOptions, Base extends BaseFeature, Generic extends GenericFeature, S extends State = State> = {
-    getPersistents?(): Record<string, Persistent<S>>;
-    preConstruct?(feature: OptionsObject<Options,Base,Generic>): void;
-    postConstruct?(feature: OptionsObject<Options,Base,Generic>): void;
-    getGatheredProps?(feature: OptionsObject<Options,Base,Generic>): Partial<OptionsObject<Options,Base,Generic>>
+export type Decorator<FeatureOptions, BaseFeature = {}, GenericFeature = {}, S extends State = State> = {
+    getPersistentData?(): Record<string, Persistent<S>>;
+    preConstruct?(feature: OptionsObject<FeatureOptions,BaseFeature,GenericFeature>): void;
+    postConstruct?(feature: OptionsObject<FeatureOptions,BaseFeature,GenericFeature>): void;
+    getGatheredProps?(feature: OptionsObject<FeatureOptions,BaseFeature,GenericFeature>): Partial<OptionsObject<FeatureOptions,BaseFeature,GenericFeature>>
 }
 
 /*----====----*/
 
 // #region Effect Decorator
-export type EffectFeatureOptions = {
+export interface EffectFeatureOptions {
     effect: Computable<any>;
 }
 
-export type EffectFeature<T extends EffectFeatureOptions, U extends BaseFeature> = Replace<
-    T & U,
-    { effect: GetComputableType<T["effect"]>; }
+export type EffectFeature<T extends EffectFeatureOptions> = Replace<
+    T, { effect: GetComputableType<T["effect"]>; }
 >;
 
-export type GenericEffectFeature<T extends GenericFeature> = T & Replace<
-    EffectFeature<EffectFeatureOptions, BaseFeature>,
+export type GenericEffectFeature = Replace<
+    EffectFeature<EffectFeatureOptions>,
     { effect: ProcessedComputable<any>; }
 >;
 
-export const effectDecorator: Decorator<FeatureOptions & EffectFeatureOptions, BaseFeature, GenericFeature & BaseFeature> = {
+export const effectDecorator: Decorator<EffectFeatureOptions, {}, GenericEffectFeature> = {
     postConstruct(feature) {
         processComputable(feature, "effect");
     }
@@ -52,31 +38,46 @@ export const effectDecorator: Decorator<FeatureOptions & EffectFeatureOptions, B
 
 /*----====----*/
 
-// #region Bonus Amount Decorator
-export interface BonusFeatureOptions {
+// #region Bonus Amount/Completions Decorator
+export interface BonusAmountFeatureOptions {
     bonusAmount: Computable<DecimalSource>;
 }
-
-export type BaseBonusFeature = BaseFeature & {
-    totalAmount: Ref<DecimalSource>;
+export interface BonusCompletionsFeatureOptions {
+    bonusCompletions: Computable<DecimalSource>;
 }
 
-export type BonusAmountFeature<T extends BonusFeatureOptions, U extends BaseBonusFeature> = Replace<
-    T & U,
-    {
-        bonusAmount: GetComputableType<T["bonusAmount"]>;
-    }
+export interface BaseBonusAmountFeature {
+    amount: Ref<DecimalSource>;
+    totalAmount: Ref<DecimalSource>;
+}
+export interface BaseBonusCompletionsFeature {
+    completions: Ref<DecimalSource>;
+    totalCompletions: Ref<DecimalSource>;
+}
+
+export type BonusAmountFeature<T extends BonusAmountFeatureOptions> = Replace<
+    T, { bonusAmount: GetComputableType<T["bonusAmount"]>; }
+>;
+export type BonusCompletionsFeature<T extends BonusCompletionsFeatureOptions> = Replace<
+    T, { bonusAmount: GetComputableType<T["bonusCompletions"]>; }
 >;
 
-export type GenericBonusFeature<T extends GenericFeature> = Replace<
-    T & BonusAmountFeature<BonusFeatureOptions, BaseBonusFeature>,
+export type GenericBonusAmountFeature = Replace<
+    BonusAmountFeature<BonusAmountFeatureOptions>,
     {
         bonusAmount: ProcessedComputable<DecimalSource>;
         totalAmount: ProcessedComputable<DecimalSource>;
     }
 >;
+export type GenericBonusCompletionsFeature = Replace<
+    BonusCompletionsFeature<BonusCompletionsFeatureOptions>,
+    {
+        bonusCompletions: ProcessedComputable<DecimalSource>;
+        totalCompletions: ProcessedComputable<DecimalSource>;
+    }
+>;
 
-export const bonusAmountDecorator: Decorator<FeatureOptions & BonusFeatureOptions, BaseBonusFeature & {amount: ProcessedComputable<DecimalSource>}, GenericFeature & BaseBonusFeature & {amount: ProcessedComputable<DecimalSource>}> = {
+export const bonusAmountDecorator: Decorator<BonusAmountFeatureOptions, BaseBonusAmountFeature, GenericBonusAmountFeature> = {
     postConstruct(feature) {
         processComputable(feature, "bonusAmount");
         if (feature.totalAmount === undefined) {
@@ -87,27 +88,14 @@ export const bonusAmountDecorator: Decorator<FeatureOptions & BonusFeatureOption
         }
     }
 }
-
-export const bonusCompletionsDecorator: Decorator<FeatureOptions & BonusFeatureOptions, BaseBonusFeature & {completions: ProcessedComputable<DecimalSource>}, GenericFeature & BaseBonusFeature & {completions: ProcessedComputable<DecimalSource>}> = {
+export const bonusCompletionsDecorator: Decorator<BonusAmountFeatureOptions, BaseBonusCompletionsFeature, GenericBonusCompletionsFeature> = {
     postConstruct(feature) {
         processComputable(feature, "bonusAmount");
-        if (feature.totalAmount === undefined) {
-            feature.totalAmount = computed(() => Decimal.add(
+        if (feature.totalCompletions === undefined) {
+            feature.totalCompletions = computed(() => Decimal.add(
                 unref(feature.completions ?? 0),
                 unref(feature.bonusAmount as ProcessedComputable<DecimalSource>)
             ));
-        }
-    }
-}
-
-export const bonusEarnedDecorator: Decorator<FeatureOptions & BonusFeatureOptions, BaseBonusFeature & {earned: ProcessedComputable<boolean>}, GenericFeature & BaseBonusFeature & {earned: ProcessedComputable<boolean>}> = {
-    postConstruct(feature) {
-        processComputable(feature, "bonusAmount");
-        if (feature.totalAmount === undefined) {
-            feature.totalAmount = computed(() => unref(feature.earned ?? false)
-                ? Decimal.add(unref(feature.bonusAmount as ProcessedComputable<DecimalSource>), 1)
-                : unref(feature.bonusAmount as ProcessedComputable<DecimalSource>)
-            );
         }
     }
 }

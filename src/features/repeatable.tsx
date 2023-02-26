@@ -24,6 +24,7 @@ import { createLazyProxy } from "util/proxies";
 import { coerceComponent, isCoercableComponent } from "util/vue";
 import type { Ref } from "vue";
 import { computed, unref } from "vue";
+import { Decorator, GenericBonusAmountFeature } from "./decorators";
 
 /** A symbol used to identify {@link Repeatable} features. */
 export const RepeatableType = Symbol("Repeatable");
@@ -118,9 +119,11 @@ export type GenericRepeatable = Replace<
  * @param optionsFunc Repeatable options.
  */
 export function createRepeatable<T extends RepeatableOptions>(
-    optionsFunc: OptionsFunc<T, BaseRepeatable, GenericRepeatable>
+    optionsFunc: OptionsFunc<T, BaseRepeatable, GenericRepeatable>,
+    ...decorators: Decorator<T, BaseRepeatable, GenericRepeatable>[]
 ): Repeatable<T> {
     const amount = persistent<DecimalSource>(0);
+    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(() => {
         const repeatable = optionsFunc();
 
@@ -128,8 +131,14 @@ export function createRepeatable<T extends RepeatableOptions>(
         repeatable.type = RepeatableType;
         repeatable[Component] = ClickableComponent;
 
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(repeatable);
+        }
+
         repeatable.amount = amount;
         repeatable.amount[DefaultValue] = repeatable.initialAmount ?? 0;
+
+        Object.assign(repeatable, decoratedData);
 
         const limitRequirement = {
             requirementMet: computed(() =>
@@ -212,14 +221,17 @@ export function createRepeatable<T extends RepeatableOptions>(
                         {currDisplay.showAmount === false ? null : (
                             <div>
                                 <br />
-                                {unref(genericRepeatable.limit) === Decimal.dInf ? (
-                                    <>Amount: {formatWhole(genericRepeatable.amount.value)}</>
-                                ) : (
-                                    <>
-                                        Amount: {formatWhole(genericRepeatable.amount.value)} /{" "}
-                                        {formatWhole(unref(genericRepeatable.limit))}
-                                    </>
-                                )}
+                                joinJSX(
+                                    <>Amount: {formatWhole(genericRepeatable.amount.value)}</>,
+                                    {unref(genericRepeatable.limit) !== Decimal.dInf ? (
+                                        <> / {formatWhole(unref(genericRepeatable.limit))}</>
+                                    ) : undefined},
+                                    {(genericRepeatable as GenericRepeatable & GenericBonusAmountFeature).bonusAmount == null ? null : (
+                                        Decimal.gt(unref((genericRepeatable as GenericRepeatable & GenericBonusAmountFeature).bonusAmount), 0) ? (
+                                            <> + {formatWhole(unref((genericRepeatable as GenericRepeatable & GenericBonusAmountFeature).bonusAmount))}</>
+                                        ) : undefined)
+                                    }
+                                )
                             </div>
                         )}
                         {currDisplay.effectDisplay == null ? null : (
@@ -254,6 +266,11 @@ export function createRepeatable<T extends RepeatableOptions>(
         processComputable(repeatable as T, "small");
         processComputable(repeatable as T, "maximize");
 
+        for (const decorator of decorators) {
+            decorator.postConstruct?.(repeatable);
+        }
+
+        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(repeatable)), {});
         repeatable[GatherProps] = function (this: GenericRepeatable) {
             const { display, visibility, style, classes, onClick, canClick, small, mark, id } =
                 this;
@@ -266,7 +283,8 @@ export function createRepeatable<T extends RepeatableOptions>(
                 canClick,
                 small,
                 mark,
-                id
+                id,
+                ...decoratedProps
             };
         };
 

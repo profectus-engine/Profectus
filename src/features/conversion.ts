@@ -11,6 +11,7 @@ import { convertComputable, processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import type { Ref } from "vue";
 import { computed, unref } from "vue";
+import { Decorator } from "./decorators";
 
 /** An object that configures a {@link Conversion}. */
 export interface ConversionOptions {
@@ -135,10 +136,15 @@ export type GenericConversion = Replace<
  * @see {@link createIndependentConversion}.
  */
 export function createConversion<T extends ConversionOptions>(
-    optionsFunc: OptionsFunc<T, BaseConversion, GenericConversion>
+    optionsFunc: OptionsFunc<T, BaseConversion, GenericConversion>,
+    ...decorators: Decorator<T, BaseConversion, GenericConversion>[]
 ): Conversion<T> {
     return createLazyProxy(() => {
         const conversion = optionsFunc();
+
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(conversion);
+        }
 
         if (conversion.currentGain == null) {
             conversion.currentGain = computed(() => {
@@ -200,6 +206,10 @@ export function createConversion<T extends ConversionOptions>(
         setDefault(conversion, "buyMax", true);
         processComputable(conversion as T, "roundUpCost");
         setDefault(conversion, "roundUpCost", true);
+
+        for (const decorator of decorators) {
+            decorator.postConstruct?.(conversion);
+        }
 
         return conversion as unknown as Conversion<T>;
     });

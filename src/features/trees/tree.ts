@@ -1,3 +1,4 @@
+import { Decorator } from "features/decorators";
 import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
 import { Component, GatherProps, getUniqueID, setDefault, Visibility } from "features/feature";
 import type { Link } from "features/links/links";
@@ -66,13 +67,21 @@ export type GenericTreeNode = Replace<
 >;
 
 export function createTreeNode<T extends TreeNodeOptions>(
-    optionsFunc?: OptionsFunc<T, BaseTreeNode, GenericTreeNode>
+    optionsFunc?: OptionsFunc<T, BaseTreeNode, GenericTreeNode>,
+    ...decorators: Decorator<T, BaseTreeNode, GenericTreeNode>[]
 ): TreeNode<T> {
+    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(() => {
         const treeNode = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         treeNode.id = getUniqueID("treeNode-");
         treeNode.type = TreeNodeType;
         treeNode[Component] = TreeNodeComponent;
+
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(treeNode);
+        }
+
+        Object.assign(decoratedData);
 
         processComputable(treeNode as T, "visibility");
         setDefault(treeNode, "visibility", Visibility.Visible);
@@ -84,6 +93,10 @@ export function createTreeNode<T extends TreeNodeOptions>(
         processComputable(treeNode as T, "classes");
         processComputable(treeNode as T, "style");
         processComputable(treeNode as T, "mark");
+
+        for (const decorator of decorators) {
+            decorator.postConstruct?.(treeNode);
+        }
 
         if (treeNode.onClick) {
             const onClick = treeNode.onClick.bind(treeNode);
@@ -102,6 +115,7 @@ export function createTreeNode<T extends TreeNodeOptions>(
             };
         }
 
+        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(treeNode)), {});
         treeNode[GatherProps] = function (this: GenericTreeNode) {
             const {
                 display,
@@ -127,7 +141,8 @@ export function createTreeNode<T extends TreeNodeOptions>(
                 glowColor,
                 canClick,
                 mark,
-                id
+                id,
+                ...decoratedProps
             };
         };
 

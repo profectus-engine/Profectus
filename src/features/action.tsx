@@ -31,6 +31,7 @@ import { coerceComponent, isCoercableComponent, render } from "util/vue";
 import { computed, Ref, ref, unref } from "vue";
 import { BarOptions, createBar, GenericBar } from "./bars/bar";
 import { ClickableOptions } from "./clickables/clickable";
+import { Decorator } from "./decorators";
 
 export const ActionType = Symbol("Action");
 
@@ -77,9 +78,11 @@ export type GenericAction = Replace<
 >;
 
 export function createAction<T extends ActionOptions>(
-    optionsFunc?: OptionsFunc<T, BaseAction, GenericAction>
+    optionsFunc?: OptionsFunc<T, BaseAction, GenericAction>,
+    ...decorators: Decorator<T, BaseAction, GenericAction>[]
 ): Action<T> {
     const progress = persistent<DecimalSource>(0);
+    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(() => {
         const action = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         action.id = getUniqueID("action-");
@@ -89,8 +92,13 @@ export function createAction<T extends ActionOptions>(
         // Required because of display changing types
         const genericAction = action as unknown as GenericAction;
 
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(action);
+        }
+
         action.isHolding = ref(false);
         action.progress = progress;
+        Object.assign(action, decoratedData);
 
         processComputable(action as T, "visibility");
         setDefault(action, "visibility", Visibility.Visible);
@@ -202,6 +210,11 @@ export function createAction<T extends ActionOptions>(
             }
         };
 
+        for (const decorator of decorators) {
+            decorator.postConstruct?.(action);
+        }
+
+        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(action)));
         action[GatherProps] = function (this: GenericAction) {
             const {
                 display,
@@ -225,7 +238,8 @@ export function createAction<T extends ActionOptions>(
                 canClick,
                 small,
                 mark,
-                id
+                id,
+                ...decoratedProps
             };
         };
 

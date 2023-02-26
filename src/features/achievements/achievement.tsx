@@ -1,4 +1,5 @@
 import AchievementComponent from "features/achievements/Achievement.vue";
+import { Decorator } from "features/decorators";
 import {
     CoercableComponent,
     Component,
@@ -72,19 +73,27 @@ export type GenericAchievement = Replace<
 >;
 
 export function createAchievement<T extends AchievementOptions>(
-    optionsFunc?: OptionsFunc<T, BaseAchievement, GenericAchievement>
+    optionsFunc?: OptionsFunc<T, BaseAchievement, GenericAchievement>,
+    ...decorators: Decorator<T, BaseAchievement, GenericAchievement>[]
 ): Achievement<T> {
     const earned = persistent<boolean>(false);
+    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(() => {
         const achievement = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         achievement.id = getUniqueID("achievement-");
         achievement.type = AchievementType;
         achievement[Component] = AchievementComponent;
 
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(achievement);
+        }
+
         achievement.earned = earned;
         achievement.complete = function () {
             earned.value = true;
         };
+
+        Object.assign(achievement, decoratedData);
 
         processComputable(achievement as T, "visibility");
         setDefault(achievement, "visibility", Visibility.Visible);
@@ -94,9 +103,14 @@ export function createAchievement<T extends AchievementOptions>(
         processComputable(achievement as T, "style");
         processComputable(achievement as T, "classes");
 
+        for (const decorator of decorators) {
+            decorator.postConstruct?.(achievement);
+        }
+
+        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(achievement)), {});
         achievement[GatherProps] = function (this: GenericAchievement) {
             const { visibility, display, earned, image, style, classes, mark, id } = this;
-            return { visibility, display, earned, image, style: unref(style), classes, mark, id };
+            return { visibility, display, earned, image, style: unref(style), classes, mark, id, ...decoratedProps };
         };
 
         if (achievement.shouldEarn) {

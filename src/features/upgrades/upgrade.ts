@@ -1,4 +1,5 @@
 import { isArray } from "@vue/shared";
+import { Decorator } from "features/decorators";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -85,16 +86,24 @@ export type GenericUpgrade = Replace<
 >;
 
 export function createUpgrade<T extends UpgradeOptions>(
-    optionsFunc: OptionsFunc<T, BaseUpgrade, GenericUpgrade>
+    optionsFunc: OptionsFunc<T, BaseUpgrade, GenericUpgrade>,
+    ...decorators: Decorator<T, BaseUpgrade, GenericUpgrade>[]
 ): Upgrade<T> {
     const bought = persistent<boolean>(false);
+    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(() => {
         const upgrade = optionsFunc();
         upgrade.id = getUniqueID("upgrade-");
         upgrade.type = UpgradeType;
         upgrade[Component] = UpgradeComponent;
 
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(upgrade);
+        }
+
         upgrade.bought = bought;
+        Object.assign(upgrade, decoratedData);
+
         upgrade.canPurchase = computed(() => requirementsMet(upgrade.requirements));
         upgrade.purchase = function () {
             const genericUpgrade = upgrade as GenericUpgrade;
@@ -120,6 +129,11 @@ export function createUpgrade<T extends UpgradeOptions>(
         processComputable(upgrade as T, "display");
         processComputable(upgrade as T, "mark");
 
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(upgrade);
+        }
+
+        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(upgrade)), {});
         upgrade[GatherProps] = function (this: GenericUpgrade) {
             const {
                 display,
@@ -143,7 +157,8 @@ export function createUpgrade<T extends UpgradeOptions>(
                 bought,
                 mark,
                 id,
-                purchase
+                purchase,
+                ...decoratedProps
             };
         };
 

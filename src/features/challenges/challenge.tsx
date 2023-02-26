@@ -1,6 +1,7 @@
 import { isArray } from "@vue/shared";
 import Toggle from "components/fields/Toggle.vue";
 import ChallengeComponent from "features/challenges/Challenge.vue";
+import { Decorator } from "features/decorators";
 import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
 import {
     Component,
@@ -98,10 +99,12 @@ export type GenericChallenge = Replace<
 >;
 
 export function createChallenge<T extends ChallengeOptions>(
-    optionsFunc: OptionsFunc<T, BaseChallenge, GenericChallenge>
+    optionsFunc: OptionsFunc<T, BaseChallenge, GenericChallenge>,
+    ...decorators: Decorator<T, BaseChallenge, GenericChallenge>[]
 ): Challenge<T> {
     const completions = persistent(0);
     const active = persistent(false);
+    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(() => {
         const challenge = optionsFunc();
 
@@ -120,8 +123,14 @@ export function createChallenge<T extends ChallengeOptions>(
         challenge.type = ChallengeType;
         challenge[Component] = ChallengeComponent;
 
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(challenge);
+        }
+
         challenge.completions = completions;
         challenge.active = active;
+        Object.assign(challenge, decoratedData);
+
         challenge.completed = computed(() =>
             Decimal.gt((challenge as GenericChallenge).completions.value, 0)
         );
@@ -234,6 +243,11 @@ export function createChallenge<T extends ChallengeOptions>(
             });
         }
 
+        for (const decorator of decorators) {
+            decorator.postConstruct?.(challenge);
+        }
+
+        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(challenge)), {});
         challenge[GatherProps] = function (this: GenericChallenge) {
             const {
                 active,
@@ -261,7 +275,8 @@ export function createChallenge<T extends ChallengeOptions>(
                 canStart,
                 mark,
                 id,
-                toggle
+                toggle,
+                ...decoratedProps
             };
         };
 

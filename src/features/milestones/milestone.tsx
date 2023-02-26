@@ -1,4 +1,5 @@
 import Select from "components/fields/Select.vue";
+import { Decorator } from "features/decorators";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -92,16 +93,23 @@ export type GenericMilestone = Replace<
 >;
 
 export function createMilestone<T extends MilestoneOptions>(
-    optionsFunc?: OptionsFunc<T, BaseMilestone, GenericMilestone>
+    optionsFunc?: OptionsFunc<T, BaseMilestone, GenericMilestone>,
+    ...decorators: Decorator<T, BaseMilestone, GenericMilestone>[]
 ): Milestone<T> {
     const earned = persistent<boolean>(false);
+    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(() => {
         const milestone = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         milestone.id = getUniqueID("milestone-");
         milestone.type = MilestoneType;
         milestone[Component] = MilestoneComponent;
 
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(milestone);
+        }
+
         milestone.earned = earned;
+        Object.assign(milestone, decoratedData);
         milestone.complete = function () {
             const genericMilestone = milestone as GenericMilestone;
             earned.value = true;
@@ -160,9 +168,14 @@ export function createMilestone<T extends MilestoneOptions>(
         processComputable(milestone as T, "display");
         processComputable(milestone as T, "showPopups");
 
+        for (const decorator of decorators) {
+            decorator.postConstruct?.(milestone);
+        }
+
+        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next?.getGatheredProps?.(milestone)), {});
         milestone[GatherProps] = function (this: GenericMilestone) {
             const { visibility, display, style, classes, earned, id } = this;
-            return { visibility, display, style: unref(style), classes, earned, id };
+            return { visibility, display, style: unref(style), classes, earned, id, ...decoratedProps };
         };
 
         if (milestone.shouldEarn) {

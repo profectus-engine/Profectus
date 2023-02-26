@@ -1,4 +1,5 @@
 import ClickableComponent from "features/clickables/Clickable.vue";
+import { Decorator } from "features/decorators";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -67,13 +68,21 @@ export type GenericClickable = Replace<
 >;
 
 export function createClickable<T extends ClickableOptions>(
-    optionsFunc?: OptionsFunc<T, BaseClickable, GenericClickable>
+    optionsFunc?: OptionsFunc<T, BaseClickable, GenericClickable>,
+    ...decorators: Decorator<T, BaseClickable, GenericClickable>[]
 ): Clickable<T> {
+    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(() => {
         const clickable = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         clickable.id = getUniqueID("clickable-");
         clickable.type = ClickableType;
         clickable[Component] = ClickableComponent;
+
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(clickable);
+        }
+
+        Object.assign(clickable, decoratedData);
 
         processComputable(clickable as T, "visibility");
         setDefault(clickable, "visibility", Visibility.Visible);
@@ -101,6 +110,11 @@ export function createClickable<T extends ClickableOptions>(
             };
         }
 
+        for (const decorator of decorators) {
+            decorator.postConstruct?.(clickable);
+        }
+
+        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(clickable)), {});
         clickable[GatherProps] = function (this: GenericClickable) {
             const {
                 display,
@@ -124,7 +138,8 @@ export function createClickable<T extends ClickableOptions>(
                 canClick,
                 small,
                 mark,
-                id
+                id,
+                ...decoratedProps
             };
         };
 
