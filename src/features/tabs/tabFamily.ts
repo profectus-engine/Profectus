@@ -101,7 +101,7 @@ export function createTabFamily<T extends TabFamilyOptions>(
         throw "Cannot create tab family with 0 tabs";
     }
 
-    const selected = persistent(Object.keys(tabs)[0]);
+    const selected = persistent(Object.keys(tabs)[0], false);
     return createLazyProxy(() => {
         const tabFamily = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
 

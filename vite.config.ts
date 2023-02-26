@@ -32,6 +32,9 @@ export default defineConfig({
         tsconfigPaths(),
         VitePWA({
             includeAssets: ["Logo.svg", "favicon.ico", "robots.txt", "apple-touch-icon.png"],
+            workbox: {
+              globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+            },
             manifest: {
                 name: projInfo.title,
                 short_name: projInfo.title,

@@ -50,7 +50,7 @@ export default defineComponent({
 
         const glowColorStyle = computed(() => {
             const color = unwrapRef(glowColor);
-            if (color != null) {
+            if (color == null || color === "") {
                 return {};
             }
             if (unref(floating)) {

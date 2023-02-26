@@ -89,7 +89,7 @@ export function createUpgrade<T extends UpgradeOptions>(
     optionsFunc: OptionsFunc<T, BaseUpgrade, GenericUpgrade>,
     ...decorators: Decorator<T, BaseUpgrade, GenericUpgrade>[]
 ): Upgrade<T> {
-    const bought = persistent<boolean>(false);
+    const bought = persistent<boolean>(false, false);
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(() => {
         const upgrade = optionsFunc();

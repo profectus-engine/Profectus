@@ -96,7 +96,7 @@ export function createMilestone<T extends MilestoneOptions>(
     optionsFunc?: OptionsFunc<T, BaseMilestone, GenericMilestone>,
     ...decorators: Decorator<T, BaseMilestone, GenericMilestone>[]
 ): Milestone<T> {
-    const earned = persistent<boolean>(false);
+    const earned = persistent<boolean>(false, false);
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(() => {
         const milestone = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);

@@ -103,7 +103,7 @@ export function createChallenge<T extends ChallengeOptions>(
     ...decorators: Decorator<T, BaseChallenge, GenericChallenge>[]
 ): Challenge<T> {
     const completions = persistent(0);
-    const active = persistent(false);
+    const active = persistent(false, false);
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(() => {
         const challenge = optionsFunc();

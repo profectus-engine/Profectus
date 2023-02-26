@@ -78,7 +78,7 @@ export function addTooltip<T extends TooltipOptions>(
             options.pinnable = false;
         } else {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (element as any).pinned = options.pinned = persistent<boolean>(false);
+            (element as any).pinned = options.pinned = persistent<boolean>(false, false);
         }
     }
 
