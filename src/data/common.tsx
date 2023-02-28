@@ -8,7 +8,7 @@ import { GenericMilestone } from "features/milestones/milestone";
 import { displayResource, Resource } from "features/resources/resource";
 import type { GenericTree, GenericTreeNode, TreeNode, TreeNodeOptions } from "features/trees/tree";
 import { createTreeNode } from "features/trees/tree";
-import { GenericFormula } from "game/formulas";
+import Formula, { FormulaSource, GenericFormula, InvertibleFormula } from "game/formulas";
 import type { Modifier } from "game/modifiers";
 import type { Persistent } from "game/persistence";
 import { DefaultValue, persistent } from "game/persistence";
@@ -488,5 +488,26 @@ export function createFormulaPreview(
             ));
         }
         return formatSmall(formula.evaluate());
+    });
+}
+
+export function modifierToFormula<T extends GenericFormula>(
+    modifier: WithRequired<Modifier, "revert">,
+    base: T
+): T;
+export function modifierToFormula(modifier: Modifier, base: FormulaSource): GenericFormula;
+export function modifierToFormula(modifier: Modifier, base: FormulaSource) {
+    return new Formula({
+        inputs: [base],
+        evaluate: val => modifier.apply(val),
+        invert:
+            "revert" in modifier && modifier.revert != null
+                ? (val, lhs) => {
+                      if (lhs instanceof Formula && lhs.hasVariable()) {
+                          return lhs.invert(modifier.revert!(val));
+                      }
+                      throw "Could not invert due to no input being a variable";
+                  }
+                : undefined
     });
 }
