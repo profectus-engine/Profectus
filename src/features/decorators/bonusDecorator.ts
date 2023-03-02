@@ -1,5 +1,5 @@
 import { Replace } from "features/feature";
-import Decimal, { DecimalSource } from "lib/break_eternity";
+import Decimal, { DecimalSource } from "util/bignum";
 import { Computable, GetComputableType, ProcessedComputable, processComputable } from "util/computed";
 import { Ref, computed, unref } from "vue";
 import { Decorator } from "./common";
