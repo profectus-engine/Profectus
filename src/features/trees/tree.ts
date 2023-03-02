@@ -1,4 +1,4 @@
-import { Decorator } from "features/decorators";
+import { Decorator } from "features/decorators/common";
 import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
 import { Component, GatherProps, getUniqueID, setDefault, Visibility } from "features/feature";
 import type { Link } from "features/links/links";

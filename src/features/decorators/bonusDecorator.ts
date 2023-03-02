@@ -1,44 +1,9 @@
-import { Replace, OptionsObject } from "./feature";
-import Decimal, { DecimalSource } from "util/bignum";
-import { Computable, GetComputableType, processComputable, ProcessedComputable } from "util/computed";
-import { Persistent, State } from "game/persistence";
-import { computed, Ref, unref } from "vue";
+import { Replace } from "features/feature";
+import Decimal, { DecimalSource } from "lib/break_eternity";
+import { Computable, GetComputableType, ProcessedComputable, processComputable } from "util/computed";
+import { Ref, computed, unref } from "vue";
+import { Decorator } from "./common";
 
-/*----====----*/
-
-export type Decorator<FeatureOptions, BaseFeature = {}, GenericFeature = {}, S extends State = State> = {
-    getPersistentData?(): Record<string, Persistent<S>>;
-    preConstruct?(feature: OptionsObject<FeatureOptions,BaseFeature,GenericFeature>): void;
-    postConstruct?(feature: OptionsObject<FeatureOptions,BaseFeature,GenericFeature>): void;
-    getGatheredProps?(feature: OptionsObject<FeatureOptions,BaseFeature,GenericFeature>): Partial<OptionsObject<FeatureOptions,BaseFeature,GenericFeature>>
-}
-
-/*----====----*/
-
-// #region Effect Decorator
-export interface EffectFeatureOptions {
-    effect: Computable<any>;
-}
-
-export type EffectFeature<T extends EffectFeatureOptions> = Replace<
-    T, { effect: GetComputableType<T["effect"]>; }
->;
-
-export type GenericEffectFeature = Replace<
-    EffectFeature<EffectFeatureOptions>,
-    { effect: ProcessedComputable<any>; }
->;
-
-export const effectDecorator: Decorator<EffectFeatureOptions, {}, GenericEffectFeature> = {
-    postConstruct(feature) {
-        processComputable(feature, "effect");
-    }
-}
-// #endregion
-
-/*----====----*/
-
-// #region Bonus Amount/Completions Decorator
 export interface BonusAmountFeatureOptions {
     bonusAmount: Computable<DecimalSource>;
 }
@@ -77,6 +42,16 @@ export type GenericBonusCompletionsFeature = Replace<
     }
 >;
 
+/**
+ * Allows the addition of "bonus levels" to the decorated feature, with an accompanying "total amount".  
+ * To function properly, the `createFeature()` function must have its generic type extended by {@linkcode BonusAmountFeatureOptions}.  
+ * To allow access to the decorated values outside the `createFeature()` function, the output type must be extended by {@linkcode GenericBonusAmountFeature}.
+ * @example ```ts
+ * createRepeatable<RepeatableOptions & BonusAmountFeatureOptions>(() => ({
+ *   bonusAmount: noPersist(otherRepeatable.amount),
+ *   ...
+ * }), bonusAmountDecorator) as GenericRepeatable & GenericBonusAmountFeature
+ */
 export const bonusAmountDecorator: Decorator<BonusAmountFeatureOptions, BaseBonusAmountFeature, GenericBonusAmountFeature> = {
     postConstruct(feature) {
         processComputable(feature, "bonusAmount");
@@ -88,18 +63,25 @@ export const bonusAmountDecorator: Decorator<BonusAmountFeatureOptions, BaseBonu
         }
     }
 }
-export const bonusCompletionsDecorator: Decorator<BonusAmountFeatureOptions, BaseBonusCompletionsFeature, GenericBonusCompletionsFeature> = {
+
+/**
+ * Allows the addition of "bonus levels" to the decorated feature, with an accompanying "total amount".  
+ * To function properly, the `createFeature()` function must have its generic type extended by {@linkcode BonusCompletionFeatureOptions}.  
+ * To allow access to the decorated values outside the `createFeature()` function, the output type must be extended by {@linkcode GenericBonusCompletionFeature}.
+ * @example ```ts
+ * createChallenge<ChallengeOptions & BonusCompletionFeatureOptions>(() => ({
+ *   bonusCompletions: noPersist(otherChallenge.completions),
+ *   ...
+ * }), bonusCompletionDecorator) as GenericChallenge & GenericBonusCompletionFeature
+ */
+export const bonusCompletionsDecorator: Decorator<BonusCompletionsFeatureOptions, BaseBonusCompletionsFeature, GenericBonusCompletionsFeature> = {
     postConstruct(feature) {
-        processComputable(feature, "bonusAmount");
+        processComputable(feature, "bonusCompletions");
         if (feature.totalCompletions === undefined) {
             feature.totalCompletions = computed(() => Decimal.add(
                 unref(feature.completions ?? 0),
-                unref(feature.bonusAmount as ProcessedComputable<DecimalSource>)
+                unref(feature.bonusCompletions as ProcessedComputable<DecimalSource>)
             ));
         }
     }
 }
-// #endregion
-
-/*----====----*/
-

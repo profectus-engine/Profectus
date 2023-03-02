@@ -24,7 +24,7 @@ import { createLazyProxy } from "util/proxies";
 import { coerceComponent, isCoercableComponent } from "util/vue";
 import type { Ref } from "vue";
 import { computed, unref } from "vue";
-import { Decorator, GenericBonusAmountFeature } from "./decorators";
+import { Decorator } from "./decorators/common";
 
 /** A symbol used to identify {@link Repeatable} features. */
 export const RepeatableType = Symbol("Repeatable");

@@ -1,5 +1,5 @@
 import ClickableComponent from "features/clickables/Clickable.vue";
-import { Decorator } from "features/decorators";
+import { Decorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,

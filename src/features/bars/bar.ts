@@ -1,5 +1,5 @@
 import BarComponent from "features/bars/Bar.vue";
-import { Decorator } from "features/decorators";
+import { Decorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,

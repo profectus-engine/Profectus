@@ -1,5 +1,5 @@
 import AchievementComponent from "features/achievements/Achievement.vue";
-import { Decorator } from "features/decorators";
+import { Decorator } from "features/decorators/common";
 import {
     CoercableComponent,
     Component,

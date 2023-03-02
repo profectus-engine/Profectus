@@ -11,7 +11,7 @@ import { convertComputable, processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import type { Ref } from "vue";
 import { computed, unref } from "vue";
-import { Decorator } from "./decorators";
+import { Decorator } from "./decorators/common";
 
 /** An object that configures a {@link Conversion}. */
 export interface ConversionOptions {

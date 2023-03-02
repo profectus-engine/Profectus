@@ -1,7 +1,7 @@
 import { isArray } from "@vue/shared";
 import Toggle from "components/fields/Toggle.vue";
 import ChallengeComponent from "features/challenges/Challenge.vue";
-import { Decorator } from "features/decorators";
+import { Decorator } from "features/decorators/common";
 import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
 import {
     Component,

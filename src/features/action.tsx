@@ -31,7 +31,7 @@ import { coerceComponent, isCoercableComponent, render } from "util/vue";
 import { computed, Ref, ref, unref } from "vue";
 import { BarOptions, createBar, GenericBar } from "./bars/bar";
 import { ClickableOptions } from "./clickables/clickable";
-import { Decorator } from "./decorators";
+import { Decorator } from "./decorators/common";
 
 export const ActionType = Symbol("Action");
 
