@@ -225,12 +225,7 @@ export function createRepeatable<T extends RepeatableOptions>(
                                     <>Amount: {formatWhole(genericRepeatable.amount.value)}</>,
                                     {unref(genericRepeatable.limit) !== Decimal.dInf ? (
                                         <> / {formatWhole(unref(genericRepeatable.limit))}</>
-                                    ) : undefined},
-                                    {(genericRepeatable as GenericRepeatable & GenericBonusAmountFeature).bonusAmount == null ? null : (
-                                        Decimal.gt(unref((genericRepeatable as GenericRepeatable & GenericBonusAmountFeature).bonusAmount), 0) ? (
-                                            <> + {formatWhole(unref((genericRepeatable as GenericRepeatable & GenericBonusAmountFeature).bonusAmount))}</>
-                                        ) : undefined)
-                                    }
+                                    ) : undefined}
                                 )
                             </div>
                         )}
