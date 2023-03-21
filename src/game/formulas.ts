@@ -477,9 +477,7 @@ function invertTetrate(
     payload: FormulaSource
 ) {
     if (hasVariable(base)) {
-        return base.invert(
-            Decimal.slog(value, Decimal.minabs(1e308, unrefFormulaSource(height)).toNumber())
-        );
+        return base.invert(Decimal.ssqrt(value));
     }
     // Other params can't be inverted ATM
     throw "Could not invert due to no input being a variable";

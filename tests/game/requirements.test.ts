@@ -2,6 +2,7 @@ import { Visibility } from "features/feature";
 import { createResource, Resource } from "features/resources/resource";
 import Formula from "game/formulas";
 import {
+    CostRequirement,
     createBooleanRequirement,
     createCostRequirement,
     createVisibilityRequirement,
@@ -17,19 +18,18 @@ import "../utils";
 describe("Creating cost requirement", () => {
     describe("Minimal requirement", () => {
         let resource: Resource;
-        let requirement: Requirement;
+        let requirement: CostRequirement;
         beforeAll(() => {
             resource = createResource(ref(10));
             requirement = createCostRequirement(() => ({
                 resource,
-                cost: 10
+                cost: 10,
+                spendResources: false
             }));
         });
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        test("resource pass-through", () => expect((requirement as any).resource).toBe(resource));
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        test("cost pass-through", () => expect((requirement as any).cost).toBe(10));
+        test("resource pass-through", () => expect(requirement.resource).toBe(resource));
+        test("cost pass-through", () => expect(requirement.cost).toBe(10));
 
         test("partialDisplay exists", () =>
             expect(typeof requirement.partialDisplay).toBe("function"));
@@ -41,23 +41,22 @@ describe("Creating cost requirement", () => {
         });
         test("is visible", () => expect(requirement.visibility).toBe(Visibility.Visible));
         test("requires pay", () => expect(requirement.requiresPay).toBe(true));
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        test("spends resources", () => expect((requirement as any).spendResources).toBe(true));
+        test("does not spend resources", () => expect(requirement.spendResources).toBe(false));
         test("cannot maximize", () => expect(unref(requirement.canMaximize)).toBe(false));
     });
 
     describe("Fully customized", () => {
         let resource: Resource;
-        let requirement: Requirement;
+        let requirement: CostRequirement;
         beforeAll(() => {
             resource = createResource(ref(10));
             requirement = createCostRequirement(() => ({
                 resource,
-                cost: 10,
+                cost: Formula.variable(resource).times(10),
                 visibility: Visibility.None,
                 requiresPay: false,
                 maximize: true,
-                spendResources: false,
+                spendResources: true,
                 // eslint-disable-next-line @typescript-eslint/no-empty-function
                 pay() {}
             }));
@@ -69,9 +68,7 @@ describe("Creating cost requirement", () => {
             requirement.pay.length === 1);
         test("is not visible", () => expect(requirement.visibility).toBe(Visibility.None));
         test("does not require pay", () => expect(requirement.requiresPay).toBe(false));
-        test("does not spend resources", () =>
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            expect((requirement as any).spendResources).toBe(false));
+        test("spends resources", () => expect(requirement.spendResources).toBe(true));
         test("can maximize", () => expect(unref(requirement.canMaximize)).toBe(true));
     });
 
@@ -79,7 +76,8 @@ describe("Creating cost requirement", () => {
         const resource = createResource(ref(10));
         const requirement = createCostRequirement(() => ({
             resource,
-            cost: 10
+            cost: 10,
+            spendResources: false
         }));
         expect(unref(requirement.requirementMet)).toBe(true);
     });
@@ -88,7 +86,8 @@ describe("Creating cost requirement", () => {
         const resource = createResource(ref(10));
         const requirement = createCostRequirement(() => ({
             resource,
-            cost: 100
+            cost: 100,
+            spendResources: false
         }));
         expect(unref(requirement.requirementMet)).toBe(false);
     });
@@ -148,7 +147,8 @@ describe("Checking maximum levels of requirements met", () => {
             createBooleanRequirement(true),
             createCostRequirement(() => ({
                 resource: createResource(ref(10)),
-                cost: Formula.variable(0)
+                cost: Formula.variable(0),
+                spendResources: false
             }))
         ];
         expect(maxRequirementsMet(requirements)).compare_tolerance(0);
@@ -159,7 +159,8 @@ describe("Checking maximum levels of requirements met", () => {
             createBooleanRequirement(true),
             createCostRequirement(() => ({
                 resource: createResource(ref(10)),
-                cost: Formula.variable(0)
+                cost: Formula.variable(0),
+                spendResources: false
             }))
         ];
         expect(maxRequirementsMet(requirements)).compare_tolerance(10);
@@ -171,11 +172,13 @@ test("Paying requirements", () => {
     const noPayment = createCostRequirement(() => ({
         resource,
         cost: 10,
-        requiresPay: false
+        requiresPay: false,
+        spendResources: false
     }));
     const payment = createCostRequirement(() => ({
         resource,
-        cost: 10
+        cost: 10,
+        spendResources: false
     }));
     payRequirements([noPayment, payment]);
     expect(resource.value).compare_tolerance(90);

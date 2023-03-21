@@ -82,7 +82,7 @@ export interface CostRequirementOptions {
      * When calculating multiple levels to be handled at once, whether it should consider resources used for each level as spent. Setting this to false causes calculations to be faster with larger numbers and supports more math functions.
      * @see {Formula}
      */
-    spendResources?: Computable<boolean>;
+    spendResources: Computable<boolean>;
     /**
      * Pass-through to {@link Requirement.pay}. May be required for maximizing support.
      * @see {@link cost} for restrictions on maximizing support.
@@ -148,8 +148,9 @@ export function createCostRequirement<T extends CostRequirementOptions>(
         setDefault(req, "visibility", Visibility.Visible);
         processComputable(req as T, "cost");
         processComputable(req as T, "requiresPay");
-        processComputable(req as T, "spendResources");
         setDefault(req, "requiresPay", true);
+        processComputable(req as T, "spendResources");
+        setDefault(req, "spendResources", false);
         setDefault(req, "pay", function (amount?: DecimalSource) {
             const cost =
                 req.cost instanceof Formula
