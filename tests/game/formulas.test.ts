@@ -8,7 +8,7 @@ import Formula, {
 } from "game/formulas";
 import Decimal, { DecimalSource } from "util/bignum";
 import { beforeAll, describe, expect, test } from "vitest";
-import { ref } from "vue";
+import { ref, unref } from "vue";
 import "../utils";
 
 type FormulaFunctions = keyof GenericFormula & keyof typeof Formula & keyof typeof Decimal;
@@ -486,7 +486,7 @@ describe("Integrating", () => {
     let variable: GenericFormula;
     let constant: GenericFormula;
     beforeAll(() => {
-        variable = Formula.variable(10);
+        variable = Formula.variable(ref(10));
         constant = Formula.constant(10);
     });
 
@@ -564,8 +564,24 @@ describe("Integrating", () => {
     describe.todo("Integrable formulas integrate correctly");
 
     test("Integrating nested formulas", () => {
-        const formula = Formula.add(variable, constant).times(constant);
-        expect(formula.evaluateIntegral()).compare_tolerance(1500);
+        const formula = Formula.add(variable, constant).times(constant).pow(2).times(30);
+        const actualCost = new Array(10)
+            .fill(null)
+            .reduce((acc, _, i) => acc.add(formula.evaluate(i)), new Decimal(0));
+        const calculatedCost = Decimal.add(
+            formula.evaluateIntegral(),
+            formula.calculateConstantOfIntegration()
+        );
+        // Check if the calculated cost is within 10% of the actual cost,
+        // because this is an approximation
+        expect(
+            Decimal.sub(actualCost, calculatedCost).abs().div(actualCost).toNumber()
+        ).toBeLessThan(0.1);
+    });
+
+    test("Integrating nested complex formulas", () => {
+        const formula = Formula.pow(1.05, variable).times(100).pow(0.5);
+        expect(() => formula.evaluateIntegral()).toThrow();
     });
 });
 
@@ -652,8 +668,13 @@ describe("Inverting integrals", () => {
     describe.todo("Invertible Integral formulas invert correctly");
 
     test("Inverting integral of nested formulas", () => {
-        const formula = Formula.add(variable, constant).times(constant);
-        expect(formula.invertIntegral(1500)).compare_tolerance(10);
+        const formula = Formula.add(variable, constant).times(constant).pow(2).times(30);
+        expect(formula.invertIntegral(7000000)).compare_tolerance(10);
+    });
+
+    test("Inverting integral of nested complex formulas", () => {
+        const formula = Formula.pow(1.05, variable).times(100).pow(0.5);
+        expect(() => formula.invertIntegral(100)).toThrow();
     });
 
     describe("Inverting integral pass-throughs", () => {
@@ -875,7 +896,7 @@ describe("Custom Formulas", () => {
 
     describe("Formula with integrate", () => {
         test("Zero input integrates correctly", () =>
-            expect(() =>
+            expect(
                 new Formula({
                     inputs: [],
                     evaluate: () => 10,
@@ -887,7 +908,7 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [variable],
                     evaluate: () => 10,
-                    integrate: (val, v1) => val ?? 20
+                    integrate: (val, stack, v1) => val ?? 20
                 }).evaluateIntegral()
             ).compare_tolerance(20));
         test("Two inputs integrates correctly", () =>
@@ -941,7 +962,7 @@ describe("Buy Max", () => {
             const maxAffordable = calculateMaxAffordable(Formula.neg(10), resource, false);
             expect(() => maxAffordable.value).toThrow();
         });
-        // https://www.desmos.com/calculator/5vgletdc1p
+        // https://www.desmos.com/calculator/7ffthe7wi8
         test("Calculates max affordable and cost correctly", () => {
             const variable = Formula.variable(0);
             const formula = Formula.pow(1.05, variable).times(100);
@@ -957,13 +978,22 @@ describe("Buy Max", () => {
             const maxAffordable = calculateMaxAffordable(Formula.abs(10), resource);
             expect(() => maxAffordable.value).toThrow();
         });
-        // https://www.desmos.com/calculator/5vgletdc1p
+        // https://www.desmos.com/calculator/7ffthe7wi8
         test("Calculates max affordable and cost correctly", () => {
             const variable = Formula.variable(0);
             const formula = Formula.pow(1.05, variable).times(100);
             const maxAffordable = calculateMaxAffordable(formula, resource);
             expect(maxAffordable.value).compare_tolerance(7);
-            expect(calculateCost(formula, maxAffordable.value)).compare_tolerance(735);
+
+            const actualCost = new Array(7)
+                .fill(null)
+                .reduce((acc, _, i) => acc.add(formula.evaluate(i)), new Decimal(0));
+            const calculatedCost = calculateCost(formula, maxAffordable.value);
+            // Check if the calculated cost is within 10% of the actual cost,
+            // because this is an approximation
+            expect(
+                Decimal.sub(actualCost, calculatedCost).abs().div(actualCost).toNumber()
+            ).toBeLessThan(0.1);
         });
     });
 });
