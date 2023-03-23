@@ -8,12 +8,12 @@ import Formula, {
 } from "game/formulas";
 import Decimal, { DecimalSource } from "util/bignum";
 import { beforeAll, describe, expect, test } from "vitest";
-import { ref, unref } from "vue";
+import { ref } from "vue";
 import "../utils";
 
 type FormulaFunctions = keyof GenericFormula & keyof typeof Formula & keyof typeof Decimal;
 
-const testValues = ["-1e400", 0, 0.25] as const;
+const testValues = [-1, "0", Decimal.dOne] as const;
 
 const invertibleZeroParamFunctionNames = [
     "neg",
