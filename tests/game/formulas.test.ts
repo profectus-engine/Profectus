@@ -759,6 +759,17 @@ describe("Step-wise", () => {
             ).compare_tolerance(10));
     });
 
+    describe("Pass-through at boundary", () => {
+        test("Evaluates correctly", () =>
+            expect(
+                Formula.step(constant, 10, value => Formula.sqrt(value)).evaluate()
+            ).compare_tolerance(10));
+        test("Inverts correctly with variable in input", () =>
+            expect(
+                Formula.step(variable, 10, value => Formula.sqrt(value)).invert(10)
+            ).compare_tolerance(10));
+    });
+
     describe("Evaluates correctly beyond start", () => {
         test("Evaluates correctly", () =>
             expect(
@@ -768,6 +779,23 @@ describe("Step-wise", () => {
             expect(
                 Formula.step(variable, 8, value => Formula.add(value, 2)).invert(12)
             ).compare_tolerance(10));
+    });
+
+    describe("Evaluates correctly when nested", () => {
+        test("Evaluates correctly", () =>
+            expect(
+                Formula.add(variable, constant)
+                    .step(10, value => Formula.mul(value, 2))
+                    .sub(10)
+                    .evaluate()
+            ).compare_tolerance(20));
+        test("Inverts correctly", () =>
+            expect(
+                Formula.add(variable, constant)
+                    .step(10, value => Formula.mul(value, 2))
+                    .sub(10)
+                    .invert(30)
+            ).compare_tolerance(15));
     });
 });
 
@@ -841,6 +869,23 @@ describe("Conditionals", () => {
             expect(
                 Formula.if(variable, true, value => Formula.add(value, 2)).invert(12)
             ).compare_tolerance(10));
+    });
+
+    describe("Evaluates correctly when nested", () => {
+        test("Evaluates correctly", () =>
+            expect(
+                Formula.add(variable, constant)
+                    .if(true, value => Formula.add(value, 2))
+                    .div(2)
+                    .evaluate()
+            ).compare_tolerance(11));
+        test("Inverts correctly", () =>
+            expect(
+                Formula.add(variable, constant)
+                    .if(true, value => Formula.add(value, 2))
+                    .div(2)
+                    .invert(12)
+            ).compare_tolerance(12));
     });
 });
 
