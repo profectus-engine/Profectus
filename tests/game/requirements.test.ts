@@ -1,6 +1,6 @@
 import { Visibility } from "features/feature";
 import { createResource, Resource } from "features/resources/resource";
-import Formula from "game/formulas";
+import Formula from "game/formulas/formulas";
 import {
     CostRequirement,
     createBooleanRequirement,

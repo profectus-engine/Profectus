@@ -2,963 +2,42 @@ import { Resource } from "features/resources/resource";
 import Decimal, { DecimalSource } from "util/bignum";
 import { Computable, convertComputable, ProcessedComputable } from "util/computed";
 import { computed, ComputedRef, ref, unref } from "vue";
+import type {
+    EvaluateFunction,
+    FormulaOptions,
+    FormulaSource,
+    GeneralFormulaOptions,
+    GenericFormula,
+    GuardedFormulasToDecimals,
+    IntegrableFormula,
+    IntegrateFunction,
+    InternalFormulaProperties,
+    InvertFunction,
+    InvertibleFormula,
+    InvertibleIntegralFormula,
+    InvertIntegralFunction,
+    SubstitutionFunction,
+    SubstitutionStack
+} from "./types";
+import * as ops from "./operations";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type GenericFormula = Formula<any>;
-export type FormulaSource = ProcessedComputable<DecimalSource> | GenericFormula;
-export type InvertibleFormula = GenericFormula & {
-    invert: (value: DecimalSource) => DecimalSource;
-};
-export type IntegrableFormula = GenericFormula & {
-    evaluateIntegral: (variable?: DecimalSource) => DecimalSource;
-};
-export type InvertibleIntegralFormula = GenericFormula & {
-    invertIntegral: (value: DecimalSource) => DecimalSource;
-};
-
-export type SubstitutionStack = ((value: DecimalSource) => DecimalSource)[] | undefined;
-
-export type FormulaOptions<T extends [FormulaSource] | FormulaSource[]> =
-    | {
-          variable: ProcessedComputable<DecimalSource>;
-      }
-    | {
-          inputs: [FormulaSource];
-      }
-    | {
-          inputs: T;
-          evaluate: (this: Formula<T>, ...inputs: GuardedFormulasToDecimals<T>) => DecimalSource;
-          invert?: (
-              this: Formula<T>,
-              value: DecimalSource,
-              ...inputs: [...T, ...unknown[]]
-          ) => DecimalSource;
-          integrate?: (
-              this: Formula<T>,
-              variable: DecimalSource | undefined,
-              stack: SubstitutionStack | undefined,
-              ...inputs: T
-          ) => DecimalSource;
-          integrateInner?: (
-              this: Formula<T>,
-              variable: DecimalSource | undefined,
-              stack: SubstitutionStack | undefined,
-              ...inputs: T
-          ) => DecimalSource;
-          applySubstitution?: (
-              this: Formula<T>,
-              variable: DecimalSource,
-              ...inputs: T
-          ) => DecimalSource;
-          invertIntegral?: (this: Formula<T>, value: DecimalSource, ...inputs: T) => DecimalSource;
-          hasVariable?: boolean;
-      };
-
-function hasVariable(value: FormulaSource): value is InvertibleFormula {
+export function hasVariable(value: FormulaSource): value is InvertibleFormula {
     return value instanceof Formula && value.hasVariable();
 }
 
-// It's really hard to type mapped tuples, but these classes seem to manage
-type FormulasToDecimals<T extends FormulaSource[]> = {
-    [K in keyof T]: DecimalSource;
-};
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TupleGuard<T extends any[]> = T extends any[] ? FormulasToDecimals<T> : never;
-type GuardedFormulasToDecimals<T extends FormulaSource[]> = TupleGuard<T>;
-
 export function unrefFormulaSource(value: FormulaSource, variable?: DecimalSource) {
     return value instanceof Formula ? value.evaluate(variable) : unref(value);
-}
-
-function passthrough(value: DecimalSource) {
-    return value;
 }
 
 function integrateVariable(variable: DecimalSource) {
     return Decimal.pow(variable, 2).div(2);
 }
 
-function integrateVariableInner(this: GenericFormula, variable: DecimalSource | undefined) {
+function integrateVariableInner(this: GenericFormula, variable?: DecimalSource) {
     if (variable == null && this.innermostVariable == null) {
         throw "Cannot integrate non-existent variable";
     }
     return variable ?? unref(this.innermostVariable);
-}
-
-function invertNeg(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.neg(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateNeg(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        return Decimal.neg(lhs.evaluateIntegral(variable, stack));
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function applySubstitutionNeg(value: DecimalSource) {
-    return Decimal.neg(value);
-}
-
-function invertAdd(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.sub(value, unrefFormulaSource(rhs)));
-    } else if (hasVariable(rhs)) {
-        return rhs.invert(Decimal.sub(value, unrefFormulaSource(lhs)));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateAdd(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource,
-    rhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.times(
-            unrefFormulaSource(rhs),
-            variable ?? unref(lhs.innermostVariable) ?? 0
-        ).add(x);
-    } else if (hasVariable(rhs)) {
-        const x = rhs.evaluateIntegral(variable, stack);
-        return Decimal.times(
-            unrefFormulaSource(lhs),
-            variable ?? unref(rhs.innermostVariable) ?? 0
-        ).add(x);
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function integrateInnerAdd(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource,
-    rhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.add(x, unrefFormulaSource(rhs));
-    } else if (hasVariable(rhs)) {
-        const x = rhs.evaluateIntegral(variable, stack);
-        return Decimal.add(x, unrefFormulaSource(lhs));
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertIntegrateAdd(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        const b = unrefFormulaSource(rhs);
-        return lhs.invert(Decimal.pow(b, 2).add(Decimal.times(value, 2)).sub(b));
-    } else if (hasVariable(rhs)) {
-        const b = unrefFormulaSource(lhs);
-        return rhs.invert(Decimal.pow(b, 2).add(Decimal.times(value, 2)).sub(b));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertSub(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.add(value, unrefFormulaSource(rhs)));
-    } else if (hasVariable(rhs)) {
-        return rhs.invert(Decimal.sub(unrefFormulaSource(lhs), value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateSub(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource,
-    rhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.sub(
-            x,
-            Decimal.times(unrefFormulaSource(rhs), variable ?? unref(lhs.innermostVariable) ?? 0)
-        );
-    } else if (hasVariable(rhs)) {
-        const x = rhs.evaluateIntegral(variable, stack);
-        return Decimal.times(
-            unrefFormulaSource(lhs),
-            variable ?? unref(rhs.innermostVariable) ?? 0
-        ).sub(x);
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function integrateInnerSub(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource,
-    rhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.sub(x, unrefFormulaSource(rhs));
-    } else if (hasVariable(rhs)) {
-        const x = rhs.evaluateIntegral(variable, stack);
-        return Decimal.sub(x, unrefFormulaSource(lhs));
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertIntegrateSub(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        const b = unrefFormulaSource(rhs);
-        return lhs.invert(Decimal.pow(b, 2).add(Decimal.times(value, 2)).sqrt().sub(b));
-    } else if (hasVariable(rhs)) {
-        const b = unrefFormulaSource(lhs);
-        return rhs.invert(Decimal.pow(b, 2).add(Decimal.times(value, 2)).sqrt().sub(b));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertMul(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.div(value, unrefFormulaSource(rhs)));
-    } else if (hasVariable(rhs)) {
-        return rhs.invert(Decimal.div(value, unrefFormulaSource(lhs)));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateMul(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource,
-    rhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.times(x, unrefFormulaSource(rhs));
-    } else if (hasVariable(rhs)) {
-        const x = rhs.evaluateIntegral(variable, stack);
-        return Decimal.times(x, unrefFormulaSource(lhs));
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function applySubstitutionMul(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return Decimal.div(value, unrefFormulaSource(rhs));
-    } else if (hasVariable(rhs)) {
-        return Decimal.div(value, unrefFormulaSource(lhs));
-    }
-    throw "Could not apply substitution due to no input being a variable";
-}
-
-function invertIntegrateMul(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        const b = unrefFormulaSource(rhs);
-        return lhs.invert(Decimal.sqrt(value).times(Decimal.sqrt(2)).div(Decimal.sqrt(b)));
-    } else if (hasVariable(rhs)) {
-        const b = unrefFormulaSource(lhs);
-        return rhs.invert(Decimal.sqrt(value).times(Decimal.sqrt(2)).div(Decimal.sqrt(b)));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertDiv(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.mul(value, unrefFormulaSource(rhs)));
-    } else if (hasVariable(rhs)) {
-        return rhs.invert(Decimal.div(unrefFormulaSource(lhs), value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateDiv(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource,
-    rhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.div(x, unrefFormulaSource(rhs));
-    } else if (hasVariable(rhs)) {
-        const x = rhs.evaluateIntegral(variable, stack);
-        return Decimal.div(unrefFormulaSource(lhs), x);
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function applySubstitutionDiv(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return Decimal.mul(value, unrefFormulaSource(rhs));
-    } else if (hasVariable(rhs)) {
-        return Decimal.mul(value, unrefFormulaSource(lhs));
-    }
-    throw "Could not apply substitution due to no input being a variable";
-}
-
-function invertIntegrateDiv(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        const b = unrefFormulaSource(rhs);
-        return lhs.invert(Decimal.sqrt(value).times(Decimal.sqrt(2)).times(Decimal.sqrt(b)));
-    } else if (hasVariable(rhs)) {
-        const b = unrefFormulaSource(lhs);
-        return rhs.invert(Decimal.sqrt(value).times(Decimal.sqrt(2)).times(Decimal.sqrt(b)));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertRecip(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.recip(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateRecip(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.ln(x);
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertIntegrateRecip(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.exp(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertLog10(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.pow10(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateLog10(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.ln(x).sub(1).times(x).div(Decimal.ln(10));
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertIntegrateLog10(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(
-            Decimal.exp(Decimal.ln(2).add(Decimal.ln(5)).times(value).div(Math.E).lambertw().add(1))
-        );
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertLog(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.pow(unrefFormulaSource(rhs), value));
-    } else if (hasVariable(rhs)) {
-        return rhs.invert(Decimal.root(unrefFormulaSource(lhs), value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateLog(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource,
-    rhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.ln(x)
-            .sub(1)
-            .times(x)
-            .div(Decimal.ln(unrefFormulaSource(rhs)));
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertIntegrateLog(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        const numerator = Decimal.ln(unrefFormulaSource(rhs)).times(value);
-        return lhs.invert(numerator.div(numerator.div(Math.E).lambertw()));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertLog2(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.pow(2, value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateLog2(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.ln(x).sub(1).times(x).div(Decimal.ln(2));
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertIntegrateLog2(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.exp(Decimal.ln(2).times(value).div(Math.E).lambertw().add(1)));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertLn(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.exp(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateLn(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.ln(x).sub(1).times(x);
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertIntegrateLn(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.exp(Decimal.div(value, Math.E).lambertw().add(1)));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertPow(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.root(value, unrefFormulaSource(rhs)));
-    } else if (hasVariable(rhs)) {
-        return rhs.invert(Decimal.ln(value).div(Decimal.ln(unrefFormulaSource(lhs))));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integratePow(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource,
-    rhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        const pow = Decimal.add(unrefFormulaSource(rhs), 1);
-        return Decimal.pow(x, pow).div(pow);
-    } else if (hasVariable(rhs)) {
-        const x = rhs.evaluateIntegral(variable, stack);
-        const b = unrefFormulaSource(lhs);
-        return Decimal.pow(b, x).div(Decimal.ln(b));
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertIntegratePow(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        const b = unrefFormulaSource(rhs);
-        return lhs.invert(Decimal.negate(b).sub(1).negate().times(value).root(Decimal.add(b, 1)));
-    } else if (hasVariable(rhs)) {
-        const denominator = Decimal.ln(unrefFormulaSource(lhs));
-        return rhs.invert(Decimal.times(denominator, value).ln().div(denominator));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertPow10(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.root(value, 10));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integratePow10(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.ln(x).sub(1).times(x).div(Decimal.ln(10));
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertIntegratePow10(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(
-            Decimal.ln(2).add(Decimal.ln(5)).times(value).div(Math.E).lambertw().add(1).exp()
-        );
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertPowBase(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.ln(value).div(unrefFormulaSource(rhs)));
-    } else if (hasVariable(rhs)) {
-        return rhs.invert(Decimal.root(unrefFormulaSource(lhs), value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integratePowBase(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource,
-    rhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        const b = unrefFormulaSource(rhs);
-        return Decimal.pow(b, x).div(Decimal.ln(b));
-    } else if (hasVariable(rhs)) {
-        const x = rhs.evaluateIntegral(variable, stack);
-        const denominator = Decimal.add(unrefFormulaSource(lhs), 1);
-        return Decimal.pow(x, denominator).div(denominator);
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertIntegratePowBase(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        const b = unrefFormulaSource(rhs);
-        return lhs.invert(Decimal.ln(b).times(value).ln().div(Decimal.ln(b)));
-    } else if (hasVariable(rhs)) {
-        const b = unrefFormulaSource(lhs);
-        return rhs.invert(Decimal.neg(b).sub(1).negate().times(value).root(Decimal.add(b, 1)));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertRoot(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.root(value, Decimal.recip(unrefFormulaSource(rhs))));
-    } else if (hasVariable(rhs)) {
-        return rhs.invert(Decimal.ln(unrefFormulaSource(lhs)).div(Decimal.ln(value)));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateRoot(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource,
-    rhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        const a = unrefFormulaSource(rhs);
-        return Decimal.pow(x, Decimal.recip(a).add(1)).times(a).div(Decimal.add(a, 1));
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertIntegrateRoot(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        const b = unrefFormulaSource(rhs);
-        return lhs.invert(
-            Decimal.add(b, 1)
-                .times(value)
-                .div(b)
-                .pow(Decimal.div(b, Decimal.add(b, 1)))
-        );
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertExp(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.ln(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateExp(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.exp(x);
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function tetrate(
-    value: DecimalSource,
-    height: DecimalSource = 2,
-    payload: DecimalSource = Decimal.fromComponents_noNormalize(1, 0, 1)
-) {
-    const heightNumber = Decimal.minabs(height, 1e308).toNumber();
-    return Decimal.tetrate(value, heightNumber, payload);
-}
-
-function invertTetrate(
-    value: DecimalSource,
-    base: FormulaSource,
-    height: FormulaSource,
-    payload: FormulaSource
-) {
-    if (hasVariable(base)) {
-        return base.invert(Decimal.ssqrt(value));
-    }
-    // Other params can't be inverted ATM
-    throw "Could not invert due to no input being a variable";
-}
-
-function iteratedexp(
-    value: DecimalSource,
-    height: DecimalSource = 2,
-    payload: DecimalSource = Decimal.fromComponents_noNormalize(1, 0, 1)
-) {
-    const heightNumber = Decimal.minabs(height, 1e308).toNumber();
-    return Decimal.iteratedexp(value, heightNumber, new Decimal(payload));
-}
-
-function invertIteratedExp(
-    value: DecimalSource,
-    lhs: FormulaSource,
-    height: FormulaSource,
-    payload: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(
-            Decimal.iteratedlog(
-                value,
-                Math.E,
-                Decimal.minabs(1e308, unrefFormulaSource(height)).toNumber()
-            )
-        );
-    }
-    // Other params can't be inverted ATM
-    throw "Could not invert due to no input being a variable";
-}
-
-function iteratedLog(value: DecimalSource, lhs: DecimalSource = 10, times: DecimalSource = 2) {
-    const timesNumber = Decimal.minabs(times, 1e308).toNumber();
-    return Decimal.iteratedlog(value, lhs, timesNumber);
-}
-
-function slog(value: DecimalSource, lhs: DecimalSource = 10) {
-    const baseNumber = Decimal.minabs(lhs, 1e308).toNumber();
-    return Decimal.slog(value, baseNumber);
-}
-
-function invertSlog(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(
-            Decimal.tetrate(value, Decimal.minabs(1e308, unrefFormulaSource(rhs)).toNumber())
-        );
-    }
-    // Other params can't be inverted ATM
-    throw "Could not invert due to no input being a variable";
-}
-
-function layeradd(value: DecimalSource, diff: DecimalSource, base: DecimalSource) {
-    const diffNumber = Decimal.minabs(diff, 1e308).toNumber();
-    return Decimal.layeradd(value, diffNumber, base);
-}
-
-function invertLayeradd(
-    value: DecimalSource,
-    lhs: FormulaSource,
-    diff: FormulaSource,
-    base: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(
-            Decimal.layeradd(
-                value,
-                Decimal.minabs(1e308, unrefFormulaSource(diff)).negate().toNumber()
-            )
-        );
-    }
-    // Other params can't be inverted ATM
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertLambertw(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.pow(Math.E, value).times(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function invertSsqrt(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.tetrate(value, 2));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function pentate(value: DecimalSource, height: DecimalSource, payload: DecimalSource) {
-    const heightNumber = Decimal.minabs(height, 1e308).toNumber();
-    return Decimal.pentate(value, heightNumber, payload);
-}
-
-function invertSin(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.asin(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateSin(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.cos(x).neg();
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertCos(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.acos(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateCos(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.sin(x);
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertTan(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.atan(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateTan(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.cos(x).ln().neg();
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertAsin(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.sin(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateAsin(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.asin(x)
-            .times(x)
-            .add(Decimal.sqrt(Decimal.sub(1, Decimal.pow(x, 2))));
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertAcos(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.cos(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateAcos(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.acos(x)
-            .times(x)
-            .sub(Decimal.sqrt(Decimal.sub(1, Decimal.pow(x, 2))));
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertAtan(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.tan(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateAtan(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.atan(x)
-            .times(x)
-            .sub(Decimal.ln(Decimal.pow(x, 2).add(1)).div(2));
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertSinh(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.asinh(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateSinh(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.cosh(x);
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertCosh(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.acosh(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateCosh(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.sinh(x);
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertTanh(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.atanh(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateTanh(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.cosh(x).ln();
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertAsinh(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.sinh(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateAsinh(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.asinh(x).times(x).sub(Decimal.pow(x, 2).add(1).sqrt());
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertAcosh(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.cosh(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateAcosh(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.acosh(x)
-            .times(x)
-            .sub(Decimal.add(x, 1).sqrt().times(Decimal.sub(x, 1).sqrt()));
-    }
-    throw "Could not integrate due to no input being a variable";
-}
-
-function invertAtanh(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.tanh(value));
-    }
-    throw "Could not invert due to no input being a variable";
-}
-
-function integrateAtanh(
-    variable: DecimalSource | undefined,
-    stack: SubstitutionStack,
-    lhs: FormulaSource
-) {
-    if (hasVariable(lhs)) {
-        const x = lhs.evaluateIntegral(variable, stack);
-        return Decimal.atanh(x)
-            .times(x)
-            .add(Decimal.sub(1, Decimal.pow(x, 2)).ln().div(2));
-    }
-    throw "Could not integrate due to no input being a variable";
 }
 
 /**
@@ -970,59 +49,59 @@ function integrateAtanh(
 export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     readonly inputs: T;
 
-    private readonly internalEvaluate:
-        | ((...inputs: GuardedFormulasToDecimals<T>) => DecimalSource)
-        | undefined;
-    private readonly internalInvert:
-        | ((value: DecimalSource, ...inputs: T) => DecimalSource)
-        | undefined;
-    private readonly internalIntegrate:
-        | ((
-              variable: DecimalSource | undefined,
-              stack: SubstitutionStack | undefined,
-              ...inputs: T
-          ) => DecimalSource)
-        | undefined;
-    private readonly internalIntegrateInner:
-        | ((
-              variable: DecimalSource | undefined,
-              stack: SubstitutionStack | undefined,
-              ...inputs: T
-          ) => DecimalSource)
-        | undefined;
-    private readonly applySubstitution:
-        | ((variable: DecimalSource, ...inputs: T) => DecimalSource)
-        | undefined;
-    private readonly internalInvertIntegral:
-        | ((value: DecimalSource, ...inputs: T) => DecimalSource)
-        | undefined;
+    private readonly internalEvaluate: EvaluateFunction<T> | undefined;
+    private readonly internalInvert: InvertFunction<T> | undefined;
+    private readonly internalIntegrate: IntegrateFunction<T> | undefined;
+    private readonly internalIntegrateInner: IntegrateFunction<T> | undefined;
+    private readonly applySubstitution: SubstitutionFunction<T> | undefined;
+    private readonly internalInvertIntegral: InvertIntegralFunction<T> | undefined;
     private readonly internalHasVariable: boolean;
 
     public readonly innermostVariable: ProcessedComputable<DecimalSource> | undefined;
 
     constructor(options: FormulaOptions<T>) {
-        // Variable case
+        let readonlyProperties;
         if ("variable" in options) {
-            this.inputs = [options.variable] as T;
-            this.internalHasVariable = true;
-            this.innermostVariable = options.variable;
-            this.internalIntegrate =
-                integrateVariable as unknown as Formula<T>["internalIntegrate"];
-            this.internalIntegrateInner =
-                integrateVariableInner as unknown as Formula<T>["internalIntegrateInner"];
-            this.applySubstitution = passthrough as unknown as Formula<T>["applySubstitution"];
-            return;
+            readonlyProperties = this.setupVariable(options);
+        } else if (!("evaluate" in options)) {
+            readonlyProperties = this.setupConstant(options);
+        } else {
+            readonlyProperties = this.setupFormula(options);
         }
-        // Constant case
-        if (!("evaluate" in options)) {
-            if (options.inputs.length !== 1) {
-                throw "Evaluate function is required if inputs is not length 1";
-            }
-            this.inputs = options.inputs as T;
-            this.internalHasVariable = false;
-            return;
-        }
+        this.inputs = readonlyProperties.inputs;
+        this.internalHasVariable = readonlyProperties.internalHasVariable;
+        this.innermostVariable = readonlyProperties.innermostVariable;
+        this.internalIntegrate = readonlyProperties.internalIntegrate;
+        this.internalIntegrateInner = readonlyProperties.internalIntegrateInner;
+        this.applySubstitution = readonlyProperties.applySubstitution;
+    }
 
+    private setupVariable({
+        variable
+    }: {
+        variable: ProcessedComputable<DecimalSource>;
+    }): InternalFormulaProperties<T> {
+        return {
+            inputs: [variable] as T,
+            internalHasVariable: true,
+            innermostVariable: variable,
+            internalIntegrate: integrateVariable as unknown as IntegrateFunction<T>,
+            internalIntegrateInner: integrateVariableInner as unknown as IntegrateFunction<T>,
+            applySubstitution: ops.passthrough as unknown as SubstitutionFunction<T>
+        };
+    }
+
+    private setupConstant({ inputs }: { inputs: [FormulaSource] }): InternalFormulaProperties<T> {
+        if (inputs.length !== 1) {
+            throw "Evaluate function is required if inputs is not length 1";
+        }
+        return {
+            inputs: inputs as T,
+            internalHasVariable: false
+        };
+    }
+
+    private setupFormula(options: GeneralFormulaOptions<T>): InternalFormulaProperties<T> {
         const {
             inputs,
             evaluate,
@@ -1037,12 +116,6 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             throw "A formula cannot be marked as having a variable if it is not invertible";
         }
 
-        this.inputs = inputs;
-        this.internalEvaluate = evaluate;
-        this.internalIntegrate = integrate;
-        this.internalIntegrateInner = integrateInner;
-        this.applySubstitution = applySubstitution;
-
         const numVariables = inputs.filter(
             input => input instanceof Formula && input.hasVariable()
         ).length;
@@ -1050,21 +123,24 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             | GenericFormula
             | undefined;
 
-        this.internalHasVariable =
+        const internalHasVariable =
             numVariables === 1 || (numVariables === 0 && hasVariable === true);
-        if (this.internalHasVariable) {
-            this.innermostVariable = variable?.innermostVariable;
-        }
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        this.internalInvert =
-            this.internalHasVariable && variable?.isInvertible() ? invert : undefined;
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        this.internalInvertIntegral =
-            this.internalHasVariable && variable?.isIntegralInvertible()
-                ? invertIntegral
-                : undefined;
+        const innermostVariable = internalHasVariable ? variable?.innermostVariable : undefined;
+        const internalInvert = internalHasVariable && variable?.isInvertible() ? invert : undefined;
+        const internalInvertIntegral =
+            internalHasVariable && variable?.isIntegralInvertible() ? invertIntegral : undefined;
+
+        return {
+            inputs,
+            internalEvaluate: evaluate,
+            internalIntegrate: integrate,
+            internalIntegrateInner: integrateInner,
+            applySubstitution,
+            innermostVariable,
+            internalHasVariable,
+            internalInvert,
+            internalInvertIntegral
+        };
     }
 
     /** Type predicate that this formula can be inverted. */
@@ -1340,9 +416,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.neg,
-            invert: invertNeg,
-            applySubstitution: applySubstitutionNeg,
-            integrate: integrateNeg
+            invert: ops.invertNeg,
+            applySubstitution: ops.applySubstitutionNeg,
+            integrate: ops.integrateNeg
         });
     }
     public static negate<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
@@ -1386,11 +462,11 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value, other],
             evaluate: Decimal.add,
-            invert: invertAdd,
-            integrate: integrateAdd,
-            integrateInner: integrateInnerAdd,
-            applySubstitution: passthrough,
-            invertIntegral: invertIntegrateAdd
+            invert: ops.invertAdd,
+            integrate: ops.integrateAdd,
+            integrateInner: ops.integrateInnerAdd,
+            applySubstitution: ops.passthrough,
+            invertIntegral: ops.invertIntegrateAdd
         });
     }
     public static plus<T extends GenericFormula>(value: T, other: FormulaSource): T;
@@ -1407,11 +483,11 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value, other],
             evaluate: Decimal.sub,
-            invert: invertSub,
-            integrate: integrateSub,
-            integrateInner: integrateInnerSub,
-            applySubstitution: passthrough,
-            invertIntegral: invertIntegrateSub
+            invert: ops.invertSub,
+            integrate: ops.integrateSub,
+            integrateInner: ops.integrateInnerSub,
+            applySubstitution: ops.passthrough,
+            invertIntegral: ops.invertIntegrateSub
         });
     }
     public static subtract<T extends GenericFormula>(value: T, other: FormulaSource): T;
@@ -1434,10 +510,10 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value, other],
             evaluate: Decimal.mul,
-            invert: invertMul,
-            integrate: integrateMul,
-            applySubstitution: applySubstitutionMul,
-            invertIntegral: invertIntegrateMul
+            invert: ops.invertMul,
+            integrate: ops.integrateMul,
+            applySubstitution: ops.applySubstitutionMul,
+            invertIntegral: ops.invertIntegrateMul
         });
     }
     public static multiply<T extends GenericFormula>(value: T, other: FormulaSource): T;
@@ -1460,10 +536,10 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value, other],
             evaluate: Decimal.div,
-            invert: invertDiv,
-            integrate: integrateDiv,
-            applySubstitution: applySubstitutionDiv,
-            invertIntegral: invertIntegrateDiv
+            invert: ops.invertDiv,
+            integrate: ops.integrateDiv,
+            applySubstitution: ops.applySubstitutionDiv,
+            invertIntegral: ops.invertIntegrateDiv
         });
     }
     public static divide<T extends GenericFormula>(value: T, other: FormulaSource): T;
@@ -1479,9 +555,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.recip,
-            invert: invertRecip,
-            integrate: integrateRecip,
-            invertIntegral: invertIntegrateRecip
+            invert: ops.invertRecip,
+            integrate: ops.integrateRecip,
+            invertIntegral: ops.invertIntegrateRecip
         });
     }
     public static reciprocal<T extends GenericFormula>(value: T): T;
@@ -1499,61 +575,22 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value, other],
             evaluate: Decimal.max,
-            invert: passthrough as (
+            invert: ops.passthrough as (
                 value: DecimalSource,
                 ...inputs: [FormulaSource, FormulaSource]
             ) => DecimalSource,
-            invertIntegral: passthrough as (
+            invertIntegral: ops.passthrough as (
                 value: DecimalSource,
                 ...inputs: [FormulaSource, FormulaSource]
             ) => DecimalSource
         });
     }
 
-    public static min(value: FormulaSource, other: FormulaSource): GenericFormula {
-        return new Formula({
-            inputs: [value, other],
-            evaluate: Decimal.min,
-            invert: passthrough as (
-                value: DecimalSource,
-                ...inputs: [FormulaSource, FormulaSource]
-            ) => DecimalSource,
-            invertIntegral: passthrough as (
-                value: DecimalSource,
-                ...inputs: [FormulaSource, FormulaSource]
-            ) => DecimalSource
-        });
-    }
-
-    public static minabs(value: FormulaSource, other: FormulaSource): GenericFormula {
-        return new Formula({
-            inputs: [value, other],
-            evaluate: Decimal.minabs,
-            invert: passthrough as (
-                value: DecimalSource,
-                ...inputs: [FormulaSource, FormulaSource]
-            ) => DecimalSource,
-            invertIntegral: passthrough as (
-                value: DecimalSource,
-                ...inputs: [FormulaSource, FormulaSource]
-            ) => DecimalSource
-        });
-    }
-
-    public static maxabs(value: FormulaSource, other: FormulaSource): GenericFormula {
-        return new Formula({
-            inputs: [value, other],
-            evaluate: Decimal.maxabs,
-            invert: passthrough as (
-                value: DecimalSource,
-                ...inputs: [FormulaSource, FormulaSource]
-            ) => DecimalSource,
-            invertIntegral: passthrough as (
-                value: DecimalSource,
-                ...inputs: [FormulaSource, FormulaSource]
-            ) => DecimalSource
-        });
-    }
+    public static min = ops.createPassthroughBinaryFormula(Decimal.min);
+    public static minabs = ops.createPassthroughBinaryFormula(Decimal.minabs);
+    public static maxabs = ops.createPassthroughBinaryFormula(Decimal.maxabs);
+    public static clampMin = ops.createPassthroughBinaryFormula(Decimal.clampMin);
+    public static clampMax = ops.createPassthroughBinaryFormula(Decimal.clampMax);
 
     public static clamp(
         value: FormulaSource,
@@ -1563,44 +600,12 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value, min, max],
             evaluate: Decimal.clamp,
-            invert: passthrough as (
-                value: DecimalSource,
-                ...inputs: [FormulaSource, FormulaSource, FormulaSource]
-            ) => DecimalSource,
-            invertIntegral: passthrough as (
-                value: DecimalSource,
-                ...inputs: [FormulaSource, FormulaSource, FormulaSource]
-            ) => DecimalSource
-        });
-    }
-
-    public static clampMin(value: FormulaSource, min: FormulaSource): GenericFormula {
-        return new Formula({
-            inputs: [value, min],
-            evaluate: Decimal.clampMin,
-            invert: passthrough as (
-                value: DecimalSource,
-                ...inputs: [FormulaSource, FormulaSource]
-            ) => DecimalSource,
-            invertIntegral: passthrough as (
-                value: DecimalSource,
-                ...inputs: [FormulaSource, FormulaSource]
-            ) => DecimalSource
-        });
-    }
-
-    public static clampMax(value: FormulaSource, max: FormulaSource): GenericFormula {
-        return new Formula({
-            inputs: [value, max],
-            evaluate: Decimal.clampMax,
-            invert: passthrough as (
-                value: DecimalSource,
-                ...inputs: [FormulaSource, FormulaSource]
-            ) => DecimalSource,
-            invertIntegral: passthrough as (
-                value: DecimalSource,
-                ...inputs: [FormulaSource, FormulaSource]
-            ) => DecimalSource
+            invert: ops.passthrough as InvertFunction<
+                [FormulaSource, FormulaSource, FormulaSource]
+            >,
+            invertIntegral: ops.passthrough as InvertFunction<
+                [FormulaSource, FormulaSource, FormulaSource]
+            >
         });
     }
 
@@ -1618,9 +623,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.log10,
-            invert: invertLog10,
-            integrate: integrateLog10,
-            invertIntegral: invertIntegrateLog10
+            invert: ops.invertLog10,
+            integrate: ops.integrateLog10,
+            invertIntegral: ops.invertIntegrateLog10
         });
     }
 
@@ -1631,9 +636,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value, base],
             evaluate: Decimal.log,
-            invert: invertLog,
-            integrate: integrateLog,
-            invertIntegral: invertIntegrateLog
+            invert: ops.invertLog,
+            integrate: ops.integrateLog,
+            invertIntegral: ops.invertIntegrateLog
         });
     }
     public static logarithm<T extends GenericFormula>(value: T, base: FormulaSource): T;
@@ -1649,9 +654,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.log2,
-            invert: invertLog2,
-            integrate: integrateLog2,
-            invertIntegral: invertIntegrateLog2
+            invert: ops.invertLog2,
+            integrate: ops.integrateLog2,
+            invertIntegral: ops.invertIntegrateLog2
         });
     }
 
@@ -1661,9 +666,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.ln,
-            invert: invertLn,
-            integrate: integrateLn,
-            invertIntegral: invertIntegrateLn
+            invert: ops.invertLn,
+            integrate: ops.integrateLn,
+            invertIntegral: ops.invertIntegrateLn
         });
     }
 
@@ -1674,9 +679,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value, other],
             evaluate: Decimal.pow,
-            invert: invertPow,
-            integrate: integratePow,
-            invertIntegral: invertIntegratePow
+            invert: ops.invertPow,
+            integrate: ops.integratePow,
+            invertIntegral: ops.invertIntegratePow
         });
     }
 
@@ -1686,9 +691,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.pow10,
-            invert: invertPow10,
-            integrate: integratePow10,
-            invertIntegral: invertIntegratePow10
+            invert: ops.invertPow10,
+            integrate: ops.integratePow10,
+            invertIntegral: ops.invertIntegratePow10
         });
     }
 
@@ -1699,9 +704,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value, other],
             evaluate: Decimal.pow_base,
-            invert: invertPowBase,
-            integrate: integratePowBase,
-            invertIntegral: invertIntegratePowBase
+            invert: ops.invertPowBase,
+            integrate: ops.integratePowBase,
+            invertIntegral: ops.invertIntegratePowBase
         });
     }
 
@@ -1712,9 +717,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value, other],
             evaluate: Decimal.root,
-            invert: invertRoot,
-            integrate: integrateRoot,
-            invertIntegral: invertIntegrateRoot
+            invert: ops.invertRoot,
+            integrate: ops.integrateRoot,
+            invertIntegral: ops.invertIntegrateRoot
         });
     }
 
@@ -1736,8 +741,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.exp,
-            invert: invertExp,
-            integrate: integrateExp
+            invert: ops.invertExp,
+            integrate: ops.integrateExp
         });
     }
 
@@ -1782,8 +787,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     ) {
         return new Formula({
             inputs: [value, height, payload],
-            evaluate: tetrate,
-            invert: invertTetrate
+            evaluate: ops.tetrate,
+            invert: ops.invertTetrate
         });
     }
 
@@ -1804,8 +809,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     ) {
         return new Formula({
             inputs: [value, height, payload],
-            evaluate: iteratedexp,
-            invert: invertIteratedExp
+            evaluate: ops.iteratedexp,
+            invert: ops.invertIteratedExp
         });
     }
 
@@ -1814,7 +819,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         base: FormulaSource = 10,
         times: FormulaSource = 1
     ): GenericFormula {
-        return new Formula({ inputs: [value, base, times], evaluate: iteratedLog });
+        return new Formula({ inputs: [value, base, times], evaluate: ops.iteratedLog });
     }
 
     public static slog<T extends GenericFormula>(
@@ -1823,7 +828,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     ): Omit<T, "integrate" | "invertIntegral">;
     public static slog(value: FormulaSource, base?: FormulaSource): GenericFormula;
     public static slog(value: FormulaSource, base: FormulaSource = 10) {
-        return new Formula({ inputs: [value, base], evaluate: slog, invert: invertSlog });
+        return new Formula({ inputs: [value, base], evaluate: ops.slog, invert: ops.invertSlog });
     }
 
     public static layeradd10(value: FormulaSource, diff: FormulaSource) {
@@ -1843,8 +848,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     public static layeradd(value: FormulaSource, diff: FormulaSource, base: FormulaSource = 10) {
         return new Formula({
             inputs: [value, diff, base],
-            evaluate: layeradd,
-            invert: invertLayeradd
+            evaluate: ops.layeradd,
+            invert: ops.invertLayeradd
         });
     }
 
@@ -1853,7 +858,11 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     ): Omit<T, "integrate" | "invertIntegral">;
     public static lambertw(value: FormulaSource): GenericFormula;
     public static lambertw(value: FormulaSource) {
-        return new Formula({ inputs: [value], evaluate: Decimal.lambertw, invert: invertLambertw });
+        return new Formula({
+            inputs: [value],
+            evaluate: Decimal.lambertw,
+            invert: ops.invertLambertw
+        });
     }
 
     public static ssqrt<T extends GenericFormula>(
@@ -1861,7 +870,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     ): Omit<T, "integrate" | "invertIntegral">;
     public static ssqrt(value: FormulaSource): GenericFormula;
     public static ssqrt(value: FormulaSource) {
-        return new Formula({ inputs: [value], evaluate: Decimal.ssqrt, invert: invertSsqrt });
+        return new Formula({ inputs: [value], evaluate: Decimal.ssqrt, invert: ops.invertSsqrt });
     }
 
     public static pentate(
@@ -1869,7 +878,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         height: FormulaSource = 2,
         payload: FormulaSource = Decimal.fromComponents_noNormalize(1, 0, 1)
     ): GenericFormula {
-        return new Formula({ inputs: [value, height, payload], evaluate: pentate });
+        return new Formula({ inputs: [value, height, payload], evaluate: ops.pentate });
     }
 
     public static sin<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
@@ -1878,8 +887,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.sin,
-            invert: invertAsin,
-            integrate: integrateSin
+            invert: ops.invertAsin,
+            integrate: ops.integrateSin
         });
     }
 
@@ -1889,8 +898,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.cos,
-            invert: invertAcos,
-            integrate: integrateCos
+            invert: ops.invertAcos,
+            integrate: ops.integrateCos
         });
     }
 
@@ -1900,8 +909,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.tan,
-            invert: invertAtan,
-            integrate: integrateTan
+            invert: ops.invertAtan,
+            integrate: ops.integrateTan
         });
     }
 
@@ -1911,8 +920,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.asin,
-            invert: invertSin,
-            integrate: integrateAsin
+            invert: ops.invertSin,
+            integrate: ops.integrateAsin
         });
     }
 
@@ -1922,8 +931,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.acos,
-            invert: invertCos,
-            integrate: integrateAcos
+            invert: ops.invertCos,
+            integrate: ops.integrateAcos
         });
     }
 
@@ -1933,8 +942,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.atan,
-            invert: invertTan,
-            integrate: integrateAtan
+            invert: ops.invertTan,
+            integrate: ops.integrateAtan
         });
     }
 
@@ -1944,8 +953,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.sinh,
-            invert: invertAsinh,
-            integrate: integrateSinh
+            invert: ops.invertAsinh,
+            integrate: ops.integrateSinh
         });
     }
 
@@ -1955,8 +964,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.cosh,
-            invert: invertAcosh,
-            integrate: integrateCosh
+            invert: ops.invertAcosh,
+            integrate: ops.integrateCosh
         });
     }
 
@@ -1966,8 +975,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.tanh,
-            invert: invertAtanh,
-            integrate: integrateTanh
+            invert: ops.invertAtanh,
+            integrate: ops.integrateTanh
         });
     }
 
@@ -1977,8 +986,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.asinh,
-            invert: invertSinh,
-            integrate: integrateAsinh
+            invert: ops.invertSinh,
+            integrate: ops.integrateAsinh
         });
     }
 
@@ -1988,8 +997,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.acosh,
-            invert: invertCosh,
-            integrate: integrateAcosh
+            invert: ops.invertCosh,
+            integrate: ops.integrateAcosh
         });
     }
 
@@ -1999,8 +1008,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value],
             evaluate: Decimal.atanh,
-            invert: invertTanh,
-            integrate: integrateAtanh
+            invert: ops.invertTanh,
+            integrate: ops.integrateAtanh
         });
     }
 
@@ -2488,7 +1497,7 @@ export function calculateMaxAffordable(
             if (!formula.isInvertible()) {
                 throw "Cannot calculate max affordable of non-invertible formula";
             }
-            return Decimal.floor((formula as InvertibleFormula).invert(resource.value));
+            return Decimal.floor(formula.invert(resource.value));
         }
     });
 }

@@ -2,10 +2,9 @@ import { createResource, Resource } from "features/resources/resource";
 import Formula, {
     calculateCost,
     calculateMaxAffordable,
-    GenericFormula,
-    InvertibleFormula,
     unrefFormulaSource
-} from "game/formulas";
+} from "game/formulas/formulas";
+import type { GenericFormula, InvertibleFormula } from "game/formulas/types";
 import Decimal, { DecimalSource } from "util/bignum";
 import { beforeAll, describe, expect, test } from "vitest";
 import { ref } from "vue";

@@ -11,12 +11,8 @@ import {
 import { createLazyProxy } from "util/proxies";
 import { joinJSX, renderJSX } from "util/vue";
 import { computed, unref } from "vue";
-import Formula, {
-    calculateCost,
-    calculateMaxAffordable,
-    GenericFormula,
-    InvertibleFormula
-} from "./formulas";
+import Formula, { calculateCost, calculateMaxAffordable } from "./formulas/formulas";
+import type { GenericFormula, InvertibleFormula } from "./formulas/types";
 import { DefaultValue, Persistent } from "./persistence";
 
 /**
