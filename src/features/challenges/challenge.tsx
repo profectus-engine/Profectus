@@ -113,7 +113,9 @@ export function createChallenge<T extends ChallengeOptions>(
                 "Cannot create challenge without a canComplete property or a resource and goal property",
                 challenge
             );
-            throw "Cannot create challenge without a canComplete property or a resource and goal property";
+            throw new Error(
+                "Cannot create challenge without a canComplete property or a resource and goal property"
+            );
         }
 
         challenge.id = getUniqueID("challenge-");

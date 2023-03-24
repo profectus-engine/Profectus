@@ -35,7 +35,7 @@ function integrateVariable(variable: DecimalSource) {
 
 function integrateVariableInner(this: GenericFormula, variable?: DecimalSource) {
     if (variable == null && this.innermostVariable == null) {
-        throw "Cannot integrate non-existent variable";
+        throw new Error("Cannot integrate non-existent variable");
     }
     return variable ?? unref(this.innermostVariable);
 }
@@ -93,7 +93,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
 
     private setupConstant({ inputs }: { inputs: [FormulaSource] }): InternalFormulaProperties<T> {
         if (inputs.length !== 1) {
-            throw "Evaluate function is required if inputs is not length 1";
+            throw new Error("Evaluate function is required if inputs is not length 1");
         }
         return {
             inputs: inputs as T,
@@ -113,7 +113,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             hasVariable
         } = options;
         if (invert == null && invertIntegral == null && hasVariable) {
-            throw "A formula cannot be marked as having a variable if it is not invertible";
+            throw new Error(
+                "A formula cannot be marked as having a variable if it is not invertible"
+            );
         }
 
         const numVariables = inputs.filter(
@@ -197,7 +199,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         } else if (this.inputs.length === 1 && this.internalHasVariable) {
             return value;
         }
-        throw "Cannot invert non-invertible formula";
+        throw new Error("Cannot invert non-invertible formula");
     }
 
     /**
@@ -213,7 +215,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
                 // We're the complex operation of this formula
                 stack = [];
                 if (this.internalIntegrate == null) {
-                    throw "Cannot integrate formula with non-existent operation";
+                    throw new Error("Cannot integrate formula with non-existent operation");
                 }
                 let value = this.internalIntegrate.call(this, variable, stack, ...this.inputs);
                 stack.forEach(func => (value = func(value)));
@@ -225,12 +227,12 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
                 } else if (this.inputs.length === 1 && this.internalHasVariable) {
                     return integrateVariable(variable ?? unrefFormulaSource(this.inputs[0]));
                 }
-                throw "Cannot integrate formula without variable";
+                throw new Error("Cannot integrate formula without variable");
             }
         } else {
             // "Inner" part of the formula
             if (this.applySubstitution == null) {
-                throw "Cannot have two complex operations in an integrable formula";
+                throw new Error("Cannot have two complex operations in an integrable formula");
             }
             stack.push((variable: DecimalSource) =>
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -243,7 +245,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             } else if (this.inputs.length === 1 && this.internalHasVariable) {
                 return variable ?? unrefFormulaSource(this.inputs[0]);
             }
-            throw "Cannot integrate formula without variable";
+            throw new Error("Cannot integrate formula without variable");
         }
     }
 
@@ -267,7 +269,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         } else if (this.inputs.length === 1 && this.internalHasVariable) {
             return value;
         }
-        throw "Cannot invert integral of formula without invertible integral";
+        throw new Error("Cannot invert integral of formula without invertible integral");
     }
 
     /**
@@ -346,7 +348,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
                 }
                 return lhs.invert(value);
             }
-            throw "Could not invert due to no input being a variable";
+            throw new Error("Could not invert due to no input being a variable");
         }
         return new Formula({
             inputs: [value],
@@ -381,7 +383,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         }
         function invertStep(value: DecimalSource, lhs: FormulaSource) {
             if (!hasVariable(lhs)) {
-                throw "Could not invert due to no input being a variable";
+                throw new Error("Could not invert due to no input being a variable");
             }
             if (unref(processedCondition)) {
                 return lhs.invert(formula.invert(value));
@@ -1374,14 +1376,16 @@ export function calculateMaxAffordable(
     return computed(() => {
         if (unref(computedSpendResources)) {
             if (!formula.isIntegrable() || !formula.isIntegralInvertible()) {
-                throw "Cannot calculate max affordable of formula with non-invertible integral";
+                throw new Error(
+                    "Cannot calculate max affordable of formula with non-invertible integral"
+                );
             }
             return Decimal.floor(
                 formula.invertIntegral(Decimal.add(resource.value, formula.evaluateIntegral()))
             ).sub(unref(formula.innermostVariable) ?? 0);
         } else {
             if (!formula.isInvertible()) {
-                throw "Cannot calculate max affordable of non-invertible formula";
+                throw new Error("Cannot calculate max affordable of non-invertible formula");
             }
             return Decimal.floor(formula.invert(resource.value));
         }

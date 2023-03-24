@@ -465,7 +465,7 @@ export function createFormulaPreview(
     const processedShowPreview = convertComputable(showPreview);
     const processedPreviewAmount = convertComputable(previewAmount);
     if (!formula.hasVariable()) {
-        throw "Cannot create formula preview if the formula does not have a variable";
+        throw new Error("Cannot create formula preview if the formula does not have a variable");
     }
     return computed(() => {
         if (unref(processedShowPreview)) {
@@ -507,7 +507,7 @@ export function modifierToFormula(modifier: Modifier, base: FormulaSource) {
                       if (lhs instanceof Formula && lhs.hasVariable()) {
                           return lhs.invert(modifier.revert!(val));
                       }
-                      throw "Could not invert due to no input being a variable";
+                      throw new Error("Could not invert due to no input being a variable");
                   }
                 : undefined
     });

@@ -115,7 +115,7 @@ function checkNaNAndWrite<T extends State>(persistent: Persistent<T>, value: T) 
             persistent[SaveDataPath]?.join("."),
             persistent
         );
-        throw "Attempted to set NaN value. See above for details";
+        throw new Error("Attempted to set NaN value. See above for details");
     }
     persistent[PersistentState].value = value;
 }

@@ -26,7 +26,9 @@ declare global {
 document.title = projInfo.title;
 window.projInfo = projInfo;
 if (projInfo.id === "") {
-    throw "Project ID is empty! Please select a unique ID for this project in /src/data/projInfo.json";
+    throw new Error(
+        "Project ID is empty! Please select a unique ID for this project in /src/data/projInfo.json"
+    );
 }
 
 requestAnimationFrame(async () => {
