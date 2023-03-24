@@ -996,6 +996,10 @@ describe("Custom Formulas", () => {
                 }).invertIntegral(8)
             ).compare_tolerance(1));
     });
+
+    describe.todo("Formula as input");
+
+    describe.todo("Determines invertibility etc. correctly");
 });
 
 describe("Buy Max", () => {
