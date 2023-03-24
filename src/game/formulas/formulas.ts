@@ -421,23 +421,13 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             integrate: ops.integrateNeg
         });
     }
-    public static negate<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
-    public static negate(value: FormulaSource): GenericFormula;
-    public static negate(value: FormulaSource) {
-        return Formula.neg(value);
-    }
-    public static negated<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
-    public static negated(value: FormulaSource): GenericFormula;
-    public static negated(value: FormulaSource) {
-        return Formula.neg(value);
-    }
+    public static negate = Formula.neg;
+    public static negated = Formula.neg;
 
     public static sign(value: FormulaSource): GenericFormula {
         return new Formula({ inputs: [value], evaluate: Decimal.sign });
     }
-    public static sgn(value: FormulaSource) {
-        return Formula.sign(value);
-    }
+    public static sgn = Formula.sign;
 
     public static round(value: FormulaSource): GenericFormula {
         return new Formula({ inputs: [value], evaluate: Decimal.round });
@@ -469,12 +459,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             invertIntegral: ops.invertIntegrateAdd
         });
     }
-    public static plus<T extends GenericFormula>(value: T, other: FormulaSource): T;
-    public static plus<T extends GenericFormula>(value: FormulaSource, other: T): T;
-    public static plus(value: FormulaSource, other: FormulaSource): GenericFormula;
-    public static plus(value: FormulaSource, other: FormulaSource) {
-        return Formula.add(value, other);
-    }
+    public static plus = Formula.add;
 
     public static sub<T extends GenericFormula>(value: T, other: FormulaSource): T;
     public static sub<T extends GenericFormula>(value: FormulaSource, other: T): T;
@@ -490,18 +475,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             invertIntegral: ops.invertIntegrateSub
         });
     }
-    public static subtract<T extends GenericFormula>(value: T, other: FormulaSource): T;
-    public static subtract<T extends GenericFormula>(value: FormulaSource, other: T): T;
-    public static subtract(value: FormulaSource, other: FormulaSource): GenericFormula;
-    public static subtract(value: FormulaSource, other: FormulaSource) {
-        return Formula.sub(value, other);
-    }
-    public static minus<T extends GenericFormula>(value: T, other: FormulaSource): T;
-    public static minus<T extends GenericFormula>(value: FormulaSource, other: T): T;
-    public static minus(value: FormulaSource, other: FormulaSource): GenericFormula;
-    public static minus(value: FormulaSource, other: FormulaSource) {
-        return Formula.sub(value, other);
-    }
+    public static subtract = Formula.sub;
+    public static minus = Formula.sub;
 
     public static mul<T extends GenericFormula>(value: T, other: FormulaSource): T;
     public static mul<T extends GenericFormula>(value: FormulaSource, other: T): T;
@@ -516,18 +491,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             invertIntegral: ops.invertIntegrateMul
         });
     }
-    public static multiply<T extends GenericFormula>(value: T, other: FormulaSource): T;
-    public static multiply<T extends GenericFormula>(value: FormulaSource, other: T): T;
-    public static multiply(value: FormulaSource, other: FormulaSource): GenericFormula;
-    public static multiply(value: FormulaSource, other: FormulaSource) {
-        return Formula.mul(value, other);
-    }
-    public static times<T extends GenericFormula>(value: T, other: FormulaSource): T;
-    public static times<T extends GenericFormula>(value: FormulaSource, other: T): T;
-    public static times(value: FormulaSource, other: FormulaSource): GenericFormula;
-    public static times(value: FormulaSource, other: FormulaSource) {
-        return Formula.mul(value, other);
-    }
+    public static multiply = Formula.mul;
+    public static times = Formula.mul;
 
     public static div<T extends GenericFormula>(value: T, other: FormulaSource): T;
     public static div<T extends GenericFormula>(value: FormulaSource, other: T): T;
@@ -542,12 +507,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             invertIntegral: ops.invertIntegrateDiv
         });
     }
-    public static divide<T extends GenericFormula>(value: T, other: FormulaSource): T;
-    public static divide<T extends GenericFormula>(value: FormulaSource, other: T): T;
-    public static divide(value: FormulaSource, other: FormulaSource): GenericFormula;
-    public static divide(value: FormulaSource, other: FormulaSource) {
-        return Formula.div(value, other);
-    }
+    public static divide = Formula.div;
+    public static divideBy = Formula.div;
+    public static dividedBy = Formula.div;
 
     public static recip<T extends GenericFormula>(value: T): T;
     public static recip(value: FormulaSource): GenericFormula;
@@ -560,16 +522,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             invertIntegral: ops.invertIntegrateRecip
         });
     }
-    public static reciprocal<T extends GenericFormula>(value: T): T;
-    public static reciprocal(value: FormulaSource): GenericFormula;
-    public static reciprocal(value: FormulaSource): GenericFormula {
-        return Formula.recip(value);
-    }
-    public static reciprocate<T extends GenericFormula>(value: T): T;
-    public static reciprocate(value: FormulaSource): GenericFormula;
-    public static reciprocate(value: FormulaSource) {
-        return Formula.recip(value);
-    }
+    public static reciprocal = Formula.recip;
+    public static reciprocate = Formula.recip;
 
     public static max(value: FormulaSource, other: FormulaSource): GenericFormula {
         return new Formula({
@@ -641,12 +595,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             invertIntegral: ops.invertIntegrateLog
         });
     }
-    public static logarithm<T extends GenericFormula>(value: T, base: FormulaSource): T;
-    public static logarithm<T extends GenericFormula>(value: FormulaSource, base: T): T;
-    public static logarithm(value: FormulaSource, base: FormulaSource): GenericFormula;
-    public static logarithm(value: FormulaSource, base: FormulaSource) {
-        return Formula.log(value, base);
-    }
+    public static logarithm = Formula.log;
 
     public static log2<T extends GenericFormula>(value: T): T;
     public static log2(value: FormulaSource): GenericFormula;
@@ -1048,23 +997,13 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     public neg(this: GenericFormula) {
         return Formula.neg(this);
     }
-    public negate<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
-    public negate(this: GenericFormula): GenericFormula;
-    public negate(this: GenericFormula) {
-        return Formula.neg(this);
-    }
-    public negated<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
-    public negated(this: GenericFormula): GenericFormula;
-    public negated(this: GenericFormula) {
-        return Formula.neg(this);
-    }
+    public negate = this.neg;
+    public negated = this.neg;
 
     public sign() {
         return Formula.sign(this);
     }
-    public sgn() {
-        return this.sign();
-    }
+    public sgn = this.sign;
 
     public round() {
         return Formula.round(this);
@@ -1088,12 +1027,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     public add(this: GenericFormula, value: FormulaSource) {
         return Formula.add(this, value);
     }
-    public plus<T extends GenericFormula>(this: T, value: FormulaSource): T;
-    public plus<T extends GenericFormula>(this: GenericFormula, value: T): T;
-    public plus(this: GenericFormula, value: FormulaSource): GenericFormula;
-    public plus(value: FormulaSource) {
-        return Formula.add(this, value);
-    }
+    public plus = this.add;
 
     public sub<T extends GenericFormula>(this: T, value: FormulaSource): T;
     public sub<T extends GenericFormula>(this: GenericFormula, value: T): T;
@@ -1101,18 +1035,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     public sub(value: FormulaSource) {
         return Formula.sub(this, value);
     }
-    public subtract<T extends GenericFormula>(this: T, value: FormulaSource): T;
-    public subtract<T extends GenericFormula>(this: GenericFormula, value: T): T;
-    public subtract(this: GenericFormula, value: FormulaSource): GenericFormula;
-    public subtract(value: FormulaSource) {
-        return Formula.sub(this, value);
-    }
-    public minus<T extends GenericFormula>(this: T, value: FormulaSource): T;
-    public minus<T extends GenericFormula>(this: GenericFormula, value: T): T;
-    public minus(this: GenericFormula, value: FormulaSource): GenericFormula;
-    public minus(value: FormulaSource) {
-        return Formula.sub(this, value);
-    }
+    public subtract = this.sub;
+    public minus = this.sub;
 
     public mul<T extends GenericFormula>(this: T, value: FormulaSource): T;
     public mul<T extends GenericFormula>(this: GenericFormula, value: T): T;
@@ -1120,18 +1044,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     public mul(value: FormulaSource) {
         return Formula.mul(this, value);
     }
-    public multiply<T extends GenericFormula>(this: T, value: FormulaSource): T;
-    public multiply<T extends GenericFormula>(this: GenericFormula, value: T): T;
-    public multiply(this: GenericFormula, value: FormulaSource): GenericFormula;
-    public multiply(value: FormulaSource) {
-        return Formula.mul(this, value);
-    }
-    public times<T extends GenericFormula>(this: T, value: FormulaSource): T;
-    public times<T extends GenericFormula>(this: GenericFormula, value: T): T;
-    public times(this: GenericFormula, value: FormulaSource): GenericFormula;
-    public times(value: FormulaSource) {
-        return Formula.mul(this, value);
-    }
+    public multiply = this.mul;
+    public times = this.mul;
 
     public div<T extends GenericFormula>(this: T, value: FormulaSource): T;
     public div<T extends GenericFormula>(this: GenericFormula, value: T): T;
@@ -1139,40 +1053,17 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     public div(value: FormulaSource) {
         return Formula.div(this, value);
     }
-    public divide<T extends GenericFormula>(this: T, value: FormulaSource): T;
-    public divide<T extends GenericFormula>(this: GenericFormula, value: T): T;
-    public divide(this: GenericFormula, value: FormulaSource): GenericFormula;
-    public divide(value: FormulaSource) {
-        return Formula.div(this, value);
-    }
-    public divideBy<T extends GenericFormula>(this: T, value: FormulaSource): T;
-    public divideBy<T extends GenericFormula>(this: GenericFormula, value: T): T;
-    public divideBy(this: GenericFormula, value: FormulaSource): GenericFormula;
-    public divideBy(value: FormulaSource) {
-        return Formula.div(this, value);
-    }
-    public dividedBy<T extends GenericFormula>(this: T, value: FormulaSource): T;
-    public dividedBy<T extends GenericFormula>(this: GenericFormula, value: T): T;
-    public dividedBy(this: GenericFormula, value: FormulaSource): GenericFormula;
-    public dividedBy(value: FormulaSource) {
-        return Formula.div(this, value);
-    }
+    public divide = this.div;
+    public divideBy = this.div;
+    public dividedBy = this.div;
 
     public recip<T extends GenericFormula>(this: T): T;
     public recip(this: FormulaSource): GenericFormula;
     public recip() {
         return Formula.recip(this);
     }
-    public reciprocal<T extends GenericFormula>(this: T): T;
-    public reciprocal(this: FormulaSource): GenericFormula;
-    public reciprocal() {
-        return Formula.recip(this);
-    }
-    public reciprocate<T extends GenericFormula>(this: T): T;
-    public reciprocate(this: FormulaSource): GenericFormula;
-    public reciprocate() {
-        return Formula.recip(this);
-    }
+    public reciprocal = this.recip;
+    public reciprocate = this.recip;
 
     public max(value: FormulaSource) {
         return Formula.max(this, value);
@@ -1222,12 +1113,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     public log(value: FormulaSource) {
         return Formula.log(this, value);
     }
-    public logarithm<T extends GenericFormula>(this: T, value: FormulaSource): T;
-    public logarithm<T extends GenericFormula>(this: FormulaSource, value: T): T;
-    public logarithm(this: FormulaSource, value: FormulaSource): GenericFormula;
-    public logarithm(value: FormulaSource) {
-        return Formula.log(this, value);
-    }
+    public logarithm = this.log;
 
     public log2<T extends GenericFormula>(this: T): T;
     public log2(this: FormulaSource): GenericFormula;
