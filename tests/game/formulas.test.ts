@@ -138,11 +138,13 @@ const nonInvertibleIntegralTwoParamFunctionNames = nonIntegrableTwoParamFunction
 
 describe("Formula Equality Checking", () => {
     describe("Equality Checks", () => {
-        test("Equals", () => Formula.add(1, 1).equals(Formula.add(1, 1)));
-        test("Not Equals due to inputs", () => Formula.add(1, 1).equals(Formula.add(1, 0)));
-        test("Not Equals due to functions", () => Formula.add(1, 1).equals(Formula.sub(1, 1)));
+        test("Equals", () => expect(Formula.add(1, 1).equals(Formula.add(1, 1))).toBe(true));
+        test("Not Equals due to inputs", () =>
+            expect(Formula.add(1, 1).equals(Formula.add(1, 0))).toBe(false));
+        test("Not Equals due to functions", () =>
+            expect(Formula.add(1, 1).equals(Formula.sub(1, 1))).toBe(false));
         test("Not Equals due to hasVariable", () =>
-            Formula.constant(1).equals(Formula.variable(1)));
+            expect(Formula.constant(1).equals(Formula.variable(1))).toBe(false));
     });
 
     describe("Formula aliases", () => {
