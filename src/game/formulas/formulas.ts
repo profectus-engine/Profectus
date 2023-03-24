@@ -71,8 +71,11 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         this.inputs = readonlyProperties.inputs;
         this.internalHasVariable = readonlyProperties.internalHasVariable;
         this.innermostVariable = readonlyProperties.innermostVariable;
+        this.internalEvaluate = readonlyProperties.internalEvaluate;
+        this.internalInvert = readonlyProperties.internalInvert;
         this.internalIntegrate = readonlyProperties.internalIntegrate;
         this.internalIntegrateInner = readonlyProperties.internalIntegrateInner;
+        this.internalInvertIntegral = readonlyProperties.internalInvertIntegral;
         this.applySubstitution = readonlyProperties.applySubstitution;
     }
 
@@ -135,13 +138,13 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return {
             inputs,
             internalEvaluate: evaluate,
+            internalInvert,
             internalIntegrate: integrate,
             internalIntegrateInner: integrateInner,
+            internalInvertIntegral,
             applySubstitution,
             innermostVariable,
-            internalHasVariable,
-            internalInvert,
-            internalInvertIntegral
+            internalHasVariable
         };
     }
 
