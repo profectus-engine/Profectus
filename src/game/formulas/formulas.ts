@@ -1,7 +1,7 @@
 import { Resource } from "features/resources/resource";
 import Decimal, { DecimalSource } from "util/bignum";
 import { Computable, convertComputable, ProcessedComputable } from "util/computed";
-import { computed, ComputedRef, ref, unref } from "vue";
+import { computed, ComputedRef, Ref, ref, unref } from "vue";
 import type {
     EvaluateFunction,
     FormulaOptions,
@@ -15,7 +15,6 @@ import type {
     InvertFunction,
     InvertibleFormula,
     InvertibleIntegralFormula,
-    InvertIntegralFunction,
     SubstitutionFunction,
     SubstitutionStack
 } from "./types";
@@ -29,8 +28,8 @@ export function unrefFormulaSource(value: FormulaSource, variable?: DecimalSourc
     return value instanceof Formula ? value.evaluate(variable) : unref(value);
 }
 
-function integrateVariable(variable: DecimalSource) {
-    return Decimal.pow(variable, 2).div(2);
+function integrateVariable(this: GenericFormula) {
+    return Formula.pow(this, 2).div(2);
 }
 
 function integrateVariableInner(this: GenericFormula, variable?: DecimalSource) {
@@ -54,10 +53,11 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     private readonly internalIntegrate: IntegrateFunction<T> | undefined;
     private readonly internalIntegrateInner: IntegrateFunction<T> | undefined;
     private readonly applySubstitution: SubstitutionFunction<T> | undefined;
-    private readonly internalInvertIntegral: InvertIntegralFunction<T> | undefined;
     private readonly internalHasVariable: boolean;
 
     public readonly innermostVariable: ProcessedComputable<DecimalSource> | undefined;
+
+    private integralFormula: GenericFormula | undefined;
 
     constructor(options: FormulaOptions<T>) {
         let readonlyProperties;
@@ -75,7 +75,6 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         this.internalInvert = readonlyProperties.internalInvert;
         this.internalIntegrate = readonlyProperties.internalIntegrate;
         this.internalIntegrateInner = readonlyProperties.internalIntegrateInner;
-        this.internalInvertIntegral = readonlyProperties.internalInvertIntegral;
         this.applySubstitution = readonlyProperties.applySubstitution;
     }
 
@@ -112,10 +111,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             integrate,
             integrateInner,
             applySubstitution,
-            invertIntegral,
             hasVariable
         } = options;
-        if (invert == null && invertIntegral == null && hasVariable) {
+        if (invert == null && hasVariable) {
             throw new Error(
                 "A formula cannot be marked as having a variable if it is not invertible"
             );
@@ -132,8 +130,6 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             numVariables === 1 || (numVariables === 0 && hasVariable === true);
         const innermostVariable = internalHasVariable ? variable?.innermostVariable : undefined;
         const internalInvert = internalHasVariable && variable?.isInvertible() ? invert : undefined;
-        const internalInvertIntegral =
-            internalHasVariable && variable?.isIntegralInvertible() ? invertIntegral : undefined;
 
         return {
             inputs,
@@ -141,11 +137,17 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             internalInvert,
             internalIntegrate: integrate,
             internalIntegrateInner: integrateInner,
-            internalInvertIntegral,
             applySubstitution,
             innermostVariable,
             internalHasVariable
         };
+    }
+
+    private calculateConstantOfIntegration() {
+        // Calculate C based on the knowledge that at 1 purchase, the total sum would be the cost of that one purchase
+        const integral = this.getIntegralFormula().evaluate(1);
+        const actualCost = this.evaluate(0);
+        return Decimal.sub(actualCost, integral);
     }
 
     /** Type predicate that this formula can be inverted. */
@@ -163,10 +165,10 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
 
     /** Type predicate that this formula has an integral function that can be inverted. */
     isIntegralInvertible(): this is InvertibleIntegralFormula {
-        return (
-            this.internalHasVariable &&
-            (this.internalInvertIntegral != null || this.internalEvaluate == null)
-        );
+        if (!this.isIntegrable()) {
+            return false;
+        }
+        return this.getIntegralFormula().isInvertible();
     }
 
     /** Whether or not this formula has a singular variable inside it, which can be accessed via {@link innermostVariable}. */
@@ -208,71 +210,101 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     /**
      * Evaluate the result of the indefinite integral (sans the constant of integration). Only works if there's a single variable and the formula is integrable. The formula can only have one "complex" operation (anything besides +,-,*,/).
      * @param variable Optionally override the value of the variable while evaluating
-     * @param stack The list of callbacks to run to handle simple operations inside the complex operation. Used in nested formulas
      * @see {@link isIntegrable}
      */
-    evaluateIntegral(variable?: DecimalSource, stack?: SubstitutionStack): DecimalSource {
+    evaluateIntegral(variable?: DecimalSource): DecimalSource {
+        if (!this.isIntegrable()) {
+            throw new Error("Cannot evaluate integral of formula without integral");
+        }
+        return Decimal.add(
+            this.getIntegralFormula().evaluate(variable),
+            this.calculateConstantOfIntegration()
+        );
+    }
+
+    /**
+     * Given the potential result of the formula's integral (and the constant of integration), calculate what value the variable inside the formula would have to be for that result to occur. Only works if there's a single variable and if the formula's integral is invertible.
+     * @param value The result of the integral.
+     * @see {@link isIntegralInvertible}
+     */
+    invertIntegral(value: DecimalSource): DecimalSource {
+        if (this.integralFormula?.isInvertible()) {
+            throw new Error("Cannot invert integral of formula without invertible integral");
+        }
+        return this.getIntegralFormula().invert(value);
+    }
+
+    /**
+     * Get a formula that will evaluate to the integral of this formula. May also be invertible.
+     * @param variable The variable that will be used to evaluate this integral at a given x value
+     * @param stack For nested formulas, a stack of operations that occur outside the complex operation
+     */
+    getIntegralFormula(
+        variable?: ProcessedComputable<DecimalSource>,
+        stack?: SubstitutionStack
+    ): GenericFormula {
+        if (variable == null && this.integralFormula != null) {
+            return this.integralFormula;
+        }
+        let formula;
+        const variablePresent = variable != null;
+        if (variable == null) {
+            variable = this.innermostVariable;
+            if (variable == null) {
+                throw new Error("Cannot integrate formula without variable");
+            }
+        }
         if (stack == null) {
             // "Outer" part of the formula
             if (this.applySubstitution == null) {
                 // We're the complex operation of this formula
                 stack = [];
                 if (this.internalIntegrate == null) {
-                    throw new Error("Cannot integrate formula with non-existent operation");
+                    throw new Error("Cannot integrate formula with non-integrable operation");
                 }
                 let value = this.internalIntegrate.call(this, variable, stack, ...this.inputs);
                 stack.forEach(func => (value = func(value)));
-                return value;
+                formula = value;
             } else {
                 // Continue digging into the formula
                 if (this.internalIntegrate) {
-                    return this.internalIntegrate.call(this, variable, undefined, ...this.inputs);
+                    formula = this.internalIntegrate.call(
+                        this,
+                        variable,
+                        undefined,
+                        ...this.inputs
+                    );
                 } else if (this.inputs.length === 1 && this.internalHasVariable) {
-                    return integrateVariable(variable ?? unrefFormulaSource(this.inputs[0]));
+                    // eslint-disable-next-line @typescript-eslint/no-this-alias
+                    formula = this;
+                } else {
+                    throw new Error("Cannot integrate formula without variable");
                 }
-                throw new Error("Cannot integrate formula without variable");
             }
         } else {
             // "Inner" part of the formula
             if (this.applySubstitution == null) {
                 throw new Error("Cannot have two complex operations in an integrable formula");
             }
-            stack.push((variable: DecimalSource) =>
+            stack.push((variable: GenericFormula) =>
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 this.applySubstitution!.call(this, variable, ...this.inputs)
             );
             if (this.internalIntegrateInner) {
-                return this.internalIntegrateInner.call(this, variable, stack, ...this.inputs);
+                formula = this.internalIntegrateInner.call(this, variable, stack, ...this.inputs);
             } else if (this.internalIntegrate) {
-                return this.internalIntegrate.call(this, variable, stack, ...this.inputs);
+                formula = this.internalIntegrate.call(this, variable, stack, ...this.inputs);
             } else if (this.inputs.length === 1 && this.internalHasVariable) {
-                return variable ?? unrefFormulaSource(this.inputs[0]);
+                // eslint-disable-next-line @typescript-eslint/no-this-alias
+                formula = this;
+            } else {
+                throw new Error("Cannot integrate formula without variable");
             }
-            throw new Error("Cannot integrate formula without variable");
         }
-    }
-
-    calculateConstantOfIntegration() {
-        // Calculate C based on the knowledge that at 1 purchase, the total sum would be the cost of that one purchase
-        const integral = this.evaluateIntegral(1);
-        const actualCost = this.evaluate(0);
-        return Decimal.sub(actualCost, integral);
-    }
-
-    /**
-     * Given the potential result of the formula's integral (sand the constant of integration), calculate what value the variable inside the formula would have to be for that result to occur. Only works if there's a single variable and if the formula's integral is invertible.
-     * @param value The result of the integral.
-     * @see {@link isIntegralInvertible}
-     */
-    invertIntegral(value: DecimalSource): DecimalSource {
-        // This is nearly completely non-functional
-        // Proper nesting will require somehow using integration by substitution or integration by parts
-        if (this.internalInvertIntegral) {
-            return this.internalInvertIntegral.call(this, value, ...this.inputs);
-        } else if (this.inputs.length === 1 && this.internalHasVariable) {
-            return value;
+        if (!variablePresent) {
+            this.integralFormula = formula;
         }
-        throw new Error("Cannot invert integral of formula without invertible integral");
+        return formula;
     }
 
     /**
@@ -292,7 +324,6 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             this.internalEvaluate === other.internalEvaluate &&
             this.internalInvert === other.internalInvert &&
             this.internalIntegrate === other.internalIntegrate &&
-            this.internalInvertIntegral === other.internalInvertIntegral &&
             this.internalHasVariable === other.internalHasVariable
         );
     }
@@ -415,7 +446,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({ inputs: [value], evaluate: Decimal.abs });
     }
 
-    public static neg<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
+    public static neg<T extends GenericFormula>(value: T): T;
     public static neg(value: FormulaSource): GenericFormula;
     public static neg(value: FormulaSource) {
         return new Formula({
@@ -460,8 +491,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             invert: ops.invertAdd,
             integrate: ops.integrateAdd,
             integrateInner: ops.integrateInnerAdd,
-            applySubstitution: ops.passthrough,
-            invertIntegral: ops.invertIntegrateAdd
+            applySubstitution: ops.passthrough
         });
     }
     public static plus = Formula.add;
@@ -476,8 +506,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             invert: ops.invertSub,
             integrate: ops.integrateSub,
             integrateInner: ops.integrateInnerSub,
-            applySubstitution: ops.passthrough,
-            invertIntegral: ops.invertIntegrateSub
+            applySubstitution: ops.passthrough
         });
     }
     public static subtract = Formula.sub;
@@ -492,8 +521,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             evaluate: Decimal.mul,
             invert: ops.invertMul,
             integrate: ops.integrateMul,
-            applySubstitution: ops.applySubstitutionMul,
-            invertIntegral: ops.invertIntegrateMul
+            applySubstitution: ops.applySubstitutionMul
         });
     }
     public static multiply = Formula.mul;
@@ -508,8 +536,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             evaluate: Decimal.div,
             invert: ops.invertDiv,
             integrate: ops.integrateDiv,
-            applySubstitution: ops.applySubstitutionDiv,
-            invertIntegral: ops.invertIntegrateDiv
+            applySubstitution: ops.applySubstitutionDiv
         });
     }
     public static divide = Formula.div;
@@ -523,8 +550,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             inputs: [value],
             evaluate: Decimal.recip,
             invert: ops.invertRecip,
-            integrate: ops.integrateRecip,
-            invertIntegral: ops.invertIntegrateRecip
+            integrate: ops.integrateRecip
         });
     }
     public static reciprocal = Formula.recip;
@@ -535,10 +561,6 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             inputs: [value, other],
             evaluate: Decimal.max,
             invert: ops.passthrough as (
-                value: DecimalSource,
-                ...inputs: [FormulaSource, FormulaSource]
-            ) => DecimalSource,
-            invertIntegral: ops.passthrough as (
                 value: DecimalSource,
                 ...inputs: [FormulaSource, FormulaSource]
             ) => DecimalSource
@@ -559,12 +581,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({
             inputs: [value, min, max],
             evaluate: Decimal.clamp,
-            invert: ops.passthrough as InvertFunction<
-                [FormulaSource, FormulaSource, FormulaSource]
-            >,
-            invertIntegral: ops.passthrough as InvertFunction<
-                [FormulaSource, FormulaSource, FormulaSource]
-            >
+            invert: ops.passthrough as InvertFunction<[FormulaSource, FormulaSource, FormulaSource]>
         });
     }
 
@@ -583,8 +600,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             inputs: [value],
             evaluate: Decimal.log10,
             invert: ops.invertLog10,
-            integrate: ops.integrateLog10,
-            invertIntegral: ops.invertIntegrateLog10
+            integrate: ops.integrateLog10
         });
     }
 
@@ -596,8 +612,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             inputs: [value, base],
             evaluate: Decimal.log,
             invert: ops.invertLog,
-            integrate: ops.integrateLog,
-            invertIntegral: ops.invertIntegrateLog
+            integrate: ops.integrateLog
         });
     }
     public static logarithm = Formula.log;
@@ -609,8 +624,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             inputs: [value],
             evaluate: Decimal.log2,
             invert: ops.invertLog2,
-            integrate: ops.integrateLog2,
-            invertIntegral: ops.invertIntegrateLog2
+            integrate: ops.integrateLog2
         });
     }
 
@@ -621,8 +635,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             inputs: [value],
             evaluate: Decimal.ln,
             invert: ops.invertLn,
-            integrate: ops.integrateLn,
-            invertIntegral: ops.invertIntegrateLn
+            integrate: ops.integrateLn
         });
     }
 
@@ -634,8 +647,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             inputs: [value, other],
             evaluate: Decimal.pow,
             invert: ops.invertPow,
-            integrate: ops.integratePow,
-            invertIntegral: ops.invertIntegratePow
+            integrate: ops.integratePow
         });
     }
 
@@ -646,8 +658,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             inputs: [value],
             evaluate: Decimal.pow10,
             invert: ops.invertPow10,
-            integrate: ops.integratePow10,
-            invertIntegral: ops.invertIntegratePow10
+            integrate: ops.integratePow10
         });
     }
 
@@ -659,8 +670,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             inputs: [value, other],
             evaluate: Decimal.pow_base,
             invert: ops.invertPowBase,
-            integrate: ops.integratePowBase,
-            invertIntegral: ops.invertIntegratePowBase
+            integrate: ops.integratePowBase
         });
     }
 
@@ -672,8 +682,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             inputs: [value, other],
             evaluate: Decimal.root,
             invert: ops.invertRoot,
-            integrate: ops.integrateRoot,
-            invertIntegral: ops.invertIntegrateRoot
+            integrate: ops.integrateRoot
         });
     }
 
@@ -689,7 +698,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({ inputs: [value], evaluate: Decimal.lngamma });
     }
 
-    public static exp<T extends GenericFormula>(value: T): Omit<T, "invertsIntegral">;
+    public static exp<T extends GenericFormula>(value: T): T;
     public static exp(value: FormulaSource): GenericFormula;
     public static exp(value: FormulaSource) {
         return new Formula({
@@ -728,7 +737,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         value: T,
         height?: FormulaSource,
         payload?: FormulaSource
-    ): Omit<T, "integrate" | "invertIntegral">;
+    ): Omit<T, "integrate">;
     public static tetrate(
         value: FormulaSource,
         height?: FormulaSource,
@@ -750,7 +759,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         value: T,
         height?: FormulaSource,
         payload?: FormulaSource
-    ): Omit<T, "integrate" | "invertIntegral">;
+    ): Omit<T, "integrate">;
     public static iteratedexp(
         value: FormulaSource,
         height?: FormulaSource,
@@ -779,7 +788,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     public static slog<T extends GenericFormula>(
         value: T,
         base?: FormulaSource
-    ): Omit<T, "integrate" | "invertIntegral">;
+    ): Omit<T, "integrate">;
     public static slog(value: FormulaSource, base?: FormulaSource): GenericFormula;
     public static slog(value: FormulaSource, base: FormulaSource = 10) {
         return new Formula({ inputs: [value, base], evaluate: ops.slog, invert: ops.invertSlog });
@@ -793,7 +802,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         value: T,
         diff: FormulaSource,
         base?: FormulaSource
-    ): Omit<T, "integrate" | "invertIntegral">;
+    ): Omit<T, "integrate">;
     public static layeradd(
         value: FormulaSource,
         diff: FormulaSource,
@@ -807,9 +816,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         });
     }
 
-    public static lambertw<T extends GenericFormula>(
-        value: T
-    ): Omit<T, "integrate" | "invertIntegral">;
+    public static lambertw<T extends GenericFormula>(value: T): Omit<T, "integrate">;
     public static lambertw(value: FormulaSource): GenericFormula;
     public static lambertw(value: FormulaSource) {
         return new Formula({
@@ -819,9 +826,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         });
     }
 
-    public static ssqrt<T extends GenericFormula>(
-        value: T
-    ): Omit<T, "integrate" | "invertIntegral">;
+    public static ssqrt<T extends GenericFormula>(value: T): Omit<T, "integrate">;
     public static ssqrt(value: FormulaSource): GenericFormula;
     public static ssqrt(value: FormulaSource) {
         return new Formula({ inputs: [value], evaluate: Decimal.ssqrt, invert: ops.invertSsqrt });
@@ -835,7 +840,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({ inputs: [value, height, payload], evaluate: ops.pentate });
     }
 
-    public static sin<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
+    public static sin<T extends GenericFormula>(value: T): T;
     public static sin(value: FormulaSource): GenericFormula;
     public static sin(value: FormulaSource) {
         return new Formula({
@@ -846,7 +851,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         });
     }
 
-    public static cos<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
+    public static cos<T extends GenericFormula>(value: T): T;
     public static cos(value: FormulaSource): GenericFormula;
     public static cos(value: FormulaSource) {
         return new Formula({
@@ -857,7 +862,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         });
     }
 
-    public static tan<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
+    public static tan<T extends GenericFormula>(value: T): T;
     public static tan(value: FormulaSource): GenericFormula;
     public static tan(value: FormulaSource) {
         return new Formula({
@@ -868,7 +873,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         });
     }
 
-    public static asin<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
+    public static asin<T extends GenericFormula>(value: T): T;
     public static asin(value: FormulaSource): GenericFormula;
     public static asin(value: FormulaSource) {
         return new Formula({
@@ -879,7 +884,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         });
     }
 
-    public static acos<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
+    public static acos<T extends GenericFormula>(value: T): T;
     public static acos(value: FormulaSource): GenericFormula;
     public static acos(value: FormulaSource) {
         return new Formula({
@@ -890,7 +895,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         });
     }
 
-    public static atan<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
+    public static atan<T extends GenericFormula>(value: T): T;
     public static atan(value: FormulaSource): GenericFormula;
     public static atan(value: FormulaSource) {
         return new Formula({
@@ -901,7 +906,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         });
     }
 
-    public static sinh<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
+    public static sinh<T extends GenericFormula>(value: T): T;
     public static sinh(value: FormulaSource): GenericFormula;
     public static sinh(value: FormulaSource) {
         return new Formula({
@@ -912,7 +917,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         });
     }
 
-    public static cosh<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
+    public static cosh<T extends GenericFormula>(value: T): T;
     public static cosh(value: FormulaSource): GenericFormula;
     public static cosh(value: FormulaSource) {
         return new Formula({
@@ -923,7 +928,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         });
     }
 
-    public static tanh<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
+    public static tanh<T extends GenericFormula>(value: T): T;
     public static tanh(value: FormulaSource): GenericFormula;
     public static tanh(value: FormulaSource) {
         return new Formula({
@@ -934,7 +939,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         });
     }
 
-    public static asinh<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
+    public static asinh<T extends GenericFormula>(value: T): T;
     public static asinh(value: FormulaSource): GenericFormula;
     public static asinh(value: FormulaSource) {
         return new Formula({
@@ -945,7 +950,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         });
     }
 
-    public static acosh<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
+    public static acosh<T extends GenericFormula>(value: T): T;
     public static acosh(value: FormulaSource): GenericFormula;
     public static acosh(value: FormulaSource) {
         return new Formula({
@@ -956,7 +961,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         });
     }
 
-    public static atanh<T extends GenericFormula>(value: T): Omit<T, "invertIntegral">;
+    public static atanh<T extends GenericFormula>(value: T): T;
     public static atanh(value: FormulaSource): GenericFormula;
     public static atanh(value: FormulaSource) {
         return new Formula({
@@ -997,7 +1002,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return Formula.abs(this);
     }
 
-    public neg<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
+    public neg<T extends GenericFormula>(this: T): T;
     public neg(this: GenericFormula): GenericFormula;
     public neg(this: GenericFormula) {
         return Formula.neg(this);
@@ -1170,7 +1175,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return Formula.lngamma(this);
     }
 
-    public exp<T extends GenericFormula>(this: T): Omit<T, "invertsIntegral">;
+    public exp<T extends GenericFormula>(this: T): T;
     public exp(this: FormulaSource): GenericFormula;
     public exp(this: FormulaSource) {
         return Formula.exp(this);
@@ -1203,7 +1208,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         this: T,
         height?: FormulaSource,
         payload?: FormulaSource
-    ): Omit<T, "integrate" | "invertIntegral">;
+    ): Omit<T, "integrate">;
     public tetrate(
         this: FormulaSource,
         height?: FormulaSource,
@@ -1221,7 +1226,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         this: T,
         height?: FormulaSource,
         payload?: FormulaSource
-    ): Omit<T, "integrate" | "invertIntegral">;
+    ): Omit<T, "integrate">;
     public iteratedexp(
         this: FormulaSource,
         height?: FormulaSource,
@@ -1239,10 +1244,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return Formula.iteratedlog(this, base, times);
     }
 
-    public slog<T extends GenericFormula>(
-        this: T,
-        base?: FormulaSource
-    ): Omit<T, "integrate" | "invertIntegral">;
+    public slog<T extends GenericFormula>(this: T, base?: FormulaSource): Omit<T, "integrate">;
     public slog(this: FormulaSource, base?: FormulaSource): GenericFormula;
     public slog(this: FormulaSource, base: FormulaSource = 10) {
         return Formula.slog(this, base);
@@ -1256,19 +1258,19 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         this: T,
         diff: FormulaSource,
         base?: FormulaSource
-    ): Omit<T, "integrate" | "invertIntegral">;
+    ): Omit<T, "integrate">;
     public layeradd(this: FormulaSource, diff: FormulaSource, base?: FormulaSource): GenericFormula;
     public layeradd(this: FormulaSource, diff: FormulaSource, base: FormulaSource) {
         return Formula.layeradd(this, diff, base);
     }
 
-    public lambertw<T extends GenericFormula>(this: T): Omit<T, "integrate" | "invertIntegral">;
+    public lambertw<T extends GenericFormula>(this: T): Omit<T, "integrate">;
     public lambertw(this: FormulaSource): GenericFormula;
     public lambertw(this: FormulaSource) {
         return Formula.lambertw(this);
     }
 
-    public ssqrt<T extends GenericFormula>(this: T): Omit<T, "integrate" | "invertIntegral">;
+    public ssqrt<T extends GenericFormula>(this: T): Omit<T, "integrate">;
     public ssqrt(this: FormulaSource): GenericFormula;
     public ssqrt(this: FormulaSource) {
         return Formula.ssqrt(this);
@@ -1281,73 +1283,73 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return Formula.pentate(this, height, payload);
     }
 
-    public sin<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
+    public sin<T extends GenericFormula>(this: T): T;
     public sin(this: FormulaSource): GenericFormula;
     public sin(this: FormulaSource) {
         return Formula.sin(this);
     }
 
-    public cos<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
+    public cos<T extends GenericFormula>(this: T): T;
     public cos(this: FormulaSource): GenericFormula;
     public cos(this: FormulaSource) {
         return Formula.cos(this);
     }
 
-    public tan<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
+    public tan<T extends GenericFormula>(this: T): T;
     public tan(this: FormulaSource): GenericFormula;
     public tan(this: FormulaSource) {
         return Formula.tan(this);
     }
 
-    public asin<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
+    public asin<T extends GenericFormula>(this: T): T;
     public asin(this: FormulaSource): GenericFormula;
     public asin(this: FormulaSource) {
         return Formula.asin(this);
     }
 
-    public acos<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
+    public acos<T extends GenericFormula>(this: T): T;
     public acos(this: FormulaSource): GenericFormula;
     public acos(this: FormulaSource) {
         return Formula.acos(this);
     }
 
-    public atan<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
+    public atan<T extends GenericFormula>(this: T): T;
     public atan(this: FormulaSource): GenericFormula;
     public atan(this: FormulaSource) {
         return Formula.atan(this);
     }
 
-    public sinh<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
+    public sinh<T extends GenericFormula>(this: T): T;
     public sinh(this: FormulaSource): GenericFormula;
     public sinh(this: FormulaSource) {
         return Formula.sinh(this);
     }
 
-    public cosh<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
+    public cosh<T extends GenericFormula>(this: T): T;
     public cosh(this: FormulaSource): GenericFormula;
     public cosh(this: FormulaSource) {
         return Formula.cosh(this);
     }
 
-    public tanh<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
+    public tanh<T extends GenericFormula>(this: T): T;
     public tanh(this: FormulaSource): GenericFormula;
     public tanh(this: FormulaSource) {
         return Formula.tanh(this);
     }
 
-    public asinh<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
+    public asinh<T extends GenericFormula>(this: T): T;
     public asinh(this: FormulaSource): GenericFormula;
     public asinh(this: FormulaSource) {
         return Formula.asinh(this);
     }
 
-    public acosh<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
+    public acosh<T extends GenericFormula>(this: T): T;
     public acosh(this: FormulaSource): GenericFormula;
     public acosh(this: FormulaSource) {
         return Formula.acosh(this);
     }
 
-    public atanh<T extends GenericFormula>(this: T): Omit<T, "invertIntegral">;
+    public atanh<T extends GenericFormula>(this: T): T;
     public atanh(this: FormulaSource): GenericFormula;
     public atanh(this: FormulaSource) {
         return Formula.atanh(this);

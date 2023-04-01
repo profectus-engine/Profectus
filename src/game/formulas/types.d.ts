@@ -22,20 +22,15 @@ type EvaluateFunction<T> = (
 type InvertFunction<T> = (this: Formula<T>, value: DecimalSource, ...inputs: T) => DecimalSource;
 type IntegrateFunction<T> = (
     this: Formula<T>,
-    variable: DecimalSource | undefined,
+    variable: Ref<DecimalSource>,
     stack: SubstitutionStack | undefined,
     ...inputs: T
-) => DecimalSource;
+) => GenericFormula;
 type SubstitutionFunction<T> = (
     this: Formula<T>,
-    variable: DecimalSource,
+    variable: GenericFormula,
     ...inputs: T
-) => DecimalSource;
-type InvertIntegralFunction<T> = (
-    this: Formula<T>,
-    value: DecimalSource,
-    ...inputs: T
-) => DecimalSource;
+) => GenericFormula;
 
 type VariableFormulaOptions = { variable: ProcessedComputable<DecimalSource> };
 type ConstantFormulaOptions = {
@@ -48,7 +43,6 @@ type GeneralFormulaOptions<T extends [FormulaSource] | FormulaSource[]> = {
     integrate?: IntegrateFunction<T>;
     integrateInner?: IntegrateFunction<T>;
     applySubstitution?: SubstitutionFunction<T>;
-    invertIntegral?: InvertIntegralFunction<T>;
     hasVariable?: boolean;
 };
 type FormulaOptions<T extends [FormulaSource] | FormulaSource[]> =
@@ -63,12 +57,11 @@ type InternalFormulaProperties<T extends [FormulaSource] | FormulaSource[]> = {
     internalInvert?: InvertFunction<T>;
     internalIntegrate?: IntegrateFunction<T>;
     internalIntegrateInner?: IntegrateFunction<T>;
-    internalInvertIntegral?: InvertIntegralFunction<T>;
     applySubstitution?: SubstitutionFunction<T>;
     innermostVariable?: ProcessedComputable<DecimalSource>;
 };
 
-type SubstitutionStack = ((value: DecimalSource) => DecimalSource)[] | undefined;
+type SubstitutionStack = ((value: GenericFormula) => GenericFormula)[] | undefined;
 
 // It's really hard to type mapped tuples, but these classes seem to manage
 type FormulasToDecimals<T extends FormulaSource[]> = {

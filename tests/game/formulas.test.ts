@@ -491,8 +491,8 @@ describe("Integrating", () => {
         constant = Formula.constant(10);
     });
 
-    test("evaluateIntegral() returns variable's value", () =>
-        expect(variable.evaluate()).compare_tolerance(10));
+    test("variable.evaluateIntegral() calculates correctly", () =>
+        expect(variable.evaluateIntegral()).compare_tolerance(Decimal.pow(10, 2).div(2)));
     test("evaluateIntegral(variable) overrides variable value", () =>
         expect(variable.add(10).evaluateIntegral(20)).compare_tolerance(400));
 
@@ -569,14 +569,10 @@ describe("Integrating", () => {
         const actualCost = new Array(10)
             .fill(null)
             .reduce((acc, _, i) => acc.add(formula.evaluate(i)), new Decimal(0));
-        const calculatedCost = Decimal.add(
-            formula.evaluateIntegral(),
-            formula.calculateConstantOfIntegration()
-        );
         // Check if the calculated cost is within 10% of the actual cost,
         // because this is an approximation
         expect(
-            Decimal.sub(actualCost, calculatedCost).abs().div(actualCost).toNumber()
+            Decimal.sub(actualCost, formula.evaluateIntegral()).abs().div(actualCost).toNumber()
         ).toBeLessThan(0.1);
     });
 
@@ -594,8 +590,10 @@ describe("Inverting integrals", () => {
         constant = Formula.constant(10);
     });
 
-    test("variable.invertIntegral() is pass-through", () =>
-        expect(variable.invertIntegral(20)).compare_tolerance(20));
+    test("variable.invertIntegral() calculates correctly", () =>
+        expect(variable.invertIntegral(20)).compare_tolerance(
+            Decimal.sqrt(20).times(Decimal.sqrt(2))
+        ));
 
     describe("Invertible Integral functions marked as such", () => {
         function checkFormula(formula: GenericFormula) {
@@ -670,7 +668,7 @@ describe("Inverting integrals", () => {
 
     test("Inverting integral of nested formulas", () => {
         const formula = Formula.add(variable, constant).times(constant).pow(2).times(30);
-        expect(formula.invertIntegral(7000000)).compare_tolerance(10);
+        expect(formula.invertIntegral(formula.evaluateIntegral())).compare_tolerance(10);
     });
 
     test("Inverting integral of nested complex formulas", () => {
@@ -946,7 +944,7 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [],
                     evaluate: () => 10,
-                    integrate: () => 20
+                    integrate: variable => variable
                 }).evaluateIntegral()
             ).compare_tolerance(20));
         test("One input integrates correctly", () =>
@@ -954,7 +952,7 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [variable],
                     evaluate: () => 10,
-                    integrate: (val, stack, v1) => val ?? 20
+                    integrate: (variable, stack, v1) => Formula.add(variable, v1)
                 }).evaluateIntegral()
             ).compare_tolerance(20));
         test("Two inputs integrates correctly", () =>
@@ -962,7 +960,7 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [variable, 2],
                     evaluate: (v1, v2) => 10,
-                    integrate: (v1, v2) => 3
+                    integrate: (variable, v1, v2) => variable
                 }).evaluateIntegral()
             ).compare_tolerance(3));
     });
@@ -973,7 +971,7 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [],
                     evaluate: () => 10,
-                    invertIntegral: () => 1,
+                    integrate: variable => variable,
                     hasVariable: true
                 }).invertIntegral(8)
             ).toThrow());
@@ -982,7 +980,7 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [variable],
                     evaluate: () => 10,
-                    invertIntegral: (val, v1) => 1,
+                    integrate: (variable, stack, v1) => variable,
                     hasVariable: true
                 }).invertIntegral(8)
             ).compare_tolerance(1));
@@ -991,7 +989,7 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [variable, 2],
                     evaluate: (v1, v2) => 10,
-                    invertIntegral: (v1, v2) => 1,
+                    integrate: (variable, v1, v2) => variable,
                     hasVariable: true
                 }).invertIntegral(8)
             ).compare_tolerance(1));
