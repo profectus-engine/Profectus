@@ -2,10 +2,11 @@ import { createResource, Resource } from "features/resources/resource";
 import Formula, {
     calculateCost,
     calculateMaxAffordable,
+    printFormula,
     unrefFormulaSource
 } from "game/formulas/formulas";
 import type { GenericFormula, InvertibleFormula } from "game/formulas/types";
-import Decimal, { DecimalSource } from "util/bignum";
+import Decimal, { DecimalSource, format } from "util/bignum";
 import { beforeAll, describe, expect, test } from "vitest";
 import { ref } from "vue";
 import "../utils";
@@ -572,7 +573,13 @@ describe("Integrating", () => {
         // Check if the calculated cost is within 10% of the actual cost,
         // because this is an approximation
         expect(
-            Decimal.sub(actualCost, formula.evaluateIntegral()).abs().div(actualCost).toNumber()
+            Decimal.sub(
+                actualCost,
+                Decimal.add(formula.evaluateIntegral(), formula.calculateConstantOfIntegration())
+            )
+                .abs()
+                .div(actualCost)
+                .toNumber()
         ).toBeLessThan(0.1);
     });
 
@@ -668,7 +675,7 @@ describe("Inverting integrals", () => {
 
     test("Inverting integral of nested formulas", () => {
         const formula = Formula.add(variable, constant).times(constant).pow(2).times(30);
-        expect(formula.invertIntegral(formula.evaluateIntegral())).compare_tolerance(10, 0.01);
+        expect(formula.invertIntegral(formula.evaluateIntegral())).compare_tolerance(10);
     });
 
     test("Inverting integral of nested complex formulas", () => {
@@ -929,18 +936,18 @@ describe("Custom Formulas", () => {
             expect(
                 new Formula({
                     inputs: [variable],
-                    evaluate: v1 => Decimal.add(v1, 19.5),
+                    evaluate: v1 => Decimal.add(v1, 10),
                     integrate: (stack, v1) => Formula.add(v1, 10)
                 }).evaluateIntegral()
-            ).compare_tolerance(20));
+            ).compare_tolerance(11));
         test("Two inputs integrates correctly", () =>
             expect(
                 new Formula({
                     inputs: [variable, 10],
-                    evaluate: v1 => Decimal.add(v1, 19.5),
+                    evaluate: (v1, v2) => Decimal.add(v1, v2),
                     integrate: (stack, v1, v2) => Formula.add(v1, v2)
                 }).evaluateIntegral()
-            ).compare_tolerance(20));
+            ).compare_tolerance(11));
     });
 
     describe("Formula with invertIntegral", () => {
@@ -956,7 +963,7 @@ describe("Custom Formulas", () => {
             expect(
                 new Formula({
                     inputs: [variable],
-                    evaluate: v1 => Decimal.add(v1, 19.5),
+                    evaluate: v1 => Decimal.add(v1, 10),
                     integrate: (stack, v1) => Formula.add(v1, 10)
                 }).invertIntegral(20)
             ).compare_tolerance(10));
@@ -964,7 +971,7 @@ describe("Custom Formulas", () => {
             expect(
                 new Formula({
                     inputs: [variable, 10],
-                    evaluate: v1 => Decimal.add(v1, 19.5),
+                    evaluate: (v1, v2) => Decimal.add(v1, v2),
                     integrate: (stack, v1, v2) => Formula.add(v1, v2)
                 }).invertIntegral(20)
             ).compare_tolerance(10));
@@ -1001,16 +1008,55 @@ describe("Buy Max", () => {
             const maxAffordable = calculateMaxAffordable(Formula.abs(10), resource);
             expect(() => maxAffordable.value).toThrow();
         });
-        // https://www.desmos.com/calculator/7ffthe7wi8
-        test("Calculates max affordable and cost correctly", () => {
-            const variable = Formula.variable(0);
+        test("Calculates max affordable and cost correctly with 0 purchases", () => {
+            const purchases = ref(0);
+            const variable = Formula.variable(purchases);
             const formula = Formula.pow(1.05, variable).times(100);
             const maxAffordable = calculateMaxAffordable(formula, resource);
-            expect(maxAffordable.value).compare_tolerance(7);
+            let actualAffordable = 0;
+            let summedCost = Decimal.dZero;
+            while (true) {
+                const nextCost = formula.evaluate(actualAffordable);
+                if (Decimal.add(summedCost, nextCost).lte(resource.value)) {
+                    actualAffordable++;
+                    summedCost = Decimal.add(summedCost, nextCost);
+                } else {
+                    break;
+                }
+            }
+            expect(maxAffordable.value).compare_tolerance(actualAffordable);
 
-            const actualCost = new Array(7)
+            const actualCost = new Array(actualAffordable)
                 .fill(null)
                 .reduce((acc, _, i) => acc.add(formula.evaluate(i)), new Decimal(0));
+            const calculatedCost = calculateCost(formula, maxAffordable.value);
+            // Check if the calculated cost is within 10% of the actual cost,
+            // because this is an approximation
+            expect(
+                Decimal.sub(actualCost, calculatedCost).abs().div(actualCost).toNumber()
+            ).toBeLessThan(0.1);
+        });
+        test("Calculates max affordable and cost correctly with 1 purchase", () => {
+            const purchases = ref(1);
+            const variable = Formula.variable(purchases);
+            const formula = Formula.pow(1.05, variable).times(100);
+            const maxAffordable = calculateMaxAffordable(formula, resource);
+            let actualAffordable = 0;
+            let summedCost = Decimal.dZero;
+            while (true) {
+                const nextCost = formula.evaluate(Decimal.add(actualAffordable, 1));
+                if (Decimal.add(summedCost, nextCost).lte(resource.value)) {
+                    actualAffordable++;
+                    summedCost = Decimal.add(summedCost, nextCost);
+                } else {
+                    break;
+                }
+            }
+            expect(maxAffordable.value).compare_tolerance(actualAffordable);
+
+            const actualCost = new Array(actualAffordable)
+                .fill(null)
+                .reduce((acc, _, i) => acc.add(formula.evaluate(i + 1)), new Decimal(0));
             const calculatedCost = calculateCost(formula, maxAffordable.value);
             // Check if the calculated cost is within 10% of the actual cost,
             // because this is an approximation

@@ -32,6 +32,10 @@ function integrateVariable(this: GenericFormula) {
     return Formula.pow(this, 2).div(2);
 }
 
+function integrateVariableInner(this: GenericFormula) {
+    return this;
+}
+
 /**
  * A class that can be used for cost/goal functions. It can be evaluated similar to a cost function, but also provides extra features for supported formulas. For example, a lot of math functions can be inverted.
  * Typically, the use of these extra features is to support cost/goal functions that have multiple levels purchased/completed at once efficiently.
@@ -81,6 +85,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             internalVariables: 1,
             innermostVariable: variable,
             internalIntegrate: integrateVariable,
+            internalIntegrateInner: integrateVariableInner,
             applySubstitution: ops.passthrough as unknown as SubstitutionFunction<T>
         };
     }
@@ -119,7 +124,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         };
     }
 
-    private calculateConstantOfIntegration() {
+    /** Calculates C for the implementation of the integral formula for this formula. */
+    calculateConstantOfIntegration() {
         // Calculate C based on the knowledge that at x=1, the integral should be the average between f(0) and f(1)
         const integral = this.getIntegralFormula().evaluate(1);
         const actualCost = Decimal.add(this.evaluate(0), this.evaluate(1)).div(2);
@@ -189,10 +195,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         if (!this.isIntegrable()) {
             throw new Error("Cannot evaluate integral of formula without integral");
         }
-        return Decimal.add(
-            this.getIntegralFormula().evaluate(variable),
-            this.calculateConstantOfIntegration()
-        );
+        return this.getIntegralFormula().evaluate(variable);
     }
 
     /**
@@ -212,7 +215,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
      * @param stack For nested formulas, a stack of operations that occur outside the complex operation.
      */
     getIntegralFormula(stack?: SubstitutionStack): GenericFormula {
-        if (this.integralFormula != null) {
+        if (this.integralFormula != null && stack == null) {
             return this.integralFormula;
         }
         if (stack == null) {
@@ -245,6 +248,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
                     throw new Error("Cannot integrate formula without variable");
                 }
             }
+            return this.integralFormula;
         } else {
             // "Inner" part of the formula
             if (this.applySubstitution == null) {
@@ -255,25 +259,19 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
                 this.applySubstitution!.call(this, variable, ...this.inputs)
             );
             if (this.internalIntegrateInner) {
-                this.integralFormula = this.internalIntegrateInner.call(
-                    this,
-                    stack,
-                    ...this.inputs
-                );
+                return this.internalIntegrateInner.call(this, stack, ...this.inputs);
             } else if (this.internalIntegrate) {
-                this.integralFormula = this.internalIntegrate.call(this, stack, ...this.inputs);
+                return this.internalIntegrate.call(this, stack, ...this.inputs);
             } else if (
                 this.inputs.length === 1 &&
                 this.internalEvaluate == null &&
                 this.hasVariable()
             ) {
-                // eslint-disable-next-line @typescript-eslint/no-this-alias
-                this.integralFormula = this;
+                return this;
             } else {
                 throw new Error("Cannot integrate formula without variable");
             }
         }
-        return this.integralFormula;
     }
 
     /**

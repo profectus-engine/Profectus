@@ -326,24 +326,10 @@ export function invertPow10(value: DecimalSource, lhs: FormulaSource) {
     throw new Error("Could not invert due to no input being a variable");
 }
 
-function internalIntegratePow10(lhs: DecimalSource) {
-    return Decimal.pow10(lhs).div(Decimal.ln(lhs));
-}
-
-function internalInvertIntegralPow10(value: DecimalSource, lhs: FormulaSource) {
-    if (hasVariable(lhs)) {
-        return lhs.invert(ln10.times(value).ln().div(ln10));
-    }
-    throw new Error("Could not invert due to no input being a variable");
-}
-
 export function integratePow10(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
-        return new Formula({
-            inputs: [lhs.getIntegralFormula(stack)],
-            evaluate: internalIntegratePow10,
-            invert: internalInvertIntegralPow10
-        });
+        const x = lhs.getIntegralFormula(stack);
+        return Formula.pow10(x).div(Formula.ln(10));
     }
     throw new Error("Could not integrate due to no input being a variable");
 }
