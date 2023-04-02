@@ -571,7 +571,7 @@ describe("Integrating", () => {
     describe.todo("Integrable formulas integrate correctly");
 
     test("Integrating nested formulas", () => {
-        const formula = Formula.add(variable, constant).times(constant).pow(2).times(30);
+        const formula = Formula.add(variable, constant).times(constant).pow(2).times(30).add(10);
         const actualCost = new Array(10)
             .fill(null)
             .reduce((acc, _, i) => acc.add(formula.evaluate(i)), new Decimal(0));
@@ -581,6 +581,24 @@ describe("Integrating", () => {
             Decimal.sub(
                 actualCost,
                 Decimal.add(formula.evaluateIntegral(), formula.calculateConstantOfIntegration())
+            )
+                .abs()
+                .div(actualCost)
+                .toNumber()
+        ).toBeLessThan(0.1);
+    });
+
+    test("Integrating nested formulas with overidden variable", () => {
+        const formula = Formula.add(variable, constant).times(constant).pow(2).times(30).add(10);
+        const actualCost = new Array(20)
+            .fill(null)
+            .reduce((acc, _, i) => acc.add(formula.evaluate(i)), new Decimal(0));
+        // Check if the calculated cost is within 10% of the actual cost,
+        // because this is an approximation
+        expect(
+            Decimal.sub(
+                actualCost,
+                Decimal.add(formula.evaluateIntegral(20), formula.calculateConstantOfIntegration())
             )
                 .abs()
                 .div(actualCost)
@@ -982,9 +1000,23 @@ describe("Custom Formulas", () => {
             ).compare_tolerance(10));
     });
 
-    describe.todo("Formula as input");
-
-    describe.todo("Determines invertibility etc. correctly");
+    describe("Formula as input", () => {
+        let customFormula: GenericFormula;
+        beforeAll(() => {
+            customFormula = new Formula({
+                inputs: [variable],
+                evaluate: v1 => v1,
+                invert: value => value,
+                integrate: (stack, v1) => v1.getIntegralFormula(stack)
+            });
+        });
+        test("Evaluate correctly", () =>
+            expect(customFormula.add(10).evaluate()).compare_tolerance(11));
+        test("Invert correctly", () =>
+            expect(customFormula.add(10).invert(20)).compare_tolerance(10));
+        test("Integrate correctly", () =>
+            expect(customFormula.add(10).evaluateIntegral(10)).compare_tolerance(20));
+    });
 });
 
 describe("Buy Max", () => {
