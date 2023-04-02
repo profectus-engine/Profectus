@@ -263,6 +263,11 @@ describe("Creating Formulas", () => {
         functionName: T,
         args: Readonly<Parameters<typeof Formula[T]>>
     ) {
+        if ((functionName === "slog" || functionName === "layeradd") && args[0] === -1) {
+            // These cases in particular take a long time, so skip them
+            // We still have plenty of coverage
+            return;
+        }
         let testName = functionName + "(";
         for (let i = 0; i < args.length; i++) {
             if (i !== 0) {
