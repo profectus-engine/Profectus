@@ -1359,39 +1359,66 @@ export function printFormula(formula: FormulaSource): string {
  * @param formula The formula to use for calculating buy max from
  * @param resource The resource used when purchasing (is only read from)
  * @param spendResources Whether or not to count spent resources on each purchase or not. If true, costs will be approximated for performance, skewing towards fewer purchases
+ * @param summedPurchases How many of the most expensive purchases should be manually summed for better accuracy. If unspecified uses 10 when spending resources and 0 when not
  */
 export function calculateMaxAffordable(
     formula: InvertibleFormula,
     resource: Resource,
-    spendResources?: true
+    spendResources?: true,
+    summedPurchases?: number
 ): ComputedRef<DecimalSource>;
 export function calculateMaxAffordable(
     formula: InvertibleIntegralFormula,
     resource: Resource,
-    spendResources: Computable<boolean>
+    spendResources: Computable<boolean>,
+    summedPurchases?: number
 ): ComputedRef<DecimalSource>;
 export function calculateMaxAffordable(
     formula: InvertibleFormula,
     resource: Resource,
-    spendResources: Computable<boolean> = true
+    spendResources: Computable<boolean> = true,
+    summedPurchases?: number
 ) {
     const computedSpendResources = convertComputable(spendResources);
     return computed(() => {
+        let affordable;
         if (unref(computedSpendResources)) {
             if (!formula.isIntegrable() || !formula.isIntegralInvertible()) {
                 throw new Error(
                     "Cannot calculate max affordable of formula with non-invertible integral"
                 );
             }
-            return Decimal.floor(
+            affordable = Decimal.floor(
                 formula.invertIntegral(Decimal.add(resource.value, formula.evaluateIntegral()))
             ).sub(unref(formula.innermostVariable) ?? 0);
+            if (summedPurchases == null) {
+                summedPurchases = 10;
+            }
         } else {
             if (!formula.isInvertible()) {
                 throw new Error("Cannot calculate max affordable of non-invertible formula");
             }
-            return Decimal.floor(formula.invert(resource.value));
+            affordable = Decimal.floor(formula.invert(resource.value));
+            if (summedPurchases == null) {
+                summedPurchases = 0;
+            }
         }
+        if (summedPurchases > 0) {
+            affordable = affordable.sub(summedPurchases).clampMin(0);
+            let summedCost = calculateCost(formula, affordable, true, 0);
+            while (true) {
+                const nextCost = formula.evaluate(
+                    affordable.add(unref(formula.innermostVariable) ?? 0)
+                );
+                if (Decimal.add(summedCost, nextCost).lt(resource.value)) {
+                    affordable = affordable.add(1);
+                    summedCost = Decimal.add(summedCost, nextCost);
+                } else {
+                    break;
+                }
+            }
+        }
+        return affordable;
     });
 }
 
@@ -1400,26 +1427,56 @@ export function calculateMaxAffordable(
  * @param formula The formula to use for calculating buy max from
  * @param amountToBuy The amount of purchases to calculate the cost for
  * @param spendResources Whether or not to count spent resources on each purchase or not. If true, costs will be approximated for performance, skewing towards higher cost
+ * @param summedPurchases How many purchases to manually sum for improved accuracy. If not specified, defaults to 10 when spending resources and 0 when not
  */
 export function calculateCost(
     formula: InvertibleFormula,
     amountToBuy: DecimalSource,
-    spendResources?: true
+    spendResources?: true,
+    summedPurchases?: number
 ): DecimalSource;
 export function calculateCost(
     formula: InvertibleIntegralFormula,
     amountToBuy: DecimalSource,
-    spendResources: boolean
+    spendResources: boolean,
+    summedPurchases?: number
 ): DecimalSource;
 export function calculateCost(
     formula: InvertibleFormula,
     amountToBuy: DecimalSource,
-    spendResources = true
+    spendResources = true,
+    summedPurchases?: number
 ) {
-    const newValue = Decimal.add(amountToBuy, unref(formula.innermostVariable) ?? 0);
+    let newValue = Decimal.add(amountToBuy, unref(formula.innermostVariable) ?? 0);
     if (spendResources) {
-        return Decimal.sub(formula.evaluateIntegral(newValue), formula.evaluateIntegral());
+        const targetValue = newValue;
+        newValue = newValue
+            .sub(summedPurchases ?? 10)
+            .clampMin(unref(formula.innermostVariable) ?? 0);
+        let cost = Decimal.sub(formula.evaluateIntegral(newValue), formula.evaluateIntegral());
+        if (targetValue.gt(1e308)) {
+            // Too large of a number for summedPurchases to make a difference,
+            // just get the cost and multiply by summed purchases
+            return cost.add(Decimal.sub(targetValue, newValue).times(formula.evaluate(newValue)));
+        }
+        for (let i = newValue.toNumber(); i < targetValue.toNumber(); i++) {
+            cost = cost.add(formula.evaluate(i));
+        }
+        return cost;
     } else {
-        return formula.evaluate(newValue);
+        const targetValue = newValue;
+        newValue = newValue
+            .sub(summedPurchases ?? 0)
+            .clampMin(unref(formula.innermostVariable) ?? 0);
+        let cost = formula.evaluate(newValue);
+        if (targetValue.gt(1e308)) {
+            // Too large of a number for summedPurchases to make a difference,
+            // just get the cost and multiply by summed purchases
+            return Decimal.sub(targetValue, newValue).add(1).times(cost);
+        }
+        for (let i = newValue.toNumber(); i < targetValue.toNumber(); i++) {
+            cost = Decimal.add(cost, formula.evaluate(i));
+        }
+        return cost;
     }
 }

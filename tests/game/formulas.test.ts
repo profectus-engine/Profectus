@@ -1022,21 +1022,20 @@ describe("Custom Formulas", () => {
 describe("Buy Max", () => {
     let resource: Resource;
     beforeAll(() => {
-        resource = createResource(ref(1000));
+        resource = createResource(ref(100000));
     });
     describe("Without spending", () => {
         test("Throws on formula with non-invertible integral", () => {
             const maxAffordable = calculateMaxAffordable(Formula.neg(10), resource, false);
             expect(() => maxAffordable.value).toThrow();
         });
-        // https://www.desmos.com/calculator/7ffthe7wi8
         test("Calculates max affordable and cost correctly", () => {
             const variable = Formula.variable(0);
             const formula = Formula.pow(1.05, variable).times(100);
             const maxAffordable = calculateMaxAffordable(formula, resource, false);
-            expect(maxAffordable.value).compare_tolerance(47);
+            expect(maxAffordable.value).compare_tolerance(141);
             expect(calculateCost(formula, maxAffordable.value, false)).compare_tolerance(
-                Decimal.pow(1.05, 47).times(100)
+                Decimal.pow(1.05, 141).times(100)
             );
         });
     });
@@ -1045,11 +1044,11 @@ describe("Buy Max", () => {
             const maxAffordable = calculateMaxAffordable(Formula.abs(10), resource);
             expect(() => maxAffordable.value).toThrow();
         });
-        test("Calculates max affordable and cost correctly with 0 purchases", () => {
+        test("Estimates max affordable and cost correctly with 0 purchases", () => {
             const purchases = ref(0);
             const variable = Formula.variable(purchases);
             const formula = Formula.pow(1.05, variable).times(100);
-            const maxAffordable = calculateMaxAffordable(formula, resource);
+            const maxAffordable = calculateMaxAffordable(formula, resource, true, 0);
             let actualAffordable = 0;
             let summedCost = Decimal.dZero;
             while (true) {
@@ -1073,11 +1072,11 @@ describe("Buy Max", () => {
                 Decimal.sub(actualCost, calculatedCost).abs().div(actualCost).toNumber()
             ).toBeLessThan(0.1);
         });
-        test("Calculates max affordable and cost correctly with 1 purchase", () => {
+        test("Estimates max affordable and cost with 1 purchase", () => {
             const purchases = ref(1);
             const variable = Formula.variable(purchases);
             const formula = Formula.pow(1.05, variable).times(100);
-            const maxAffordable = calculateMaxAffordable(formula, resource);
+            const maxAffordable = calculateMaxAffordable(formula, resource, true, 0);
             let actualAffordable = 0;
             let summedCost = Decimal.dZero;
             while (true) {
@@ -1100,6 +1099,72 @@ describe("Buy Max", () => {
             expect(
                 Decimal.sub(actualCost, calculatedCost).abs().div(actualCost).toNumber()
             ).toBeLessThan(0.1);
+        });
+        test("Estimates max affordable and cost more accurately with summing last purchases", () => {
+            const purchases = ref(1);
+            const variable = Formula.variable(purchases);
+            const formula = Formula.pow(1.05, variable).times(100);
+            const maxAffordable = calculateMaxAffordable(formula, resource);
+            let actualAffordable = 0;
+            let summedCost = Decimal.dZero;
+            while (true) {
+                const nextCost = formula.evaluate(Decimal.add(actualAffordable, 1));
+                if (Decimal.add(summedCost, nextCost).lte(resource.value)) {
+                    actualAffordable++;
+                    summedCost = Decimal.add(summedCost, nextCost);
+                } else {
+                    break;
+                }
+            }
+            expect(maxAffordable.value).compare_tolerance(actualAffordable);
+
+            const actualCost = new Array(actualAffordable)
+                .fill(null)
+                .reduce((acc, _, i) => acc.add(formula.evaluate(i + 1)), new Decimal(0));
+            const calculatedCost = calculateCost(formula, maxAffordable.value);
+            // Since we're summing the last few purchases, this has a tighter deviation allowed
+            expect(
+                Decimal.sub(actualCost, calculatedCost).abs().div(actualCost).toNumber()
+            ).toBeLessThan(0.02);
+        });
+        test("Handles summing purchases when making few purchases", () => {
+            const purchases = ref(90);
+            const variable = Formula.variable(purchases);
+            const formula = Formula.pow(1.05, variable).times(100);
+            const maxAffordable = calculateMaxAffordable(formula, resource);
+            let actualAffordable = 0;
+            let summedCost = Decimal.dZero;
+            while (true) {
+                const nextCost = formula.evaluate(Decimal.add(actualAffordable, purchases.value));
+                if (Decimal.add(summedCost, nextCost).lte(resource.value)) {
+                    actualAffordable++;
+                    summedCost = Decimal.add(summedCost, nextCost);
+                } else {
+                    break;
+                }
+            }
+            expect(maxAffordable.value).compare_tolerance(actualAffordable);
+
+            const actualCost = new Array(actualAffordable)
+                .fill(null)
+                .reduce(
+                    (acc, _, i) => acc.add(formula.evaluate(i + purchases.value)),
+                    new Decimal(0)
+                );
+            const calculatedCost = calculateCost(formula, maxAffordable.value);
+            // Since we're summing all the purchases this should be equivalent
+            expect(calculatedCost).compare_tolerance(actualCost);
+        });
+        test("Handles summing purchases when over e308 purchases", () => {
+            resource.value = "1ee308";
+            const purchases = ref(0);
+            const variable = Formula.variable(purchases);
+            const formula = variable;
+            const maxAffordable = calculateMaxAffordable(formula, resource);
+            const calculatedCost = calculateCost(formula, maxAffordable.value);
+            expect(Decimal.isNaN(calculatedCost)).toBe(false);
+            expect(Decimal.isFinite(calculatedCost)).toBe(true);
+            resource.value = 100000;
         });
     });
 });
