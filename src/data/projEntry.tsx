@@ -7,7 +7,8 @@ import { globalBus } from "game/events";
 import Formula, {
     calculateCost,
     calculateMaxAffordable,
-    findNonInvertible
+    findNonInvertible,
+    printFormula
 } from "game/formulas/formulas";
 import type { BaseLayer, GenericLayer } from "game/layers";
 import { createLayer } from "game/layers";
@@ -23,6 +24,7 @@ window.Formula = Formula;
 window.calculateMaxAffordable = calculateMaxAffordable;
 window.calculateCost = calculateCost;
 window.findNonInvertible = findNonInvertible;
+window.printFormula = printFormula;
 window.unref = unref;
 window.ref = ref;
 window.createResource = createResource;

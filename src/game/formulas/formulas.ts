@@ -1,5 +1,5 @@
 import { Resource } from "features/resources/resource";
-import Decimal, { DecimalSource } from "util/bignum";
+import Decimal, { DecimalSource, format } from "util/bignum";
 import { Computable, convertComputable, ProcessedComputable } from "util/computed";
 import { computed, ComputedRef, ref, unref } from "vue";
 import * as ops from "./operations";
@@ -1332,6 +1332,28 @@ export function findNonInvertible(formula: GenericFormula): GenericFormula | nul
         }
     }
     return null;
+}
+
+/**
+ * Stringifies a formula so it's more easy to read in the console
+ * @param formula The formula to print
+ */
+export function printFormula(formula: FormulaSource): string {
+    if (formula instanceof Formula) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        return formula.internalEvaluate == null
+            ? formula.hasVariable()
+                ? "x"
+                : formula.inputs[0] ?? 0
+            : // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              formula.internalEvaluate.name +
+                  "(" +
+                  formula.inputs.map(printFormula).join(", ") +
+                  ")";
+    }
+    return format(unref(formula));
 }
 
 /**
