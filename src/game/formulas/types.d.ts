@@ -22,7 +22,6 @@ type EvaluateFunction<T> = (
 type InvertFunction<T> = (this: Formula<T>, value: DecimalSource, ...inputs: T) => DecimalSource;
 type IntegrateFunction<T> = (
     this: Formula<T>,
-    variable: Ref<DecimalSource>,
     stack: SubstitutionStack | undefined,
     ...inputs: T
 ) => GenericFormula;
@@ -43,7 +42,6 @@ type GeneralFormulaOptions<T extends [FormulaSource] | FormulaSource[]> = {
     integrate?: IntegrateFunction<T>;
     integrateInner?: IntegrateFunction<T>;
     applySubstitution?: SubstitutionFunction<T>;
-    hasVariable?: boolean;
 };
 type FormulaOptions<T extends [FormulaSource] | FormulaSource[]> =
     | VariableFormulaOptions
@@ -52,7 +50,7 @@ type FormulaOptions<T extends [FormulaSource] | FormulaSource[]> =
 
 type InternalFormulaProperties<T extends [FormulaSource] | FormulaSource[]> = {
     inputs: T;
-    internalHasVariable: boolean;
+    internalVariables: number;
     internalEvaluate?: EvaluateFunction<T>;
     internalInvert?: InvertFunction<T>;
     internalIntegrate?: IntegrateFunction<T>;

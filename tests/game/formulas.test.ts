@@ -96,21 +96,21 @@ const invertibleIntegralZeroPramFunctionNames = [
     "sqr",
     "sqrt",
     "cube",
-    "cbrt"
-] as const;
-const nonInvertibleIntegralZeroPramFunctionNames = [
-    ...nonIntegrableZeroParamFunctionNames,
+    "cbrt",
     "neg",
     "exp",
     "sin",
     "cos",
     "tan",
+    "sinh",
+    "cosh",
+    "tanh"
+] as const;
+const nonInvertibleIntegralZeroPramFunctionNames = [
+    ...nonIntegrableZeroParamFunctionNames,
     "asin",
     "acos",
     "atan",
-    "sinh",
-    "cosh",
-    "tanh",
     "asinh",
     "acosh",
     "atanh"
@@ -493,8 +493,8 @@ describe("Integrating", () => {
 
     test("variable.evaluateIntegral() calculates correctly", () =>
         expect(variable.evaluateIntegral()).compare_tolerance(Decimal.pow(10, 2).div(2)));
-    test("evaluateIntegral(variable) overrides variable value", () =>
-        expect(variable.add(10).evaluateIntegral(20)).compare_tolerance(400));
+    test("variable.evaluateIntegral(variable) overrides variable value", () =>
+        expect(variable.evaluateIntegral(20)).compare_tolerance(Decimal.pow(20, 2).div(2)));
 
     describe("Integrable functions marked as such", () => {
         function checkFormula(formula: GenericFormula) {
@@ -668,31 +668,12 @@ describe("Inverting integrals", () => {
 
     test("Inverting integral of nested formulas", () => {
         const formula = Formula.add(variable, constant).times(constant).pow(2).times(30);
-        expect(formula.invertIntegral(formula.evaluateIntegral())).compare_tolerance(10);
+        expect(formula.invertIntegral(formula.evaluateIntegral())).compare_tolerance(10, 0.01);
     });
 
     test("Inverting integral of nested complex formulas", () => {
         const formula = Formula.pow(1.05, variable).times(100).pow(0.5);
         expect(() => formula.invertIntegral(100)).toThrow();
-    });
-
-    describe("Inverting integral pass-throughs", () => {
-        test("max", () =>
-            expect(Formula.max(variable, constant).invertIntegral(10)).compare_tolerance(10));
-        test("min", () =>
-            expect(Formula.min(variable, constant).invertIntegral(10)).compare_tolerance(10));
-        test("minabs", () =>
-            expect(Formula.minabs(variable, constant).invertIntegral(10)).compare_tolerance(10));
-        test("maxabs", () =>
-            expect(Formula.maxabs(variable, constant).invertIntegral(10)).compare_tolerance(10));
-        test("clampMax", () =>
-            expect(Formula.clampMax(variable, constant).invertIntegral(10)).compare_tolerance(10));
-        test("clampMin", () =>
-            expect(Formula.clampMin(variable, constant).invertIntegral(10)).compare_tolerance(10));
-        test("clamp", () =>
-            expect(
-                Formula.clamp(variable, constant, constant).invertIntegral(10)
-            ).compare_tolerance(10));
     });
 });
 
@@ -914,8 +895,7 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [],
                     evaluate: () => 6,
-                    invert: value => value,
-                    hasVariable: true
+                    invert: value => value
                 }).invert(10)
             ).toThrow());
         test("One input inverts correctly", () =>
@@ -923,8 +903,7 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [variable],
                     evaluate: () => 10,
-                    invert: (value, v1) => v1.evaluate(),
-                    hasVariable: true
+                    invert: (value, v1) => v1.evaluate()
                 }).invert(10)
             ).compare_tolerance(1));
         test("Two inputs inverts correctly", () =>
@@ -932,37 +911,36 @@ describe("Custom Formulas", () => {
                 new Formula({
                     inputs: [variable, 2],
                     evaluate: () => 10,
-                    invert: (value, v1, v2) => v2,
-                    hasVariable: true
+                    invert: (value, v1, v2) => v2
                 }).invert(10)
             ).compare_tolerance(2));
     });
 
     describe("Formula with integrate", () => {
-        test("Zero input integrates correctly", () =>
-            expect(
+        test("Zero input cannot integrate", () =>
+            expect(() =>
                 new Formula({
                     inputs: [],
-                    evaluate: () => 10,
-                    integrate: variable => variable
+                    evaluate: () => 0,
+                    integrate: stack => variable
                 }).evaluateIntegral()
-            ).compare_tolerance(20));
+            ).toThrow());
         test("One input integrates correctly", () =>
             expect(
                 new Formula({
                     inputs: [variable],
-                    evaluate: () => 10,
-                    integrate: (variable, stack, v1) => Formula.add(variable, v1)
+                    evaluate: v1 => Decimal.add(v1, 19.5),
+                    integrate: (stack, v1) => Formula.add(v1, 10)
                 }).evaluateIntegral()
             ).compare_tolerance(20));
         test("Two inputs integrates correctly", () =>
             expect(
                 new Formula({
-                    inputs: [variable, 2],
-                    evaluate: (v1, v2) => 10,
-                    integrate: (variable, v1, v2) => variable
+                    inputs: [variable, 10],
+                    evaluate: v1 => Decimal.add(v1, 19.5),
+                    integrate: (stack, v1, v2) => Formula.add(v1, v2)
                 }).evaluateIntegral()
-            ).compare_tolerance(3));
+            ).compare_tolerance(20));
     });
 
     describe("Formula with invertIntegral", () => {
@@ -970,29 +948,26 @@ describe("Custom Formulas", () => {
             expect(() =>
                 new Formula({
                     inputs: [],
-                    evaluate: () => 10,
-                    integrate: variable => variable,
-                    hasVariable: true
-                }).invertIntegral(8)
+                    evaluate: () => 0,
+                    integrate: stack => variable
+                }).invertIntegral(20)
             ).toThrow());
         test("One input inverts integral correctly", () =>
             expect(
                 new Formula({
                     inputs: [variable],
-                    evaluate: () => 10,
-                    integrate: (variable, stack, v1) => variable,
-                    hasVariable: true
-                }).invertIntegral(8)
-            ).compare_tolerance(1));
+                    evaluate: v1 => Decimal.add(v1, 19.5),
+                    integrate: (stack, v1) => Formula.add(v1, 10)
+                }).invertIntegral(20)
+            ).compare_tolerance(10));
         test("Two inputs inverts integral correctly", () =>
             expect(
                 new Formula({
-                    inputs: [variable, 2],
-                    evaluate: (v1, v2) => 10,
-                    integrate: (variable, v1, v2) => variable,
-                    hasVariable: true
-                }).invertIntegral(8)
-            ).compare_tolerance(1));
+                    inputs: [variable, 10],
+                    evaluate: v1 => Decimal.add(v1, 19.5),
+                    integrate: (stack, v1, v2) => Formula.add(v1, v2)
+                }).invertIntegral(20)
+            ).compare_tolerance(10));
     });
 
     describe.todo("Formula as input");

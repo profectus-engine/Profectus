@@ -1,7 +1,8 @@
 import { Resource } from "features/resources/resource";
 import Decimal, { DecimalSource } from "util/bignum";
 import { Computable, convertComputable, ProcessedComputable } from "util/computed";
-import { computed, ComputedRef, Ref, ref, unref } from "vue";
+import { computed, ComputedRef, ref, unref } from "vue";
+import * as ops from "./operations";
 import type {
     EvaluateFunction,
     FormulaOptions,
@@ -18,7 +19,6 @@ import type {
     SubstitutionFunction,
     SubstitutionStack
 } from "./types";
-import * as ops from "./operations";
 
 export function hasVariable(value: FormulaSource): value is InvertibleFormula {
     return value instanceof Formula && value.hasVariable();
@@ -30,13 +30,6 @@ export function unrefFormulaSource(value: FormulaSource, variable?: DecimalSourc
 
 function integrateVariable(this: GenericFormula) {
     return Formula.pow(this, 2).div(2);
-}
-
-function integrateVariableInner(this: GenericFormula, variable?: DecimalSource) {
-    if (variable == null && this.innermostVariable == null) {
-        throw new Error("Cannot integrate non-existent variable");
-    }
-    return variable ?? unref(this.innermostVariable);
 }
 
 /**
@@ -53,7 +46,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     private readonly internalIntegrate: IntegrateFunction<T> | undefined;
     private readonly internalIntegrateInner: IntegrateFunction<T> | undefined;
     private readonly applySubstitution: SubstitutionFunction<T> | undefined;
-    private readonly internalHasVariable: boolean;
+    private readonly internalVariables: number;
 
     public readonly innermostVariable: ProcessedComputable<DecimalSource> | undefined;
 
@@ -69,7 +62,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             readonlyProperties = this.setupFormula(options);
         }
         this.inputs = readonlyProperties.inputs;
-        this.internalHasVariable = readonlyProperties.internalHasVariable;
+        this.internalVariables = readonlyProperties.internalVariables;
         this.innermostVariable = readonlyProperties.innermostVariable;
         this.internalEvaluate = readonlyProperties.internalEvaluate;
         this.internalInvert = readonlyProperties.internalInvert;
@@ -85,10 +78,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     }): InternalFormulaProperties<T> {
         return {
             inputs: [variable] as T,
-            internalHasVariable: true,
+            internalVariables: 1,
             innermostVariable: variable,
-            internalIntegrate: integrateVariable as unknown as IntegrateFunction<T>,
-            internalIntegrateInner: integrateVariableInner as unknown as IntegrateFunction<T>,
+            internalIntegrate: integrateVariable,
             applySubstitution: ops.passthrough as unknown as SubstitutionFunction<T>
         };
     }
@@ -99,68 +91,49 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         }
         return {
             inputs: inputs as T,
-            internalHasVariable: false
+            internalVariables: 0
         };
     }
 
     private setupFormula(options: GeneralFormulaOptions<T>): InternalFormulaProperties<T> {
-        const {
-            inputs,
-            evaluate,
-            invert,
-            integrate,
-            integrateInner,
-            applySubstitution,
-            hasVariable
-        } = options;
-        if (invert == null && hasVariable) {
-            throw new Error(
-                "A formula cannot be marked as having a variable if it is not invertible"
-            );
-        }
-
-        const numVariables = inputs.filter(
-            input => input instanceof Formula && input.hasVariable()
-        ).length;
+        const { inputs, evaluate, invert, integrate, integrateInner, applySubstitution } = options;
+        const numVariables = inputs.reduce<number>(
+            (acc, input) => acc + (input instanceof Formula ? input.internalVariables : 0),
+            0
+        );
         const variable = inputs.find(input => input instanceof Formula && input.hasVariable()) as
             | GenericFormula
             | undefined;
 
-        const internalHasVariable =
-            numVariables === 1 || (numVariables === 0 && hasVariable === true);
-        const innermostVariable = internalHasVariable ? variable?.innermostVariable : undefined;
-        const internalInvert = internalHasVariable && variable?.isInvertible() ? invert : undefined;
+        const innermostVariable = numVariables === 1 ? variable?.innermostVariable : undefined;
 
         return {
             inputs,
             internalEvaluate: evaluate,
-            internalInvert,
+            internalInvert: invert,
             internalIntegrate: integrate,
             internalIntegrateInner: integrateInner,
             applySubstitution,
             innermostVariable,
-            internalHasVariable
+            internalVariables: numVariables
         };
     }
 
     private calculateConstantOfIntegration() {
-        // Calculate C based on the knowledge that at 1 purchase, the total sum would be the cost of that one purchase
+        // Calculate C based on the knowledge that at x=1, the integral should be the average between f(0) and f(1)
         const integral = this.getIntegralFormula().evaluate(1);
-        const actualCost = this.evaluate(0);
+        const actualCost = Decimal.add(this.evaluate(0), this.evaluate(1)).div(2);
         return Decimal.sub(actualCost, integral);
     }
 
     /** Type predicate that this formula can be inverted. */
     isInvertible(): this is InvertibleFormula {
-        return (
-            this.internalHasVariable &&
-            (this.internalInvert != null || this.internalEvaluate == null)
-        );
+        return this.hasVariable() && (this.internalInvert != null || this.internalEvaluate == null);
     }
 
     /** Type predicate that this formula can be integrated. */
     isIntegrable(): this is IntegrableFormula {
-        return this.internalHasVariable && this.internalIntegrate != null;
+        return this.hasVariable() && this.internalIntegrate != null;
     }
 
     /** Type predicate that this formula has an integral function that can be inverted. */
@@ -173,7 +146,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
 
     /** Whether or not this formula has a singular variable inside it, which can be accessed via {@link innermostVariable}. */
     hasVariable(): boolean {
-        return this.internalHasVariable;
+        return this.internalVariables === 1;
     }
 
     /**
@@ -188,7 +161,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
                     unrefFormulaSource(input, variable)
                 ) as GuardedFormulasToDecimals<T>)
             ) ??
-            (this.internalHasVariable ? variable : null) ??
+            (this.hasVariable() ? variable : null) ??
             unrefFormulaSource(this.inputs[0])
         );
     }
@@ -199,9 +172,9 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
      * @see {@link isInvertible}
      */
     invert(value: DecimalSource): DecimalSource {
-        if (this.internalInvert) {
+        if (this.internalInvert && this.hasVariable()) {
             return this.internalInvert.call(this, value, ...this.inputs);
-        } else if (this.inputs.length === 1 && this.internalHasVariable) {
+        } else if (this.inputs.length === 1 && this.hasVariable()) {
             return value;
         }
         throw new Error("Cannot invert non-invertible formula");
@@ -228,7 +201,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
      * @see {@link isIntegralInvertible}
      */
     invertIntegral(value: DecimalSource): DecimalSource {
-        if (this.integralFormula?.isInvertible()) {
+        if (!this.isIntegrable() || !this.getIntegralFormula().isInvertible()) {
             throw new Error("Cannot invert integral of formula without invertible integral");
         }
         return this.getIntegralFormula().invert(value);
@@ -236,23 +209,11 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
 
     /**
      * Get a formula that will evaluate to the integral of this formula. May also be invertible.
-     * @param variable The variable that will be used to evaluate this integral at a given x value
-     * @param stack For nested formulas, a stack of operations that occur outside the complex operation
+     * @param stack For nested formulas, a stack of operations that occur outside the complex operation.
      */
-    getIntegralFormula(
-        variable?: ProcessedComputable<DecimalSource>,
-        stack?: SubstitutionStack
-    ): GenericFormula {
-        if (variable == null && this.integralFormula != null) {
+    getIntegralFormula(stack?: SubstitutionStack): GenericFormula {
+        if (this.integralFormula != null) {
             return this.integralFormula;
-        }
-        let formula;
-        const variablePresent = variable != null;
-        if (variable == null) {
-            variable = this.innermostVariable;
-            if (variable == null) {
-                throw new Error("Cannot integrate formula without variable");
-            }
         }
         if (stack == null) {
             // "Outer" part of the formula
@@ -262,21 +223,24 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
                 if (this.internalIntegrate == null) {
                     throw new Error("Cannot integrate formula with non-integrable operation");
                 }
-                let value = this.internalIntegrate.call(this, variable, stack, ...this.inputs);
+                let value = this.internalIntegrate.call(this, stack, ...this.inputs);
                 stack.forEach(func => (value = func(value)));
-                formula = value;
+                this.integralFormula = value;
             } else {
                 // Continue digging into the formula
                 if (this.internalIntegrate) {
-                    formula = this.internalIntegrate.call(
+                    this.integralFormula = this.internalIntegrate.call(
                         this,
-                        variable,
                         undefined,
                         ...this.inputs
                     );
-                } else if (this.inputs.length === 1 && this.internalHasVariable) {
+                } else if (
+                    this.inputs.length === 1 &&
+                    this.internalEvaluate == null &&
+                    this.hasVariable()
+                ) {
                     // eslint-disable-next-line @typescript-eslint/no-this-alias
-                    formula = this;
+                    this.integralFormula = this;
                 } else {
                     throw new Error("Cannot integrate formula without variable");
                 }
@@ -291,20 +255,25 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
                 this.applySubstitution!.call(this, variable, ...this.inputs)
             );
             if (this.internalIntegrateInner) {
-                formula = this.internalIntegrateInner.call(this, variable, stack, ...this.inputs);
+                this.integralFormula = this.internalIntegrateInner.call(
+                    this,
+                    stack,
+                    ...this.inputs
+                );
             } else if (this.internalIntegrate) {
-                formula = this.internalIntegrate.call(this, variable, stack, ...this.inputs);
-            } else if (this.inputs.length === 1 && this.internalHasVariable) {
+                this.integralFormula = this.internalIntegrate.call(this, stack, ...this.inputs);
+            } else if (
+                this.inputs.length === 1 &&
+                this.internalEvaluate == null &&
+                this.hasVariable()
+            ) {
                 // eslint-disable-next-line @typescript-eslint/no-this-alias
-                formula = this;
+                this.integralFormula = this;
             } else {
                 throw new Error("Cannot integrate formula without variable");
             }
         }
-        if (!variablePresent) {
-            this.integralFormula = formula;
-        }
-        return formula;
+        return this.integralFormula;
     }
 
     /**
@@ -324,7 +293,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             this.internalEvaluate === other.internalEvaluate &&
             this.internalInvert === other.internalInvert &&
             this.internalIntegrate === other.internalIntegrate &&
-            this.internalHasVariable === other.internalHasVariable
+            this.internalVariables === other.internalVariables
         );
     }
 
@@ -556,17 +525,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     public static reciprocal = Formula.recip;
     public static reciprocate = Formula.recip;
 
-    public static max(value: FormulaSource, other: FormulaSource): GenericFormula {
-        return new Formula({
-            inputs: [value, other],
-            evaluate: Decimal.max,
-            invert: ops.passthrough as (
-                value: DecimalSource,
-                ...inputs: [FormulaSource, FormulaSource]
-            ) => DecimalSource
-        });
-    }
-
+    // TODO these functions should ostensibly be integrable, and the integrals should be invertible
+    public static max = ops.createPassthroughBinaryFormula(Decimal.max);
     public static min = ops.createPassthroughBinaryFormula(Decimal.min);
     public static minabs = ops.createPassthroughBinaryFormula(Decimal.minabs);
     public static maxabs = ops.createPassthroughBinaryFormula(Decimal.maxabs);
@@ -1354,6 +1314,24 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
     public atanh(this: FormulaSource) {
         return Formula.atanh(this);
     }
+}
+
+/**
+ * Utility for recursively searching through a formula for the cause of non-invertibility.
+ * @param formula The formula to search for a non-invertible formula within
+ */
+export function findNonInvertible(formula: GenericFormula): GenericFormula | null {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    if (formula.internalInvert == null && formula.internalEvaluate != null) {
+        return formula;
+    }
+    for (const input of formula.inputs) {
+        if (hasVariable(input)) {
+            return findNonInvertible(input);
+        }
+    }
+    return null;
 }
 
 /**

@@ -4,7 +4,11 @@ import { createResource, trackBest, trackOOMPS, trackTotal } from "features/reso
 import type { GenericTree } from "features/trees/tree";
 import { branchedResetPropagation, createTree } from "features/trees/tree";
 import { globalBus } from "game/events";
-import Formula, { calculateCost, calculateMaxAffordable } from "game/formulas/formulas";
+import Formula, {
+    calculateCost,
+    calculateMaxAffordable,
+    findNonInvertible
+} from "game/formulas/formulas";
 import type { BaseLayer, GenericLayer } from "game/layers";
 import { createLayer } from "game/layers";
 import type { Player } from "game/player";
@@ -18,6 +22,7 @@ import prestige from "./layers/prestige";
 window.Formula = Formula;
 window.calculateMaxAffordable = calculateMaxAffordable;
 window.calculateCost = calculateCost;
+window.findNonInvertible = findNonInvertible;
 window.unref = unref;
 window.ref = ref;
 window.createResource = createResource;

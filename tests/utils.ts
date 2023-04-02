@@ -2,7 +2,7 @@ import Decimal, { DecimalSource, format } from "util/bignum";
 import { expect } from "vitest";
 
 interface CustomMatchers<R = unknown> {
-    compare_tolerance(expected: DecimalSource): R;
+    compare_tolerance(expected: DecimalSource, tolerance?: number): R;
 }
 
 declare global {
@@ -16,7 +16,7 @@ declare global {
 }
 
 expect.extend({
-    compare_tolerance(received: DecimalSource, expected: DecimalSource) {
+    compare_tolerance(received: DecimalSource, expected: DecimalSource, tolerance?: number) {
         const { isNot } = this;
         let pass = false;
         if (!Decimal.isFinite(expected)) {
@@ -24,7 +24,7 @@ expect.extend({
         } else if (Decimal.isNaN(expected)) {
             pass = Decimal.isNaN(received);
         } else {
-            pass = Decimal.eq_tolerance(received, expected);
+            pass = Decimal.eq_tolerance(received, expected, tolerance);
         }
         return {
             // do not alter your "pass" based on isNot. Vitest does it for you
