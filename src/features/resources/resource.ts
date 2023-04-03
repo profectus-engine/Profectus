@@ -1,8 +1,6 @@
 import { globalBus } from "game/events";
-import { NonPersistent, Persistent, State } from "game/persistence";
-import { persistent } from "game/persistence";
-import player from "game/player";
-import settings from "game/settings";
+import type { Persistent, State } from "game/persistence";
+import { NonPersistent, persistent } from "game/persistence";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatWhole } from "util/bignum";
 import type { ProcessedComputable } from "util/computed";
