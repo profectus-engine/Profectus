@@ -1,7 +1,12 @@
 import type { OptionsFunc, Replace } from "features/feature";
 import { setDefault } from "features/feature";
 import type { Resource } from "features/resources/resource";
-import { InvertibleFormula } from "game/formulas/types";
+import Formula from "game/formulas/formulas";
+import {
+    IntegrableFormula,
+    InvertibleFormula,
+    InvertibleIntegralFormula
+} from "game/formulas/types";
 import type { BaseLayer } from "game/layers";
 import type { DecimalSource } from "util/bignum";
 import Decimal from "util/bignum";
@@ -15,9 +20,11 @@ import { computed, unref } from "vue";
 export interface ConversionOptions {
     /**
      * The formula used to determine how much {@link gainResource} should be earned by this converting.
-     * When evaluating, the variable will always be overidden to the amount of {@link baseResource}.
+     * The passed value will be a Formula representing the {@link baseResource} variable.
      */
-    formula: InvertibleFormula;
+    formula: (
+        variable: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
+    ) => InvertibleFormula;
     /**
      * How much of the output resource the conversion can currently convert for.
      * Typically this will be set for you in a conversion constructor.
@@ -98,6 +105,7 @@ export type Conversion<T extends ConversionOptions> = Replace<
 export type GenericConversion = Replace<
     Conversion<ConversionOptions>,
     {
+        formula: InvertibleFormula;
         currentGain: ProcessedComputable<DecimalSource>;
         actualGain: ProcessedComputable<DecimalSource>;
         currentAt: ProcessedComputable<DecimalSource>;
@@ -120,9 +128,14 @@ export function createConversion<T extends ConversionOptions>(
     return createLazyProxy(() => {
         const conversion = optionsFunc();
 
+        (conversion as GenericConversion).formula = conversion.formula(
+            Formula.variable(conversion.baseResource)
+        );
         if (conversion.currentGain == null) {
             conversion.currentGain = computed(() => {
-                let gain = conversion.formula.evaluate(conversion.baseResource.value);
+                let gain = (conversion as GenericConversion).formula.evaluate(
+                    conversion.baseResource.value
+                );
                 gain = Decimal.floor(gain).max(0);
 
                 if (unref(conversion.buyMax) === false) {
@@ -136,14 +149,14 @@ export function createConversion<T extends ConversionOptions>(
         }
         if (conversion.currentAt == null) {
             conversion.currentAt = computed(() => {
-                return conversion.formula.invert(
+                return (conversion as GenericConversion).formula.invert(
                     Decimal.floor(unref((conversion as GenericConversion).currentGain))
                 );
             });
         }
         if (conversion.nextAt == null) {
             conversion.nextAt = computed(() => {
-                return conversion.formula.invert(
+                return (conversion as GenericConversion).formula.invert(
                     Decimal.floor(unref((conversion as GenericConversion).currentGain)).add(1)
                 );
             });
@@ -205,7 +218,9 @@ export function createIndependentConversion<S extends ConversionOptions>(
 
         if (conversion.currentGain == null) {
             conversion.currentGain = computed(() => {
-                let gain = conversion.formula.evaluate(conversion.baseResource.value);
+                let gain = (conversion as unknown as GenericConversion).formula.evaluate(
+                    conversion.baseResource.value
+                );
                 gain = Decimal.floor(gain).max(conversion.gainResource.value);
                 if (unref(conversion.buyMax) === false) {
                     gain = gain.min(Decimal.add(conversion.gainResource.value, 1));
@@ -216,7 +231,9 @@ export function createIndependentConversion<S extends ConversionOptions>(
         if (conversion.actualGain == null) {
             conversion.actualGain = computed(() => {
                 let gain = Decimal.sub(
-                    conversion.formula.evaluate(conversion.baseResource.value),
+                    (conversion as unknown as GenericConversion).formula.evaluate(
+                        conversion.baseResource.value
+                    ),
                     conversion.gainResource.value
                 ).max(0);
 
@@ -227,9 +244,11 @@ export function createIndependentConversion<S extends ConversionOptions>(
             });
         }
         setDefault(conversion, "convert", function () {
-            const amountGained = unref((conversion as GenericConversion).actualGain);
-            conversion.gainResource.value = unref((conversion as GenericConversion).currentGain);
-            (conversion as GenericConversion).spend(amountGained);
+            const amountGained = unref((conversion as unknown as GenericConversion).actualGain);
+            conversion.gainResource.value = unref(
+                (conversion as unknown as GenericConversion).currentGain
+            );
+            (conversion as unknown as GenericConversion).spend(amountGained);
             conversion.onConvert?.(amountGained);
         });
 
