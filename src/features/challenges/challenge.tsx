@@ -69,7 +69,7 @@ export interface ChallengeOptions {
               title?: CoercableComponent;
               /** The main text that appears in the display. */
               description: CoercableComponent;
-              /** A description of the current goal for this challenge. */
+              /** A description of the current goal for this challenge. If unspecified then the requirements will be displayed automatically based on {@link requirements}.  */
               goal?: CoercableComponent;
               /** A description of what will change upon completing this challenge. */
               reward?: CoercableComponent;
@@ -271,7 +271,8 @@ export function createChallenge<T extends ChallengeOptions>(
                 canStart,
                 mark,
                 id,
-                toggle
+                toggle,
+                requirements
             } = this;
             return {
                 active,
@@ -285,7 +286,8 @@ export function createChallenge<T extends ChallengeOptions>(
                 canStart,
                 mark,
                 id,
-                toggle
+                toggle,
+                requirements
             };
         };
 

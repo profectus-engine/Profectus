@@ -38,6 +38,7 @@ import type { GenericChallenge } from "features/challenges/challenge";
 import type { StyleValue } from "features/feature";
 import { isHidden, isVisible, jsx, Visibility } from "features/feature";
 import { getHighNotifyStyle, getNotifyStyle } from "game/notifications";
+import { displayRequirements, Requirements } from "game/requirements";
 import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "util/vue";
 import type { Component, PropType, UnwrapRef } from "vue";
 import { computed, defineComponent, shallowRef, toRefs, unref, watchEffect } from "vue";
@@ -61,6 +62,7 @@ export default defineComponent({
             Object,
             Function
         ),
+        requirements: processedPropType<Requirements>(Object, Array),
         visibility: {
             type: processedPropType<Visibility | boolean>(Number, Boolean),
             required: true
@@ -90,7 +92,7 @@ export default defineComponent({
         Node
     },
     setup(props) {
-        const { active, maxed, canComplete, display } = toRefs(props);
+        const { active, maxed, canComplete, display, requirements } = toRefs(props);
 
         const buttonText = computed(() => {
             if (active.value) {
@@ -128,7 +130,7 @@ export default defineComponent({
             }
             const Title = coerceComponent(currDisplay.title || "", "h3");
             const Description = coerceComponent(currDisplay.description, "div");
-            const Goal = coerceComponent(currDisplay.goal || "");
+            const Goal = coerceComponent(currDisplay.goal != null ? currDisplay.goal : jsx(() => displayRequirements(unwrapRef(requirements) ?? [])), "h3");
             const Reward = coerceComponent(currDisplay.reward || "");
             const EffectDisplay = coerceComponent(currDisplay.effectDisplay || "");
             comp.value = coerceComponent(
@@ -140,12 +142,10 @@ export default defineComponent({
                             </div>
                         ) : null}
                         <Description />
-                        {currDisplay.goal != null ? (
-                            <div>
-                                <br />
-                                Goal: <Goal />
-                            </div>
-                        ) : null}
+                        <div>
+                            <br />
+                            Goal: <Goal />
+                        </div>
                         {currDisplay.reward != null ? (
                             <div>
                                 <br />

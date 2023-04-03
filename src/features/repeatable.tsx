@@ -42,7 +42,7 @@ export type RepeatableDisplay =
           title?: CoercableComponent;
           /** The main text that appears in the display. */
           description?: CoercableComponent;
-          /** A description of the current effect of this repeatable, bsed off its amount. */
+          /** A description of the current effect of this repeatable, based off its amount. */
           effectDisplay?: CoercableComponent;
           /** Whether or not to show the current amount of this repeatable at the bottom of the display. */
           showAmount?: boolean;
