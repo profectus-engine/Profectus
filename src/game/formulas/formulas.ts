@@ -315,6 +315,7 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
         return new Formula({ variable: value }) as InvertibleFormula;
     }
 
+    // TODO add integration support to step-wise functions
     /**
      * Creates a step-wise formula. After {@ref start} the formula will have an additional modifier.
      * This function assumes the incoming {@ref value} will be continuous and monotonically increasing.
