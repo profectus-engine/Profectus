@@ -3,6 +3,7 @@ import {
     CoercableComponent,
     Component,
     GatherProps,
+    GenericComponent,
     getUniqueID,
     isVisible,
     OptionsFunc,
@@ -48,7 +49,7 @@ export interface BaseAchievement {
     earned: Persistent<boolean>;
     complete: VoidFunction;
     type: typeof AchievementType;
-    [Component]: typeof AchievementComponent;
+    [Component]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
@@ -79,7 +80,7 @@ export function createAchievement<T extends AchievementOptions>(
         const achievement = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         achievement.id = getUniqueID("achievement-");
         achievement.type = AchievementType;
-        achievement[Component] = AchievementComponent;
+        achievement[Component] = AchievementComponent as GenericComponent;
 
         achievement.earned = earned;
         achievement.complete = function () {

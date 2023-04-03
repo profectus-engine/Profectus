@@ -1,5 +1,5 @@
 import BoardComponent from "features/boards/Board.vue";
-import type { OptionsFunc, Replace, StyleValue } from "features/feature";
+import type { GenericComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
 import {
     Component,
     findFeatures,
@@ -178,7 +178,7 @@ export interface BaseBoard {
     selectedAction: Ref<GenericBoardNodeAction | null>;
     mousePosition: Ref<{ x: number; y: number } | null>;
     type: typeof BoardType;
-    [Component]: typeof BoardComponent;
+    [Component]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
@@ -221,7 +221,7 @@ export function createBoard<T extends BoardOptions>(
         const board = optionsFunc();
         board.id = getUniqueID("board-");
         board.type = BoardType;
-        board[Component] = BoardComponent;
+        board[Component] = BoardComponent as GenericComponent;
 
         if (board.state) {
             deletePersistent(state);

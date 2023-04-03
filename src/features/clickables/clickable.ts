@@ -42,7 +42,7 @@ export interface ClickableOptions {
 export interface BaseClickable {
     id: string;
     type: typeof ClickableType;
-    [Component]: typeof ClickableComponent;
+    [Component]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
@@ -73,7 +73,7 @@ export function createClickable<T extends ClickableOptions>(
         const clickable = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         clickable.id = getUniqueID("clickable-");
         clickable.type = ClickableType;
-        clickable[Component] = ClickableComponent;
+        clickable[Component] = ClickableComponent as GenericComponent;
 
         processComputable(clickable as T, "visibility");
         setDefault(clickable, "visibility", Visibility.Visible);

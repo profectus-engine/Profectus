@@ -61,7 +61,7 @@ export interface BaseUpgrade {
     canPurchase: Ref<boolean>;
     purchase: VoidFunction;
     type: typeof UpgradeType;
-    [Component]: typeof UpgradeComponent;
+    [Component]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
@@ -92,7 +92,7 @@ export function createUpgrade<T extends UpgradeOptions>(
         const upgrade = optionsFunc();
         upgrade.id = getUniqueID("upgrade-");
         upgrade.type = UpgradeType;
-        upgrade[Component] = UpgradeComponent;
+        upgrade[Component] = UpgradeComponent as GenericComponent;
 
         upgrade.bought = bought;
         upgrade.canPurchase = computed(() => requirementsMet(upgrade.requirements));

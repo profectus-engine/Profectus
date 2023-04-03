@@ -69,7 +69,7 @@ export interface BaseMilestone {
     earned: Persistent<boolean>;
     complete: VoidFunction;
     type: typeof MilestoneType;
-    [Component]: typeof MilestoneComponent;
+    [Component]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
@@ -99,7 +99,7 @@ export function createMilestone<T extends MilestoneOptions>(
         const milestone = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         milestone.id = getUniqueID("milestone-");
         milestone.type = MilestoneType;
-        milestone[Component] = MilestoneComponent;
+        milestone[Component] = MilestoneComponent as GenericComponent;
 
         milestone.earned = earned;
         milestone.complete = function () {

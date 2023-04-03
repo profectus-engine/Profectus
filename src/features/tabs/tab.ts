@@ -1,4 +1,10 @@
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import { Component, GatherProps, getUniqueID } from "features/feature";
 import TabComponent from "features/tabs/Tab.vue";
 import type { Computable, GetComputableType } from "util/computed";
@@ -15,7 +21,7 @@ export interface TabOptions {
 export interface BaseTab {
     id: string;
     type: typeof TabType;
-    [Component]: typeof TabComponent;
+    [Component]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
@@ -37,7 +43,7 @@ export function createTab<T extends TabOptions>(
         const tab = optionsFunc();
         tab.id = getUniqueID("tab-");
         tab.type = TabType;
-        tab[Component] = TabComponent;
+        tab[Component] = TabComponent as GenericComponent;
 
         tab[GatherProps] = function (this: GenericTab) {
             const { display } = this;

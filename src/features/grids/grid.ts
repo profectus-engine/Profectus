@@ -1,4 +1,10 @@
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import { Component, GatherProps, getUniqueID, setDefault, Visibility } from "features/feature";
 import GridComponent from "features/grids/Grid.vue";
 import type { Persistent, State } from "game/persistence";
@@ -206,7 +212,7 @@ export interface BaseGrid {
     cells: Record<string | number, GridCell>;
     cellState: Persistent<Record<string | number, State>>;
     type: typeof GridType;
-    [Component]: typeof GridComponent;
+    [Component]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
@@ -242,7 +248,7 @@ export function createGrid<T extends GridOptions>(
     return createLazyProxy(() => {
         const grid = optionsFunc();
         grid.id = getUniqueID("grid-");
-        grid[Component] = GridComponent;
+        grid[Component] = GridComponent as GenericComponent;
 
         grid.cellState = cellState;
 

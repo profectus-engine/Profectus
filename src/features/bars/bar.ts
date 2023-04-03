@@ -40,7 +40,7 @@ export interface BarOptions {
 export interface BaseBar {
     id: string;
     type: typeof BarType;
-    [Component]: typeof BarComponent;
+    [Component]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
@@ -77,7 +77,7 @@ export function createBar<T extends BarOptions>(
         const bar = optionsFunc();
         bar.id = getUniqueID("bar-");
         bar.type = BarType;
-        bar[Component] = BarComponent;
+        bar[Component] = BarComponent as GenericComponent;
 
         processComputable(bar as T, "visibility");
         setDefault(bar, "visibility", Visibility.Visible);

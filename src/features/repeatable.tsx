@@ -1,6 +1,12 @@
 import { isArray } from "@vue/shared";
 import ClickableComponent from "features/clickables/Clickable.vue";
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import { Component, GatherProps, getUniqueID, jsx, setDefault, Visibility } from "features/feature";
 import { DefaultValue, Persistent, persistent } from "game/persistence";
 import {
@@ -88,7 +94,7 @@ export interface BaseRepeatable {
     /** A symbol that helps identify features of the same type. */
     type: typeof RepeatableType;
     /** The Vue component used to render this feature. */
-    [Component]: typeof ClickableComponent;
+    [Component]: GenericComponent;
     /** A function to gather the props the vue component requires for this feature. */
     [GatherProps]: () => Record<string, unknown>;
 }
@@ -131,7 +137,7 @@ export function createRepeatable<T extends RepeatableOptions>(
 
         repeatable.id = getUniqueID("repeatable-");
         repeatable.type = RepeatableType;
-        repeatable[Component] = ClickableComponent;
+        repeatable[Component] = ClickableComponent as GenericComponent;
 
         repeatable.amount = amount;
         repeatable.amount[DefaultValue] = repeatable.initialAmount ?? 0;

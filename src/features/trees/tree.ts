@@ -1,4 +1,10 @@
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import { Component, GatherProps, getUniqueID, setDefault, Visibility } from "features/feature";
 import type { Link } from "features/links/links";
 import type { GenericReset } from "features/reset";
@@ -39,7 +45,7 @@ export interface TreeNodeOptions {
 export interface BaseTreeNode {
     id: string;
     type: typeof TreeNodeType;
-    [Component]: typeof TreeNodeComponent;
+    [Component]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
@@ -72,7 +78,7 @@ export function createTreeNode<T extends TreeNodeOptions>(
         const treeNode = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         treeNode.id = getUniqueID("treeNode-");
         treeNode.type = TreeNodeType;
-        treeNode[Component] = TreeNodeComponent;
+        treeNode[Component] = TreeNodeComponent as GenericComponent;
 
         processComputable(treeNode as T, "visibility");
         setDefault(treeNode, "visibility", Visibility.Visible);
@@ -157,7 +163,7 @@ export interface BaseTree {
     isResetting: Ref<boolean>;
     resettingNode: Ref<GenericTreeNode | null>;
     type: typeof TreeType;
-    [Component]: typeof TreeComponent;
+    [Component]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
@@ -186,7 +192,7 @@ export function createTree<T extends TreeOptions>(
         const tree = optionsFunc();
         tree.id = getUniqueID("tree-");
         tree.type = TreeType;
-        tree[Component] = TreeComponent;
+        tree[Component] = TreeComponent as GenericComponent;
 
         tree.isResetting = ref(false);
         tree.resettingNode = shallowRef(null);

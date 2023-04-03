@@ -1,7 +1,13 @@
 import { isArray } from "@vue/shared";
 import Toggle from "components/fields/Toggle.vue";
 import ChallengeComponent from "features/challenges/Challenge.vue";
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import {
     Component,
     GatherProps,
@@ -67,7 +73,7 @@ export interface BaseChallenge {
     toggle: VoidFunction;
     complete: (remainInChallenge?: boolean) => void;
     type: typeof ChallengeType;
-    [Component]: typeof ChallengeComponent;
+    [Component]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
@@ -106,7 +112,7 @@ export function createChallenge<T extends ChallengeOptions>(
 
         challenge.id = getUniqueID("challenge-");
         challenge.type = ChallengeType;
-        challenge[Component] = ChallengeComponent;
+        challenge[Component] = ChallengeComponent as GenericComponent;
 
         challenge.completions = completions;
         challenge.active = active;

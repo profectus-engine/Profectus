@@ -1,4 +1,10 @@
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import { Component, GatherProps, getUniqueID, setDefault, Visibility } from "features/feature";
 import InfoboxComponent from "features/infoboxes/Infobox.vue";
 import type { Persistent } from "game/persistence";
@@ -30,7 +36,7 @@ export interface BaseInfobox {
     id: string;
     collapsed: Persistent<boolean>;
     type: typeof InfoboxType;
-    [Component]: typeof InfoboxComponent;
+    [Component]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
@@ -63,7 +69,7 @@ export function createInfobox<T extends InfoboxOptions>(
         const infobox = optionsFunc();
         infobox.id = getUniqueID("infobox-");
         infobox.type = InfoboxType;
-        infobox[Component] = InfoboxComponent;
+        infobox[Component] = InfoboxComponent as GenericComponent;
 
         infobox.collapsed = collapsed;
 

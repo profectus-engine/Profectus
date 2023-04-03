@@ -1,4 +1,10 @@
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import {
     Component,
     GatherProps,
@@ -37,7 +43,7 @@ export interface TabButtonOptions {
 
 export interface BaseTabButton {
     type: typeof TabButtonType;
-    [Component]: typeof TabButtonComponent;
+    [Component]: GenericComponent;
 }
 
 export type TabButton<T extends TabButtonOptions> = Replace<
@@ -73,7 +79,7 @@ export interface BaseTabFamily {
     activeTab: Ref<GenericTab | CoercableComponent | null>;
     selected: Persistent<string>;
     type: typeof TabFamilyType;
-    [Component]: typeof TabFamilyComponent;
+    [Component]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
@@ -107,13 +113,13 @@ export function createTabFamily<T extends TabFamilyOptions>(
 
         tabFamily.id = getUniqueID("tabFamily-");
         tabFamily.type = TabFamilyType;
-        tabFamily[Component] = TabFamilyComponent;
+        tabFamily[Component] = TabFamilyComponent as GenericComponent;
 
         tabFamily.tabs = Object.keys(tabs).reduce<Record<string, GenericTabButton>>(
             (parsedTabs, tab) => {
                 const tabButton: TabButtonOptions & Partial<BaseTabButton> = tabs[tab]();
                 tabButton.type = TabButtonType;
-                tabButton[Component] = TabButtonComponent;
+                tabButton[Component] = TabButtonComponent as GenericComponent;
 
                 processComputable(tabButton as TabButtonOptions, "visibility");
                 setDefault(tabButton, "visibility", Visibility.Visible);

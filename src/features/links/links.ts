@@ -1,4 +1,4 @@
-import type { OptionsFunc, Replace } from "features/feature";
+import type { GenericComponent, OptionsFunc, Replace } from "features/feature";
 import { GatherProps, Component } from "features/feature";
 import type { Position } from "game/layers";
 import type { Computable, GetComputableType, ProcessedComputable } from "util/computed";
@@ -22,7 +22,7 @@ export interface LinksOptions {
 
 export interface BaseLinks {
     type: typeof LinksType;
-    [Component]: typeof LinksComponent;
+    [Component]: GenericComponent;
     [GatherProps]: () => Record<string, unknown>;
 }
 
@@ -46,7 +46,7 @@ export function createLinks<T extends LinksOptions>(
     return createLazyProxy(() => {
         const links = optionsFunc();
         links.type = LinksType;
-        links[Component] = LinksComponent;
+        links[Component] = LinksComponent as GenericComponent;
 
         processComputable(links as T, "links");
 
