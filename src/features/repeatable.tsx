@@ -78,6 +78,11 @@ export interface BaseRepeatable {
     maxed: Ref<boolean>;
     /** Whether or not this repeatable can be clicked. */
     canClick: ProcessedComputable<boolean>;
+    /**
+     * How much amount can be increased by, or 1 if unclickable.
+     * Capped at 1 if {@link RepeatableOptions.maximize} is false.
+     **/
+    amountToIncrease: Ref<DecimalSource>;
     /** A function that gets called when this repeatable is clicked. */
     onClick: (event?: MouseEvent | TouchEvent) => void;
     /** A symbol that helps identify features of the same type. */
@@ -170,6 +175,11 @@ export function createRepeatable<T extends RepeatableOptions>(
             }
             return currClasses;
         });
+        repeatable.amountToIncrease = computed(() =>
+            unref((repeatable as GenericRepeatable).maximize)
+                ? maxRequirementsMet(repeatable.requirements)
+                : 1
+        );
         repeatable.canClick = computed(() => requirementsMet(repeatable.requirements));
         const onClick = repeatable.onClick;
         repeatable.onClick = function (this: GenericRepeatable, event?: MouseEvent | TouchEvent) {
@@ -177,12 +187,7 @@ export function createRepeatable<T extends RepeatableOptions>(
             if (!unref(genericRepeatable.canClick)) {
                 return;
             }
-            payRequirements(
-                repeatable.requirements,
-                unref(genericRepeatable.maximize)
-                    ? maxRequirementsMet(genericRepeatable.requirements)
-                    : 1
-            );
+            payRequirements(repeatable.requirements, unref(repeatable.amountToIncrease));
             genericRepeatable.amount.value = Decimal.add(genericRepeatable.amount.value, 1);
             onClick?.(event);
         };
@@ -233,9 +238,7 @@ export function createRepeatable<T extends RepeatableOptions>(
                                 <br />
                                 {displayRequirements(
                                     genericRepeatable.requirements,
-                                    unref(genericRepeatable.maximize)
-                                        ? maxRequirementsMet(genericRepeatable.requirements)
-                                        : 1
+                                    unref(repeatable.amountToIncrease)
                                 )}
                             </div>
                         )}

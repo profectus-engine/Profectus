@@ -12,10 +12,10 @@ import {
     Visibility
 } from "features/feature";
 import type { GenericReset } from "features/reset";
-import type { Resource } from "features/resources/resource";
 import { globalBus } from "game/events";
 import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
+import { maxRequirementsMet, Requirements } from "game/requirements";
 import settings, { registerSettingField } from "game/settings";
 import type { DecimalSource } from "util/bignum";
 import Decimal from "util/bignum";
@@ -36,11 +36,10 @@ export interface ChallengeOptions {
     visibility?: Computable<Visibility | boolean>;
     canStart?: Computable<boolean>;
     reset?: GenericReset;
-    canComplete?: Computable<boolean | DecimalSource>;
+    requirements: Requirements;
+    maximize?: Computable<boolean>;
     completionLimit?: Computable<DecimalSource>;
     mark?: Computable<boolean | string>;
-    resource?: Resource;
-    goal?: Computable<DecimalSource>;
     classes?: Computable<Record<string, boolean>>;
     style?: Computable<StyleValue>;
     display?: Computable<
@@ -60,6 +59,7 @@ export interface ChallengeOptions {
 
 export interface BaseChallenge {
     id: string;
+    canComplete: Ref<DecimalSource>;
     completions: Persistent<DecimalSource>;
     completed: Ref<boolean>;
     maxed: Ref<boolean>;
@@ -76,10 +76,10 @@ export type Challenge<T extends ChallengeOptions> = Replace<
     {
         visibility: GetComputableTypeWithDefault<T["visibility"], Visibility.Visible>;
         canStart: GetComputableTypeWithDefault<T["canStart"], true>;
-        canComplete: GetComputableTypeWithDefault<T["canComplete"], Ref<boolean>>;
+        requirements: GetComputableType<T["requirements"]>;
+        maximize: GetComputableType<T["maximize"]>;
         completionLimit: GetComputableTypeWithDefault<T["completionLimit"], 1>;
         mark: GetComputableTypeWithDefault<T["mark"], Ref<boolean>>;
-        goal: GetComputableType<T["goal"]>;
         classes: GetComputableType<T["classes"]>;
         style: GetComputableType<T["style"]>;
         display: GetComputableType<T["display"]>;
@@ -91,7 +91,6 @@ export type GenericChallenge = Replace<
     {
         visibility: ProcessedComputable<Visibility | boolean>;
         canStart: ProcessedComputable<boolean>;
-        canComplete: ProcessedComputable<boolean | DecimalSource>;
         completionLimit: ProcessedComputable<DecimalSource>;
         mark: ProcessedComputable<boolean>;
     }
@@ -104,19 +103,6 @@ export function createChallenge<T extends ChallengeOptions>(
     const active = persistent(false, false);
     return createLazyProxy(() => {
         const challenge = optionsFunc();
-
-        if (
-            challenge.canComplete == null &&
-            (challenge.resource == null || challenge.goal == null)
-        ) {
-            console.warn(
-                "Cannot create challenge without a canComplete property or a resource and goal property",
-                challenge
-            );
-            throw new Error(
-                "Cannot create challenge without a canComplete property or a resource and goal property"
-            );
-        }
 
         challenge.id = getUniqueID("challenge-");
         challenge.type = ChallengeType;
@@ -137,13 +123,10 @@ export function createChallenge<T extends ChallengeOptions>(
             const genericChallenge = challenge as GenericChallenge;
             if (genericChallenge.active.value) {
                 if (
-                    unref(genericChallenge.canComplete) !== false &&
+                    Decimal.gt(unref(genericChallenge.canComplete), 0) &&
                     !genericChallenge.maxed.value
                 ) {
-                    let completions: boolean | DecimalSource = unref(genericChallenge.canComplete);
-                    if (typeof completions === "boolean") {
-                        completions = 1;
-                    }
+                    const completions = unref(genericChallenge.canComplete);
                     genericChallenge.completions.value = Decimal.min(
                         Decimal.add(genericChallenge.completions.value, completions),
                         unref(genericChallenge.completionLimit)
@@ -163,18 +146,20 @@ export function createChallenge<T extends ChallengeOptions>(
                 genericChallenge.onEnter?.();
             }
         };
+        challenge.canComplete = computed(() =>
+            Decimal.max(
+                maxRequirementsMet((challenge as GenericChallenge).requirements),
+                unref((challenge as GenericChallenge).maximize) ? Decimal.dInf : 1
+            )
+        );
         challenge.complete = function (remainInChallenge?: boolean) {
             const genericChallenge = challenge as GenericChallenge;
-            let completions: boolean | DecimalSource = unref(genericChallenge.canComplete);
+            const completions = unref(genericChallenge.canComplete);
             if (
                 genericChallenge.active.value &&
-                completions !== false &&
-                (completions === true || Decimal.neq(0, completions)) &&
+                Decimal.gt(completions, 0) &&
                 !genericChallenge.maxed.value
             ) {
-                if (typeof completions === "boolean") {
-                    completions = 1;
-                }
                 genericChallenge.completions.value = Decimal.min(
                     Decimal.add(genericChallenge.completions.value, completions),
                     unref(genericChallenge.completionLimit)
@@ -196,19 +181,6 @@ export function createChallenge<T extends ChallengeOptions>(
             }
             return unref(visibility);
         });
-        if (challenge.canComplete == null) {
-            challenge.canComplete = computed(() => {
-                const genericChallenge = challenge as GenericChallenge;
-                if (
-                    !genericChallenge.active.value ||
-                    genericChallenge.resource == null ||
-                    genericChallenge.goal == null
-                ) {
-                    return false;
-                }
-                return Decimal.gte(genericChallenge.resource.value, unref(genericChallenge.goal));
-            });
-        }
         if (challenge.mark == null) {
             challenge.mark = computed(
                 () =>
@@ -219,11 +191,10 @@ export function createChallenge<T extends ChallengeOptions>(
 
         processComputable(challenge as T, "canStart");
         setDefault(challenge, "canStart", true);
-        processComputable(challenge as T, "canComplete");
+        processComputable(challenge as T, "maximize");
         processComputable(challenge as T, "completionLimit");
         setDefault(challenge, "completionLimit", 1);
         processComputable(challenge as T, "mark");
-        processComputable(challenge as T, "goal");
         processComputable(challenge as T, "classes");
         processComputable(challenge as T, "style");
         processComputable(challenge as T, "display");
@@ -278,9 +249,9 @@ export function setupAutoComplete(
 ): WatchStopHandle {
     const isActive = typeof autoActive === "function" ? computed(autoActive) : autoActive;
     return watch(
-        [challenge.canComplete as Ref<boolean>, isActive as Ref<boolean>],
+        [challenge.canComplete as Ref<DecimalSource>, isActive as Ref<boolean>],
         ([canComplete, isActive]) => {
-            if (canComplete && isActive) {
+            if (Decimal.gt(canComplete, 0) && isActive) {
                 challenge.complete(!exitOnComplete);
             }
         }

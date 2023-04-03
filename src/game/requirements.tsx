@@ -239,7 +239,7 @@ export function maxRequirementsMet(requirements: Requirements): DecimalSource {
     }
     const reqsMet = unref(requirements.requirementMet);
     if (typeof reqsMet === "boolean") {
-        return reqsMet ? Infinity : 0;
+        return reqsMet ? Decimal.dInf : 0;
     } else if (Decimal.gt(reqsMet, 1) && unref(requirements.canMaximize) !== true) {
         return 1;
     }
