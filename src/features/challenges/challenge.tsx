@@ -36,47 +36,87 @@ import { createLazyProxy } from "util/proxies";
 import type { Ref, WatchStopHandle } from "vue";
 import { computed, unref, watch } from "vue";
 
-export const ChallengeType = Symbol("ChallengeType");
+/** A symbol used to identify {@link Challenge} features. */
+export const ChallengeType = Symbol("Challenge");
 
+/**
+ * An object that configures a {@link Challenge}.
+ */
 export interface ChallengeOptions {
+    /** Whether this challenge should be visible. */
     visibility?: Computable<Visibility | boolean>;
+    /** Whether this challenge can be started. */
     canStart?: Computable<boolean>;
+    /** The reset function for this challenge. */
     reset?: GenericReset;
+    /** The requirement(s) to complete this challenge. */
     requirements: Requirements;
+    /** Whether or not completing this challenge should grant multiple completions if requirements met. Requires {@link requirements} to be a requirement or array of requirements with {@link Requirement.canMaximize} true. */
     maximize?: Computable<boolean>;
+    /** The maximum number of times the challenge can be completed. */
     completionLimit?: Computable<DecimalSource>;
+    /** Shows a marker on the corner of the feature. */
     mark?: Computable<boolean | string>;
+    /** Dictionary of CSS classes to apply to this feature. */
     classes?: Computable<Record<string, boolean>>;
+    /** CSS to apply to this feature. */
     style?: Computable<StyleValue>;
+    /** The display to use for this challenge. */
     display?: Computable<
         | CoercableComponent
         | {
+              /** A header to appear at the top of the display. */
               title?: CoercableComponent;
+              /** The main text that appears in the display. */
               description: CoercableComponent;
+              /** A description of the current goal for this challenge. */
               goal?: CoercableComponent;
+              /** A description of what will change upon completing this challenge. */
               reward?: CoercableComponent;
+              /** A description of the current effect of this challenge. */
               effectDisplay?: CoercableComponent;
           }
     >;
+    /** A function that is called when the challenge is completed. */
     onComplete?: VoidFunction;
+    /** A function that is called when the challenge is exited. */
     onExit?: VoidFunction;
+    /** A function that is called when the challenge is entered. */
     onEnter?: VoidFunction;
 }
 
+/**
+ * The properties that are added onto a processed {@link ChallengeOptions} to create a {@link Challenge}.
+ */
 export interface BaseChallenge {
+    /** An auto-generated ID for identifying challenges that appear in the DOM. Will not persist between refreshes or updates. */
     id: string;
+    /** The current amount of times this challenge can be completed. */
     canComplete: Ref<DecimalSource>;
+    /** The current number of times this challenge has been completed. */
     completions: Persistent<DecimalSource>;
+    /** Whether or not this challenge has been completed. */
     completed: Ref<boolean>;
+    /** Whether or not this challenge's completion count is at its limit. */
     maxed: Ref<boolean>;
+    /** Whether or not this challenge is currently active. */
     active: Persistent<boolean>;
+    /** A function to enter or leave the challenge. */
     toggle: VoidFunction;
+    /**
+     * A function to complete this challenge.
+     * @param remainInChallenge - Optional parameter to specify if the challenge should remain active after completion.
+     */
     complete: (remainInChallenge?: boolean) => void;
+    /** A symbol that helps identify features of the same type. */
     type: typeof ChallengeType;
+    /** The Vue component used to render this feature. */
     [Component]: GenericComponent;
+    /** A function to gather the props the vue component requires for this feature. */
     [GatherProps]: () => Record<string, unknown>;
 }
 
+/** An object that represents a feature that can be entered and exited, and have one or more completions with scaling requirements. */
 export type Challenge<T extends ChallengeOptions> = Replace<
     T & BaseChallenge,
     {
@@ -92,6 +132,7 @@ export type Challenge<T extends ChallengeOptions> = Replace<
     }
 >;
 
+/** A type that matches any valid {@link Challenge} object. */
 export type GenericChallenge = Replace<
     Challenge<ChallengeOptions>,
     {
@@ -102,6 +143,10 @@ export type GenericChallenge = Replace<
     }
 >;
 
+/**
+ * Lazily creates a challenge with the given options.
+ * @param optionsFunc Challenge options.
+ */
 export function createChallenge<T extends ChallengeOptions>(
     optionsFunc: OptionsFunc<T, BaseChallenge, GenericChallenge>
 ): Challenge<T> {
@@ -248,6 +293,12 @@ export function createChallenge<T extends ChallengeOptions>(
     });
 }
 
+/**
+ * This will automatically complete a challenge when it's requirements are met.
+ * @param challenge The challenge to auto-complete
+ * @param autoActive Whether or not auto-completing should currently occur
+ * @param exitOnComplete Whether or not to exit the challenge after auto-completion
+ */
 export function setupAutoComplete(
     challenge: GenericChallenge,
     autoActive: Computable<boolean> = true,
@@ -264,19 +315,27 @@ export function setupAutoComplete(
     );
 }
 
+/**
+ * Utility for taking an array of challenges where only one may be active at a time, and giving a ref to the one currently active (or null if none are active)
+ * @param challenges The list of challenges that are mutually exclusive
+ */
 export function createActiveChallenge(
     challenges: GenericChallenge[]
-): Ref<GenericChallenge | undefined> {
-    return computed(() => challenges.find(challenge => challenge.active.value));
+): Ref<GenericChallenge | null> {
+    return computed(() => challenges.find(challenge => challenge.active.value) ?? null);
 }
 
+/**
+ * Utility for reporting if any challenge in a list is currently active. Intended for preventing entering a challenge if another is already active.
+ * @param challenges List of challenges that are mutually exclusive
+ */
 export function isAnyChallengeActive(
-    challenges: GenericChallenge[] | Ref<GenericChallenge | undefined>
+    challenges: GenericChallenge[] | Ref<GenericChallenge | null>
 ): Ref<boolean> {
     if (isArray(challenges)) {
         challenges = createActiveChallenge(challenges);
     }
-    return computed(() => (challenges as Ref<GenericChallenge | undefined>).value != null);
+    return computed(() => (challenges as Ref<GenericChallenge | null>).value != null);
 }
 
 declare module "game/settings" {
