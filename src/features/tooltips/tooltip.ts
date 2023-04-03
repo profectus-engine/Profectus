@@ -1,6 +1,6 @@
 import type { CoercableComponent, Replace, StyleValue } from "features/feature";
 import { Component, GatherProps, setDefault } from "features/feature";
-import { persistent } from "game/persistence";
+import { deletePersistent, Persistent, persistent } from "game/persistence";
 import { Direction } from "util/common";
 import type {
     Computable,
@@ -71,18 +71,22 @@ export function addTooltip<T extends TooltipOptions>(
     processComputable(options as T, "yoffset");
 
     if (options.pinnable) {
-        if ("pinned" in element) {
-            console.error(
-                "Cannot add pinnable tooltip to element that already has a property called 'pinned'"
-            );
-            options.pinnable = false;
-        } else {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (element as any).pinned = options.pinned = persistent<boolean>(false, false);
-        }
+        options.pinned = persistent<boolean>(false, false);
     }
 
     nextTick(() => {
+        if (options.pinnable) {
+            if ("pinned" in element) {
+                console.error(
+                    "Cannot add pinnable tooltip to element that already has a property called 'pinned'"
+                );
+                options.pinnable = false;
+                deletePersistent(options.pinned as Persistent<boolean>);
+            } else {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (element as any).pinned = options.pinned;
+            }
+        }
         const elementComponent = element[Component];
         element[Component] = TooltipComponent;
         const elementGatherProps = element[GatherProps].bind(element);
