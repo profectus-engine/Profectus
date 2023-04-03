@@ -12,7 +12,7 @@
             feature: true,
             achievement: true,
             locked: !unref(earned),
-            bought: unref(earned),
+            done: unref(earned),
             small: unref(small),
             ...unref(classes)
         }"
@@ -60,7 +60,7 @@ export default defineComponent({
         MarkNode
     },
     setup(props) {
-        const { display, requirements } = toRefs(props);
+        const { display, requirements, earned } = toRefs(props);
 
         const comp = shallowRef<Component | string>("");
 
@@ -76,7 +76,9 @@ export default defineComponent({
             }
             const Requirement = coerceComponent(currDisplay.requirement ? currDisplay.requirement : jsx(() => displayRequirements(unwrapRef(requirements) ?? [])), "h3");
             const EffectDisplay = coerceComponent(currDisplay.effectDisplay || "", "b");
-            const OptionsDisplay = coerceComponent(currDisplay.optionsDisplay || "", "span");
+            const OptionsDisplay = unwrapRef(earned) ?
+                coerceComponent(currDisplay.optionsDisplay || "", "span") :
+                "";
             comp.value = coerceComponent(
                 jsx(() => (
                     <span>
@@ -117,6 +119,7 @@ export default defineComponent({
 }
 
 .achievement:not(.small) {
+    height: unset;
     width: calc(100% - 10px);
     min-width: 120px;
     padding-left: 5px;
