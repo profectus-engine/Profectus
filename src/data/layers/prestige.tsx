@@ -3,7 +3,7 @@
  * @hidden
  */
 import { main } from "data/projEntry";
-import { createCumulativeConversion, createPolynomialScaling } from "features/conversion";
+import { createCumulativeConversion } from "features/conversion";
 import { jsx } from "features/feature";
 import { createHotkey } from "features/hotkey";
 import { createReset } from "features/reset";
@@ -23,10 +23,9 @@ const layer = createLayer(id, function (this: BaseLayer) {
     const points = createResource<DecimalSource>(0, "prestige points");
 
     const conversion = createCumulativeConversion(() => ({
-        scaling: createPolynomialScaling(10, 0.5),
+        formula: x => x.div(10).sqrt(),
         baseResource: main.points,
-        gainResource: points,
-        roundUpCost: true
+        gainResource: points
     }));
 
     const reset = createReset(() => ({

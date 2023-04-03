@@ -92,6 +92,7 @@ export interface BaseConversion {
 export type Conversion<T extends ConversionOptions> = Replace<
     T & BaseConversion,
     {
+        formula: InvertibleFormula;
         currentGain: GetComputableTypeWithDefault<T["currentGain"], Ref<DecimalSource>>;
         actualGain: GetComputableTypeWithDefault<T["actualGain"], Ref<DecimalSource>>;
         currentAt: GetComputableTypeWithDefault<T["currentAt"], Ref<DecimalSource>>;
@@ -105,7 +106,6 @@ export type Conversion<T extends ConversionOptions> = Replace<
 export type GenericConversion = Replace<
     Conversion<ConversionOptions>,
     {
-        formula: InvertibleFormula;
         currentGain: ProcessedComputable<DecimalSource>;
         actualGain: ProcessedComputable<DecimalSource>;
         currentAt: ProcessedComputable<DecimalSource>;
