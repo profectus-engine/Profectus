@@ -27,12 +27,10 @@
 import "components/common/features.css";
 import MarkNode from "components/MarkNode.vue";
 import Node from "components/Node.vue";
-import { CoercableComponent, jsx } from "features/feature";
-import { Visibility, isHidden, isVisible } from "features/feature";
+import { isHidden, isVisible, jsx, Visibility } from "features/feature";
 import { displayRequirements, Requirements } from "game/requirements";
-import { coerceComponent, computeOptionalComponent, isCoercableComponent, processedPropType, unwrapRef } from "util/vue";
-import { Component, shallowRef, StyleValue, UnwrapRef, watchEffect } from "vue";
-import { defineComponent, toRefs, unref } from "vue";
+import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "util/vue";
+import { Component, defineComponent, shallowRef, StyleValue, toRefs, unref, UnwrapRef, watchEffect } from "vue";
 import { GenericAchievement } from "./achievement";
 
 export default defineComponent({
@@ -76,7 +74,7 @@ export default defineComponent({
                 comp.value = coerceComponent(currDisplay);
                 return;
             }
-            const Requirement = currDisplay.requirement ? coerceComponent(currDisplay.requirement, "h3") : displayRequirements(unwrapRef(requirements) ?? []);
+            const Requirement = coerceComponent(currDisplay.requirement ? currDisplay.requirement : jsx(() => displayRequirements(unwrapRef(requirements) ?? [])), "h3");
             const EffectDisplay = coerceComponent(currDisplay.effectDisplay || "", "b");
             const OptionsDisplay = coerceComponent(currDisplay.optionsDisplay || "", "span");
             comp.value = coerceComponent(
