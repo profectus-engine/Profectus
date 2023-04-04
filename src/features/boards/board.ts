@@ -1,5 +1,5 @@
 import BoardComponent from "features/boards/Board.vue";
-import type { OptionsFunc, Replace, StyleValue } from "features/feature";
+import type { GenericComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
 import {
     Component,
     findFeatures,
@@ -27,20 +27,27 @@ import type { Link } from "../links/links";
 
 globalBus.on("setupVue", app => panZoom.install(app));
 
+/** A symbol used to identify {@link Board} features. */
 export const BoardType = Symbol("Board");
 
+/**
+ * A type representing a computable value for a node on the board. Used for node types to return different values based on the given node and the state of the board.
+ */
 export type NodeComputable<T> = Computable<T> | ((node: BoardNode) => T);
 
+/** Ways to display progress of an action with a duration. */
 export enum ProgressDisplay {
     Outline = "Outline",
     Fill = "Fill"
 }
 
+/** Node shapes. */
 export enum Shape {
     Circle = "Circle",
     Diamond = "Triangle"
 }
 
+/** An object representing a node on the board. */
 export interface BoardNode {
     id: number;
     position: {
@@ -52,48 +59,76 @@ export interface BoardNode {
     pinned?: boolean;
 }
 
+/** An object representing a link between two nodes on the board. */
 export interface BoardNodeLink extends Omit<Link, "startNode" | "endNode"> {
     startNode: BoardNode;
     endNode: BoardNode;
     pulsing?: boolean;
 }
 
+/** An object representing a label for a node. */
 export interface NodeLabel {
     text: string;
     color?: string;
     pulsing?: boolean;
 }
 
+/** The persistent data for a board. */
 export type BoardData = {
     nodes: BoardNode[];
     selectedNode: number | null;
     selectedAction: string | null;
 };
 
+/**
+ * An object that configures a {@link NodeType}.
+ */
 export interface NodeTypeOptions {
+    /** The title to display for the node. */
     title: NodeComputable<string>;
+    /** An optional label for the node. */
     label?: NodeComputable<NodeLabel | null>;
+    /** The size of the node - diameter for circles, width and height for squares. */
     size: NodeComputable<number>;
+    /** Whether the node is draggable or not. */
     draggable?: NodeComputable<boolean>;
+    /** The shape of the node. */
     shape: NodeComputable<Shape>;
+    /** Whether the node can accept another node being dropped upon it. */
     canAccept?: boolean | Ref<boolean> | ((node: BoardNode, otherNode: BoardNode) => boolean);
+    /** The progress value of the node. */
     progress?: NodeComputable<number>;
+    /** How the progress should be displayed on the node. */
     progressDisplay?: NodeComputable<ProgressDisplay>;
+    /** The color of the progress indicator. */
     progressColor?: NodeComputable<string>;
+    /** The fill color of the node. */
     fillColor?: NodeComputable<string>;
+    /** The outline color of the node. */
     outlineColor?: NodeComputable<string>;
+    /** The color of the title text. */
     titleColor?: NodeComputable<string>;
+    /** The list of action options for the node. */
     actions?: BoardNodeActionOptions[];
+    /** The distance between the center of the node and its actions. */
     actionDistance?: NodeComputable<number>;
+    /** A function that is called when the node is clicked. */
     onClick?: (node: BoardNode) => void;
+    /** A function that is called when a node is dropped onto this node. */
     onDrop?: (node: BoardNode, otherNode: BoardNode) => void;
+    /** A function that is called for each node of this type every tick. */
     update?: (node: BoardNode, diff: number) => void;
 }
 
+/**
+ * The properties that are added onto a processed {@link NodeTypeOptions} to create a {@link NodeType}.
+ */
 export interface BaseNodeType {
+    /** The nodes currently on the board of this type. */
     nodes: Ref<BoardNode[]>;
 }
 
+/** An object that represents a type of node that can appear on a board. It will handle getting properties and callbacks for every node of that type. */
 export type NodeType<T extends NodeTypeOptions> = Replace<
     T & BaseNodeType,
     {
@@ -114,6 +149,7 @@ export type NodeType<T extends NodeTypeOptions> = Replace<
     }
 >;
 
+/** A type that matches any valid {@link NodeType} object. */
 export type GenericNodeType = Replace<
     NodeType<NodeTypeOptions>,
     {
@@ -127,20 +163,34 @@ export type GenericNodeType = Replace<
     }
 >;
 
+/**
+ * An object that configures a {@link BoardNodeAction}.
+ */
 export interface BoardNodeActionOptions {
+    /** A unique identifier for the action. */
     id: string;
+    /** Whether this action should be visible. */
     visibility?: NodeComputable<Visibility | boolean>;
+    /** The icon to display for the action. */
     icon: NodeComputable<string>;
+    /** The fill color of the action. */
     fillColor?: NodeComputable<string>;
+    /** The tooltip text to display for the action. */
     tooltip: NodeComputable<string>;
+    /** An array of board node links associated with the action. They appear when the action is focused. */
     links?: NodeComputable<BoardNodeLink[]>;
+    /** A function that is called when the action is clicked. */
     onClick: (node: BoardNode) => boolean | undefined;
 }
 
+/**
+ * The properties that are added onto a processed {@link BoardNodeActionOptions} to create an {@link BoardNodeAction}.
+ */
 export interface BaseBoardNodeAction {
     links?: Ref<BoardNodeLink[]>;
 }
 
+/** An object that represents an action that can be taken upon a node. */
 export type BoardNodeAction<T extends BoardNodeActionOptions> = Replace<
     T & BaseBoardNodeAction,
     {
@@ -152,6 +202,7 @@ export type BoardNodeAction<T extends BoardNodeActionOptions> = Replace<
     }
 >;
 
+/** A type that matches any valid {@link BoardNodeAction} object. */
 export type GenericBoardNodeAction = Replace<
     BoardNodeAction<BoardNodeActionOptions>,
     {
@@ -159,29 +210,53 @@ export type GenericBoardNodeAction = Replace<
     }
 >;
 
+/**
+ * An object that configures a {@link Board}.
+ */
 export interface BoardOptions {
+    /** Whether this board should be visible. */
     visibility?: Computable<Visibility | boolean>;
+    /** The height of the board. Defaults to 100% */
     height?: Computable<string>;
+    /** The width of the board. Defaults to 100% */
     width?: Computable<string>;
+    /** Dictionary of CSS classes to apply to this feature. */
     classes?: Computable<Record<string, boolean>>;
+    /** CSS to apply to this feature. */
     style?: Computable<StyleValue>;
+    /** A function that returns an array of initial board nodes, without IDs. */
     startNodes: () => Omit<BoardNode, "id">[];
+    /** A dictionary of node types that can appear on the board. */
     types: Record<string, NodeTypeOptions>;
+    /** The persistent state of the board. */
     state?: Computable<BoardData>;
+    /** An array of board node links to display. */
     links?: Computable<BoardNodeLink[] | null>;
 }
 
+/**
+ * The properties that are added onto a processed {@link BoardOptions} to create a {@link Board}.
+ */
 export interface BaseBoard {
+    /** An auto-generated ID for identifying features that appear in the DOM. Will not persist between refreshes or updates. */
     id: string;
+    /** All the nodes currently on the board. */
     nodes: Ref<BoardNode[]>;
+    /** The currently selected node, if any. */
     selectedNode: Ref<BoardNode | null>;
+    /** The currently selected action, if any. */
     selectedAction: Ref<GenericBoardNodeAction | null>;
+    /** The current mouse position, if over the board. */
     mousePosition: Ref<{ x: number; y: number } | null>;
+    /** A symbol that helps identify features of the same type. */
     type: typeof BoardType;
-    [Component]: typeof BoardComponent;
+    /** The Vue component used to render this feature. */
+    [Component]: GenericComponent;
+    /** A function to gather the props the vue component requires for this feature. */
     [GatherProps]: () => Record<string, unknown>;
 }
 
+/** An object that represents a feature that is a zoomable, pannable board with various nodes upon it. */
 export type Board<T extends BoardOptions> = Replace<
     T & BaseBoard,
     {
@@ -196,6 +271,7 @@ export type Board<T extends BoardOptions> = Replace<
     }
 >;
 
+/** A type that matches any valid {@link Board} object. */
 export type GenericBoard = Replace<
     Board<BoardOptions>,
     {
@@ -205,6 +281,10 @@ export type GenericBoard = Replace<
     }
 >;
 
+/**
+ * Lazily creates a board with the given options.
+ * @param optionsFunc Board options.
+ */
 export function createBoard<T extends BoardOptions>(
     optionsFunc: OptionsFunc<T, BaseBoard, GenericBoard>
 ): Board<T> {
@@ -221,7 +301,7 @@ export function createBoard<T extends BoardOptions>(
         const board = optionsFunc();
         board.id = getUniqueID("board-");
         board.type = BoardType;
-        board[Component] = BoardComponent;
+        board[Component] = BoardComponent as GenericComponent;
 
         if (board.state) {
             deletePersistent(state);
@@ -368,10 +448,19 @@ export function createBoard<T extends BoardOptions>(
     });
 }
 
+/**
+ * Gets the value of a property for a specified node.
+ * @param property The property to find the value of
+ * @param node The node to get the property of
+ */
 export function getNodeProperty<T>(property: NodeComputable<T>, node: BoardNode): T {
     return isFunction<T, [BoardNode], Computable<T>>(property) ? property(node) : unref(property);
 }
 
+/**
+ * Utility to get an ID for a node that is guaranteed unique.
+ * @param board The board feature to generate an ID for
+ */
 export function getUniqueNodeID(board: GenericBoard): number {
     let id = 0;
     board.nodes.value.forEach(node => {

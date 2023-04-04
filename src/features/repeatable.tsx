@@ -1,6 +1,12 @@
 import { isArray } from "@vue/shared";
 import ClickableComponent from "features/clickables/Clickable.vue";
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import { Component, GatherProps, getUniqueID, jsx, setDefault, Visibility } from "features/feature";
 import { DefaultValue, Persistent, persistent } from "game/persistence";
 import {
@@ -37,7 +43,7 @@ export type RepeatableDisplay =
           title?: CoercableComponent;
           /** The main text that appears in the display. */
           description?: CoercableComponent;
-          /** A description of the current effect of this repeatable, bsed off its amount. */
+          /** A description of the current effect of this repeatable, based off its amount. */
           effectDisplay?: CoercableComponent;
           /** Whether or not to show the current amount of this repeatable at the bottom of the display. */
           showAmount?: boolean;
@@ -71,7 +77,7 @@ export interface RepeatableOptions {
  * The properties that are added onto a processed {@link RepeatableOptions} to create a {@link Repeatable}.
  */
 export interface BaseRepeatable {
-    /** An auto-generated ID for identifying features that appear in the DOM. Will not persistent between refreshes or updates. */
+    /** An auto-generated ID for identifying features that appear in the DOM. Will not persist between refreshes or updates. */
     id: string;
     /** The current amount this repeatable has. */
     amount: Persistent<DecimalSource>;
@@ -79,12 +85,17 @@ export interface BaseRepeatable {
     maxed: Ref<boolean>;
     /** Whether or not this repeatable can be clicked. */
     canClick: ProcessedComputable<boolean>;
+    /**
+     * How much amount can be increased by, or 1 if unclickable.
+     * Capped at 1 if {@link RepeatableOptions.maximize} is false.
+     **/
+    amountToIncrease: Ref<DecimalSource>;
     /** A function that gets called when this repeatable is clicked. */
     onClick: (event?: MouseEvent | TouchEvent) => void;
     /** A symbol that helps identify features of the same type. */
     type: typeof RepeatableType;
     /** The Vue component used to render this feature. */
-    [Component]: typeof ClickableComponent;
+    [Component]: GenericComponent;
     /** A function to gather the props the vue component requires for this feature. */
     [GatherProps]: () => Record<string, unknown>;
 }
@@ -129,7 +140,7 @@ export function createRepeatable<T extends RepeatableOptions>(
 
         repeatable.id = getUniqueID("repeatable-");
         repeatable.type = RepeatableType;
-        repeatable[Component] = ClickableComponent;
+        repeatable[Component] = ClickableComponent as GenericComponent;
 
         for (const decorator of decorators) {
             decorator.preConstruct?.(repeatable);
@@ -179,6 +190,11 @@ export function createRepeatable<T extends RepeatableOptions>(
             }
             return currClasses;
         });
+        repeatable.amountToIncrease = computed(() =>
+            unref((repeatable as GenericRepeatable).maximize)
+                ? maxRequirementsMet(repeatable.requirements)
+                : 1
+        );
         repeatable.canClick = computed(() => requirementsMet(repeatable.requirements));
         const onClick = repeatable.onClick;
         repeatable.onClick = function (this: GenericRepeatable, event?: MouseEvent | TouchEvent) {
@@ -186,12 +202,7 @@ export function createRepeatable<T extends RepeatableOptions>(
             if (!unref(genericRepeatable.canClick)) {
                 return;
             }
-            payRequirements(
-                repeatable.requirements,
-                unref(genericRepeatable.maximize)
-                    ? maxRequirementsMet(genericRepeatable.requirements)
-                    : 1
-            );
+            payRequirements(repeatable.requirements, unref(repeatable.amountToIncrease));
             genericRepeatable.amount.value = Decimal.add(genericRepeatable.amount.value, 1);
             onClick?.(event);
         };
@@ -240,9 +251,7 @@ export function createRepeatable<T extends RepeatableOptions>(
                                 <br />
                                 {displayRequirements(
                                     genericRepeatable.requirements,
-                                    unref(genericRepeatable.maximize)
-                                        ? maxRequirementsMet(genericRepeatable.requirements)
-                                        : 1
+                                    unref(repeatable.amountToIncrease)
                                 )}
                             </div>
                         )}

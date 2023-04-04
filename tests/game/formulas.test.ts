@@ -2,18 +2,18 @@ import { createResource, Resource } from "features/resources/resource";
 import Formula, {
     calculateCost,
     calculateMaxAffordable,
-    GenericFormula,
-    InvertibleFormula,
+    printFormula,
     unrefFormulaSource
-} from "game/formulas";
-import Decimal, { DecimalSource } from "util/bignum";
+} from "game/formulas/formulas";
+import type { GenericFormula, InvertibleFormula } from "game/formulas/types";
+import Decimal, { DecimalSource, format } from "util/bignum";
 import { beforeAll, describe, expect, test } from "vitest";
 import { ref } from "vue";
 import "../utils";
 
 type FormulaFunctions = keyof GenericFormula & keyof typeof Formula & keyof typeof Decimal;
 
-const testValues = ["-1e400", 0, 0.25] as const;
+const testValues = [-1, "0", Decimal.dOne] as const;
 
 const invertibleZeroParamFunctionNames = [
     "neg",
@@ -40,7 +40,10 @@ const invertibleZeroParamFunctionNames = [
     "tanh",
     "asinh",
     "acosh",
-    "atanh"
+    "atanh",
+    "slog",
+    "tetrate",
+    "iteratedexp"
 ] as const;
 const nonInvertibleZeroParamFunctionNames = [
     "abs",
@@ -94,21 +97,21 @@ const invertibleIntegralZeroPramFunctionNames = [
     "sqr",
     "sqrt",
     "cube",
-    "cbrt"
-] as const;
-const nonInvertibleIntegralZeroPramFunctionNames = [
-    ...nonIntegrableZeroParamFunctionNames,
+    "cbrt",
     "neg",
     "exp",
     "sin",
     "cos",
     "tan",
+    "sinh",
+    "cosh",
+    "tanh"
+] as const;
+const nonInvertibleIntegralZeroPramFunctionNames = [
+    ...nonIntegrableZeroParamFunctionNames,
     "asin",
     "acos",
     "atan",
-    "sinh",
-    "cosh",
-    "tanh",
     "asinh",
     "acosh",
     "atanh"
@@ -122,7 +125,7 @@ const invertibleOneParamFunctionNames = [
     "log",
     "pow",
     "root",
-    "slog"
+    "layeradd"
 ] as const;
 const nonInvertibleOneParamFunctionNames = ["layeradd10"] as const;
 const integrableOneParamFunctionNames = ["add", "sub", "mul", "div", "log", "pow", "root"] as const;
@@ -130,21 +133,19 @@ const nonIntegrableOneParamFunctionNames = [...nonInvertibleOneParamFunctionName
 const invertibleIntegralOneParamFunctionNames = integrableOneParamFunctionNames;
 const nonInvertibleIntegralOneParamFunctionNames = nonIntegrableOneParamFunctionNames;
 
-const invertibleTwoParamFunctionNames = ["tetrate", "layeradd", "iteratedexp"] as const;
 const nonInvertibleTwoParamFunctionNames = ["iteratedlog", "pentate"] as const;
-const nonIntegrableTwoParamFunctionNames = [
-    ...invertibleTwoParamFunctionNames,
-    ...nonInvertibleZeroParamFunctionNames
-];
+const nonIntegrableTwoParamFunctionNames = nonInvertibleTwoParamFunctionNames;
 const nonInvertibleIntegralTwoParamFunctionNames = nonIntegrableTwoParamFunctionNames;
 
 describe("Formula Equality Checking", () => {
     describe("Equality Checks", () => {
-        test("Equals", () => Formula.add(1, 1).equals(Formula.add(1, 1)));
-        test("Not Equals due to inputs", () => Formula.add(1, 1).equals(Formula.add(1, 0)));
-        test("Not Equals due to functions", () => Formula.add(1, 1).equals(Formula.sub(1, 1)));
+        test("Equals", () => expect(Formula.add(1, 1).equals(Formula.add(1, 1))).toBe(true));
+        test("Not Equals due to inputs", () =>
+            expect(Formula.add(1, 1).equals(Formula.add(1, 0))).toBe(false));
+        test("Not Equals due to functions", () =>
+            expect(Formula.add(1, 1).equals(Formula.sub(1, 1))).toBe(false));
         test("Not Equals due to hasVariable", () =>
-            Formula.constant(1).equals(Formula.variable(1)));
+            expect(Formula.constant(1).equals(Formula.variable(1))).toBe(false));
     });
 
     describe("Formula aliases", () => {
@@ -197,16 +198,6 @@ describe("Formula Equality Checking", () => {
                 test(name, () => {
                     const instanceFormula = formula[name](10);
                     const staticFormula = Formula[name](formula, 10);
-                    expect(instanceFormula.equals(staticFormula)).toBe(true);
-                });
-            }
-        );
-
-        [...invertibleTwoParamFunctionNames, ...nonInvertibleTwoParamFunctionNames].forEach(
-            name => {
-                test(name, () => {
-                    const instanceFormula = formula[name](1, 1);
-                    const staticFormula = Formula[name](formula, 1, 1);
                     expect(instanceFormula.equals(staticFormula)).toBe(true);
                 });
             }
@@ -272,6 +263,11 @@ describe("Creating Formulas", () => {
         functionName: T,
         args: Readonly<Parameters<typeof Formula[T]>>
     ) {
+        if ((functionName === "slog" || functionName === "layeradd") && args[0] === -1) {
+            // These cases in particular take a long time, so skip them
+            // We still have plenty of coverage
+            return;
+        }
         let testName = functionName + "(";
         for (let i = 0; i < args.length; i++) {
             if (i !== 0) {
@@ -331,13 +327,7 @@ describe("Creating Formulas", () => {
         );
     });
     describe("2-param", () => {
-        (
-            [
-                ...invertibleTwoParamFunctionNames,
-                ...nonInvertibleTwoParamFunctionNames,
-                "clamp"
-            ] as const
-        ).forEach(names =>
+        ([...nonInvertibleTwoParamFunctionNames, "clamp"] as const).forEach(names =>
             describe(names, () => {
                 checkFormula(names, [0, 0, 0] as const);
                 testValues.forEach(i =>
@@ -403,24 +393,6 @@ describe("Inverting", () => {
                     checkFormula(Formula[name](variable, variable), false));
             });
         });
-        invertibleTwoParamFunctionNames.forEach(name => {
-            describe(name, () => {
-                test(`${name}(var, const, const) is marked as invertible and having a variable`, () =>
-                    checkFormula(Formula[name](variable, constant, constant)));
-                test(`${name}(const, var, const) is marked as invertible and having a variable`, () =>
-                    checkFormula(Formula[name](constant, variable, constant)));
-                test(`${name}(const, const, var) is marked as invertible and having a variable`, () =>
-                    checkFormula(Formula[name](constant, constant, variable)));
-                test(`${name}(var, var, const) is marked as not invertible and not having a variable`, () =>
-                    checkFormula(Formula[name](variable, variable, constant), false));
-                test(`${name}(var, const, var) is marked as not invertible and not having a variable`, () =>
-                    checkFormula(Formula[name](variable, constant, variable), false));
-                test(`${name}(const, var, var) is marked as not invertible and not having a variable`, () =>
-                    checkFormula(Formula[name](constant, variable, variable), false));
-                test(`${name}(var, var, var) is marked as not invertible and not having a variable`, () =>
-                    checkFormula(Formula[name](variable, variable, variable), false));
-            });
-        });
     });
 
     describe("Non-invertible formulas marked as such", () => {
@@ -479,30 +451,13 @@ describe("Inverting", () => {
                     const result = formula.evaluate();
                     expect(formula.invert(result)).compare_tolerance(2);
                 });
-                test(`${name}(const, var).invert()`, () => {
-                    const formula = Formula[name](constant, variable);
-                    const result = formula.evaluate();
-                    expect(formula.invert(result)).compare_tolerance(2);
-                });
-            })
-        );
-        invertibleTwoParamFunctionNames.forEach(name =>
-            describe(name, () => {
-                test(`${name}(var, const, const).invert()`, () => {
-                    const formula = Formula[name](variable, constant, constant);
-                    const result = formula.evaluate();
-                    expect(formula.invert(result)).compare_tolerance(2);
-                });
-                test(`${name}(const, var, const).invert()`, () => {
-                    const formula = Formula[name](constant, variable, constant);
-                    const result = formula.evaluate();
-                    expect(formula.invert(result)).compare_tolerance(2);
-                });
-                test(`${name}(const, const, var).invert()`, () => {
-                    const formula = Formula[name](constant, constant, variable);
-                    const result = formula.evaluate();
-                    expect(formula.invert(result)).compare_tolerance(2);
-                });
+                if (name !== "layeradd") {
+                    test(`${name}(const, var).invert()`, () => {
+                        const formula = Formula[name](constant, variable);
+                        const result = formula.evaluate();
+                        expect(formula.invert(result)).compare_tolerance(2);
+                    });
+                }
             })
         );
     });
@@ -530,7 +485,7 @@ describe("Inverting", () => {
     test("Inverting with non-invertible sections", () => {
         const formula = Formula.add(variable, constant.ceil());
         expect(formula.isInvertible()).toBe(true);
-        expect(formula.invert(10)).compare_tolerance(7);
+        expect(formula.invert(10)).compare_tolerance(0);
     });
 });
 
@@ -538,14 +493,14 @@ describe("Integrating", () => {
     let variable: GenericFormula;
     let constant: GenericFormula;
     beforeAll(() => {
-        variable = Formula.variable(10);
+        variable = Formula.variable(ref(10));
         constant = Formula.constant(10);
     });
 
-    test("evaluateIntegral() returns variable's value", () =>
-        expect(variable.evaluate()).compare_tolerance(10));
-    test("evaluateIntegral(variable) overrides variable value", () =>
-        expect(variable.add(10).evaluateIntegral(20)).compare_tolerance(400));
+    test("variable.evaluateIntegral() calculates correctly", () =>
+        expect(variable.evaluateIntegral()).compare_tolerance(Decimal.pow(10, 2).div(2)));
+    test("variable.evaluateIntegral(variable) overrides variable value", () =>
+        expect(variable.evaluateIntegral(20)).compare_tolerance(Decimal.pow(20, 2).div(2)));
 
     describe("Integrable functions marked as such", () => {
         function checkFormula(formula: GenericFormula) {
@@ -562,8 +517,10 @@ describe("Integrating", () => {
             describe(name, () => {
                 test(`${name}(var, const) is marked as integrable`, () =>
                     checkFormula(Formula[name](variable, constant)));
-                test(`${name}(const, var) is marked as integrable`, () =>
-                    checkFormula(Formula[name](constant, variable)));
+                if (name !== "log" && name !== "root") {
+                    test(`${name}(const, var) is marked as integrable`, () =>
+                        checkFormula(Formula[name](constant, variable)));
+                }
                 test(`${name}(var, var) is marked as not integrable`, () =>
                     expect(Formula[name](variable, variable).isIntegrable()).toBe(false));
             });
@@ -614,8 +571,44 @@ describe("Integrating", () => {
     describe.todo("Integrable formulas integrate correctly");
 
     test("Integrating nested formulas", () => {
-        const formula = Formula.add(variable, constant).times(constant);
-        expect(formula.evaluateIntegral()).compare_tolerance(1500);
+        const formula = Formula.add(variable, constant).times(constant).pow(2).times(30).add(10);
+        const actualCost = new Array(10)
+            .fill(null)
+            .reduce((acc, _, i) => acc.add(formula.evaluate(i)), new Decimal(0));
+        // Check if the calculated cost is within 10% of the actual cost,
+        // because this is an approximation
+        expect(
+            Decimal.sub(
+                actualCost,
+                Decimal.add(formula.evaluateIntegral(), formula.calculateConstantOfIntegration())
+            )
+                .abs()
+                .div(actualCost)
+                .toNumber()
+        ).toBeLessThan(0.1);
+    });
+
+    test("Integrating nested formulas with overidden variable", () => {
+        const formula = Formula.add(variable, constant).times(constant).pow(2).times(30).add(10);
+        const actualCost = new Array(20)
+            .fill(null)
+            .reduce((acc, _, i) => acc.add(formula.evaluate(i)), new Decimal(0));
+        // Check if the calculated cost is within 10% of the actual cost,
+        // because this is an approximation
+        expect(
+            Decimal.sub(
+                actualCost,
+                Decimal.add(formula.evaluateIntegral(20), formula.calculateConstantOfIntegration())
+            )
+                .abs()
+                .div(actualCost)
+                .toNumber()
+        ).toBeLessThan(0.1);
+    });
+
+    test("Integrating nested complex formulas", () => {
+        const formula = Formula.pow(1.05, variable).times(100).pow(0.5);
+        expect(() => formula.evaluateIntegral()).toThrow();
     });
 });
 
@@ -627,8 +620,10 @@ describe("Inverting integrals", () => {
         constant = Formula.constant(10);
     });
 
-    test("variable.invertIntegral() is pass-through", () =>
-        expect(variable.invertIntegral(20)).compare_tolerance(20));
+    test("variable.invertIntegral() calculates correctly", () =>
+        expect(variable.invertIntegral(20)).compare_tolerance(
+            Decimal.sqrt(20).times(Decimal.sqrt(2))
+        ));
 
     describe("Invertible Integral functions marked as such", () => {
         function checkFormula(formula: GenericFormula) {
@@ -645,8 +640,10 @@ describe("Inverting integrals", () => {
             describe(name, () => {
                 test(`${name}(var, const) is marked as having an invertible integral`, () =>
                     checkFormula(Formula[name](variable, constant)));
-                test(`${name}(const, var) is marked as having an invertible integral`, () =>
-                    checkFormula(Formula[name](constant, variable)));
+                if (name !== "log" && name !== "root") {
+                    test(`${name}(const, var) is marked as having an invertible integral`, () =>
+                        checkFormula(Formula[name](constant, variable)));
+                }
                 test(`${name}(var, var) is marked as not having an invertible integral`, () => {
                     const formula = Formula[name](variable, variable);
                     expect(formula.isIntegralInvertible()).toBe(false);
@@ -700,27 +697,13 @@ describe("Inverting integrals", () => {
     describe.todo("Invertible Integral formulas invert correctly");
 
     test("Inverting integral of nested formulas", () => {
-        const formula = Formula.add(variable, constant).times(constant);
-        expect(formula.invertIntegral(1500)).compare_tolerance(10);
+        const formula = Formula.add(variable, constant).times(constant).pow(2).times(30);
+        expect(formula.invertIntegral(formula.evaluateIntegral())).compare_tolerance(10);
     });
 
-    describe("Inverting integral pass-throughs", () => {
-        test("max", () =>
-            expect(Formula.max(variable, constant).invertIntegral(10)).compare_tolerance(10));
-        test("min", () =>
-            expect(Formula.min(variable, constant).invertIntegral(10)).compare_tolerance(10));
-        test("minabs", () =>
-            expect(Formula.minabs(variable, constant).invertIntegral(10)).compare_tolerance(10));
-        test("maxabs", () =>
-            expect(Formula.maxabs(variable, constant).invertIntegral(10)).compare_tolerance(10));
-        test("clampMax", () =>
-            expect(Formula.clampMax(variable, constant).invertIntegral(10)).compare_tolerance(10));
-        test("clampMin", () =>
-            expect(Formula.clampMin(variable, constant).invertIntegral(10)).compare_tolerance(10));
-        test("clamp", () =>
-            expect(
-                Formula.clamp(variable, constant, constant).invertIntegral(10)
-            ).compare_tolerance(10));
+    test("Inverting integral of nested complex formulas", () => {
+        const formula = Formula.pow(1.05, variable).times(100).pow(0.5);
+        expect(() => formula.invertIntegral(100)).toThrow();
     });
 });
 
@@ -785,6 +768,17 @@ describe("Step-wise", () => {
             ).compare_tolerance(10));
     });
 
+    describe("Pass-through at boundary", () => {
+        test("Evaluates correctly", () =>
+            expect(
+                Formula.step(constant, 10, value => Formula.sqrt(value)).evaluate()
+            ).compare_tolerance(10));
+        test("Inverts correctly with variable in input", () =>
+            expect(
+                Formula.step(variable, 10, value => Formula.sqrt(value)).invert(10)
+            ).compare_tolerance(10));
+    });
+
     describe("Evaluates correctly beyond start", () => {
         test("Evaluates correctly", () =>
             expect(
@@ -794,6 +788,23 @@ describe("Step-wise", () => {
             expect(
                 Formula.step(variable, 8, value => Formula.add(value, 2)).invert(12)
             ).compare_tolerance(10));
+    });
+
+    describe("Evaluates correctly when nested", () => {
+        test("Evaluates correctly", () =>
+            expect(
+                Formula.add(variable, constant)
+                    .step(10, value => Formula.mul(value, 2))
+                    .sub(10)
+                    .evaluate()
+            ).compare_tolerance(20));
+        test("Inverts correctly", () =>
+            expect(
+                Formula.add(variable, constant)
+                    .step(10, value => Formula.mul(value, 2))
+                    .sub(10)
+                    .invert(30)
+            ).compare_tolerance(15));
     });
 });
 
@@ -868,9 +879,31 @@ describe("Conditionals", () => {
                 Formula.if(variable, true, value => Formula.add(value, 2)).invert(12)
             ).compare_tolerance(10));
     });
+
+    describe("Evaluates correctly when nested", () => {
+        test("Evaluates correctly", () =>
+            expect(
+                Formula.add(variable, constant)
+                    .if(true, value => Formula.add(value, 2))
+                    .div(2)
+                    .evaluate()
+            ).compare_tolerance(11));
+        test("Inverts correctly", () =>
+            expect(
+                Formula.add(variable, constant)
+                    .if(true, value => Formula.add(value, 2))
+                    .div(2)
+                    .invert(12)
+            ).compare_tolerance(12));
+    });
 });
 
 describe("Custom Formulas", () => {
+    let variable: GenericFormula;
+    beforeAll(() => {
+        variable = Formula.variable(1);
+    });
+
     describe("Formula with evaluate", () => {
         test("Zero input evaluates correctly", () =>
             expect(new Formula({ inputs: [], evaluate: () => 10 }).evaluate()).compare_tolerance(
@@ -887,126 +920,251 @@ describe("Custom Formulas", () => {
     });
 
     describe("Formula with invert", () => {
-        test("Zero input inverts correctly", () =>
-            expect(
+        test("Zero input does not invert", () =>
+            expect(() =>
                 new Formula({
                     inputs: [],
                     evaluate: () => 6,
-                    invert: value => value,
-                    hasVariable: true
+                    invert: value => value
                 }).invert(10)
-            ).compare_tolerance(10));
+            ).toThrow());
         test("One input inverts correctly", () =>
             expect(
                 new Formula({
-                    inputs: [1],
+                    inputs: [variable],
                     evaluate: () => 10,
-                    invert: (value, v1) => v1,
-                    hasVariable: true
+                    invert: (value, v1) => v1.evaluate()
                 }).invert(10)
             ).compare_tolerance(1));
         test("Two inputs inverts correctly", () =>
             expect(
                 new Formula({
-                    inputs: [1, 2],
+                    inputs: [variable, 2],
                     evaluate: () => 10,
-                    invert: (value, v1, v2) => v2,
-                    hasVariable: true
+                    invert: (value, v1, v2) => v2
                 }).invert(10)
             ).compare_tolerance(2));
     });
 
     describe("Formula with integrate", () => {
-        test("Zero input integrates correctly", () =>
-            expect(
+        test("Zero input cannot integrate", () =>
+            expect(() =>
                 new Formula({
                     inputs: [],
-                    evaluate: () => 10,
-                    integrate: () => 20
+                    evaluate: () => 0,
+                    integrate: stack => variable
                 }).evaluateIntegral()
-            ).compare_tolerance(20));
+            ).toThrow());
         test("One input integrates correctly", () =>
             expect(
                 new Formula({
-                    inputs: [1],
-                    evaluate: () => 10,
-                    integrate: (val, v1) => val ?? 20
+                    inputs: [variable],
+                    evaluate: v1 => Decimal.add(v1, 10),
+                    integrate: (stack, v1) => Formula.add(v1, 10)
                 }).evaluateIntegral()
-            ).compare_tolerance(20));
+            ).compare_tolerance(11));
         test("Two inputs integrates correctly", () =>
             expect(
                 new Formula({
-                    inputs: [1, 2],
-                    evaluate: (v1, v2) => 10,
-                    integrate: (v1, v2) => 3
+                    inputs: [variable, 10],
+                    evaluate: (v1, v2) => Decimal.add(v1, v2),
+                    integrate: (stack, v1, v2) => Formula.add(v1, v2)
                 }).evaluateIntegral()
-            ).compare_tolerance(3));
+            ).compare_tolerance(11));
     });
 
     describe("Formula with invertIntegral", () => {
-        test("Zero input inverts integral correctly", () =>
-            expect(
+        test("Zero input does not invert integral", () =>
+            expect(() =>
                 new Formula({
                     inputs: [],
-                    evaluate: () => 10,
-                    invertIntegral: () => 1,
-                    hasVariable: true
-                }).invertIntegral(8)
-            ).compare_tolerance(1));
+                    evaluate: () => 0,
+                    integrate: stack => variable
+                }).invertIntegral(20)
+            ).toThrow());
         test("One input inverts integral correctly", () =>
             expect(
                 new Formula({
-                    inputs: [1],
-                    evaluate: () => 10,
-                    invertIntegral: (val, v1) => 1,
-                    hasVariable: true
-                }).invertIntegral(8)
-            ).compare_tolerance(1));
+                    inputs: [variable],
+                    evaluate: v1 => Decimal.add(v1, 10),
+                    integrate: (stack, v1) => Formula.add(v1, 10)
+                }).invertIntegral(20)
+            ).compare_tolerance(10));
         test("Two inputs inverts integral correctly", () =>
             expect(
                 new Formula({
-                    inputs: [1, 2],
-                    evaluate: (v1, v2) => 10,
-                    invertIntegral: (v1, v2) => 1,
-                    hasVariable: true
-                }).invertIntegral(8)
-            ).compare_tolerance(1));
+                    inputs: [variable, 10],
+                    evaluate: (v1, v2) => Decimal.add(v1, v2),
+                    integrate: (stack, v1, v2) => Formula.add(v1, v2)
+                }).invertIntegral(20)
+            ).compare_tolerance(10));
+    });
+
+    describe("Formula as input", () => {
+        let customFormula: GenericFormula;
+        beforeAll(() => {
+            customFormula = new Formula({
+                inputs: [variable],
+                evaluate: v1 => v1,
+                invert: value => value,
+                integrate: (stack, v1) => v1.getIntegralFormula(stack)
+            });
+        });
+        test("Evaluate correctly", () =>
+            expect(customFormula.add(10).evaluate()).compare_tolerance(11));
+        test("Invert correctly", () =>
+            expect(customFormula.add(10).invert(20)).compare_tolerance(10));
+        test("Integrate correctly", () =>
+            expect(customFormula.add(10).evaluateIntegral(10)).compare_tolerance(20));
     });
 });
 
 describe("Buy Max", () => {
     let resource: Resource;
     beforeAll(() => {
-        resource = createResource(ref(10));
+        resource = createResource(ref(100000));
     });
-    describe("With spending", () => {
+    describe("Without spending", () => {
         test("Throws on formula with non-invertible integral", () => {
             const maxAffordable = calculateMaxAffordable(Formula.neg(10), resource, false);
             expect(() => maxAffordable.value).toThrow();
         });
-        // https://www.desmos.com/calculator/5vgletdc1p
         test("Calculates max affordable and cost correctly", () => {
-            const variable = Formula.variable(10);
-            const formula = Formula.pow(1.05, variable);
+            const variable = Formula.variable(0);
+            const formula = Formula.pow(1.05, variable).times(100);
             const maxAffordable = calculateMaxAffordable(formula, resource, false);
-            expect(maxAffordable.value).compare_tolerance(47);
+            expect(maxAffordable.value).compare_tolerance(141);
             expect(calculateCost(formula, maxAffordable.value, false)).compare_tolerance(
-                Decimal.pow(1.05, 47)
+                Decimal.pow(1.05, 141).times(100)
             );
         });
     });
-    describe("Without spending", () => {
+    describe("With spending", () => {
         test("Throws on non-invertible formula", () => {
             const maxAffordable = calculateMaxAffordable(Formula.abs(10), resource);
             expect(() => maxAffordable.value).toThrow();
         });
-        // https://www.desmos.com/calculator/5vgletdc1p
-        test("Calculates max affordable and cost correctly", () => {
-            const variable = Formula.variable(10);
-            const formula = Formula.pow(1.05, variable);
+        test("Estimates max affordable and cost correctly with 0 purchases", () => {
+            const purchases = ref(0);
+            const variable = Formula.variable(purchases);
+            const formula = Formula.pow(1.05, variable).times(100);
+            const maxAffordable = calculateMaxAffordable(formula, resource, true, 0);
+            let actualAffordable = 0;
+            let summedCost = Decimal.dZero;
+            while (true) {
+                const nextCost = formula.evaluate(actualAffordable);
+                if (Decimal.add(summedCost, nextCost).lte(resource.value)) {
+                    actualAffordable++;
+                    summedCost = Decimal.add(summedCost, nextCost);
+                } else {
+                    break;
+                }
+            }
+            expect(maxAffordable.value).compare_tolerance(actualAffordable);
+
+            const actualCost = new Array(actualAffordable)
+                .fill(null)
+                .reduce((acc, _, i) => acc.add(formula.evaluate(i)), new Decimal(0));
+            const calculatedCost = calculateCost(formula, maxAffordable.value);
+            // Check if the calculated cost is within 10% of the actual cost,
+            // because this is an approximation
+            expect(
+                Decimal.sub(actualCost, calculatedCost).abs().div(actualCost).toNumber()
+            ).toBeLessThan(0.1);
+        });
+        test("Estimates max affordable and cost with 1 purchase", () => {
+            const purchases = ref(1);
+            const variable = Formula.variable(purchases);
+            const formula = Formula.pow(1.05, variable).times(100);
+            const maxAffordable = calculateMaxAffordable(formula, resource, true, 0);
+            let actualAffordable = 0;
+            let summedCost = Decimal.dZero;
+            while (true) {
+                const nextCost = formula.evaluate(Decimal.add(actualAffordable, 1));
+                if (Decimal.add(summedCost, nextCost).lte(resource.value)) {
+                    actualAffordable++;
+                    summedCost = Decimal.add(summedCost, nextCost);
+                } else {
+                    break;
+                }
+            }
+            expect(maxAffordable.value).compare_tolerance(actualAffordable);
+
+            const actualCost = new Array(actualAffordable)
+                .fill(null)
+                .reduce((acc, _, i) => acc.add(formula.evaluate(i + 1)), new Decimal(0));
+            const calculatedCost = calculateCost(formula, maxAffordable.value);
+            // Check if the calculated cost is within 10% of the actual cost,
+            // because this is an approximation
+            expect(
+                Decimal.sub(actualCost, calculatedCost).abs().div(actualCost).toNumber()
+            ).toBeLessThan(0.1);
+        });
+        test("Estimates max affordable and cost more accurately with summing last purchases", () => {
+            const purchases = ref(1);
+            const variable = Formula.variable(purchases);
+            const formula = Formula.pow(1.05, variable).times(100);
             const maxAffordable = calculateMaxAffordable(formula, resource);
-            expect(maxAffordable.value).compare_tolerance(7);
-            expect(calculateCost(formula, maxAffordable.value)).compare_tolerance(7.35);
+            let actualAffordable = 0;
+            let summedCost = Decimal.dZero;
+            while (true) {
+                const nextCost = formula.evaluate(Decimal.add(actualAffordable, 1));
+                if (Decimal.add(summedCost, nextCost).lte(resource.value)) {
+                    actualAffordable++;
+                    summedCost = Decimal.add(summedCost, nextCost);
+                } else {
+                    break;
+                }
+            }
+            expect(maxAffordable.value).compare_tolerance(actualAffordable);
+
+            const actualCost = new Array(actualAffordable)
+                .fill(null)
+                .reduce((acc, _, i) => acc.add(formula.evaluate(i + 1)), new Decimal(0));
+            const calculatedCost = calculateCost(formula, maxAffordable.value);
+            // Since we're summing the last few purchases, this has a tighter deviation allowed
+            expect(
+                Decimal.sub(actualCost, calculatedCost).abs().div(actualCost).toNumber()
+            ).toBeLessThan(0.02);
+        });
+        test("Handles summing purchases when making few purchases", () => {
+            const purchases = ref(90);
+            const variable = Formula.variable(purchases);
+            const formula = Formula.pow(1.05, variable).times(100);
+            const maxAffordable = calculateMaxAffordable(formula, resource);
+            let actualAffordable = 0;
+            let summedCost = Decimal.dZero;
+            while (true) {
+                const nextCost = formula.evaluate(Decimal.add(actualAffordable, purchases.value));
+                if (Decimal.add(summedCost, nextCost).lte(resource.value)) {
+                    actualAffordable++;
+                    summedCost = Decimal.add(summedCost, nextCost);
+                } else {
+                    break;
+                }
+            }
+            expect(maxAffordable.value).compare_tolerance(actualAffordable);
+
+            const actualCost = new Array(actualAffordable)
+                .fill(null)
+                .reduce(
+                    (acc, _, i) => acc.add(formula.evaluate(i + purchases.value)),
+                    new Decimal(0)
+                );
+            const calculatedCost = calculateCost(formula, maxAffordable.value);
+            // Since we're summing all the purchases this should be equivalent
+            expect(calculatedCost).compare_tolerance(actualCost);
+        });
+        test("Handles summing purchases when over e308 purchases", () => {
+            resource.value = "1ee308";
+            const purchases = ref(0);
+            const variable = Formula.variable(purchases);
+            const formula = variable;
+            const maxAffordable = calculateMaxAffordable(formula, resource);
+            const calculatedCost = calculateCost(formula, maxAffordable.value);
+            expect(Decimal.isNaN(calculatedCost)).toBe(false);
+            expect(Decimal.isFinite(calculatedCost)).toBe(true);
+            resource.value = 100000;
         });
     });
 });

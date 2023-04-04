@@ -1,14 +1,15 @@
 import Collapsible from "components/layout/Collapsible.vue";
+import { GenericAchievement } from "features/achievements/achievement";
 import type { Clickable, ClickableOptions, GenericClickable } from "features/clickables/clickable";
 import { createClickable } from "features/clickables/clickable";
 import type { GenericConversion } from "features/conversion";
 import type { CoercableComponent, JSXFunction, OptionsFunc, Replace } from "features/feature";
 import { jsx, setDefault } from "features/feature";
-import { GenericMilestone } from "features/milestones/milestone";
 import { displayResource, Resource } from "features/resources/resource";
 import type { GenericTree, GenericTreeNode, TreeNode, TreeNodeOptions } from "features/trees/tree";
 import { createTreeNode } from "features/trees/tree";
-import { GenericFormula } from "game/formulas";
+import Formula from "game/formulas/formulas";
+import type { FormulaSource, GenericFormula } from "game/formulas/types";
 import type { Modifier } from "game/modifiers";
 import type { Persistent } from "game/persistence";
 import { DefaultValue, persistent } from "game/persistence";
@@ -383,35 +384,35 @@ export function colorText(textToColor: string, color = "var(--accent2)"): JSX.El
 }
 
 /**
- * Creates a collapsible display of a list of milestones
- * @param milestones A dictionary of the milestones to display, inserted in the order from easiest to hardest
+ * Creates a collapsible display of a list of achievements
+ * @param achievements A dictionary of the achievements to display, inserted in the order from easiest to hardest
  */
-export function createCollapsibleMilestones(milestones: Record<string, GenericMilestone>) {
-    // Milestones are typically defined from easiest to hardest, and we want to show hardest first
-    const orderedMilestones = Object.values(milestones).reverse();
-    const collapseMilestones = persistent<boolean>(true, false);
-    const lockedMilestones = computed(() =>
-        orderedMilestones.filter(m => m.earned.value === false)
+export function createCollapsibleAchievements(achievements: Record<string, GenericAchievement>) {
+    // Achievements are typically defined from easiest to hardest, and we want to show hardest first
+    const orderedAchievements = Object.values(achievements).reverse();
+    const collapseAchievements = persistent<boolean>(true, false);
+    const lockedAchievements = computed(() =>
+        orderedAchievements.filter(m => m.earned.value === false)
     );
     const { firstFeature, collapsedContent, hasCollapsedContent } = getFirstFeature(
-        orderedMilestones,
+        orderedAchievements,
         m => m.earned.value
     );
     const display = jsx(() => {
-        const milestonesToDisplay = [...lockedMilestones.value];
+        const achievementsToDisplay = [...lockedAchievements.value];
         if (firstFeature.value) {
-            milestonesToDisplay.push(firstFeature.value);
+            achievementsToDisplay.push(firstFeature.value);
         }
         return renderColJSX(
-            ...milestonesToDisplay,
+            ...achievementsToDisplay,
             jsx(() => (
                 <Collapsible
-                    collapsed={collapseMilestones}
+                    collapsed={collapseAchievements}
                     content={collapsedContent}
                     display={
-                        collapseMilestones.value
-                            ? "Show other completed milestones"
-                            : "Hide other completed milestones"
+                        collapseAchievements.value
+                            ? "Show other completed achievements"
+                            : "Hide other completed achievements"
                     }
                     v-show={unref(hasCollapsedContent)}
                 />
@@ -419,7 +420,7 @@ export function createCollapsibleMilestones(milestones: Record<string, GenericMi
         );
     });
     return {
-        collapseMilestones,
+        collapseAchievements: collapseAchievements,
         display
     };
 }
@@ -464,7 +465,7 @@ export function createFormulaPreview(
     const processedShowPreview = convertComputable(showPreview);
     const processedPreviewAmount = convertComputable(previewAmount);
     if (!formula.hasVariable()) {
-        throw "Cannot create formula preview if the formula does not have a variable";
+        throw new Error("Cannot create formula preview if the formula does not have a variable");
     }
     return computed(() => {
         if (unref(processedShowPreview)) {
@@ -488,5 +489,26 @@ export function createFormulaPreview(
             ));
         }
         return formatSmall(formula.evaluate());
+    });
+}
+
+export function modifierToFormula<T extends GenericFormula>(
+    modifier: WithRequired<Modifier, "revert">,
+    base: T
+): T;
+export function modifierToFormula(modifier: Modifier, base: FormulaSource): GenericFormula;
+export function modifierToFormula(modifier: Modifier, base: FormulaSource) {
+    return new Formula({
+        inputs: [base],
+        evaluate: val => modifier.apply(val),
+        invert:
+            "revert" in modifier && modifier.revert != null
+                ? (val, lhs) => {
+                      if (lhs instanceof Formula && lhs.hasVariable()) {
+                          return lhs.invert(modifier.revert!(val));
+                      }
+                      throw new Error("Could not invert due to no input being a variable");
+                  }
+                : undefined
     });
 }

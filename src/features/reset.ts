@@ -11,19 +11,32 @@ import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { isRef, unref } from "vue";
 
+/** A symbol used to identify {@link Reset} features. */
 export const ResetType = Symbol("Reset");
 
+/**
+ * An object that configures a {@link Clickable}.
+ */
 export interface ResetOptions {
+    /** List of things to reset. Can include objects which will be recursed over for persistent values. */
     thingsToReset: Computable<Record<string, unknown>[]>;
+    /** A function that is called when the reset is performed. */
     onReset?: VoidFunction;
 }
 
+/**
+ * The properties that are added onto a processed {@link ResetOptions} to create an {@link Reset}.
+ */
 export interface BaseReset {
+    /** An auto-generated ID for identifying which reset is being performed. Will not persist between refreshes or updates. */
     id: string;
+    /** Trigger the reset. */
     reset: VoidFunction;
+    /** A symbol that helps identify features of the same type. */
     type: typeof ResetType;
 }
 
+/** An object that represents a reset mechanic, which resets progress back to its initial state. */
 export type Reset<T extends ResetOptions> = Replace<
     T & BaseReset,
     {
@@ -31,8 +44,13 @@ export type Reset<T extends ResetOptions> = Replace<
     }
 >;
 
+/** A type that matches any valid {@link Reset} object. */
 export type GenericReset = Reset<ResetOptions>;
 
+/**
+ * Lazily creates a reset with the given options.
+ * @param optionsFunc Reset options.
+ */
 export function createReset<T extends ResetOptions>(
     optionsFunc: OptionsFunc<T, BaseReset, GenericReset>
 ): Reset<T> {
@@ -66,6 +84,11 @@ export function createReset<T extends ResetOptions>(
 }
 
 const listeners: Record<string, Unsubscribe | undefined> = {};
+/**
+ * Track the time since the specified reset last occured.
+ * @param layer The layer the reset is attached to
+ * @param reset The reset mechanic to track the time since
+ */
 export function trackResetTime(layer: BaseLayer, reset: GenericReset): Persistent<Decimal> {
     const resetTime = persistent<Decimal>(new Decimal(0));
     globalBus.on("addLayer", layerBeingAdded => {

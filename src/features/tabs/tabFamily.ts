@@ -1,4 +1,10 @@
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import {
     Component,
     GatherProps,
@@ -23,23 +29,43 @@ import type { Ref } from "vue";
 import { computed, unref } from "vue";
 import type { GenericTab } from "./tab";
 
+/** A symbol used to identify {@link TabButton} features. */
 export const TabButtonType = Symbol("TabButton");
+/** A symbol used to identify {@link TabFamily} features. */
 export const TabFamilyType = Symbol("TabFamily");
 
+/**
+ * An object that configures a {@link TabButton}.
+ */
 export interface TabButtonOptions {
+    /** Whether this tab button should be visible. */
     visibility?: Computable<Visibility | boolean>;
+    /** The tab to display when this button is clicked. */
     tab: Computable<GenericTab | CoercableComponent>;
+    /** The label on this button. */
     display: Computable<CoercableComponent>;
+    /** Dictionary of CSS classes to apply to this feature. */
     classes?: Computable<Record<string, boolean>>;
+    /** CSS to apply to this feature. */
     style?: Computable<StyleValue>;
+    /** The color of the glow effect to display when this button is active. */
     glowColor?: Computable<string>;
 }
 
+/**
+ * The properties that are added onto a processed {@link TabButtonOptions} to create an {@link TabButton}.
+ */
 export interface BaseTabButton {
+    /** A symbol that helps identify features of the same type. */
     type: typeof TabButtonType;
-    [Component]: typeof TabButtonComponent;
+    /** The Vue component used to render this feature. */
+    [Component]: GenericComponent;
 }
 
+/**
+ * An object that represents a button that can be clicked to change tabs in a tabbed interface.
+ * @see {@link TabFamily}
+ */
 export type TabButton<T extends TabButtonOptions> = Replace<
     T & BaseTabButton,
     {
@@ -52,6 +78,7 @@ export type TabButton<T extends TabButtonOptions> = Replace<
     }
 >;
 
+/** A type that matches any valid {@link TabButton} object. */
 export type GenericTabButton = Replace<
     TabButton<TabButtonOptions>,
     {
@@ -59,24 +86,46 @@ export type GenericTabButton = Replace<
     }
 >;
 
+/**
+ * An object that configures a {@link TabFamily}.
+ */
 export interface TabFamilyOptions {
+    /** Whether this tab button should be visible. */
     visibility?: Computable<Visibility | boolean>;
+    /** Dictionary of CSS classes to apply to this feature. */
     classes?: Computable<Record<string, boolean>>;
+    /** CSS to apply to this feature. */
     style?: Computable<StyleValue>;
+    /** A dictionary of CSS classes to apply to the list of buttons for changing tabs. */
     buttonContainerClasses?: Computable<Record<string, boolean>>;
+    /** CSS to apply to the list of buttons for changing tabs. */
     buttonContainerStyle?: Computable<StyleValue>;
 }
 
+/**
+ * The properties that are added onto a processed {@link TabFamilyOptions} to create an {@link TabFamily}.
+ */
 export interface BaseTabFamily {
+    /** An auto-generated ID for identifying features that appear in the DOM. Will not persist between refreshes or updates. */
     id: string;
+    /** All the tabs within this family. */
     tabs: Record<string, TabButtonOptions>;
+    /** The currently active tab, if any. */
     activeTab: Ref<GenericTab | CoercableComponent | null>;
+    /** The name of the tab that is currently active. */
     selected: Persistent<string>;
+    /** A symbol that helps identify features of the same type. */
     type: typeof TabFamilyType;
-    [Component]: typeof TabFamilyComponent;
+    /** The Vue component used to render this feature. */
+    [Component]: GenericComponent;
+    /** A function to gather the props the vue component requires for this feature. */
     [GatherProps]: () => Record<string, unknown>;
 }
 
+/**
+ * An object that represents a tabbed interface.
+ * @see {@link TabFamily}
+ */
 export type TabFamily<T extends TabFamilyOptions> = Replace<
     T & BaseTabFamily,
     {
@@ -85,6 +134,7 @@ export type TabFamily<T extends TabFamilyOptions> = Replace<
     }
 >;
 
+/** A type that matches any valid {@link TabFamily} object. */
 export type GenericTabFamily = Replace<
     TabFamily<TabFamilyOptions>,
     {
@@ -92,13 +142,17 @@ export type GenericTabFamily = Replace<
     }
 >;
 
+/**
+ * Lazily creates a tab family with the given options.
+ * @param optionsFunc Tab family options.
+ */
 export function createTabFamily<T extends TabFamilyOptions>(
     tabs: Record<string, () => TabButtonOptions>,
     optionsFunc?: OptionsFunc<T, BaseTabFamily, GenericTabFamily>
 ): TabFamily<T> {
     if (Object.keys(tabs).length === 0) {
         console.warn("Cannot create tab family with 0 tabs");
-        throw "Cannot create tab family with 0 tabs";
+        throw new Error("Cannot create tab family with 0 tabs");
     }
 
     const selected = persistent(Object.keys(tabs)[0], false);
@@ -107,13 +161,13 @@ export function createTabFamily<T extends TabFamilyOptions>(
 
         tabFamily.id = getUniqueID("tabFamily-");
         tabFamily.type = TabFamilyType;
-        tabFamily[Component] = TabFamilyComponent;
+        tabFamily[Component] = TabFamilyComponent as GenericComponent;
 
         tabFamily.tabs = Object.keys(tabs).reduce<Record<string, GenericTabButton>>(
             (parsedTabs, tab) => {
                 const tabButton: TabButtonOptions & Partial<BaseTabButton> = tabs[tab]();
                 tabButton.type = TabButtonType;
-                tabButton[Component] = TabButtonComponent;
+                tabButton[Component] = TabButtonComponent as GenericComponent;
 
                 processComputable(tabButton as TabButtonOptions, "visibility");
                 setDefault(tabButton, "visibility", Visibility.Visible);

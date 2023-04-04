@@ -1,5 +1,12 @@
 import { isArray } from "@vue/shared";
-import { CoercableComponent, isVisible, jsx, setDefault, Visibility } from "features/feature";
+import {
+    CoercableComponent,
+    isVisible,
+    jsx,
+    Replace,
+    setDefault,
+    Visibility
+} from "features/feature";
 import { displayResource, Resource } from "features/resources/resource";
 import Decimal, { DecimalSource } from "lib/break_eternity";
 import {
@@ -11,12 +18,8 @@ import {
 import { createLazyProxy } from "util/proxies";
 import { joinJSX, renderJSX } from "util/vue";
 import { computed, unref } from "vue";
-import Formula, {
-    calculateCost,
-    calculateMaxAffordable,
-    GenericFormula,
-    InvertibleFormula
-} from "./formulas";
+import Formula, { calculateCost, calculateMaxAffordable } from "./formulas/formulas";
+import type { GenericFormula, InvertibleFormula } from "./formulas/types";
 import { DefaultValue, Persistent } from "./persistence";
 
 /**
@@ -90,7 +93,15 @@ export interface CostRequirementOptions {
     pay?: (amount?: DecimalSource) => void;
 }
 
-export type CostRequirement = Requirement & CostRequirementOptions;
+export type CostRequirement = Replace<
+    Requirement & CostRequirementOptions,
+    {
+        cost: ProcessedComputable<DecimalSource> | GenericFormula;
+        visibility: ProcessedComputable<Visibility.Visible | Visibility.None | boolean>;
+        requiresPay: ProcessedComputable<boolean>;
+        spendResources: ProcessedComputable<boolean>;
+    }
+>;
 
 /**
  * Lazily creates a requirement with the given options, that is based on meeting an amount of a resource.
@@ -113,13 +124,7 @@ export function createCostRequirement<T extends CostRequirementOptions>(
                 {displayResource(
                     req.resource,
                     req.cost instanceof Formula
-                        ? calculateCost(
-                              req.cost,
-                              amount ?? 1,
-                              unref(
-                                  req.spendResources as ProcessedComputable<boolean> | undefined
-                              ) ?? true
-                          )
+                        ? calculateCost(req.cost, amount ?? 1, unref(req.spendResources) as boolean)
                         : unref(req.cost as ProcessedComputable<DecimalSource>)
                 )}{" "}
                 {req.resource.displayName}
@@ -131,13 +136,7 @@ export function createCostRequirement<T extends CostRequirementOptions>(
                 {displayResource(
                     req.resource,
                     req.cost instanceof Formula
-                        ? calculateCost(
-                              req.cost,
-                              amount ?? 1,
-                              unref(
-                                  req.spendResources as ProcessedComputable<boolean> | undefined
-                              ) ?? true
-                          )
+                        ? calculateCost(req.cost, amount ?? 1, unref(req.spendResources) as boolean)
                         : unref(req.cost as ProcessedComputable<DecimalSource>)
                 )}{" "}
                 {req.resource.displayName}
@@ -148,17 +147,13 @@ export function createCostRequirement<T extends CostRequirementOptions>(
         setDefault(req, "visibility", Visibility.Visible);
         processComputable(req as T, "cost");
         processComputable(req as T, "requiresPay");
-        processComputable(req as T, "spendResources");
         setDefault(req, "requiresPay", true);
+        processComputable(req as T, "spendResources");
+        setDefault(req, "spendResources", true);
         setDefault(req, "pay", function (amount?: DecimalSource) {
             const cost =
                 req.cost instanceof Formula
-                    ? calculateCost(
-                          req.cost,
-                          amount ?? 1,
-                          unref(req.spendResources as ProcessedComputable<boolean> | undefined) ??
-                              true
-                      )
+                    ? calculateCost(req.cost, amount ?? 1, unref(req.spendResources) as boolean)
                     : unref(req.cost as ProcessedComputable<DecimalSource>);
             req.resource.value = Decimal.sub(req.resource.value, cost).max(0);
         });
@@ -169,7 +164,7 @@ export function createCostRequirement<T extends CostRequirementOptions>(
             req.requirementMet = calculateMaxAffordable(
                 req.cost as InvertibleFormula,
                 req.resource,
-                unref(req.spendResources as ProcessedComputable<boolean> | undefined) ?? true
+                unref(req.spendResources) as boolean
             );
         } else {
             req.requirementMet = computed(() => {
@@ -242,7 +237,7 @@ export function maxRequirementsMet(requirements: Requirements): DecimalSource {
     }
     const reqsMet = unref(requirements.requirementMet);
     if (typeof reqsMet === "boolean") {
-        return reqsMet ? Infinity : 0;
+        return reqsMet ? Decimal.dInf : 0;
     } else if (Decimal.gt(reqsMet, 1) && unref(requirements.canMaximize) !== true) {
         return 1;
     }

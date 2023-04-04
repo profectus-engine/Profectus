@@ -1,5 +1,11 @@
 import { Decorator } from "features/decorators/common";
-import type { CoercableComponent, OptionsFunc, Replace, StyleValue } from "features/feature";
+import type {
+    CoercableComponent,
+    GenericComponent,
+    OptionsFunc,
+    Replace,
+    StyleValue
+} from "features/feature";
 import { Component, GatherProps, getUniqueID, setDefault, Visibility } from "features/feature";
 import type { Link } from "features/links/links";
 import type { GenericReset } from "features/reset";
@@ -20,30 +26,54 @@ import { createLazyProxy } from "util/proxies";
 import type { Ref } from "vue";
 import { computed, ref, shallowRef, unref } from "vue";
 
+/** A symbol used to identify {@link TreeNode} features. */
 export const TreeNodeType = Symbol("TreeNode");
+/** A symbol used to identify {@link Tree} features. */
 export const TreeType = Symbol("Tree");
 
+/**
+ * An object that configures a {@link TreeNode}.
+ */
 export interface TreeNodeOptions {
+    /** Whether this tree node should be visible. */
     visibility?: Computable<Visibility | boolean>;
+    /** Whether or not this tree node can be clicked. */
     canClick?: Computable<boolean>;
+    /** The background color for this node. */
     color?: Computable<string>;
+    /** The label to display on this tree node. */
     display?: Computable<CoercableComponent>;
+    /** The color of the glow effect shown to notify the user there's something to do with this node. */
     glowColor?: Computable<string>;
+    /** Dictionary of CSS classes to apply to this feature. */
     classes?: Computable<Record<string, boolean>>;
+    /** CSS to apply to this feature. */
     style?: Computable<StyleValue>;
+    /** Shows a marker on the corner of the feature. */
     mark?: Computable<boolean | string>;
+    /** A reset object attached to this node, used for propagating resets through the tree. */
     reset?: GenericReset;
+    /** A function that is called when the tree node is clicked. */
     onClick?: (e?: MouseEvent | TouchEvent) => void;
+    /** A function that is called when the tree node is held down. */
     onHold?: VoidFunction;
 }
 
+/**
+ * The properties that are added onto a processed {@link TreeNodeOptions} to create an {@link TreeNode}.
+ */
 export interface BaseTreeNode {
+    /** An auto-generated ID for identifying features that appear in the DOM. Will not persist between refreshes or updates. */
     id: string;
+    /** A symbol that helps identify features of the same type. */
     type: typeof TreeNodeType;
-    [Component]: typeof TreeNodeComponent;
+    /** The Vue component used to render this feature. */
+    [Component]: GenericComponent;
+    /** A function to gather the props the vue component requires for this feature. */
     [GatherProps]: () => Record<string, unknown>;
 }
 
+/** An object that represents a node on a tree. */
 export type TreeNode<T extends TreeNodeOptions> = Replace<
     T & BaseTreeNode,
     {
@@ -58,6 +88,7 @@ export type TreeNode<T extends TreeNodeOptions> = Replace<
     }
 >;
 
+/** A type that matches any valid {@link TreeNode} object. */
 export type GenericTreeNode = Replace<
     TreeNode<TreeNodeOptions>,
     {
@@ -66,6 +97,10 @@ export type GenericTreeNode = Replace<
     }
 >;
 
+/**
+ * Lazily creates a tree node with the given options.
+ * @param optionsFunc Tree Node options.
+ */
 export function createTreeNode<T extends TreeNodeOptions>(
     optionsFunc?: OptionsFunc<T, BaseTreeNode, GenericTreeNode>,
     ...decorators: Decorator<T, BaseTreeNode, GenericTreeNode>[]
@@ -75,7 +110,7 @@ export function createTreeNode<T extends TreeNodeOptions>(
         const treeNode = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         treeNode.id = getUniqueID("treeNode-");
         treeNode.type = TreeNodeType;
-        treeNode[Component] = TreeNodeComponent;
+        treeNode[Component] = TreeNodeComponent as GenericComponent;
 
         for (const decorator of decorators) {
             decorator.preConstruct?.(treeNode);
@@ -150,32 +185,52 @@ export function createTreeNode<T extends TreeNodeOptions>(
     });
 }
 
+/** Represents a branch between two nodes in a tree. */
 export interface TreeBranch extends Omit<Link, "startNode" | "endNode"> {
     startNode: GenericTreeNode;
     endNode: GenericTreeNode;
 }
 
+/**
+ * An object that configures a {@link Tree}.
+ */
 export interface TreeOptions {
+    /** Whether this clickable should be visible. */
     visibility?: Computable<Visibility | boolean>;
+    /** The nodes within the tree, in a 2D array. */
     nodes: Computable<GenericTreeNode[][]>;
+    /** Nodes to show on the left side of the tree. */
     leftSideNodes?: Computable<GenericTreeNode[]>;
+    /** Nodes to show on the right side of the tree. */
     rightSideNodes?: Computable<GenericTreeNode[]>;
+    /** The branches between nodes within this tree. */
     branches?: Computable<TreeBranch[]>;
+    /** How to propagate resets through the tree. */
     resetPropagation?: ResetPropagation;
+    /** A function that is called when a node within the tree is reset. */
     onReset?: (node: GenericTreeNode) => void;
 }
 
 export interface BaseTree {
+    /** An auto-generated ID for identifying features that appear in the DOM. Will not persist between refreshes or updates. */
     id: string;
+    /** The link objects for each of the branches of the tree.  */
     links: Ref<Link[]>;
+    /** Cause a reset on this node and propagate it through the tree according to {@link resetPropagation}. */
     reset: (node: GenericTreeNode) => void;
+    /** A flag that is true while the reset is still propagating through the tree. */
     isResetting: Ref<boolean>;
+    /** A reference to the node that caused the currently propagating reset. */
     resettingNode: Ref<GenericTreeNode | null>;
+    /** A symbol that helps identify features of the same type. */
     type: typeof TreeType;
-    [Component]: typeof TreeComponent;
+    /** The Vue component used to render this feature. */
+    [Component]: GenericComponent;
+    /** A function to gather the props the vue component requires for this feature. */
     [GatherProps]: () => Record<string, unknown>;
 }
 
+/** An object that represents a feature that is a tree of nodes with branches between them. Contains support for reset mechanics that can propagate through the tree. */
 export type Tree<T extends TreeOptions> = Replace<
     T & BaseTree,
     {
@@ -187,6 +242,7 @@ export type Tree<T extends TreeOptions> = Replace<
     }
 >;
 
+/** A type that matches any valid {@link Tree} object. */
 export type GenericTree = Replace<
     Tree<TreeOptions>,
     {
@@ -194,6 +250,10 @@ export type GenericTree = Replace<
     }
 >;
 
+/**
+ * Lazily creates a tree with the given options.
+ * @param optionsFunc Tree options.
+ */
 export function createTree<T extends TreeOptions>(
     optionsFunc: OptionsFunc<T, BaseTree, GenericTree>
 ): Tree<T> {
@@ -201,7 +261,7 @@ export function createTree<T extends TreeOptions>(
         const tree = optionsFunc();
         tree.id = getUniqueID("tree-");
         tree.type = TreeType;
-        tree[Component] = TreeComponent;
+        tree[Component] = TreeComponent as GenericComponent;
 
         tree.isResetting = ref(false);
         tree.resettingNode = shallowRef(null);
@@ -236,10 +296,12 @@ export function createTree<T extends TreeOptions>(
     });
 }
 
+/** A function that is used to propagate resets through a tree. */
 export type ResetPropagation = {
     (tree: GenericTree, resettingNode: GenericTreeNode): void;
 };
 
+/** Propagate resets down the tree by resetting every node in a lower row. */
 export const defaultResetPropagation = function (
     tree: GenericTree,
     resettingNode: GenericTreeNode
@@ -251,6 +313,7 @@ export const defaultResetPropagation = function (
     }
 };
 
+/** Propagate resets down the tree by resetting every node in a lower row. */
 export const invertedResetPropagation = function (
     tree: GenericTree,
     resettingNode: GenericTreeNode
@@ -262,6 +325,7 @@ export const invertedResetPropagation = function (
     }
 };
 
+/** Propagate resets down the branches of the tree. */
 export const branchedResetPropagation = function (
     tree: GenericTree,
     resettingNode: GenericTreeNode
@@ -297,6 +361,10 @@ export const branchedResetPropagation = function (
     }
 };
 
+/**
+ * Utility for creating a tooltip for a tree node that displays a resource-based unlock requirement, and after unlock shows the amount of another resource.
+ * It sounds oddly specific, but comes up a lot.
+ */
 export function createResourceTooltip(
     resource: Resource,
     requiredResource: Resource | null = null,

@@ -2788,7 +2788,7 @@ export default class Decimal {
             return FC_NN(this.sign, this.layer - 1, this.mag);
         }
 
-        throw "Unhandled behavior in lambertw()";
+        throw new Error("Unhandled behavior in lambertw()");
     }
 
     //The super square-root function - what number, tetrated to height 2, equals this?
