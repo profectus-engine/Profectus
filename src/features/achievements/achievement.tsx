@@ -95,7 +95,7 @@ export interface AchievementOptions {
  * The properties that are added onto a processed {@link AchievementOptions} to create an {@link Achievement}.
  */
 export interface BaseAchievement {
-    /** An auto-generated ID for identifying achievements that appear in the DOM. Will not persist between refreshes or updates. */
+    /** An auto-generated ID for identifying features that appear in the DOM. Will not persist between refreshes or updates. */
     id: string;
     /** Whether or not this achievement has been earned. */
     earned: Persistent<boolean>;
@@ -109,7 +109,7 @@ export interface BaseAchievement {
     [GatherProps]: () => Record<string, unknown>;
 }
 
-/** An object that represents a feature with that is passively earned upon meeting certain requirements. */
+/** An object that represents a feature with requirements that is passively earned upon meeting certain requirements. */
 export type Achievement<T extends AchievementOptions> = Replace<
     T & BaseAchievement,
     {
@@ -133,7 +133,7 @@ export type GenericAchievement = Replace<
 >;
 
 /**
- * Lazily creates a achievement with the given options.
+ * Lazily creates an achievement with the given options.
  * @param optionsFunc Achievement options.
  */
 export function createAchievement<T extends AchievementOptions>(

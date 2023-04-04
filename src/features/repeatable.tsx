@@ -76,7 +76,7 @@ export interface RepeatableOptions {
  * The properties that are added onto a processed {@link RepeatableOptions} to create a {@link Repeatable}.
  */
 export interface BaseRepeatable {
-    /** An auto-generated ID for identifying features that appear in the DOM. Will not persistent between refreshes or updates. */
+    /** An auto-generated ID for identifying features that appear in the DOM. Will not persist between refreshes or updates. */
     id: string;
     /** The current amount this repeatable has. */
     amount: Persistent<DecimalSource>;

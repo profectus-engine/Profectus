@@ -19,31 +19,56 @@ import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { unref } from "vue";
 
+/** A symbol used to identify {@link Bar} features. */
 export const BarType = Symbol("Bar");
 
+/**
+ * An object that configures a {@link Bar}.
+ */
 export interface BarOptions {
+    /** Whether this bar should be visible. */
     visibility?: Computable<Visibility | boolean>;
+    /** The width of the bar. */
     width: Computable<number>;
+    /** The height of the bar. */
     height: Computable<number>;
+    /** The direction in which the bar progresses. */
     direction: Computable<Direction>;
+    /** CSS to apply to this feature. */
     style?: Computable<StyleValue>;
+    /** Dictionary of CSS classes to apply to this feature. */
     classes?: Computable<Record<string, boolean>>;
+    /** CSS to apply to the bar's border. */
     borderStyle?: Computable<StyleValue>;
+    /** CSS to apply to the bar's base. */
     baseStyle?: Computable<StyleValue>;
+    /** CSS to apply to the bar's text. */
     textStyle?: Computable<StyleValue>;
+    /** CSS to apply to the bar's fill. */
     fillStyle?: Computable<StyleValue>;
+    /** The progress value of the bar, from 0 to 1. */
     progress: Computable<DecimalSource>;
+    /** The display to use for this bar. */
     display?: Computable<CoercableComponent>;
+    /** Shows a marker on the corner of the feature. */
     mark?: Computable<boolean | string>;
 }
 
+/**
+ * The properties that are added onto a processed {@link BarOptions} to create a {@link Bar}.
+ */
 export interface BaseBar {
+    /** An auto-generated ID for identifying features that appear in the DOM. Will not persist between refreshes or updates. */
     id: string;
+    /** A symbol that helps identify features of the same type. */
     type: typeof BarType;
+    /** The Vue component used to render this feature. */
     [Component]: GenericComponent;
+    /** A function to gather the props the vue component requires for this feature. */
     [GatherProps]: () => Record<string, unknown>;
 }
 
+/** An object that represents a feature that displays some sort of progress or completion or resource with a cap. */
 export type Bar<T extends BarOptions> = Replace<
     T & BaseBar,
     {
@@ -63,6 +88,7 @@ export type Bar<T extends BarOptions> = Replace<
     }
 >;
 
+/** A type that matches any valid {@link Bar} object. */
 export type GenericBar = Replace<
     Bar<BarOptions>,
     {
@@ -70,6 +96,10 @@ export type GenericBar = Replace<
     }
 >;
 
+/**
+ * Lazily creates a bar with the given options.
+ * @param optionsFunc Bar options.
+ */
 export function createBar<T extends BarOptions>(
     optionsFunc: OptionsFunc<T, BaseBar, GenericBar>
 ): Bar<T> {

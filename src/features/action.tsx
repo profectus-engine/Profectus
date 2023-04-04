@@ -32,26 +32,46 @@ import { computed, Ref, ref, unref } from "vue";
 import { BarOptions, createBar, GenericBar } from "./bars/bar";
 import { ClickableOptions } from "./clickables/clickable";
 
+/** A symbol used to identify {@link Action} features. */
 export const ActionType = Symbol("Action");
 
+/**
+ * An object that configures a {@link Action}.
+ */
 export interface ActionOptions extends Omit<ClickableOptions, "onClick" | "onHold"> {
+    /** The cooldown during which the action cannot be performed again, in seconds. */
     duration: Computable<DecimalSource>;
+    /** Whether or not the action should perform automatically when the cooldown is finished. */
     autoStart?: Computable<boolean>;
+    /** A function that is called when the action is clicked. */
     onClick: (amount: DecimalSource) => void;
+    /** A pass-through to the {@link Bar} used to display the cooldown progress for the action. */
     barOptions?: Partial<BarOptions>;
 }
 
+/**
+ * The properties that are added onto a processed {@link ActionOptions} to create an {@link Action}.
+ */
 export interface BaseAction {
+    /** An auto-generated ID for identifying features that appear in the DOM. Will not persist between refreshes or updates. */
     id: string;
+    /** A symbol that helps identify features of the same type. */
     type: typeof ActionType;
+    /** Whether or not the player is holding down the action. Actions will be considered clicked as soon as the cooldown completes when being held down. */
     isHolding: Ref<boolean>;
+    /** The current amount of progress through the cooldown. */
     progress: Ref<DecimalSource>;
+    /** The bar used to display the current cooldown progress. */
     progressBar: GenericBar;
+    /** Update the cooldown the specified number of seconds */
     update: (diff: number) => void;
+    /** The Vue component used to render this feature. */
     [Component]: GenericComponent;
+    /** A function to gather the props the vue component requires for this feature. */
     [GatherProps]: () => Record<string, unknown>;
 }
 
+/** An object that represens a feature that can be clicked upon, and then have a cooldown before they can be clicked again. */
 export type Action<T extends ActionOptions> = Replace<
     T & BaseAction,
     {
@@ -67,6 +87,7 @@ export type Action<T extends ActionOptions> = Replace<
     }
 >;
 
+/** A type that matches any valid {@link Action} object. */
 export type GenericAction = Replace<
     Action<ActionOptions>,
     {
@@ -76,6 +97,10 @@ export type GenericAction = Replace<
     }
 >;
 
+/**
+ * Lazily creates an action with the given options.
+ * @param optionsFunc Action options.
+ */
 export function createAction<T extends ActionOptions>(
     optionsFunc?: OptionsFunc<T, BaseAction, GenericAction>
 ): Action<T> {

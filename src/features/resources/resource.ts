@@ -8,12 +8,23 @@ import { loadingSave } from "util/save";
 import type { ComputedRef, Ref } from "vue";
 import { computed, isRef, ref, unref, watch } from "vue";
 
+/** An object that represents a named and quantifiable resource in the game. */
 export interface Resource<T = DecimalSource> extends Ref<T> {
+    /** The name of this resource. */
     displayName: string;
+    /** When displaying the value of this resource, how many significant digits to display. */
     precision: number;
+    /** Whether or not to display very small values using scientific notation, or rounding to 0. */
     small?: boolean;
 }
 
+/**
+ * Creates a resource.
+ * @param defaultValue The initial value of the resource
+ * @param displayName The human readable name of this resource
+ * @param precision The number of significant digits to display by default
+ * @param small Whether or not to display very small values or round to 0, by default
+ */
 export function createResource<T extends State>(
     defaultValue: T,
     displayName?: string,
@@ -49,6 +60,7 @@ export function createResource<T extends State>(
     return resource as Resource<T>;
 }
 
+/** Returns a reference to the highest amount of the resource ever owned, which is updated automatically. */
 export function trackBest(resource: Resource): Ref<DecimalSource> {
     const best = persistent(resource.value);
     watch(resource, amount => {
@@ -62,6 +74,7 @@ export function trackBest(resource: Resource): Ref<DecimalSource> {
     return best;
 }
 
+/** Returns a reference to the total amount of the resource gained, updated automatically. "Refunds" count as gain. */
 export function trackTotal(resource: Resource): Ref<DecimalSource> {
     const total = persistent(resource.value);
     watch(resource, (amount, prevAmount) => {
@@ -77,6 +90,7 @@ export function trackTotal(resource: Resource): Ref<DecimalSource> {
 
 const tetra8 = new Decimal("10^^8");
 const e100 = new Decimal("1e100");
+/** Returns a reference to the amount of resource being gained in terms of orders of magnitude per second, calcualted over the last tick. Useful for situations where the gain rate is increasing very rapidly. */
 export function trackOOMPS(
     resource: Resource,
     pointGain?: ComputedRef<DecimalSource>
@@ -135,6 +149,7 @@ export function trackOOMPS(
     return oompsString;
 }
 
+/** Utility for displaying a resource with the correct precision. */
 export function displayResource(resource: Resource, overrideAmount?: DecimalSource): string {
     const amount = overrideAmount ?? resource.value;
     if (Decimal.eq(resource.precision, 0)) {
@@ -143,6 +158,7 @@ export function displayResource(resource: Resource, overrideAmount?: DecimalSour
     return format(amount, resource.precision, resource.small);
 }
 
+/** Utility for unwrapping a resource that may or may not be inside a ref. */
 export function unwrapResource(resource: ProcessedComputable<Resource>): Resource {
     if ("displayName" in resource) {
         return resource;

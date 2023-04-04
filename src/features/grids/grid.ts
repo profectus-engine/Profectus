@@ -21,14 +21,22 @@ import { createLazyProxy } from "util/proxies";
 import type { Ref } from "vue";
 import { computed, unref } from "vue";
 
+/** A symbol used to identify {@link Grid} features. */
 export const GridType = Symbol("Grid");
 
+/** A type representing a computable value for a cell in the grid. */
 export type CellComputable<T> = Computable<T> | ((id: string | number, state: State) => T);
 
+/** Create proxy to more easily get the properties of cells on a grid. */
 function createGridProxy(grid: GenericGrid): Record<string | number, GridCell> {
     return new Proxy({}, getGridHandler(grid)) as Record<string | number, GridCell>;
 }
 
+/**
+ * Returns traps for a proxy that will give cell proxies when accessing any numerical key.
+ * @param grid The grid to get the cells from.
+ * @see {@link createGridProxy}
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getGridHandler(grid: GenericGrid): ProxyHandler<Record<string | number, GridCell>> {
     const keys = computed(() => {
@@ -86,6 +94,12 @@ function getGridHandler(grid: GenericGrid): ProxyHandler<Record<string | number,
     };
 }
 
+/**
+ * Returns traps for a proxy that will get the properties for the specified cell
+ * @param id The grid cell ID to get properties from.
+ * @see {@link getGridHandler}
+ * @see {@link createGridProxy}
+ */
 function getCellHandler(id: string): ProxyHandler<GenericGrid> {
     const keys = [
         "id",
@@ -175,47 +189,90 @@ function getCellHandler(id: string): ProxyHandler<GenericGrid> {
     };
 }
 
+/**
+ * Represents a cell within a grid. These properties will typically be accessed via a cell proxy that calls functions on the grid to get the properties for a specific cell.
+ * @see {@link createGridProxy}
+ */
 export interface GridCell {
+    /** A unique identifier for the grid cell. */
     id: string;
+    /** Whether this cell should be visible. */
     visibility: Visibility | boolean;
+    /** Whether this cell can be clicked. */
     canClick: boolean;
+    /** The initial persistent state of this cell. */
     startState: State;
+    /** The persistent state of this cell. */
     state: State;
+    /** CSS to apply to this feature. */
     style?: StyleValue;
+    /** Dictionary of CSS classes to apply to this feature. */
     classes?: Record<string, boolean>;
+    /** A header to appear at the top of the display. */
     title?: CoercableComponent;
+    /** The main text that appears in the display. */
     display: CoercableComponent;
+    /** A function that is called when the cell is clicked. */
     onClick?: (e?: MouseEvent | TouchEvent) => void;
+    /** A function that is called when the cell is held down. */
     onHold?: VoidFunction;
 }
 
+/**
+ * An object that configures a {@link Grid}.
+ */
 export interface GridOptions {
+    /** Whether this grid should be visible. */
     visibility?: Computable<Visibility | boolean>;
+    /** The number of rows in the grid. */
     rows: Computable<number>;
+    /** The number of columns in the grid. */
     cols: Computable<number>;
+    /** A computable to determine the visibility of a cell. */
     getVisibility?: CellComputable<Visibility | boolean>;
+    /** A computable to determine if a cell can be clicked. */
     getCanClick?: CellComputable<boolean>;
+    /** A computable to get the initial persistent state of a cell. */
     getStartState: Computable<State> | ((id: string | number) => State);
+    /** A computable to get the CSS styles for a cell. */
     getStyle?: CellComputable<StyleValue>;
+    /** A computable to get the CSS classes for a cell. */
     getClasses?: CellComputable<Record<string, boolean>>;
+    /** A computable to get the title component for a cell. */
     getTitle?: CellComputable<CoercableComponent>;
+    /** A computable to get the display component for a cell. */
     getDisplay: CellComputable<CoercableComponent>;
+    /** A function that is called when a cell is clicked. */
     onClick?: (id: string | number, state: State, e?: MouseEvent | TouchEvent) => void;
+    /** A function that is called when a cell is held down. */
     onHold?: (id: string | number, state: State) => void;
 }
 
+/**
+ * The properties that are added onto a processed {@link BoardOptions} to create a {@link Board}.
+ */
 export interface BaseGrid {
+    /** An auto-generated ID for identifying features that appear in the DOM. Will not persist between refreshes or updates. */
     id: string;
+    /** Get the auto-generated ID for identifying a specific cell of this grid that appears in the DOM. Will not persist between refreshes or updates. */
     getID: (id: string | number, state: State) => string;
+    /** Get the persistent state of the given cell. */
     getState: (id: string | number) => State;
+    /** Set the persistent state of the given cell. */
     setState: (id: string | number, state: State) => void;
+    /** A dictionary of cells within this grid. */
     cells: Record<string | number, GridCell>;
+    /** The persistent state of this grid, which is a dictionary of cell states. */
     cellState: Persistent<Record<string | number, State>>;
+    /** A symbol that helps identify features of the same type. */
     type: typeof GridType;
+    /** The Vue component used to render this feature. */
     [Component]: GenericComponent;
+    /** A function to gather the props the vue component requires for this feature. */
     [GatherProps]: () => Record<string, unknown>;
 }
 
+/** An object that represents a feature that is a grid of cells that all behave according to the same rules. */
 export type Grid<T extends GridOptions> = Replace<
     T & BaseGrid,
     {
@@ -232,6 +289,7 @@ export type Grid<T extends GridOptions> = Replace<
     }
 >;
 
+/** A type that matches any valid {@link Grid} object. */
 export type GenericGrid = Replace<
     Grid<GridOptions>,
     {
@@ -241,6 +299,10 @@ export type GenericGrid = Replace<
     }
 >;
 
+/**
+ * Lazily creates a grid with the given options.
+ * @param optionsFunc Grid options.
+ */
 export function createGrid<T extends GridOptions>(
     optionsFunc: OptionsFunc<T, BaseGrid, GenericGrid>
 ): Grid<T> {

@@ -21,20 +21,34 @@ declare module "@vue/runtime-dom" {
     }
 }
 
+/**
+ * An object that configures a {@link Tooltip}.
+ */
 export interface TooltipOptions {
+    /** Whether or not this tooltip can be pinned, meaning it'll stay visible even when not hovered. */
     pinnable?: boolean;
+    /** The text to display inside the tooltip. */
     display: Computable<CoercableComponent>;
+    /** Dictionary of CSS classes to apply to this feature. */
     classes?: Computable<Record<string, boolean>>;
+    /** CSS to apply to this feature. */
     style?: Computable<StyleValue>;
+    /** The direction in which to display the tooltip */
     direction?: Computable<Direction>;
+    /** The x offset of the tooltip, in px. */
     xoffset?: Computable<string>;
+    /** The y offset of the tooltip, in px. */
     yoffset?: Computable<string>;
 }
 
+/**
+ * The properties that are added onto a processed {@link TooltipOptions} to create an {@link Tooltip}.
+ */
 export interface BaseTooltip {
     pinned?: Ref<boolean>;
 }
 
+/** An object that represents a tooltip that appears when hovering over an element. */
 export type Tooltip<T extends TooltipOptions> = Replace<
     T & BaseTooltip,
     {
@@ -49,6 +63,7 @@ export type Tooltip<T extends TooltipOptions> = Replace<
     }
 >;
 
+/** A type that matches any valid {@link Tooltip} object. */
 export type GenericTooltip = Replace<
     Tooltip<TooltipOptions>,
     {
@@ -58,6 +73,11 @@ export type GenericTooltip = Replace<
     }
 >;
 
+/**
+ * Creates a tooltip on the given element with the given options.
+ * @param element The renderable feature to display the tooltip on.
+ * @param optionsFunc Clickable options.
+ */
 export function addTooltip<T extends TooltipOptions>(
     element: VueFeature,
     options: T & ThisType<Tooltip<T>> & Partial<BaseTooltip>

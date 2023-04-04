@@ -89,7 +89,7 @@ export interface ChallengeOptions {
  * The properties that are added onto a processed {@link ChallengeOptions} to create a {@link Challenge}.
  */
 export interface BaseChallenge {
-    /** An auto-generated ID for identifying challenges that appear in the DOM. Will not persist between refreshes or updates. */
+    /** An auto-generated ID for identifying features that appear in the DOM. Will not persist between refreshes or updates. */
     id: string;
     /** The current amount of times this challenge can be completed. */
     canComplete: Ref<DecimalSource>;
