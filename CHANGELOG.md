@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Requirements can use them so repeatables and challenges can be "buy max" without any extra effort
     - Conversions now use formulas instead of the old scaling functions system, allowing for arbitrary functions that are much easier to follow
     - There's a utility for converting modifiers to formulas, thus replacing things like the gain modifier on conversions
+- Feature decorators, which simplify the process of adding extra values to features
 - Action feature, which is a clickable with a cooldown
 - ETA util (calculates time until a specific amount of a resource, based on its current gain rate)
 - createCollapsibleMilestones util
