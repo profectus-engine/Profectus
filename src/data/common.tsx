@@ -492,6 +492,11 @@ export function createFormulaPreview(
     });
 }
 
+/**
+ * Utility for converting a modifier into a formula. Takes the input for this formula as the base parameter.
+ * @param modifier The modifier to convert to the formula
+ * @param base An existing formula or processed DecimalSource that will be the input to the formula
+ */
 export function modifierToFormula<T extends GenericFormula>(
     modifier: WithRequired<Modifier, "revert">,
     base: T
