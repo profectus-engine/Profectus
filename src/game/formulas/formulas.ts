@@ -317,8 +317,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
 
     // TODO add integration support to step-wise functions
     /**
-     * Creates a step-wise formula. After {@ref start} the formula will have an additional modifier.
-     * This function assumes the incoming {@ref value} will be continuous and monotonically increasing.
+     * Creates a step-wise formula. After {@link start} the formula will have an additional modifier.
+     * This function assumes the incoming {@link value} will be continuous and monotonically increasing.
      * @param value The value before applying the step
      * @param start The value at which to start applying the step
      * @param formulaModifier How this step should modify the formula. The incoming value will be the unmodified formula value _minus the start value_. So for example if an incoming formula evaluates to 200 and has a step that starts at 150, the formulaModifier would be given 50 as the parameter
@@ -1356,7 +1356,7 @@ export function printFormula(formula: FormulaSource): string {
 }
 
 /**
- * Utility for calculating the maximum amount of purchases possible with a given formula and resource. If {@ref spendResources} is changed to false, the calculation will be much faster with higher numbers.
+ * Utility for calculating the maximum amount of purchases possible with a given formula and resource. If {@link spendResources} is changed to false, the calculation will be much faster with higher numbers.
  * @param formula The formula to use for calculating buy max from
  * @param resource The resource used when purchasing (is only read from)
  * @param spendResources Whether or not to count spent resources on each purchase or not. If true, costs will be approximated for performance, skewing towards fewer purchases
@@ -1424,7 +1424,7 @@ export function calculateMaxAffordable(
 }
 
 /**
- * Utility for calculating the cost of a formula for a given amount of purchases. If {@ref spendResources} is changed to false, the calculation will be much faster with higher numbers.
+ * Utility for calculating the cost of a formula for a given amount of purchases. If {@link spendResources} is changed to false, the calculation will be much faster with higher numbers.
  * @param formula The formula to use for calculating buy max from
  * @param amountToBuy The amount of purchases to calculate the cost for
  * @param spendResources Whether or not to count spent resources on each purchase or not. If true, costs will be approximated for performance, skewing towards higher cost

@@ -139,11 +139,11 @@ export function createConversion<T extends ConversionOptions>(
         );
         if (conversion.currentGain == null) {
             conversion.currentGain = computed(() => {
-                let gain = (conversion as GenericConversion).formula.evaluate(
-                    conversion.baseResource.value
-                );
-                gain = Decimal.floor(gain).max(0);
-
+                let gain = Decimal.floor(
+                    (conversion as GenericConversion).formula.evaluate(
+                        conversion.baseResource.value
+                    )
+                ).max(0);
                 if (unref(conversion.buyMax) === false) {
                     gain = gain.min(1);
                 }
@@ -228,10 +228,11 @@ export function createIndependentConversion<S extends ConversionOptions>(
 
         if (conversion.currentGain == null) {
             conversion.currentGain = computed(() => {
-                let gain = (conversion as unknown as GenericConversion).formula.evaluate(
-                    conversion.baseResource.value
-                );
-                gain = Decimal.floor(gain).max(conversion.gainResource.value);
+                let gain = Decimal.floor(
+                    (conversion as unknown as GenericConversion).formula.evaluate(
+                        conversion.baseResource.value
+                    )
+                ).max(conversion.gainResource.value);
                 if (unref(conversion.buyMax) === false) {
                     gain = gain.min(Decimal.add(conversion.gainResource.value, 1));
                 }
@@ -245,7 +246,9 @@ export function createIndependentConversion<S extends ConversionOptions>(
                         conversion.baseResource.value
                     ),
                     conversion.gainResource.value
-                ).max(0);
+                )
+                    .floor()
+                    .max(0);
 
                 if (unref(conversion.buyMax) === false) {
                     gain = gain.min(1);
@@ -273,13 +276,13 @@ export function createIndependentConversion<S extends ConversionOptions>(
  * @param layer The layer this passive generation will be associated with. Typically `this` when calling this function from inside a layer's options function.
  * @param conversion The conversion that will determine how much generation there is.
  * @param rate A multiplier to multiply against the conversion's currentGain.
- * @param cap A value that should not be passed via passive generation. If null, no cap is applied.
+ * @param cap A value that should not be passed via passive generation.
  */
 export function setupPassiveGeneration(
     layer: BaseLayer,
     conversion: GenericConversion,
     rate: Computable<DecimalSource> = 1,
-    cap: Computable<DecimalSource | null> = null
+    cap: Computable<DecimalSource> = Decimal.dInf
 ): void {
     const processedRate = convertComputable(rate);
     const processedCap = convertComputable(cap);
@@ -290,7 +293,7 @@ export function setupPassiveGeneration(
                 conversion.gainResource.value,
                 Decimal.times(currRate, diff).times(Decimal.ceil(unref(conversion.actualGain)))
             )
-                .min(unref(processedCap) ?? Decimal.dInf)
+                .min(unref(processedCap))
                 .max(conversion.gainResource.value);
         }
     });
