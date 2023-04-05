@@ -6,7 +6,7 @@ import {
 } from "features/conversion";
 import { createResource, Resource } from "features/resources/resource";
 import { GenericFormula } from "game/formulas/types";
-import { createLayer } from "game/layers";
+import { createLayer, GenericLayer } from "game/layers";
 import Decimal from "util/bignum";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { ref, unref } from "vue";
@@ -450,53 +450,37 @@ describe("Passive generation", () => {
     let baseResource: Resource;
     let gainResource: Resource;
     let formula: (x: GenericFormula) => GenericFormula;
+    let conversion: GenericConversion;
+    let layer: GenericLayer;
     beforeEach(() => {
-        baseResource = createResource(ref(40));
+        baseResource = createResource(ref(10));
         gainResource = createResource(ref(1));
         formula = x => x.div(10).sqrt();
-    });
-    test("Rate is 0", () => {
-        const conversion = createCumulativeConversion(() => ({
+        conversion = createCumulativeConversion(() => ({
             baseResource,
             gainResource,
             formula
         }));
-        const layer = createLayer("dummy", () => ({ display: "" }));
+        layer = createLayer("dummy", () => ({ display: "" }));
+    });
+    test("Rate is 0", () => {
         setupPassiveGeneration(layer, conversion, 0);
-        layer.emit("preUpdate", 100);
+        layer.emit("preUpdate", 1);
         expect(gainResource.value).compare_tolerance(1);
     });
     test("Rate is 1", () => {
-        const conversion = createCumulativeConversion(() => ({
-            baseResource,
-            gainResource,
-            formula
-        }));
-        const layer = createLayer("dummy", () => ({ display: "" }));
         setupPassiveGeneration(layer, conversion);
-        layer.emit("preUpdate", 100);
-        expect(gainResource.value).compare_tolerance(201);
+        layer.emit("preUpdate", 1);
+        expect(gainResource.value).compare_tolerance(2);
     })
     test("Rate is 100", () => {
-        const conversion = createCumulativeConversion(() => ({
-            baseResource,
-            gainResource,
-            formula
-        }));
-        const layer = createLayer("dummy", () => ({ display: "" }));
         setupPassiveGeneration(layer, conversion, () => 100);
-        layer.emit("preUpdate", 100);
-        expect(gainResource.value).compare_tolerance(20001);
+        layer.emit("preUpdate", 1);
+        expect(gainResource.value).compare_tolerance(101);
     })
     test("Obeys cap", () => {
-        const conversion = createCumulativeConversion(() => ({
-            baseResource,
-            gainResource,
-            formula
-        }));
-        const layer = createLayer("dummy", () => ({ display: "" }));
         setupPassiveGeneration(layer, conversion, 100, () => 100);
-        layer.emit("preUpdate", 100);
+        layer.emit("preUpdate", 1);
         expect(gainResource.value).compare_tolerance(100);
     })
 });
