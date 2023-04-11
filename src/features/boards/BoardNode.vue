@@ -170,7 +170,7 @@
 import themes from "data/themes";
 import type { BoardNode, GenericBoardNodeAction, GenericNodeType } from "features/boards/board";
 import { ProgressDisplay, getNodeProperty, Shape } from "features/boards/board";
-import { Visibility } from "features/feature";
+import { isVisible } from "features/feature";
 import settings from "game/settings";
 import { computed, ref, toRefs, unref, watch } from "vue";
 
@@ -210,8 +210,8 @@ watch(isDraggable, value => {
 
 const actions = computed(() => {
     const node = unref(props.node);
-    return getNodeProperty(props.nodeType.value.actions, node)?.filter(
-        action => getNodeProperty(action.visibility, node) !== Visibility.None
+    return getNodeProperty(props.nodeType.value.actions, node)?.filter(action =>
+        isVisible(getNodeProperty(action.visibility, node))
     );
 });
 
