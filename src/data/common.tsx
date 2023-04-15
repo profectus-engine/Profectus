@@ -491,29 +491,3 @@ export function createFormulaPreview(
         return formatSmall(formula.evaluate());
     });
 }
-
-/**
- * Utility for converting a modifier into a formula. Takes the input for this formula as the base parameter.
- * @param modifier The modifier to convert to the formula
- * @param base An existing formula or processed DecimalSource that will be the input to the formula
- */
-export function modifierToFormula<T extends GenericFormula>(
-    modifier: WithRequired<Modifier, "revert">,
-    base: T
-): T;
-export function modifierToFormula(modifier: Modifier, base: FormulaSource): GenericFormula;
-export function modifierToFormula(modifier: Modifier, base: FormulaSource) {
-    return new Formula({
-        inputs: [base],
-        evaluate: val => modifier.apply(val),
-        invert:
-            "revert" in modifier && modifier.revert != null
-                ? (val, lhs) => {
-                      if (lhs instanceof Formula && lhs.hasVariable()) {
-                          return lhs.invert(modifier.revert!(val));
-                      }
-                      throw new Error("Could not invert due to no input being a variable");
-                  }
-                : undefined
-    });
-}
