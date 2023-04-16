@@ -253,17 +253,17 @@ export interface Section {
     baseText?: Computable<CoercableComponent>;
     /** Whether or not this section should be currently visible to the player. **/
     visible?: Computable<boolean>;
+    /** Determines if numbers larger or smaller than the base should be displayed as red. */
+    smallerIsBetter?: boolean;
 }
 
 /**
  * Takes an array of modifier "sections", and creates a JSXFunction that can render all those sections, and allow each section to be collapsed.
  * Also returns a list of persistent refs that are used to control which sections are currently collapsed.
  * @param sectionsFunc A function that returns the sections to display.
- * @param smallerIsBetter Determines whether numbers larger or smaller than the base should be displayed as red.
  */
 export function createCollapsibleModifierSections(
-    sectionsFunc: () => Section[],
-    smallerIsBetter = false
+    sectionsFunc: () => Section[]
 ): [JSXFunction, Persistent<Record<number, boolean>>] {
     const sections: Section[] = [];
     const processed:
@@ -324,7 +324,9 @@ export function createCollapsibleModifierSections(
                             {s.unit}
                         </span>
                     </div>
-                    {renderJSX(unref(s.modifier.description))}
+                    {s.modifier.description == null
+                        ? null
+                        : renderJSX(unref(s.modifier.description))}
                 </>
             );
 
@@ -353,7 +355,7 @@ export function createCollapsibleModifierSections(
                                 class="modifier-amount"
                                 style={
                                     (
-                                        smallerIsBetter === true
+                                        s.smallerIsBetter === true
                                             ? Decimal.gt(total, base ?? 1)
                                             : Decimal.lt(total, base ?? 1)
                                     )
