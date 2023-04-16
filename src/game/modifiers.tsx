@@ -43,20 +43,20 @@ export interface Modifier {
  */
 export type ModifierFromOptionalParams<T, S> = T extends undefined
     ? S extends undefined
-        ? Omit<WithRequired<Modifier, "invert">, "description" | "enabled">
-        : Omit<WithRequired<Modifier, "invert" | "enabled">, "description">
+        ? Omit<WithRequired<Modifier, "invert" | "getFormula">, "description" | "enabled">
+        : Omit<WithRequired<Modifier, "invert" | "enabled" | "getFormula">, "description">
     : S extends undefined
-    ? Omit<WithRequired<Modifier, "invert" | "description">, "enabled">
-    : WithRequired<Modifier, "invert" | "enabled" | "description">;
+    ? Omit<WithRequired<Modifier, "invert" | "description" | "getFormula">, "enabled">
+    : WithRequired<Modifier, "invert" | "enabled" | "description" | "getFormula">;
 
 /** An object that configures an additive modifier via {@link createAdditiveModifier}. */
 export interface AdditiveModifierOptions {
     /** The amount to add to the input value. */
     addend: Computable<DecimalSource>;
     /** Description of what this modifier is doing. */
-    description?: Computable<CoercableComponent> | undefined;
+    description?: Computable<CoercableComponent>;
     /** A computable that will be processed and passed directly into the returned modifier. */
-    enabled?: Computable<boolean> | undefined;
+    enabled?: Computable<boolean>;
     /** Determines if numbers larger or smaller than 0 should be displayed as red. */
     smallerIsBetter?: boolean;
 }
@@ -295,17 +295,21 @@ export function createSequentialModifier<
                           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                           .reduce((acc, curr) => curr.getFormula!(acc), gain)
                 : undefined,
-            enabled: computed(() => modifiers.filter(m => unref(m.enabled) !== false).length > 0),
-            description: jsx(() => (
-                <>
-                    {(
-                        modifiers
-                            .filter(m => unref(m.enabled) !== false)
-                            .map(m => unref(m.description))
-                            .filter(d => d) as CoercableComponent[]
-                    ).map(renderJSX)}
-                </>
-            ))
+            enabled: modifiers.some(m => m.enabled != null)
+                ? computed(() => modifiers.filter(m => unref(m.enabled) !== false).length > 0)
+                : undefined,
+            description: modifiers.some(m => m.description != null)
+                ? jsx(() => (
+                      <>
+                          {(
+                              modifiers
+                                  .filter(m => unref(m.enabled) !== false)
+                                  .map(m => unref(m.description))
+                                  .filter(d => d) as CoercableComponent[]
+                          ).map(renderJSX)}
+                      </>
+                  ))
+                : undefined
         };
     }) as unknown as S;
 }
