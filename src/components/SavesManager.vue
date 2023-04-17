@@ -15,7 +15,7 @@
                         :save="saves[element]"
                         @open="openSave(element)"
                         @export="exportSave(element)"
-                        @editName="name => editSave(element, name)"
+                        @editName="(name: string) => editSave(element, name)"
                         @duplicate="duplicateSave(element)"
                         @delete="deleteSave(element)"
                     />
@@ -38,7 +38,7 @@
                             v-if="Object.keys(bank).length > 0"
                             :options="bank"
                             :modelValue="selectedPreset"
-                            @update:modelValue="preset => newFromPreset(preset as string)"
+                            @update:modelValue="(preset: unknown) => newFromPreset(preset as string)"
                             closeOnSelect
                             placeholder="Select preset"
                             class="presets"
