@@ -47,6 +47,11 @@ export const SaveDataPath = Symbol("SaveDataPath");
 export const CheckNaN = Symbol("CheckNaN");
 
 /**
+ * A symbol used to flag objects that should not be checked for persistent values.
+ */
+export const SkipPersistence = Symbol("SkipPersistence");
+
+/**
  * This is a union of things that should be safely stringifiable without needing special processes or knowing what to load them in as.
  * - Decimals aren't allowed because we'd need to know to parse them back.
  * - DecimalSources are allowed because the string is a valid value for them
@@ -196,12 +201,42 @@ export function isPersistent(value: unknown): value is Persistent {
 
 /**
  * Unwraps the non-persistent ref inside of persistent refs, to be passed to other features without duplicating values in the save data object.
- * @param persistent The persistent ref to unwrap
+ * @param persistent The persistent ref to unwrap, or an object to ignore all persistent refs within
  */
 export function noPersist<T extends Persistent<S>, S extends State>(
     persistent: T
-): T[typeof NonPersistent] {
-    return persistent[NonPersistent];
+): T[typeof NonPersistent];
+export function noPersist<T extends object>(persistent: T): T;
+export function noPersist<T extends Persistent<S>, S extends State>(persistent: T | object) {
+    // Check for proxy state so if it's a lazy proxy we don't evaluate it's function
+    // Lazy proxies are not persistent refs themselves, so we know we want to wrap them
+    return !(ProxyState in persistent) && NonPersistent in persistent
+        ? persistent[NonPersistent]
+        : new Proxy(persistent, {
+              get(target, p) {
+                  if (p === PersistentState) {
+                      return undefined;
+                  }
+                  if (p === SkipPersistence) {
+                      return true;
+                  }
+                  return target[p as keyof typeof target];
+              },
+              set(target, key, value) {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  (target as Record<PropertyKey, any>)[key] = value;
+                  return true;
+              },
+              has(target, key) {
+                  if (key === PersistentState) {
+                      return false;
+                  }
+                  if (key == SkipPersistence) {
+                      return true;
+                  }
+                  return Reflect.has(target, key);
+              }
+          });
 }
 
 /**
@@ -226,6 +261,9 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
         Object.keys(obj).forEach(key => {
             let value = obj[key];
             if (value != null && typeof value === "object") {
+                if ((value as Record<PropertyKey, unknown>)[SkipPersistence] === true) {
+                    return;
+                }
                 if (ProxyState in value) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     value = (value as any)[ProxyState] as object;
