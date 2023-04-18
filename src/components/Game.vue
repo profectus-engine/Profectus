@@ -13,7 +13,7 @@
                     v-if="layerKeys.includes(tab)"
                     v-bind="gatherLayerProps(layers[tab]!)"
                     :index="index"
-                    @set-minimized="value => (layers[tab]!.minimized.value = value)"
+                    @set-minimized="(value: boolean) => (layers[tab]!.minimized.value = value)"
                 />
                 <component :is="tab" :index="index" v-else />
             </div>

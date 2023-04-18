@@ -253,17 +253,17 @@ export interface Section {
     baseText?: Computable<CoercableComponent>;
     /** Whether or not this section should be currently visible to the player. **/
     visible?: Computable<boolean>;
+    /** Determines if numbers larger or smaller than the base should be displayed as red. */
+    smallerIsBetter?: boolean;
 }
 
 /**
  * Takes an array of modifier "sections", and creates a JSXFunction that can render all those sections, and allow each section to be collapsed.
  * Also returns a list of persistent refs that are used to control which sections are currently collapsed.
  * @param sectionsFunc A function that returns the sections to display.
- * @param smallerIsBetter Determines whether numbers larger or smaller than the base should be displayed as red.
  */
 export function createCollapsibleModifierSections(
-    sectionsFunc: () => Section[],
-    smallerIsBetter = false
+    sectionsFunc: () => Section[]
 ): [JSXFunction, Persistent<Record<number, boolean>>] {
     const sections: Section[] = [];
     const processed:
@@ -324,7 +324,9 @@ export function createCollapsibleModifierSections(
                             {s.unit}
                         </span>
                     </div>
-                    {renderJSX(unref(s.modifier.description))}
+                    {s.modifier.description == null
+                        ? null
+                        : renderJSX(unref(s.modifier.description))}
                 </>
             );
 
@@ -353,7 +355,7 @@ export function createCollapsibleModifierSections(
                                 class="modifier-amount"
                                 style={
                                     (
-                                        smallerIsBetter === true
+                                        s.smallerIsBetter === true
                                             ? Decimal.gt(total, base ?? 1)
                                             : Decimal.lt(total, base ?? 1)
                                     )
@@ -489,31 +491,5 @@ export function createFormulaPreview(
             ));
         }
         return formatSmall(formula.evaluate());
-    });
-}
-
-/**
- * Utility for converting a modifier into a formula. Takes the input for this formula as the base parameter.
- * @param modifier The modifier to convert to the formula
- * @param base An existing formula or processed DecimalSource that will be the input to the formula
- */
-export function modifierToFormula<T extends GenericFormula>(
-    modifier: WithRequired<Modifier, "revert">,
-    base: T
-): T;
-export function modifierToFormula(modifier: Modifier, base: FormulaSource): GenericFormula;
-export function modifierToFormula(modifier: Modifier, base: FormulaSource) {
-    return new Formula({
-        inputs: [base],
-        evaluate: val => modifier.apply(val),
-        invert:
-            "revert" in modifier && modifier.revert != null
-                ? (val, lhs) => {
-                      if (lhs instanceof Formula && lhs.hasVariable()) {
-                          return lhs.invert(modifier.revert!(val));
-                      }
-                      throw new Error("Could not invert due to no input being a variable");
-                  }
-                : undefined
     });
 }

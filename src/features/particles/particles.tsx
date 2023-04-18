@@ -73,7 +73,7 @@ export function createParticles<T extends ParticlesOptions>(
         const particles = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         particles.id = getUniqueID("particles-");
         particles.type = ParticlesType;
-        particles[Component] = ParticlesComponent;
+        particles[Component] = ParticlesComponent as GenericComponent;
 
         particles.app = shallowRef(null);
         particles.addEmitter = (config: EmitterConfigV3): Promise<Emitter> => {

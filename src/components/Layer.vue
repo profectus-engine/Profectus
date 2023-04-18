@@ -73,10 +73,6 @@ export default defineComponent({
             player.tabs.splice(unref(props.index), Infinity);
         }
 
-        function setMinimized(min: boolean) {
-            minimized.value = min;
-        }
-
         function updateNodes(nodes: Record<string, FeatureNode | undefined>) {
             props.nodes.value = nodes;
         }

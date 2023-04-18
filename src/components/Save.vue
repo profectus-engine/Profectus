@@ -33,7 +33,7 @@
             <DangerButton
                 :disabled="isActive"
                 @click="emit('delete')"
-                @confirmingChanged="value => (isConfirming = value)"
+                @confirmingChanged="(value: boolean) => (isConfirming = value)"
             >
                 <Tooltip display="Delete" :direction="Direction.Left" class="info">
                     <span class="material-icons" style="margin: -2px">delete</span>

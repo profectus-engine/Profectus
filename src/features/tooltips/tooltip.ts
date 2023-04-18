@@ -1,4 +1,4 @@
-import type { CoercableComponent, Replace, StyleValue } from "features/feature";
+import type { CoercableComponent, GenericComponent, Replace, StyleValue } from "features/feature";
 import { Component, GatherProps, setDefault } from "features/feature";
 import { deletePersistent, Persistent, persistent } from "game/persistence";
 import { Direction } from "util/common";
@@ -76,7 +76,7 @@ export type GenericTooltip = Replace<
 /**
  * Creates a tooltip on the given element with the given options.
  * @param element The renderable feature to display the tooltip on.
- * @param optionsFunc Clickable options.
+ * @param options Tooltip options.
  */
 export function addTooltip<T extends TooltipOptions>(
     element: VueFeature,
@@ -108,7 +108,7 @@ export function addTooltip<T extends TooltipOptions>(
             }
         }
         const elementComponent = element[Component];
-        element[Component] = TooltipComponent;
+        element[Component] = TooltipComponent as GenericComponent;
         const elementGatherProps = element[GatherProps].bind(element);
         element[GatherProps] = function gatherTooltipProps(this: GenericTooltip) {
             const { display, classes, style, direction, xoffset, yoffset, pinned } = this;

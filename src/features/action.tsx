@@ -37,7 +37,7 @@ import { Decorator } from "./decorators/common";
 export const ActionType = Symbol("Action");
 
 /**
- * An object that configures a {@link Action}.
+ * An object that configures an {@link Action}.
  */
 export interface ActionOptions extends Omit<ClickableOptions, "onClick" | "onHold"> {
     /** The cooldown during which the action cannot be performed again, in seconds. */
@@ -72,7 +72,7 @@ export interface BaseAction {
     [GatherProps]: () => Record<string, unknown>;
 }
 
-/** An object that represens a feature that can be clicked upon, and then have a cooldown before they can be clicked again. */
+/** An object that represents a feature that can be clicked upon, and then has a cooldown before it can be clicked again. */
 export type Action<T extends ActionOptions> = Replace<
     T & BaseAction,
     {
