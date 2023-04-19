@@ -6,9 +6,11 @@ import { Decorator } from "./common";
 
 export interface BonusAmountFeatureOptions {
     bonusAmount: Computable<DecimalSource>;
+    totalAmount?: Computable<DecimalSource>;
 }
 export interface BonusCompletionsFeatureOptions {
     bonusCompletions: Computable<DecimalSource>;
+    totalCompletions?: Computable<DecimalSource>;
 }
 
 export interface BaseBonusAmountFeature {
