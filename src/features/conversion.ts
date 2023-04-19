@@ -127,8 +127,8 @@ export function createConversion<T extends ConversionOptions>(
     optionsFunc: OptionsFunc<T, BaseConversion, GenericConversion>,
     ...decorators: Decorator<T, BaseConversion, GenericConversion>[]
 ): Conversion<T> {
-    return createLazyProxy(() => {
-        const conversion = optionsFunc();
+    return createLazyProxy(feature => {
+        const conversion = optionsFunc.call(feature, feature);
 
         for (const decorator of decorators) {
             decorator.preConstruct?.(conversion);
@@ -221,8 +221,8 @@ export function createCumulativeConversion<S extends ConversionOptions>(
 export function createIndependentConversion<S extends ConversionOptions>(
     optionsFunc: OptionsFunc<S, BaseConversion, GenericConversion>
 ): Conversion<S> {
-    return createConversion(() => {
-        const conversion: S = optionsFunc();
+    return createConversion(feature => {
+        const conversion: S = optionsFunc.call(feature, feature);
 
         setDefault(conversion, "buyMax", false);
 

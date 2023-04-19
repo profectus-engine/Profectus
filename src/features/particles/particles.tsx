@@ -69,8 +69,10 @@ export type GenericParticles = Particles<ParticlesOptions>;
 export function createParticles<T extends ParticlesOptions>(
     optionsFunc?: OptionsFunc<T, BaseParticles, GenericParticles>
 ): Particles<T> {
-    return createLazyProxy(() => {
-        const particles = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
+    return createLazyProxy(feature => {
+        const particles =
+            optionsFunc?.call(feature, feature) ??
+            ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         particles.id = getUniqueID("particles-");
         particles.type = ParticlesType;
         particles[Component] = ParticlesComponent as GenericComponent;

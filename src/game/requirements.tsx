@@ -3,6 +3,7 @@ import {
     CoercableComponent,
     isVisible,
     jsx,
+    OptionsFunc,
     Replace,
     setDefault,
     Visibility
@@ -108,10 +109,10 @@ export type CostRequirement = Replace<
  * @param optionsFunc Cost requirement options.
  */
 export function createCostRequirement<T extends CostRequirementOptions>(
-    optionsFunc: () => T
+    optionsFunc: OptionsFunc<T>
 ): CostRequirement {
-    return createLazyProxy(() => {
-        const req = optionsFunc() as T & Partial<Requirement>;
+    return createLazyProxy(feature => {
+        const req = optionsFunc.call(feature, feature) as T & Partial<Requirement>;
 
         req.partialDisplay = amount => (
             <span

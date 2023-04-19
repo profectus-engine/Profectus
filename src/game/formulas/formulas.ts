@@ -1,7 +1,8 @@
 import { Resource } from "features/resources/resource";
+import { NonPersistent } from "game/persistence";
 import Decimal, { DecimalSource, format } from "util/bignum";
-import { Computable, convertComputable, ProcessedComputable } from "util/computed";
-import { computed, ComputedRef, ref, unref } from "vue";
+import { Computable, ProcessedComputable, convertComputable } from "util/computed";
+import { ComputedRef, Ref, computed, ref, unref } from "vue";
 import * as ops from "./operations";
 import type {
     EvaluateFunction,
@@ -58,7 +59,15 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
 
     constructor(options: FormulaOptions<T>) {
         let readonlyProperties;
+        if ("inputs" in options) {
+            options.inputs = options.inputs.map(input =>
+                typeof input === "object" && NonPersistent in input ? input[NonPersistent] : input
+            ) as T | [FormulaSource];
+        }
         if ("variable" in options) {
+            if (typeof options.variable === "object" && NonPersistent in options.variable) {
+                options.variable = options.variable[NonPersistent] as Ref<DecimalSource>;
+            }
             readonlyProperties = this.setupVariable(options);
         } else if (!("evaluate" in options)) {
             readonlyProperties = this.setupConstant(options);
@@ -364,21 +373,30 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
      * @param value The incoming formula value
      * @param condition Whether or not to apply the modifier
      * @param formulaModifier The modifier to apply to the incoming formula if the condition is true
+     * @param elseFormulaModifier An optional modifier to apply to the incoming formula if the condition is false
      */
     public static if(
         value: FormulaSource,
         condition: Computable<boolean>,
         formulaModifier: (
             value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
+        ) => GenericFormula,
+        elseFormulaModifier?: (
+            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
         ) => GenericFormula
     ): GenericFormula {
         const lhsRef = ref<DecimalSource>(0);
-        const formula = formulaModifier(Formula.variable(lhsRef));
+        const variable = Formula.variable(lhsRef);
+        const formula = formulaModifier(variable);
+        const elseFormula = elseFormulaModifier?.(variable);
         const processedCondition = convertComputable(condition);
         function evalStep(lhs: DecimalSource) {
             if (unref(processedCondition)) {
                 lhsRef.value = lhs;
                 return formula.evaluate();
+            } else if (elseFormula) {
+                lhsRef.value = lhs;
+                return elseFormula.evaluate();
             } else {
                 return lhs;
             }
@@ -389,6 +407,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             }
             if (unref(processedCondition)) {
                 return lhs.invert(formula.invert(value));
+            } else if (elseFormula) {
+                return lhs.invert(elseFormula.invert(value));
             } else {
                 return lhs.invert(value);
             }
@@ -399,15 +419,17 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             invert: formula.isInvertible() && formula.hasVariable() ? invertStep : undefined
         });
     }
-    /** @see {@link if} */
     public static conditional(
         value: FormulaSource,
         condition: Computable<boolean>,
         formulaModifier: (
             value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
+        ) => GenericFormula,
+        elseFormulaModifier?: (
+            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
         ) => GenericFormula
     ) {
-        return Formula.if(value, condition, formulaModifier);
+        return Formula.if(value, condition, formulaModifier, elseFormulaModifier);
     }
 
     public static abs(value: FormulaSource): GenericFormula {

@@ -31,14 +31,14 @@ export type Proxied<T> = NonNullable<T> extends Record<PropertyKey, unknown>
 // Takes a function that returns an object and pretends to be that object
 // Note that the object is lazily calculated
 export function createLazyProxy<T extends object, S extends T>(
-    objectFunc: (baseObject: S) => T & S,
+    objectFunc: (this: S, baseObject: S) => T & S,
     baseObject: S = {} as S
 ): T {
     const obj: S & Partial<T> = baseObject;
     let calculated = false;
     function calculateObj(): T {
         if (!calculated) {
-            Object.assign(obj, objectFunc(obj));
+            Object.assign(obj, objectFunc.call(obj, obj));
             calculated = true;
         }
         return obj as S & T;
@@ -73,7 +73,7 @@ export function createLazyProxy<T extends object, S extends T>(
         },
         getOwnPropertyDescriptor(target, key) {
             if (!calculated) {
-                Object.assign(obj, objectFunc(obj));
+                Object.assign(obj, objectFunc.call(obj, obj));
                 calculated = true;
             }
             return Object.getOwnPropertyDescriptor(target, key);

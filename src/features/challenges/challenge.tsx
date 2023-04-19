@@ -155,8 +155,8 @@ export function createChallenge<T extends ChallengeOptions>(
     const completions = persistent(0);
     const active = persistent(false, false);
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
-    return createLazyProxy(() => {
-        const challenge = optionsFunc();
+    return createLazyProxy(feature => {
+        const challenge = optionsFunc.call(feature, feature);
 
         challenge.id = getUniqueID("challenge-");
         challenge.type = ChallengeType;

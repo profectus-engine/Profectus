@@ -143,8 +143,10 @@ export function createAchievement<T extends AchievementOptions>(
 ): Achievement<T> {
     const earned = persistent<boolean>(false, false);
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
-    return createLazyProxy(() => {
-        const achievement = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
+    return createLazyProxy(feature => {
+        const achievement =
+            optionsFunc?.call(feature, feature) ??
+            ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         achievement.id = getUniqueID("achievement-");
         achievement.type = AchievementType;
         achievement[Component] = AchievementComponent as GenericComponent;

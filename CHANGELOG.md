@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Requires referencing persistent refs either through a proxy or by wrapping in `noPersist()`
 - **BREAKING** Visibility properties can now take booleans
     - Removed showIf util
+- **BREAKING** Lazy proxies and options functions now pass the base object in as `this` as well as the first parameter.
 - Tweaked settings display
 - setupPassiveGeneration will no longer lower the resource
 - displayResource now floors resource amounts

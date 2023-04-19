@@ -68,8 +68,8 @@ const uppercaseNumbers = [")", "!", "@", "#", "$", "%", "^", "&", "*", "("];
 export function createHotkey<T extends HotkeyOptions>(
     optionsFunc: OptionsFunc<T, BaseHotkey, GenericHotkey>
 ): Hotkey<T> {
-    return createLazyProxy(() => {
-        const hotkey = optionsFunc();
+    return createLazyProxy(feature => {
+        const hotkey = optionsFunc.call(feature, feature);
         hotkey.type = HotkeyType;
 
         processComputable(hotkey as T, "enabled");

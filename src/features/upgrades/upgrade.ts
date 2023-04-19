@@ -123,8 +123,8 @@ export function createUpgrade<T extends UpgradeOptions>(
 ): Upgrade<T> {
     const bought = persistent<boolean>(false, false);
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
-    return createLazyProxy(() => {
-        const upgrade = optionsFunc();
+    return createLazyProxy(feature => {
+        const upgrade = optionsFunc.call(feature, feature);
         upgrade.id = getUniqueID("upgrade-");
         upgrade.type = UpgradeType;
         upgrade[Component] = UpgradeComponent as GenericComponent;

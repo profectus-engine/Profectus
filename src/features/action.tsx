@@ -108,8 +108,10 @@ export function createAction<T extends ActionOptions>(
 ): Action<T> {
     const progress = persistent<DecimalSource>(0);
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
-    return createLazyProxy(() => {
-        const action = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
+    return createLazyProxy(feature => {
+        const action =
+            optionsFunc?.call(feature, feature) ??
+            ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         action.id = getUniqueID("action-");
         action.type = ActionType;
         action[Component] = ClickableComponent as GenericComponent;

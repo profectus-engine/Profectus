@@ -100,8 +100,10 @@ export function createClickable<T extends ClickableOptions>(
     ...decorators: Decorator<T, BaseClickable, GenericClickable>[]
 ): Clickable<T> {
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
-    return createLazyProxy(() => {
-        const clickable = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
+    return createLazyProxy(feature => {
+        const clickable =
+            optionsFunc?.call(feature, feature) ??
+            ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         clickable.id = getUniqueID("clickable-");
         clickable.type = ClickableType;
         clickable[Component] = ClickableComponent as GenericComponent;

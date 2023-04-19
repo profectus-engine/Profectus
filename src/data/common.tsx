@@ -5,11 +5,10 @@ import { createClickable } from "features/clickables/clickable";
 import type { GenericConversion } from "features/conversion";
 import type { CoercableComponent, JSXFunction, OptionsFunc, Replace } from "features/feature";
 import { jsx, setDefault } from "features/feature";
-import { displayResource, Resource } from "features/resources/resource";
+import { Resource, displayResource } from "features/resources/resource";
 import type { GenericTree, GenericTreeNode, TreeNode, TreeNodeOptions } from "features/trees/tree";
 import { createTreeNode } from "features/trees/tree";
-import Formula from "game/formulas/formulas";
-import type { FormulaSource, GenericFormula } from "game/formulas/types";
+import type { GenericFormula } from "game/formulas/types";
 import type { Modifier } from "game/modifiers";
 import type { Persistent } from "game/persistence";
 import { DefaultValue, persistent } from "game/persistence";
@@ -99,8 +98,8 @@ export type GenericResetButton = Replace<
 export function createResetButton<T extends ClickableOptions & ResetButtonOptions>(
     optionsFunc: OptionsFunc<T>
 ): ResetButton<T> {
-    return createClickable(() => {
-        const resetButton = optionsFunc();
+    return createClickable(feature => {
+        const resetButton = optionsFunc.call(feature, feature);
 
         processComputable(resetButton as T, "showNextAt");
         setDefault(resetButton, "showNextAt", true);
@@ -213,8 +212,8 @@ export type GenericLayerTreeNode = Replace<
 export function createLayerTreeNode<T extends LayerTreeNodeOptions>(
     optionsFunc: OptionsFunc<T>
 ): LayerTreeNode<T> {
-    return createTreeNode(() => {
-        const options = optionsFunc();
+    return createTreeNode(feature => {
+        const options = optionsFunc.call(feature, feature);
         processComputable(options as T, "display");
         setDefault(options, "display", options.layerID);
         processComputable(options as T, "append");

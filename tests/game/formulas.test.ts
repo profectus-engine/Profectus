@@ -868,6 +868,26 @@ describe("Conditionals", () => {
                 Formula.if(variable, false, value => Formula.sqrt(value)).invert(10)
             ).compare_tolerance(10));
     });
+    describe("Evaluates correctly with condition false and else statement", () => {
+        test("Evaluates correctly", () =>
+            expect(
+                Formula.if(
+                    constant,
+                    false,
+                    value => Formula.sqrt(value),
+                    value => value.times(2)
+                ).evaluate()
+            ).compare_tolerance(20));
+        test("Inverts correctly with variable in input", () =>
+            expect(
+                Formula.if(
+                    variable,
+                    false,
+                    value => Formula.sqrt(value),
+                    value => value.times(2)
+                ).invert(20)
+            ).compare_tolerance(10));
+    });
 
     describe("Evaluates correctly with condition true", () => {
         test("Evaluates correctly", () =>

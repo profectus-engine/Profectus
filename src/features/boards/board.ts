@@ -297,8 +297,8 @@ export function createBoard<T extends BoardOptions>(
         false
     );
 
-    return createLazyProxy(() => {
-        const board = optionsFunc();
+    return createLazyProxy(feature => {
+        const board = optionsFunc.call(feature, feature);
         board.id = getUniqueID("board-");
         board.type = BoardType;
         board[Component] = BoardComponent as GenericComponent;

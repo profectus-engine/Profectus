@@ -135,8 +135,8 @@ export function createRepeatable<T extends RepeatableOptions>(
 ): Repeatable<T> {
     const amount = persistent<DecimalSource>(0);
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
-    return createLazyProxy(() => {
-        const repeatable = optionsFunc();
+    return createLazyProxy(feature => {
+        const repeatable = optionsFunc.call(feature, feature);
 
         repeatable.id = getUniqueID("repeatable-");
         repeatable.type = RepeatableType;

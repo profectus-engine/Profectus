@@ -1,5 +1,5 @@
 import "components/common/modifiers.css";
-import type { CoercableComponent } from "features/feature";
+import type { CoercableComponent, OptionsFunc } from "features/feature";
 import { jsx } from "features/feature";
 import settings from "game/settings";
 import type { DecimalSource } from "util/bignum";
@@ -66,10 +66,13 @@ export interface AdditiveModifierOptions {
  * @param optionsFunc Additive modifier options.
  */
 export function createAdditiveModifier<T extends AdditiveModifierOptions>(
-    optionsFunc: () => T
+    optionsFunc: OptionsFunc<T>
 ): ModifierFromOptionalParams<T["description"], T["enabled"]> {
-    return createLazyProxy(() => {
-        const { addend, description, enabled, smallerIsBetter } = optionsFunc();
+    return createLazyProxy(feature => {
+        const { addend, description, enabled, smallerIsBetter } = optionsFunc.call(
+            feature,
+            feature
+        );
 
         const processedAddend = convertComputable(addend);
         const processedDescription = convertComputable(description);
@@ -128,10 +131,13 @@ export interface MultiplicativeModifierOptions {
  * @param optionsFunc Multiplicative modifier options.
  */
 export function createMultiplicativeModifier<T extends MultiplicativeModifierOptions>(
-    optionsFunc: () => T
+    optionsFunc: OptionsFunc<T>
 ): ModifierFromOptionalParams<T["description"], T["enabled"]> {
-    return createLazyProxy(() => {
-        const { multiplier, description, enabled, smallerIsBetter } = optionsFunc();
+    return createLazyProxy(feature => {
+        const { multiplier, description, enabled, smallerIsBetter } = optionsFunc.call(
+            feature,
+            feature
+        );
 
         const processedMultiplier = convertComputable(multiplier);
         const processedDescription = convertComputable(description);
@@ -191,11 +197,11 @@ export interface ExponentialModifierOptions {
  * @param optionsFunc Exponential modifier options.
  */
 export function createExponentialModifier<T extends ExponentialModifierOptions>(
-    optionsFunc: () => T
+    optionsFunc: OptionsFunc<T>
 ): ModifierFromOptionalParams<T["description"], T["enabled"]> {
-    return createLazyProxy(() => {
+    return createLazyProxy(feature => {
         const { exponent, description, enabled, supportLowNumbers, smallerIsBetter } =
-            optionsFunc();
+            optionsFunc.call(feature, feature);
 
         const processedExponent = convertComputable(exponent);
         const processedDescription = convertComputable(description);
