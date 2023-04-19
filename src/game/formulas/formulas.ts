@@ -1,7 +1,8 @@
 import { Resource } from "features/resources/resource";
+import { NonPersistent } from "game/persistence";
 import Decimal, { DecimalSource, format } from "util/bignum";
-import { Computable, convertComputable, ProcessedComputable } from "util/computed";
-import { computed, ComputedRef, ref, unref } from "vue";
+import { Computable, ProcessedComputable, convertComputable } from "util/computed";
+import { ComputedRef, Ref, computed, ref, unref } from "vue";
 import * as ops from "./operations";
 import type {
     EvaluateFunction,
@@ -58,7 +59,15 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
 
     constructor(options: FormulaOptions<T>) {
         let readonlyProperties;
+        if ("inputs" in options) {
+            options.inputs = options.inputs.map(input =>
+                typeof input === "object" && NonPersistent in input ? input[NonPersistent] : input
+            ) as T | [FormulaSource];
+        }
         if ("variable" in options) {
+            if (typeof options.variable === "object" && NonPersistent in options.variable) {
+                options.variable = options.variable[NonPersistent] as Ref<DecimalSource>;
+            }
             readonlyProperties = this.setupVariable(options);
         } else if (!("evaluate" in options)) {
             readonlyProperties = this.setupConstant(options);
