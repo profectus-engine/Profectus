@@ -364,21 +364,30 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
      * @param value The incoming formula value
      * @param condition Whether or not to apply the modifier
      * @param formulaModifier The modifier to apply to the incoming formula if the condition is true
+     * @param elseFormulaModifier An optional modifier to apply to the incoming formula if the condition is false
      */
     public static if(
         value: FormulaSource,
         condition: Computable<boolean>,
         formulaModifier: (
             value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
+        ) => GenericFormula,
+        elseFormulaModifier?: (
+            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
         ) => GenericFormula
     ): GenericFormula {
         const lhsRef = ref<DecimalSource>(0);
-        const formula = formulaModifier(Formula.variable(lhsRef));
+        const variable = Formula.variable(lhsRef);
+        const formula = formulaModifier(variable);
+        const elseFormula = elseFormulaModifier?.(variable);
         const processedCondition = convertComputable(condition);
         function evalStep(lhs: DecimalSource) {
             if (unref(processedCondition)) {
                 lhsRef.value = lhs;
                 return formula.evaluate();
+            } else if (elseFormula) {
+                lhsRef.value = lhs;
+                return elseFormula.evaluate();
             } else {
                 return lhs;
             }
@@ -389,6 +398,8 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             }
             if (unref(processedCondition)) {
                 return lhs.invert(formula.invert(value));
+            } else if (elseFormula) {
+                return lhs.invert(elseFormula.invert(value));
             } else {
                 return lhs.invert(value);
             }
@@ -399,15 +410,17 @@ export default class Formula<T extends [FormulaSource] | FormulaSource[]> {
             invert: formula.isInvertible() && formula.hasVariable() ? invertStep : undefined
         });
     }
-    /** @see {@link if} */
     public static conditional(
         value: FormulaSource,
         condition: Computable<boolean>,
         formulaModifier: (
             value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
+        ) => GenericFormula,
+        elseFormulaModifier?: (
+            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
         ) => GenericFormula
     ) {
-        return Formula.if(value, condition, formulaModifier);
+        return Formula.if(value, condition, formulaModifier, elseFormulaModifier);
     }
 
     public static abs(value: FormulaSource): GenericFormula {
