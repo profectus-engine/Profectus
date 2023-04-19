@@ -62,8 +62,8 @@ export type GenericTab = Tab<TabOptions>;
 export function createTab<T extends TabOptions>(
     optionsFunc: OptionsFunc<T, BaseTab, GenericTab>
 ): Tab<T> {
-    return createLazyProxy(() => {
-        const tab = optionsFunc();
+    return createLazyProxy(feature => {
+        const tab = optionsFunc.call(feature, feature);
         tab.id = getUniqueID("tab-");
         tab.type = TabType;
         tab[Component] = TabComponent as GenericComponent;

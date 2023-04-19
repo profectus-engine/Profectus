@@ -307,8 +307,8 @@ export function createGrid<T extends GridOptions>(
     optionsFunc: OptionsFunc<T, BaseGrid, GenericGrid>
 ): Grid<T> {
     const cellState = persistent<Record<string | number, State>>({}, false);
-    return createLazyProxy(() => {
-        const grid = optionsFunc();
+    return createLazyProxy(feature => {
+        const grid = optionsFunc.call(feature, feature);
         grid.id = getUniqueID("grid-");
         grid[Component] = GridComponent as GenericComponent;
 

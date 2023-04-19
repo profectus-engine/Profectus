@@ -97,8 +97,10 @@ export type GenericClickable = Replace<
 export function createClickable<T extends ClickableOptions>(
     optionsFunc?: OptionsFunc<T, BaseClickable, GenericClickable>
 ): Clickable<T> {
-    return createLazyProxy(() => {
-        const clickable = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
+    return createLazyProxy(feature => {
+        const clickable =
+            optionsFunc?.call(feature, feature) ??
+            ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         clickable.id = getUniqueID("clickable-");
         clickable.type = ClickableType;
         clickable[Component] = ClickableComponent as GenericComponent;

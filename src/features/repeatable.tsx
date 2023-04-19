@@ -132,8 +132,8 @@ export function createRepeatable<T extends RepeatableOptions>(
     optionsFunc: OptionsFunc<T, BaseRepeatable, GenericRepeatable>
 ): Repeatable<T> {
     const amount = persistent<DecimalSource>(0);
-    return createLazyProxy(() => {
-        const repeatable = optionsFunc();
+    return createLazyProxy(feature => {
+        const repeatable = optionsFunc.call(feature, feature);
 
         repeatable.id = getUniqueID("repeatable-");
         repeatable.type = RepeatableType;

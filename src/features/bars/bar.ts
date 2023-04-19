@@ -103,8 +103,8 @@ export type GenericBar = Replace<
 export function createBar<T extends BarOptions>(
     optionsFunc: OptionsFunc<T, BaseBar, GenericBar>
 ): Bar<T> {
-    return createLazyProxy(() => {
-        const bar = optionsFunc();
+    return createLazyProxy(feature => {
+        const bar = optionsFunc.call(feature, feature);
         bar.id = getUniqueID("bar-");
         bar.type = BarType;
         bar[Component] = BarComponent as GenericComponent;

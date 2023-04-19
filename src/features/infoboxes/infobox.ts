@@ -91,8 +91,8 @@ export function createInfobox<T extends InfoboxOptions>(
     optionsFunc: OptionsFunc<T, BaseInfobox, GenericInfobox>
 ): Infobox<T> {
     const collapsed = persistent<boolean>(false, false);
-    return createLazyProxy(() => {
-        const infobox = optionsFunc();
+    return createLazyProxy(feature => {
+        const infobox = optionsFunc.call(feature, feature);
         infobox.id = getUniqueID("infobox-");
         infobox.type = InfoboxType;
         infobox[Component] = InfoboxComponent as GenericComponent;

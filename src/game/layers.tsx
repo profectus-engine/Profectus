@@ -220,7 +220,7 @@ export function createLayer<T extends LayerOptions>(
         addingLayers.push(id);
         persistentRefs[id] = new Set();
         layer.minimized = persistent(false, false);
-        Object.assign(layer, optionsFunc.call(layer as BaseLayer));
+        Object.assign(layer, optionsFunc.call(layer, layer as BaseLayer));
         if (
             addingLayers[addingLayers.length - 1] == null ||
             addingLayers[addingLayers.length - 1] !== id

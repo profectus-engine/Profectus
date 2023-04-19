@@ -125,8 +125,8 @@ export type GenericConversion = Replace<
 export function createConversion<T extends ConversionOptions>(
     optionsFunc: OptionsFunc<T, BaseConversion, GenericConversion>
 ): Conversion<T> {
-    return createLazyProxy(() => {
-        const conversion = optionsFunc();
+    return createLazyProxy(feature => {
+        const conversion = optionsFunc.call(feature, feature);
 
         (conversion as GenericConversion).formula = conversion.formula(
             Formula.variable(conversion.baseResource)
@@ -211,8 +211,8 @@ export function createCumulativeConversion<S extends ConversionOptions>(
 export function createIndependentConversion<S extends ConversionOptions>(
     optionsFunc: OptionsFunc<S, BaseConversion, GenericConversion>
 ): Conversion<S> {
-    return createConversion(() => {
-        const conversion: S = optionsFunc();
+    return createConversion(feature => {
+        const conversion: S = optionsFunc.call(feature, feature);
 
         setDefault(conversion, "buyMax", false);
 

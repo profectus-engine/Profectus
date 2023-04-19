@@ -103,8 +103,10 @@ export type GenericTreeNode = Replace<
 export function createTreeNode<T extends TreeNodeOptions>(
     optionsFunc?: OptionsFunc<T, BaseTreeNode, GenericTreeNode>
 ): TreeNode<T> {
-    return createLazyProxy(() => {
-        const treeNode = optionsFunc?.() ?? ({} as ReturnType<NonNullable<typeof optionsFunc>>);
+    return createLazyProxy(feature => {
+        const treeNode =
+            optionsFunc?.call(feature, feature) ??
+            ({} as ReturnType<NonNullable<typeof optionsFunc>>);
         treeNode.id = getUniqueID("treeNode-");
         treeNode.type = TreeNodeType;
         treeNode[Component] = TreeNodeComponent as GenericComponent;
@@ -242,8 +244,8 @@ export type GenericTree = Replace<
 export function createTree<T extends TreeOptions>(
     optionsFunc: OptionsFunc<T, BaseTree, GenericTree>
 ): Tree<T> {
-    return createLazyProxy(() => {
-        const tree = optionsFunc();
+    return createLazyProxy(feature => {
+        const tree = optionsFunc.call(feature, feature);
         tree.id = getUniqueID("tree-");
         tree.type = TreeType;
         tree[Component] = TreeComponent as GenericComponent;

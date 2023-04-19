@@ -54,8 +54,8 @@ export type GenericReset = Reset<ResetOptions>;
 export function createReset<T extends ResetOptions>(
     optionsFunc: OptionsFunc<T, BaseReset, GenericReset>
 ): Reset<T> {
-    return createLazyProxy(() => {
-        const reset = optionsFunc();
+    return createLazyProxy(feature => {
+        const reset = optionsFunc.call(feature, feature);
         reset.id = getUniqueID("reset-");
         reset.type = ResetType;
 
