@@ -1,5 +1,5 @@
 import { isArray } from "@vue/shared";
-import { Decorator } from "features/decorators/common";
+import { Decorator, GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,
