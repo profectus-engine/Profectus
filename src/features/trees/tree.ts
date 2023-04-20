@@ -1,4 +1,4 @@
-import { Decorator } from "features/decorators/common";
+import { Decorator, GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -103,7 +103,7 @@ export type GenericTreeNode = Replace<
  */
 export function createTreeNode<T extends TreeNodeOptions>(
     optionsFunc?: OptionsFunc<T, BaseTreeNode, GenericTreeNode>,
-    ...decorators: Decorator<T, BaseTreeNode, GenericTreeNode>[]
+    ...decorators: GenericDecorator[]
 ): TreeNode<T> {
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(feature => {

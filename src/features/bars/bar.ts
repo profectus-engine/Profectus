@@ -1,5 +1,5 @@
 import BarComponent from "features/bars/Bar.vue";
-import { Decorator } from "features/decorators/common";
+import { Decorator, GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -103,7 +103,7 @@ export type GenericBar = Replace<
  */
 export function createBar<T extends BarOptions>(
     optionsFunc: OptionsFunc<T, BaseBar, GenericBar>,
-    ...decorators: Decorator<T, BaseBar, GenericBar>[]
+    ...decorators: GenericDecorator[]
 ): Bar<T> {
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(feature => {

@@ -15,11 +15,13 @@ export interface BonusCompletionsFeatureOptions {
 
 export interface BaseBonusAmountFeature {
     amount: Ref<DecimalSource>;
-    totalAmount: Ref<DecimalSource>;
+    bonusAmount: ProcessedComputable<DecimalSource>;
+    totalAmount?: Ref<DecimalSource>;
 }
 export interface BaseBonusCompletionsFeature {
     completions: Ref<DecimalSource>;
-    totalCompletions: Ref<DecimalSource>;
+    bonusCompletions: ProcessedComputable<DecimalSource>;
+    totalCompletions?: Ref<DecimalSource>;
 }
 
 export type BonusAmountFeature<T extends BonusAmountFeatureOptions> = Replace<
@@ -47,6 +49,7 @@ export type GenericBonusCompletionsFeature = Replace<
 /**
  * Allows the addition of "bonus levels" to the decorated feature, with an accompanying "total amount".  
  * To function properly, the `createFeature()` function must have its generic type extended by {@linkcode BonusAmountFeatureOptions}.  
+ * Additionally, the base feature must have an `amount` property.  
  * To allow access to the decorated values outside the `createFeature()` function, the output type must be extended by {@linkcode GenericBonusAmountFeature}.
  * @example ```ts
  * createRepeatable<RepeatableOptions & BonusAmountFeatureOptions>(() => ({

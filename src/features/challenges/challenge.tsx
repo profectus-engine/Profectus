@@ -1,7 +1,7 @@
 import { isArray } from "@vue/shared";
 import Toggle from "components/fields/Toggle.vue";
 import ChallengeComponent from "features/challenges/Challenge.vue";
-import { Decorator } from "features/decorators/common";
+import { Decorator, GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -150,7 +150,7 @@ export type GenericChallenge = Replace<
  */
 export function createChallenge<T extends ChallengeOptions>(
     optionsFunc: OptionsFunc<T, BaseChallenge, GenericChallenge>,
-    ...decorators: Decorator<T, BaseChallenge, GenericChallenge>[]
+    ...decorators: GenericDecorator[]
 ): Challenge<T> {
     const completions = persistent(0);
     const active = persistent(false, false);

@@ -119,7 +119,7 @@ export type GenericUpgrade = Replace<
  */
 export function createUpgrade<T extends UpgradeOptions>(
     optionsFunc: OptionsFunc<T, BaseUpgrade, GenericUpgrade>,
-    ...decorators: Decorator<T, BaseUpgrade, GenericUpgrade>[]
+    ...decorators: GenericDecorator[]
 ): Upgrade<T> {
     const bought = persistent<boolean>(false, false);
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});

@@ -1,5 +1,5 @@
 import ClickableComponent from "features/clickables/Clickable.vue";
-import { Decorator } from "features/decorators/common";
+import { Decorator, GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -97,7 +97,7 @@ export type GenericClickable = Replace<
  */
 export function createClickable<T extends ClickableOptions>(
     optionsFunc?: OptionsFunc<T, BaseClickable, GenericClickable>,
-    ...decorators: Decorator<T, BaseClickable, GenericClickable>[]
+    ...decorators: GenericDecorator[]
 ): Clickable<T> {
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(feature => {

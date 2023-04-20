@@ -2,12 +2,14 @@ import { Replace, OptionsObject } from "../feature";
 import { Computable, GetComputableType, processComputable, ProcessedComputable } from "util/computed";
 import { Persistent, State } from "game/persistence";
 
-export type Decorator<FeatureOptions, BaseFeature = {}, GenericFeature = BaseFeature, S extends State = State> = {
+export type Decorator<FeatureOptions, BaseFeature = Object, GenericFeature = BaseFeature, S extends State = State> = {
     getPersistentData?(): Record<string, Persistent<S>>;
     preConstruct?(feature: OptionsObject<FeatureOptions,BaseFeature,GenericFeature>): void;
     postConstruct?(feature: OptionsObject<FeatureOptions,BaseFeature,GenericFeature>): void;
     getGatheredProps?(feature: OptionsObject<FeatureOptions,BaseFeature,GenericFeature>): Partial<OptionsObject<FeatureOptions,BaseFeature,GenericFeature>>
 }
+
+export type GenericDecorator = Decorator<unknown>;
 
 export interface EffectFeatureOptions {
     effect: Computable<any>;
@@ -33,7 +35,7 @@ export type GenericEffectFeature = Replace<
  * }), effectDecorator) as GenericUpgrade & GenericEffectFeature;
  * ```
  */
-export const effectDecorator: Decorator<EffectFeatureOptions, {}, GenericEffectFeature> = {
+export const effectDecorator: Decorator<EffectFeatureOptions, unknown, GenericEffectFeature> = {
     postConstruct(feature) {
         processComputable(feature, "effect");
     }

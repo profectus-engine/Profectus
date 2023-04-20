@@ -2,7 +2,7 @@ import { computed } from "@vue/reactivity";
 import { isArray } from "@vue/shared";
 import Select from "components/fields/Select.vue";
 import AchievementComponent from "features/achievements/Achievement.vue";
-import { Decorator } from "features/decorators/common";
+import { Decorator, GenericDecorator } from "features/decorators/common";
 import {
     CoercableComponent,
     Component,
@@ -139,7 +139,7 @@ export type GenericAchievement = Replace<
  */
 export function createAchievement<T extends AchievementOptions>(
     optionsFunc?: OptionsFunc<T, BaseAchievement, GenericAchievement>,
-    ...decorators: Decorator<T, BaseAchievement, GenericAchievement>[]
+    ...decorators: GenericDecorator[]
 ): Achievement<T> {
     const earned = persistent<boolean>(false, false);
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});

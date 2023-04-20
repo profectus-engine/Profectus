@@ -30,7 +30,7 @@ import { createLazyProxy } from "util/proxies";
 import { coerceComponent, isCoercableComponent } from "util/vue";
 import type { Ref } from "vue";
 import { computed, unref } from "vue";
-import { Decorator } from "./decorators/common";
+import { Decorator, GenericDecorator } from "./decorators/common";
 
 /** A symbol used to identify {@link Repeatable} features. */
 export const RepeatableType = Symbol("Repeatable");
@@ -131,11 +131,11 @@ export type GenericRepeatable = Replace<
  */
 export function createRepeatable<T extends RepeatableOptions>(
     optionsFunc: OptionsFunc<T, BaseRepeatable, GenericRepeatable>,
-    ...decorators: Decorator<T, BaseRepeatable, GenericRepeatable>[]
+    ...decorators: GenericDecorator[]
 ): Repeatable<T> {
     const amount = persistent<DecimalSource>(0);
     const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
-    return createLazyProxy(feature => {
+    return createLazyProxy<Repeatable<T>, Repeatable<T>>(feature => {
         const repeatable = optionsFunc.call(feature, feature);
 
         repeatable.id = getUniqueID("repeatable-");
