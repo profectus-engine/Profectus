@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2023-04-20
 ### Added
 - **BREAKING** New requirements system
     - Replaces many features' existing requirements with new generic form
