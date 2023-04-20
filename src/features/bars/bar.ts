@@ -1,4 +1,5 @@
 import BarComponent from "features/bars/Bar.vue";
+import { Decorator, GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -101,13 +102,21 @@ export type GenericBar = Replace<
  * @param optionsFunc Bar options.
  */
 export function createBar<T extends BarOptions>(
-    optionsFunc: OptionsFunc<T, BaseBar, GenericBar>
+    optionsFunc: OptionsFunc<T, BaseBar, GenericBar>,
+    ...decorators: GenericDecorator[]
 ): Bar<T> {
+    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(feature => {
         const bar = optionsFunc.call(feature, feature);
         bar.id = getUniqueID("bar-");
         bar.type = BarType;
         bar[Component] = BarComponent as GenericComponent;
+
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(bar);
+        }
+
+        Object.assign(bar, decoratedData);
 
         processComputable(bar as T, "visibility");
         setDefault(bar, "visibility", Visibility.Visible);
@@ -124,6 +133,11 @@ export function createBar<T extends BarOptions>(
         processComputable(bar as T, "display");
         processComputable(bar as T, "mark");
 
+        for (const decorator of decorators) {
+            decorator.postConstruct?.(bar);
+        }
+
+        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(bar)), {});
         bar[GatherProps] = function (this: GenericBar) {
             const {
                 progress,
@@ -155,7 +169,8 @@ export function createBar<T extends BarOptions>(
                 baseStyle,
                 fillStyle,
                 mark,
-                id
+                id,
+                ...decoratedProps
             };
         };
 

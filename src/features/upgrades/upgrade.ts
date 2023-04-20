@@ -1,4 +1,5 @@
 import { isArray } from "@vue/shared";
+import { Decorator, GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -14,11 +15,13 @@ import {
     setDefault,
     Visibility
 } from "features/feature";
+import { createResource } from "features/resources/resource";
 import UpgradeComponent from "features/upgrades/Upgrade.vue";
 import type { GenericLayer } from "game/layers";
 import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
 import {
+createCostRequirement,
     createVisibilityRequirement,
     payRequirements,
     Requirements,
@@ -115,16 +118,24 @@ export type GenericUpgrade = Replace<
  * @param optionsFunc Upgrade options.
  */
 export function createUpgrade<T extends UpgradeOptions>(
-    optionsFunc: OptionsFunc<T, BaseUpgrade, GenericUpgrade>
+    optionsFunc: OptionsFunc<T, BaseUpgrade, GenericUpgrade>,
+    ...decorators: GenericDecorator[]
 ): Upgrade<T> {
     const bought = persistent<boolean>(false, false);
+    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(feature => {
         const upgrade = optionsFunc.call(feature, feature);
         upgrade.id = getUniqueID("upgrade-");
         upgrade.type = UpgradeType;
         upgrade[Component] = UpgradeComponent as GenericComponent;
 
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(upgrade);
+        }
+
         upgrade.bought = bought;
+        Object.assign(upgrade, decoratedData);
+
         upgrade.canPurchase = computed(() => requirementsMet(upgrade.requirements));
         upgrade.purchase = function () {
             const genericUpgrade = upgrade as GenericUpgrade;
@@ -150,6 +161,11 @@ export function createUpgrade<T extends UpgradeOptions>(
         processComputable(upgrade as T, "display");
         processComputable(upgrade as T, "mark");
 
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(upgrade);
+        }
+
+        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(upgrade)), {});
         upgrade[GatherProps] = function (this: GenericUpgrade) {
             const {
                 display,
@@ -173,7 +189,8 @@ export function createUpgrade<T extends UpgradeOptions>(
                 bought,
                 mark,
                 id,
-                purchase
+                purchase,
+                ...decoratedProps
             };
         };
 

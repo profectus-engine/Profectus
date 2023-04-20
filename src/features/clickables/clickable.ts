@@ -1,4 +1,5 @@
 import ClickableComponent from "features/clickables/Clickable.vue";
+import { Decorator, GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -95,8 +96,10 @@ export type GenericClickable = Replace<
  * @param optionsFunc Clickable options.
  */
 export function createClickable<T extends ClickableOptions>(
-    optionsFunc?: OptionsFunc<T, BaseClickable, GenericClickable>
+    optionsFunc?: OptionsFunc<T, BaseClickable, GenericClickable>,
+    ...decorators: GenericDecorator[]
 ): Clickable<T> {
+    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
     return createLazyProxy(feature => {
         const clickable =
             optionsFunc?.call(feature, feature) ??
@@ -104,6 +107,12 @@ export function createClickable<T extends ClickableOptions>(
         clickable.id = getUniqueID("clickable-");
         clickable.type = ClickableType;
         clickable[Component] = ClickableComponent as GenericComponent;
+
+        for (const decorator of decorators) {
+            decorator.preConstruct?.(clickable);
+        }
+
+        Object.assign(clickable, decoratedData);
 
         processComputable(clickable as T, "visibility");
         setDefault(clickable, "visibility", Visibility.Visible);
@@ -131,6 +140,11 @@ export function createClickable<T extends ClickableOptions>(
             };
         }
 
+        for (const decorator of decorators) {
+            decorator.postConstruct?.(clickable);
+        }
+
+        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(clickable)), {});
         clickable[GatherProps] = function (this: GenericClickable) {
             const {
                 display,
@@ -154,7 +168,8 @@ export function createClickable<T extends ClickableOptions>(
                 canClick,
                 small,
                 mark,
-                id
+                id,
+                ...decoratedProps
             };
         };
 
