@@ -98,6 +98,7 @@ export const bonusAmountDecorator: Decorator<
  *   bonusCompletions: noPersist(otherChallenge.completions),
  *   ...
  * }), bonusCompletionDecorator) as GenericChallenge & GenericBonusCompletionFeature
+ * ```
  */
 export const bonusCompletionsDecorator: Decorator<
     BonusCompletionsFeatureOptions,
