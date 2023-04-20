@@ -58,6 +58,11 @@ export type GenericBonusCompletionsFeature = Replace<
  * }), bonusAmountDecorator) as GenericRepeatable & GenericBonusAmountFeature
  */
 export const bonusAmountDecorator: Decorator<BonusAmountFeatureOptions, BaseBonusAmountFeature, GenericBonusAmountFeature> = {
+    preConstruct(feature) {
+        if (feature.amount === undefined) {
+            console.error(`Decorated feature ${feature.id} does not contain the required 'amount' property"`);
+        }
+    },
     postConstruct(feature) {
         processComputable(feature, "bonusAmount");
         if (feature.totalAmount === undefined) {
