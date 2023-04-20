@@ -105,7 +105,10 @@ export function createBar<T extends BarOptions>(
     optionsFunc: OptionsFunc<T, BaseBar, GenericBar>,
     ...decorators: GenericDecorator[]
 ): Bar<T> {
-    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
+    const decoratedData = decorators.reduce(
+        (current, next) => Object.assign(current, next.getPersistentData?.()),
+        {}
+    );
     return createLazyProxy(feature => {
         const bar = optionsFunc.call(feature, feature);
         bar.id = getUniqueID("bar-");
@@ -137,7 +140,10 @@ export function createBar<T extends BarOptions>(
             decorator.postConstruct?.(bar);
         }
 
-        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(bar)), {});
+        const decoratedProps = decorators.reduce(
+            (current, next) => Object.assign(current, next.getGatheredProps?.(bar)),
+            {}
+        );
         bar[GatherProps] = function (this: GenericBar) {
             const {
                 progress,

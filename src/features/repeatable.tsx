@@ -134,7 +134,10 @@ export function createRepeatable<T extends RepeatableOptions>(
     ...decorators: GenericDecorator[]
 ): Repeatable<T> {
     const amount = persistent<DecimalSource>(0);
-    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
+    const decoratedData = decorators.reduce(
+        (current, next) => Object.assign(current, next.getPersistentData?.()),
+        {}
+    );
     return createLazyProxy<Repeatable<T>, Repeatable<T>>(feature => {
         const repeatable = optionsFunc.call(feature, feature);
 
@@ -233,10 +236,10 @@ export function createRepeatable<T extends RepeatableOptions>(
                             <div>
                                 <br />
                                 joinJSX(
-                                    <>Amount: {formatWhole(genericRepeatable.amount.value)}</>,
-                                    {unref(genericRepeatable.limit) !== Decimal.dInf ? (
-                                        <> / {formatWhole(unref(genericRepeatable.limit))}</>
-                                    ) : undefined}
+                                <>Amount: {formatWhole(genericRepeatable.amount.value)}</>,
+                                {unref(genericRepeatable.limit) !== Decimal.dInf ? (
+                                    <> / {formatWhole(unref(genericRepeatable.limit))}</>
+                                ) : undefined}
                                 )
                             </div>
                         )}
@@ -274,7 +277,10 @@ export function createRepeatable<T extends RepeatableOptions>(
             decorator.postConstruct?.(repeatable);
         }
 
-        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(repeatable)), {});
+        const decoratedProps = decorators.reduce(
+            (current, next) => Object.assign(current, next.getGatheredProps?.(repeatable)),
+            {}
+        );
         repeatable[GatherProps] = function (this: GenericRepeatable) {
             const { display, visibility, style, classes, onClick, canClick, small, mark, id } =
                 this;

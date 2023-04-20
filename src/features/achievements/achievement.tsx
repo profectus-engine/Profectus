@@ -142,7 +142,10 @@ export function createAchievement<T extends AchievementOptions>(
     ...decorators: GenericDecorator[]
 ): Achievement<T> {
     const earned = persistent<boolean>(false, false);
-    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
+    const decoratedData = decorators.reduce(
+        (current, next) => Object.assign(current, next.getPersistentData?.()),
+        {}
+    );
     return createLazyProxy(feature => {
         const achievement =
             optionsFunc?.call(feature, feature) ??
@@ -232,7 +235,10 @@ export function createAchievement<T extends AchievementOptions>(
             decorator.postConstruct?.(achievement);
         }
 
-        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(achievement)), {});
+        const decoratedProps = decorators.reduce(
+            (current, next) => Object.assign(current, next.getGatheredProps?.(achievement)),
+            {}
+        );
         achievement[GatherProps] = function (this: GenericAchievement) {
             const {
                 visibility,

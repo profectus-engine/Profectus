@@ -99,7 +99,10 @@ export function createClickable<T extends ClickableOptions>(
     optionsFunc?: OptionsFunc<T, BaseClickable, GenericClickable>,
     ...decorators: GenericDecorator[]
 ): Clickable<T> {
-    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
+    const decoratedData = decorators.reduce(
+        (current, next) => Object.assign(current, next.getPersistentData?.()),
+        {}
+    );
     return createLazyProxy(feature => {
         const clickable =
             optionsFunc?.call(feature, feature) ??
@@ -144,7 +147,10 @@ export function createClickable<T extends ClickableOptions>(
             decorator.postConstruct?.(clickable);
         }
 
-        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(clickable)), {});
+        const decoratedProps = decorators.reduce(
+            (current, next) => Object.assign(current, next.getGatheredProps?.(clickable)),
+            {}
+        );
         clickable[GatherProps] = function (this: GenericClickable) {
             const {
                 display,

@@ -105,7 +105,10 @@ export function createTreeNode<T extends TreeNodeOptions>(
     optionsFunc?: OptionsFunc<T, BaseTreeNode, GenericTreeNode>,
     ...decorators: GenericDecorator[]
 ): TreeNode<T> {
-    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
+    const decoratedData = decorators.reduce(
+        (current, next) => Object.assign(current, next.getPersistentData?.()),
+        {}
+    );
     return createLazyProxy(feature => {
         const treeNode =
             optionsFunc?.call(feature, feature) ??
@@ -152,7 +155,10 @@ export function createTreeNode<T extends TreeNodeOptions>(
             };
         }
 
-        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(treeNode)), {});
+        const decoratedProps = decorators.reduce(
+            (current, next) => Object.assign(current, next.getGatheredProps?.(treeNode)),
+            {}
+        );
         treeNode[GatherProps] = function (this: GenericTreeNode) {
             const {
                 display,

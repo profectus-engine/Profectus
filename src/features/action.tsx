@@ -107,7 +107,10 @@ export function createAction<T extends ActionOptions>(
     ...decorators: GenericDecorator[]
 ): Action<T> {
     const progress = persistent<DecimalSource>(0);
-    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
+    const decoratedData = decorators.reduce(
+        (current, next) => Object.assign(current, next.getPersistentData?.()),
+        {}
+    );
     return createLazyProxy(feature => {
         const action =
             optionsFunc?.call(feature, feature) ??
@@ -241,7 +244,9 @@ export function createAction<T extends ActionOptions>(
             decorator.postConstruct?.(action);
         }
 
-        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(action)));
+        const decoratedProps = decorators.reduce((current, next) =>
+            Object.assign(current, next.getGatheredProps?.(action))
+        );
         action[GatherProps] = function (this: GenericAction) {
             const {
                 display,

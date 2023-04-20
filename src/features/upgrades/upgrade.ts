@@ -21,7 +21,7 @@ import type { GenericLayer } from "game/layers";
 import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
 import {
-createCostRequirement,
+    createCostRequirement,
     createVisibilityRequirement,
     payRequirements,
     Requirements,
@@ -122,7 +122,10 @@ export function createUpgrade<T extends UpgradeOptions>(
     ...decorators: GenericDecorator[]
 ): Upgrade<T> {
     const bought = persistent<boolean>(false, false);
-    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
+    const decoratedData = decorators.reduce(
+        (current, next) => Object.assign(current, next.getPersistentData?.()),
+        {}
+    );
     return createLazyProxy(feature => {
         const upgrade = optionsFunc.call(feature, feature);
         upgrade.id = getUniqueID("upgrade-");
@@ -165,7 +168,10 @@ export function createUpgrade<T extends UpgradeOptions>(
             decorator.preConstruct?.(upgrade);
         }
 
-        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(upgrade)), {});
+        const decoratedProps = decorators.reduce(
+            (current, next) => Object.assign(current, next.getGatheredProps?.(upgrade)),
+            {}
+        );
         upgrade[GatherProps] = function (this: GenericUpgrade) {
             const {
                 display,

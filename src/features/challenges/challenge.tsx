@@ -154,7 +154,10 @@ export function createChallenge<T extends ChallengeOptions>(
 ): Challenge<T> {
     const completions = persistent(0);
     const active = persistent(false, false);
-    const decoratedData = decorators.reduce((current, next) => Object.assign(current, next.getPersistentData?.()), {});
+    const decoratedData = decorators.reduce(
+        (current, next) => Object.assign(current, next.getPersistentData?.()),
+        {}
+    );
     return createLazyProxy(feature => {
         const challenge = optionsFunc.call(feature, feature);
 
@@ -271,7 +274,10 @@ export function createChallenge<T extends ChallengeOptions>(
             decorator.postConstruct?.(challenge);
         }
 
-        const decoratedProps = decorators.reduce((current, next) => Object.assign(current, next.getGatheredProps?.(challenge)), {});
+        const decoratedProps = decorators.reduce(
+            (current, next) => Object.assign(current, next.getGatheredProps?.(challenge)),
+            {}
+        );
         challenge[GatherProps] = function (this: GenericChallenge) {
             const {
                 active,
