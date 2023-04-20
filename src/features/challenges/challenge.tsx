@@ -1,7 +1,7 @@
 import { isArray } from "@vue/shared";
 import Toggle from "components/fields/Toggle.vue";
 import ChallengeComponent from "features/challenges/Challenge.vue";
-import { Decorator, GenericDecorator } from "features/decorators/common";
+import { GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -12,17 +12,17 @@ import type {
 import {
     Component,
     GatherProps,
+    Visibility,
     getUniqueID,
     isVisible,
     jsx,
-    setDefault,
-    Visibility
+    setDefault
 } from "features/feature";
 import type { GenericReset } from "features/reset";
 import { globalBus } from "game/events";
 import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
-import { maxRequirementsMet, Requirements } from "game/requirements";
+import { Requirements, maxRequirementsMet } from "game/requirements";
 import settings, { registerSettingField } from "game/settings";
 import type { DecimalSource } from "util/bignum";
 import Decimal from "util/bignum";

@@ -1,5 +1,5 @@
 import { isArray } from "@vue/shared";
-import { Decorator, GenericDecorator } from "features/decorators/common";
+import { GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -9,22 +9,20 @@ import type {
 } from "features/feature";
 import {
     Component,
-    findFeatures,
     GatherProps,
+    Visibility,
+    findFeatures,
     getUniqueID,
-    setDefault,
-    Visibility
+    setDefault
 } from "features/feature";
-import { createResource } from "features/resources/resource";
 import UpgradeComponent from "features/upgrades/Upgrade.vue";
 import type { GenericLayer } from "game/layers";
 import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
 import {
-    createCostRequirement,
+    Requirements,
     createVisibilityRequirement,
     payRequirements,
-    Requirements,
     requirementsMet
 } from "game/requirements";
 import { isFunction } from "util/common";

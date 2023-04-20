@@ -1,5 +1,5 @@
 import ClickableComponent from "features/clickables/Clickable.vue";
-import { Decorator, GenericDecorator } from "features/decorators/common";
+import { GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -7,7 +7,7 @@ import type {
     Replace,
     StyleValue
 } from "features/feature";
-import { Component, GatherProps, getUniqueID, setDefault, Visibility } from "features/feature";
+import { Component, GatherProps, Visibility, getUniqueID, setDefault } from "features/feature";
 import type { BaseLayer } from "game/layers";
 import type { Unsubscribe } from "nanoevents";
 import type {

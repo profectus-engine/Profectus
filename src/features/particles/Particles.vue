@@ -14,7 +14,7 @@ import { globalBus } from "game/events";
 import "lib/pixi";
 import { processedPropType } from "util/vue";
 import type { PropType } from "vue";
-import { defineComponent, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, unref } from "vue";
+import { defineComponent, nextTick, onBeforeUnmount, onMounted, shallowRef, unref } from "vue";
 
 // TODO get typing support on the Particles component
 export default defineComponent({

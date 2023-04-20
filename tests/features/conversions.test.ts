@@ -8,7 +8,7 @@ import { createResource, Resource } from "features/resources/resource";
 import { GenericFormula } from "game/formulas/types";
 import { createLayer, GenericLayer } from "game/layers";
 import Decimal from "util/bignum";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { ref, unref } from "vue";
 import "../utils";
 
@@ -472,15 +472,15 @@ describe("Passive generation", () => {
         setupPassiveGeneration(layer, conversion);
         layer.emit("preUpdate", 1);
         expect(gainResource.value).compare_tolerance(2);
-    })
+    });
     test("Rate is 100", () => {
         setupPassiveGeneration(layer, conversion, () => 100);
         layer.emit("preUpdate", 1);
         expect(gainResource.value).compare_tolerance(101);
-    })
+    });
     test("Obeys cap", () => {
         setupPassiveGeneration(layer, conversion, 100, () => 100);
         layer.emit("preUpdate", 1);
         expect(gainResource.value).compare_tolerance(100);
-    })
+    });
 });

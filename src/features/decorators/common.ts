@@ -28,7 +28,7 @@ export type Decorator<
 export type GenericDecorator = Decorator<unknown>;
 
 export interface EffectFeatureOptions {
-    effect: Computable<any>;
+    effect: Computable<unknown>;
 }
 
 export type EffectFeature<T extends EffectFeatureOptions> = Replace<
@@ -38,7 +38,7 @@ export type EffectFeature<T extends EffectFeatureOptions> = Replace<
 
 export type GenericEffectFeature = Replace<
     EffectFeature<EffectFeatureOptions>,
-    { effect: ProcessedComputable<any> }
+    { effect: ProcessedComputable<unknown> }
 >;
 
 /**

@@ -7,14 +7,14 @@ import type {
     Replace,
     StyleValue
 } from "features/feature";
-import { Component, GatherProps, getUniqueID, jsx, setDefault, Visibility } from "features/feature";
+import { Component, GatherProps, Visibility, getUniqueID, jsx, setDefault } from "features/feature";
 import { DefaultValue, Persistent, persistent } from "game/persistence";
 import {
+    Requirements,
     createVisibilityRequirement,
     displayRequirements,
     maxRequirementsMet,
     payRequirements,
-    Requirements,
     requirementsMet
 } from "game/requirements";
 import type { DecimalSource } from "util/bignum";
@@ -30,7 +30,7 @@ import { createLazyProxy } from "util/proxies";
 import { coerceComponent, isCoercableComponent } from "util/vue";
 import type { Ref } from "vue";
 import { computed, unref } from "vue";
-import { Decorator, GenericDecorator } from "./decorators/common";
+import { GenericDecorator } from "./decorators/common";
 
 /** A symbol used to identify {@link Repeatable} features. */
 export const RepeatableType = Symbol("Repeatable");

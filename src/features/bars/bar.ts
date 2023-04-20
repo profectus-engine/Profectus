@@ -1,5 +1,5 @@
 import BarComponent from "features/bars/Bar.vue";
-import { Decorator, GenericDecorator } from "features/decorators/common";
+import { GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -7,7 +7,7 @@ import type {
     Replace,
     StyleValue
 } from "features/feature";
-import { Component, GatherProps, getUniqueID, setDefault, Visibility } from "features/feature";
+import { Component, GatherProps, Visibility, getUniqueID, setDefault } from "features/feature";
 import type { DecimalSource } from "util/bignum";
 import { Direction } from "util/common";
 import type {

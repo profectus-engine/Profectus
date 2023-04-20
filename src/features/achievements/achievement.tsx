@@ -2,19 +2,19 @@ import { computed } from "@vue/reactivity";
 import { isArray } from "@vue/shared";
 import Select from "components/fields/Select.vue";
 import AchievementComponent from "features/achievements/Achievement.vue";
-import { Decorator, GenericDecorator } from "features/decorators/common";
+import { GenericDecorator } from "features/decorators/common";
 import {
     CoercableComponent,
     Component,
     GatherProps,
     GenericComponent,
-    getUniqueID,
-    jsx,
     OptionsFunc,
     Replace,
-    setDefault,
     StyleValue,
-    Visibility
+    Visibility,
+    getUniqueID,
+    jsx,
+    setDefault
 } from "features/feature";
 import { globalBus } from "game/events";
 import "game/notifications";
@@ -22,10 +22,10 @@ import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
 import player from "game/player";
 import {
+    Requirements,
     createBooleanRequirement,
     createVisibilityRequirement,
     displayRequirements,
-    Requirements,
     requirementsMet
 } from "game/requirements";
 import settings, { registerSettingField } from "game/settings";

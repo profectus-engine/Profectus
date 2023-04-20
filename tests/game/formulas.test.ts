@@ -2,11 +2,10 @@ import { createResource, Resource } from "features/resources/resource";
 import Formula, {
     calculateCost,
     calculateMaxAffordable,
-    printFormula,
     unrefFormulaSource
 } from "game/formulas/formulas";
 import type { GenericFormula, InvertibleFormula } from "game/formulas/types";
-import Decimal, { DecimalSource, format } from "util/bignum";
+import Decimal, { DecimalSource } from "util/bignum";
 import { beforeAll, describe, expect, test } from "vitest";
 import { ref } from "vue";
 import "../utils";
@@ -151,7 +150,7 @@ describe("Formula Equality Checking", () => {
     describe("Formula aliases", () => {
         function testAliases<T extends FormulaFunctions>(
             aliases: T[],
-            args: Parameters<typeof Formula[T]>
+            args: Parameters<(typeof Formula)[T]>
         ) {
             describe(aliases[0], () => {
                 let formula: GenericFormula;
@@ -239,7 +238,7 @@ describe("Creating Formulas", () => {
 
     function checkFormula<T extends FormulaFunctions>(
         functionName: T,
-        args: Readonly<Parameters<typeof Formula[T]>>
+        args: Readonly<Parameters<(typeof Formula)[T]>>
     ) {
         let formula: GenericFormula;
         beforeAll(() => {
@@ -261,7 +260,7 @@ describe("Creating Formulas", () => {
     // It's a lot of tests, but I'd rather be exhaustive
     function testFormulaCall<T extends FormulaFunctions>(
         functionName: T,
-        args: Readonly<Parameters<typeof Formula[T]>>
+        args: Readonly<Parameters<(typeof Formula)[T]>>
     ) {
         if ((functionName === "slog" || functionName === "layeradd") && args[0] === -1) {
             // These cases in particular take a long time, so skip them

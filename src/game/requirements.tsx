@@ -267,6 +267,7 @@ export function displayRequirements(requirements: Requirements, amount: DecimalS
                     <div>
                         Costs:{" "}
                         {joinJSX(
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                             withCosts.map(r => r.partialDisplay!(amount)),
                             <>, </>
                         )}
@@ -276,6 +277,7 @@ export function displayRequirements(requirements: Requirements, amount: DecimalS
                     <div>
                         Requires:{" "}
                         {joinJSX(
+                            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                             withoutCosts.map(r => r.partialDisplay!(amount)),
                             <>, </>
                         )}
