@@ -15,7 +15,7 @@
             <br />
             <div>
                 <a
-                    :href="discordLink || 'https://discord.gg/WzejVAx'"
+                    :href="discordLink || 'https://discord.gg/yJ4fjnjU54'"
                     class="nan-modal-discord-link"
                 >
                     <span class="material-icons nan-modal-discord">discord</span>

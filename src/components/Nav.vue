@@ -15,7 +15,7 @@
                     <a :href="discordLink" target="_blank">{{ discordName }}</a>
                 </li>
                 <li>
-                    <a href="https://discord.gg/WzejVAx" target="_blank"
+                    <a href="https://discord.gg/yJ4fjnjU54" target="_blank"
                         >The Paper Pilot Community</a
                     >
                 </li>
@@ -82,7 +82,7 @@
                     <a :href="discordLink" target="_blank">{{ discordName }}</a>
                 </li>
                 <li>
-                    <a href="https://discord.gg/WzejVAx" target="_blank"
+                    <a href="https://discord.gg/yJ4fjnjU54" target="_blank"
                         >The Paper Pilot Community</a
                     >
                 </li>

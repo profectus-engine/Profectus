@@ -33,7 +33,7 @@
                 </div>
                 <div>
                     <a
-                        href="https://discord.gg/WzejVAx"
+                        href="https://discord.gg/yJ4fjnjU54"
                         class="info-modal-discord-link"
                         target="_blank"
                     >
