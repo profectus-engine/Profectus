@@ -201,9 +201,7 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
      * Creates a formula that evaluates to a constant value.
      * @param value The constant value for this formula.
      */
-    public static constant(
-        value: ProcessedComputable<DecimalSource>
-    ): InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula {
+    public static constant(value: ProcessedComputable<DecimalSource>): InvertibleIntegralFormula {
         return new Formula({ inputs: [value] });
     }
 
@@ -211,9 +209,7 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
      * Creates a formula that is marked as the variable for an outer formula. Typically used for inverting and integrating.
      * @param value The variable for this formula.
      */
-    public static variable(
-        value: ProcessedComputable<DecimalSource>
-    ): InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula {
+    public static variable(value: ProcessedComputable<DecimalSource>): InvertibleIntegralFormula {
         return new Formula({ variable: value });
     }
 
@@ -228,9 +224,7 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
     public static step(
         value: FormulaSource,
         start: Computable<DecimalSource>,
-        formulaModifier: (
-            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
-        ) => GenericFormula
+        formulaModifier: (value: InvertibleIntegralFormula) => GenericFormula
     ) {
         const lhsRef = ref<DecimalSource>(0);
         const formula = formulaModifier(Formula.variable(lhsRef));
@@ -271,12 +265,8 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
     public static if(
         value: FormulaSource,
         condition: Computable<boolean>,
-        formulaModifier: (
-            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
-        ) => GenericFormula,
-        elseFormulaModifier?: (
-            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
-        ) => GenericFormula
+        formulaModifier: (value: InvertibleIntegralFormula) => GenericFormula,
+        elseFormulaModifier?: (value: InvertibleIntegralFormula) => GenericFormula
     ) {
         const lhsRef = ref<DecimalSource>(0);
         const variable = Formula.variable(lhsRef);
@@ -319,12 +309,8 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
     public static conditional(
         value: FormulaSource,
         condition: Computable<boolean>,
-        formulaModifier: (
-            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
-        ) => GenericFormula,
-        elseFormulaModifier?: (
-            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
-        ) => GenericFormula
+        formulaModifier: (value: InvertibleIntegralFormula) => GenericFormula,
+        elseFormulaModifier?: (value: InvertibleIntegralFormula) => GenericFormula
     ) {
         return Formula.if(value, condition, formulaModifier, elseFormulaModifier);
     }
@@ -872,26 +858,20 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
 
     public step(
         start: Computable<DecimalSource>,
-        formulaModifier: (
-            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
-        ) => GenericFormula
+        formulaModifier: (value: InvertibleIntegralFormula) => GenericFormula
     ) {
         return Formula.step(this, start, formulaModifier);
     }
 
     public if(
         condition: Computable<boolean>,
-        formulaModifier: (
-            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
-        ) => GenericFormula
+        formulaModifier: (value: InvertibleIntegralFormula) => GenericFormula
     ) {
         return Formula.if(this, condition, formulaModifier);
     }
     public conditional(
         condition: Computable<boolean>,
-        formulaModifier: (
-            value: InvertibleFormula & IntegrableFormula & InvertibleIntegralFormula
-        ) => GenericFormula
+        formulaModifier: (value: InvertibleIntegralFormula) => GenericFormula
     ) {
         return Formula.if(this, condition, formulaModifier);
     }
