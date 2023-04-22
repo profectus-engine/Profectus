@@ -178,7 +178,7 @@ export interface BoardNodeActionOptions {
     /** The fill color of the action. */
     fillColor?: NodeComputable<string>;
     /** The tooltip text to display for the action. */
-    tooltip: NodeComputable<string>;
+    tooltip: NodeComputable<NodeLabel>;
     /** An array of board node links associated with the action. They appear when the action is focused. */
     links?: NodeComputable<BoardNodeLink[]>;
     /** A function that is called when the action is clicked. */

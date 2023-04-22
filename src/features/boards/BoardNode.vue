@@ -138,10 +138,10 @@
 <script setup lang="ts">
 import themes from "data/themes";
 import type { BoardNode, GenericBoardNodeAction, GenericNodeType } from "features/boards/board";
-import { ProgressDisplay, getNodeProperty, Shape } from "features/boards/board";
+import { ProgressDisplay, Shape, getNodeProperty } from "features/boards/board";
 import { isVisible } from "features/feature";
 import settings from "game/settings";
-import { computed, ref, toRefs, unref, watch } from "vue";
+import { computed, toRefs, unref, watch } from "vue";
 import BoardNodeAction from "./BoardNodeAction.vue";
 
 const sqrtTwo = Math.sqrt(2);
@@ -204,7 +204,14 @@ const position = computed(() => {
 
 const shape = computed(() => getNodeProperty(props.nodeType.value.shape, unref(props.node)));
 const title = computed(() => getNodeProperty(props.nodeType.value.title, unref(props.node)));
-const label = computed(() => getNodeProperty(props.nodeType.value.label, unref(props.node)));
+const label = computed(
+    () =>
+        (isSelected.value
+            ? unref(props.selectedAction) &&
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              getNodeProperty(unref(props.selectedAction)!.tooltip, unref(props.node))
+            : null) ?? getNodeProperty(props.nodeType.value.label, unref(props.node))
+);
 const size = computed(() => getNodeProperty(props.nodeType.value.size, unref(props.node)));
 const progress = computed(
     () => getNodeProperty(props.nodeType.value.progress, unref(props.node)) ?? 0
