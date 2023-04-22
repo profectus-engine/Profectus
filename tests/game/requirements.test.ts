@@ -16,11 +16,14 @@ import { isRef, ref, unref } from "vue";
 import "../utils";
 
 describe("Creating cost requirement", () => {
+    let resource: Resource;
+    beforeAll(() => {
+        resource = createResource(ref(10));
+    });
+
     describe("Minimal requirement", () => {
-        let resource: Resource;
         let requirement: CostRequirement;
         beforeAll(() => {
-            resource = createResource(ref(10));
             requirement = createCostRequirement(() => ({
                 resource,
                 cost: 10,
@@ -46,10 +49,8 @@ describe("Creating cost requirement", () => {
     });
 
     describe("Fully customized", () => {
-        let resource: Resource;
         let requirement: CostRequirement;
         beforeAll(() => {
-            resource = createResource(ref(10));
             requirement = createCostRequirement(() => ({
                 resource,
                 cost: Formula.variable(resource).times(10),
@@ -73,7 +74,6 @@ describe("Creating cost requirement", () => {
     });
 
     test("Requirement met when meeting the cost", () => {
-        const resource = createResource(ref(10));
         const requirement = createCostRequirement(() => ({
             resource,
             cost: 10,
@@ -83,13 +83,73 @@ describe("Creating cost requirement", () => {
     });
 
     test("Requirement not met when not meeting the cost", () => {
-        const resource = createResource(ref(10));
         const requirement = createCostRequirement(() => ({
             resource,
             cost: 100,
             spendResources: false
         }));
         expect(unref(requirement.requirementMet)).toBe(false);
+    });
+
+    describe("canMaximize works correctly", () => {
+        test("Cost function cannot maximize", () =>
+            expect(
+                unref(
+                    createCostRequirement(() => ({
+                        resource,
+                        cost: () => 10
+                    })).canMaximize
+                )
+            ).toBe(false));
+        test("Non-invertible formula cannot maximize", () =>
+            expect(
+                unref(
+                    createCostRequirement(() => ({
+                        resource,
+                        cost: Formula.variable(resource).abs()
+                    })).canMaximize
+                )
+            ).toBe(false));
+        test("Invertible formula can maximize if spendResources is false", () =>
+            expect(
+                unref(
+                    createCostRequirement(() => ({
+                        resource,
+                        cost: Formula.variable(resource).lambertw(),
+                        spendResources: false
+                    })).canMaximize
+                )
+            ).toBe(true));
+        test("Invertible formula cannot maximize if spendResources is true", () =>
+            expect(
+                unref(
+                    createCostRequirement(() => ({
+                        resource,
+                        cost: Formula.variable(resource).lambertw(),
+                        spendResources: true
+                    })).canMaximize
+                )
+            ).toBe(false));
+        test("Integrable formula can maximize if spendResources is false", () =>
+            expect(
+                unref(
+                    createCostRequirement(() => ({
+                        resource,
+                        cost: Formula.variable(resource).pow(2),
+                        spendResources: false
+                    })).canMaximize
+                )
+            ).toBe(true));
+        test("Integrable formula can maximize if spendResources is true", () =>
+            expect(
+                unref(
+                    createCostRequirement(() => ({
+                        resource,
+                        cost: Formula.variable(resource).pow(2),
+                        spendResources: true
+                    })).canMaximize
+                )
+            ).toBe(true));
     });
 });
 

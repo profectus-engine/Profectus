@@ -101,6 +101,7 @@ export type CostRequirement = Replace<
         visibility: ProcessedComputable<Visibility.Visible | Visibility.None | boolean>;
         requiresPay: ProcessedComputable<boolean>;
         spendResources: ProcessedComputable<boolean>;
+        canMaximize: ProcessedComputable<boolean>;
     }
 >;
 
@@ -159,14 +160,33 @@ export function createCostRequirement<T extends CostRequirementOptions>(
             req.resource.value = Decimal.sub(req.resource.value, cost).max(0);
         });
 
-        req.canMaximize = req.cost instanceof Formula && req.cost.isInvertible();
+        req.canMaximize = computed(
+            () =>
+                req.cost instanceof Formula &&
+                req.cost.isInvertible() &&
+                (unref(req.spendResources) === false || req.cost.isIntegrable())
+        );
 
-        if (req.canMaximize) {
-            req.requirementMet = calculateMaxAffordable(
-                req.cost as InvertibleFormula,
+        if (req.cost instanceof Formula && req.cost.isInvertible()) {
+            const maxAffordable = calculateMaxAffordable(
+                req.cost,
                 req.resource,
                 unref(req.spendResources) as boolean
             );
+            req.requirementMet = computed(() => {
+                if (unref(req.canMaximize)) {
+                    return maxAffordable.value;
+                } else {
+                    if (req.cost instanceof Formula) {
+                        return Decimal.gte(req.resource.value, req.cost.evaluate());
+                    } else {
+                        return Decimal.gte(
+                            req.resource.value,
+                            unref(req.cost as ProcessedComputable<DecimalSource>)
+                        );
+                    }
+                }
+            });
         } else {
             req.requirementMet = computed(() => {
                 if (req.cost instanceof Formula) {
