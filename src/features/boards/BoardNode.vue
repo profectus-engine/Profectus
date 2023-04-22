@@ -3,7 +3,7 @@
         class="boardnode"
         :class="{ [node.type]: true, isSelected, isDraggable }"
         :style="{ opacity: dragging?.id === node.id && hasDragged ? 0.5 : 1 }"
-        :transform="`translate(${position.x},${position.y})`"
+        :transform="`translate(${position.x},${position.y})${isSelected ? ' scale(1.2)' : ''}`"
     >
         <BoardNodeAction
             :actions="actions ?? []"
@@ -244,6 +244,7 @@ function mouseDown(e: MouseEvent | TouchEvent) {
 
 function mouseUp(e: MouseEvent | TouchEvent) {
     if (!props.hasDragged?.value) {
+        emit("endDragging", props.node.value.id);
         props.nodeType.value.onClick?.(props.node.value);
         e.stopPropagation();
     }
@@ -258,10 +259,6 @@ function mouseUp(e: MouseEvent | TouchEvent) {
 
 .boardnode:hover .body {
     fill: var(--highlighted);
-}
-
-.boardnode.isSelected {
-    transform: scale(1.2);
 }
 
 .boardnode.isSelected .body {
