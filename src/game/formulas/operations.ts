@@ -17,6 +17,9 @@ export function invertNeg(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateNeg(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         return Formula.neg(lhs.getIntegralFormula(stack));
     }
     throw new Error("Could not integrate due to no input being a variable");
@@ -37,9 +40,15 @@ export function invertAdd(value: DecimalSource, lhs: FormulaSource, rhs: Formula
 
 export function integrateAdd(stack: SubstitutionStack, lhs: FormulaSource, rhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.times(rhs, lhs.innermostVariable ?? 0).add(x);
     } else if (hasVariable(rhs)) {
+        if (!rhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = rhs.getIntegralFormula(stack);
         return Formula.times(lhs, rhs.innermostVariable ?? 0).add(x);
     }
@@ -52,9 +61,15 @@ export function integrateInnerAdd(
     rhs: FormulaSource
 ) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.add(x, rhs);
     } else if (hasVariable(rhs)) {
+        if (!rhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = rhs.getIntegralFormula(stack);
         return Formula.add(x, lhs);
     }
@@ -72,9 +87,15 @@ export function invertSub(value: DecimalSource, lhs: FormulaSource, rhs: Formula
 
 export function integrateSub(stack: SubstitutionStack, lhs: FormulaSource, rhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.sub(x, Formula.times(rhs, lhs.innermostVariable ?? 0));
     } else if (hasVariable(rhs)) {
+        if (!rhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = rhs.getIntegralFormula(stack);
         return Formula.times(lhs, rhs.innermostVariable ?? 0).sub(x);
     }
@@ -87,9 +108,15 @@ export function integrateInnerSub(
     rhs: FormulaSource
 ) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.sub(x, rhs);
     } else if (hasVariable(rhs)) {
+        if (!rhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = rhs.getIntegralFormula(stack);
         return Formula.sub(x, lhs);
     }
@@ -107,9 +134,15 @@ export function invertMul(value: DecimalSource, lhs: FormulaSource, rhs: Formula
 
 export function integrateMul(stack: SubstitutionStack, lhs: FormulaSource, rhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.times(x, rhs);
     } else if (hasVariable(rhs)) {
+        if (!rhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = rhs.getIntegralFormula(stack);
         return Formula.times(x, lhs);
     }
@@ -140,9 +173,15 @@ export function invertDiv(value: DecimalSource, lhs: FormulaSource, rhs: Formula
 
 export function integrateDiv(stack: SubstitutionStack, lhs: FormulaSource, rhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.div(x, rhs);
     } else if (hasVariable(rhs)) {
+        if (!rhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = rhs.getIntegralFormula(stack);
         return Formula.div(lhs, x);
     }
@@ -171,6 +210,9 @@ export function invertRecip(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateRecip(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.ln(x);
     }
@@ -198,6 +240,9 @@ function internalInvertIntegralLog10(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateLog10(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         return new Formula({
             inputs: [lhs.getIntegralFormula(stack)],
             evaluate: internalIntegrateLog10,
@@ -230,6 +275,9 @@ function internalInvertIntegralLog(value: DecimalSource, lhs: FormulaSource, rhs
 
 export function integrateLog(stack: SubstitutionStack, lhs: FormulaSource, rhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         return new Formula({
             inputs: [lhs.getIntegralFormula(stack), rhs],
             evaluate: internalIntegrateLog,
@@ -260,6 +308,9 @@ function internalInvertIntegralLog2(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateLog2(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         return new Formula({
             inputs: [lhs.getIntegralFormula(stack)],
             evaluate: internalIntegrateLog2,
@@ -289,6 +340,9 @@ function internalInvertIntegralLn(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateLn(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         return new Formula({
             inputs: [lhs.getIntegralFormula(stack)],
             evaluate: internalIntegrateLn,
@@ -309,10 +363,16 @@ export function invertPow(value: DecimalSource, lhs: FormulaSource, rhs: Formula
 
 export function integratePow(stack: SubstitutionStack, lhs: FormulaSource, rhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         const pow = Formula.add(rhs, 1);
         return Formula.pow(x, pow).div(pow);
     } else if (hasVariable(rhs)) {
+        if (!rhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = rhs.getIntegralFormula(stack);
         return Formula.pow(lhs, x).div(Formula.ln(lhs));
     }
@@ -328,6 +388,9 @@ export function invertPow10(value: DecimalSource, lhs: FormulaSource) {
 
 export function integratePow10(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.pow10(x).div(Formula.ln(10));
     }
@@ -345,9 +408,15 @@ export function invertPowBase(value: DecimalSource, lhs: FormulaSource, rhs: For
 
 export function integratePowBase(stack: SubstitutionStack, lhs: FormulaSource, rhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.pow(rhs, x).div(Formula.ln(rhs));
     } else if (hasVariable(rhs)) {
+        if (!rhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = rhs.getIntegralFormula(stack);
         const denominator = Formula.add(lhs, 1);
         return Formula.pow(x, denominator).div(denominator);
@@ -366,6 +435,9 @@ export function invertRoot(value: DecimalSource, lhs: FormulaSource, rhs: Formul
 
 export function integrateRoot(stack: SubstitutionStack, lhs: FormulaSource, rhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.pow(x, Formula.recip(rhs).add(1)).times(rhs).div(Formula.add(rhs, 1));
     }
@@ -381,6 +453,9 @@ export function invertExp(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateExp(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.exp(x);
     }
@@ -512,6 +587,9 @@ export function invertSin(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateSin(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.cos(x).neg();
     }
@@ -527,6 +605,9 @@ export function invertCos(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateCos(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.sin(x);
     }
@@ -542,6 +623,9 @@ export function invertTan(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateTan(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.cos(x).ln().neg();
     }
@@ -557,6 +641,9 @@ export function invertAsin(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateAsin(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.asin(x)
             .times(x)
@@ -574,6 +661,9 @@ export function invertAcos(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateAcos(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.acos(x)
             .times(x)
@@ -591,6 +681,9 @@ export function invertAtan(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateAtan(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.atan(x)
             .times(x)
@@ -608,6 +701,9 @@ export function invertSinh(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateSinh(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.cosh(x);
     }
@@ -623,6 +719,9 @@ export function invertCosh(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateCosh(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.sinh(x);
     }
@@ -638,6 +737,9 @@ export function invertTanh(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateTanh(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.cosh(x).ln();
     }
@@ -653,6 +755,9 @@ export function invertAsinh(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateAsinh(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.asinh(x).times(x).sub(Formula.pow(x, 2).add(1).sqrt());
     }
@@ -668,6 +773,9 @@ export function invertAcosh(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateAcosh(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.acosh(x)
             .times(x)
@@ -685,6 +793,9 @@ export function invertAtanh(value: DecimalSource, lhs: FormulaSource) {
 
 export function integrateAtanh(stack: SubstitutionStack, lhs: FormulaSource) {
     if (hasVariable(lhs)) {
+        if (!lhs.isIntegrable()) {
+            throw new Error("Could not integrate due to variable not being integrable");
+        }
         const x = lhs.getIntegralFormula(stack);
         return Formula.atanh(x)
             .times(x)
