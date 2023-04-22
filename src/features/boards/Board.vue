@@ -1,7 +1,6 @@
 <template>
     <panZoom
         v-if="isVisible(visibility)"
-        v-show="isHidden(visibility)"
         :style="[
             {
                 width,
@@ -25,7 +24,10 @@
         <svg class="stage" width="100%" height="100%">
             <g class="g1">
                 <transition-group name="link" appear>
-                    <g v-for="(link, i) in unref(links) || []" :key="i">
+                    <g
+                        v-for="link in unref(links) || []"
+                        :key="`${link.startNode.id}-${link.endNode.id}`"
+                    >
                         <BoardLinkVue :link="link" />
                     </g>
                 </transition-group>
@@ -35,7 +37,7 @@
                             :node="node"
                             :nodeType="types[node.type]"
                             :dragging="draggingNode"
-                            :dragged="dragged"
+                            :dragged="draggingNode === node ? dragged : undefined"
                             :hasDragged="hasDragged"
                             :receivingNode="receivingNode?.id === node.id"
                             :selectedNode="unref(selectedNode)"
@@ -60,9 +62,9 @@ import type {
 } from "features/boards/board";
 import { getNodeProperty } from "features/boards/board";
 import type { StyleValue } from "features/feature";
-import { isHidden, isVisible, Visibility } from "features/feature";
+import { Visibility, isVisible } from "features/feature";
 import type { ProcessedComputable } from "util/computed";
-import { computed, ref, Ref, toRefs, unref } from "vue";
+import { Ref, computed, ref, toRefs, unref } from "vue";
 import BoardLinkVue from "./BoardLink.vue";
 import BoardNodeVue from "./BoardNode.vue";
 
@@ -138,6 +140,7 @@ const receivingNode = computed(() => {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function onInit(panzoomInstance: any) {
     panzoomInstance.setTransformOrigin(null);
+    panzoomInstance.moveTo(stage.value.$el.clientWidth / 2, stage.value.$el.clientHeight / 2);
 }
 
 function mouseDown(e: MouseEvent | TouchEvent, nodeID: number | null = null, draggable = false) {
@@ -222,8 +225,7 @@ function endDragging(nodeID: number | null) {
         draggingNode.value.position.y += Math.round(dragged.value.y / 25) * 25;
 
         const nodes = props.nodes.value;
-        nodes.splice(nodes.indexOf(draggingNode.value), 1);
-        nodes.push(draggingNode.value);
+        nodes.push(nodes.splice(nodes.indexOf(draggingNode.value), 1)[0]);
 
         if (receivingNode.value) {
             props.types.value[receivingNode.value.type].onDrop?.(

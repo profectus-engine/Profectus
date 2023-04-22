@@ -63,6 +63,8 @@ export interface BoardNode {
 export interface BoardNodeLink extends Omit<Link, "startNode" | "endNode"> {
     startNode: BoardNode;
     endNode: BoardNode;
+    stroke: string;
+    strokeWidth: number;
     pulsing?: boolean;
 }
 
@@ -365,7 +367,7 @@ export function createBoard<T extends BoardOptions>(
         processComputable(board as T, "width");
         setDefault(board, "width", "100%");
         processComputable(board as T, "height");
-        setDefault(board, "height", "400px");
+        setDefault(board, "height", "100%");
         processComputable(board as T, "classes");
         processComputable(board as T, "style");
 

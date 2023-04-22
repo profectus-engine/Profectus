@@ -1,50 +1,19 @@
 <template>
     <g
         class="boardnode"
-        :class="node.type"
+        :class="{ [node.type]: true, isSelected, isDraggable }"
         :style="{ opacity: dragging?.id === node.id && hasDragged ? 0.5 : 1 }"
         :transform="`translate(${position.x},${position.y})`"
     >
-        <transition name="actions" appear>
-            <g v-if="isSelected && actions">
-                <!-- TODO move to separate file -->
-                <g
-                    v-for="(action, index) in actions"
-                    :key="action.id"
-                    class="action"
-                    :class="{ selected: selectedAction?.id === action.id }"
-                    :transform="`translate(
-                            ${
-                                (-size - 30) *
-                                Math.sin(((actions.length - 1) / 2 - index) * actionDistance)
-                            },
-                            ${
-                                (size + 30) *
-                                Math.cos(((actions.length - 1) / 2 - index) * actionDistance)
-                            }
-                        )`"
-                    @mousedown="e => performAction(e, action)"
-                    @touchstart="e => performAction(e, action)"
-                    @mouseup="e => actionMouseUp(e, action)"
-                    @touchend.stop="e => actionMouseUp(e, action)"
-                >
-                    <circle
-                        :fill="getNodeProperty(action.fillColor, node)"
-                        r="20"
-                        :stroke-width="selectedAction?.id === action.id ? 4 : 0"
-                        :stroke="outlineColor"
-                    />
-                    <text :fill="titleColor" class="material-icons">{{
-                        getNodeProperty(action.icon, node)
-                    }}</text>
-                </g>
-            </g>
-        </transition>
+        <BoardNodeAction
+            :actions="actions ?? []"
+            :is-selected="isSelected"
+            :node="node"
+            :node-type="nodeType"
+        />
 
         <g
             class="node-container"
-            @mouseenter="isHovering = true"
-            @mouseleave="isHovering = false"
             @mousedown="mouseDown"
             @touchstart.passive="mouseDown"
             @mouseup="mouseUp"
@@ -69,7 +38,7 @@
                 />
 
                 <circle
-                    class="progressFill"
+                    class="progress progressFill"
                     v-if="progressDisplay === ProgressDisplay.Fill"
                     :r="Math.max(size * progress - 2, 0)"
                     :fill="progressColor"
@@ -77,7 +46,7 @@
                 <circle
                     v-else
                     :r="size + 4.5"
-                    class="progressRing"
+                    class="progress progressRing"
                     fill="transparent"
                     :stroke-dasharray="(size + 4.5) * 2 * Math.PI"
                     :stroke-width="5"
@@ -113,7 +82,7 @@
 
                 <rect
                     v-if="progressDisplay === ProgressDisplay.Fill"
-                    class="progressFill"
+                    class="progress progressFill"
                     :width="Math.max(size * sqrtTwo * progress - 2, 0)"
                     :height="Math.max(size * sqrtTwo * progress - 2, 0)"
                     :transform="`translate(${-Math.max(size * sqrtTwo * progress - 2, 0) / 2}, ${
@@ -123,7 +92,7 @@
                 />
                 <rect
                     v-else
-                    class="progressDiamond"
+                    class="progress progressDiamond"
                     :width="size * sqrtTwo + 9"
                     :height="size * sqrtTwo + 9"
                     :transform="`translate(${-(size * sqrtTwo + 9) / 2}, ${
@@ -173,6 +142,7 @@ import { ProgressDisplay, getNodeProperty, Shape } from "features/boards/board";
 import { isVisible } from "features/feature";
 import settings from "game/settings";
 import { computed, ref, toRefs, unref, watch } from "vue";
+import BoardNodeAction from "./BoardNodeAction.vue";
 
 const sqrtTwo = Math.sqrt(2);
 
@@ -195,7 +165,6 @@ const emit = defineEmits<{
     (e: "endDragging", node: number): void;
 }>();
 
-const isHovering = ref(false);
 const isSelected = computed(() => unref(props.selectedNode) === unref(props.node));
 const isDraggable = computed(() =>
     getNodeProperty(props.nodeType.value.draggable, unref(props.node))
@@ -217,16 +186,20 @@ const actions = computed(() => {
 
 const position = computed(() => {
     const node = unref(props.node);
-    const dragged = unref(props.dragged);
 
-    return getNodeProperty(props.nodeType.value.draggable, node) &&
+    if (
+        getNodeProperty(props.nodeType.value.draggable, node) &&
         unref(props.dragging)?.id === node.id &&
-        dragged
-        ? {
-              x: node.position.x + Math.round(dragged.x / 25) * 25,
-              y: node.position.y + Math.round(dragged.y / 25) * 25
-          }
-        : node.position;
+        unref(props.dragged) != null
+    ) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const { x, y } = unref(props.dragged)!;
+        return {
+            x: node.position.x + Math.round(x / 25) * 25,
+            y: node.position.y + Math.round(y / 25) * 25
+        };
+    }
+    return node.position;
 });
 
 const shape = computed(() => getNodeProperty(props.nodeType.value.shape, unref(props.node)));
@@ -264,32 +237,14 @@ const canAccept = computed(
         unref(props.hasDragged) &&
         getNodeProperty(props.nodeType.value.canAccept, unref(props.node))
 );
-const actionDistance = computed(() =>
-    getNodeProperty(props.nodeType.value.actionDistance, unref(props.node))
-);
 
 function mouseDown(e: MouseEvent | TouchEvent) {
     emit("mouseDown", e, props.node.value.id, isDraggable.value);
 }
 
-function mouseUp() {
+function mouseUp(e: MouseEvent | TouchEvent) {
     if (!props.hasDragged?.value) {
         props.nodeType.value.onClick?.(props.node.value);
-    }
-}
-
-function performAction(e: MouseEvent | TouchEvent, action: GenericBoardNodeAction) {
-    // If the onClick function made this action selected,
-    // don't propagate the event (which will deselect everything)
-    if (action.onClick(unref(props.node)) || unref(props.selectedAction)?.id === action.id) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-}
-
-function actionMouseUp(e: MouseEvent | TouchEvent, action: GenericBoardNodeAction) {
-    if (unref(props.selectedAction)?.id === action.id) {
-        e.preventDefault();
         e.stopPropagation();
     }
 }
@@ -301,6 +256,22 @@ function actionMouseUp(e: MouseEvent | TouchEvent, action: GenericBoardNodeActio
     transition-duration: 0s;
 }
 
+.boardnode:hover .body {
+    fill: var(--highlighted);
+}
+
+.boardnode.isSelected {
+    transform: scale(1.2);
+}
+
+.boardnode.isSelected .body {
+    fill: var(--accent1) !important;
+}
+
+.boardnode:not(.isDraggable) .body {
+    fill: var(--locked);
+}
+
 .node-title {
     text-anchor: middle;
     dominant-baseline: middle;
@@ -309,23 +280,12 @@ function actionMouseUp(e: MouseEvent | TouchEvent, action: GenericBoardNodeActio
     pointer-events: none;
 }
 
+.progress {
+    transition-duration: 0.05s;
+}
+
 .progressRing {
     transform: rotate(-90deg);
-}
-
-.action:not(.boardnode):hover circle,
-.action:not(.boardnode).selected circle {
-    r: 25;
-}
-
-.action:not(.boardnode):hover text,
-.action:not(.boardnode).selected text {
-    font-size: 187.5%; /* 150% * 1.25 */
-}
-
-.action:not(.boardnode) text {
-    text-anchor: middle;
-    dominant-baseline: central;
 }
 
 .fade-enter-from,
@@ -353,11 +313,6 @@ function actionMouseUp(e: MouseEvent | TouchEvent, action: GenericBoardNodeActio
 </style>
 
 <style>
-.actions-enter-from .action,
-.actions-leave-to .action {
-    transform: translate(0, 0);
-}
-
 .grow-enter-from .node-container,
 .grow-leave-to .node-container {
     transform: scale(0);

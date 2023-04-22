@@ -179,5 +179,6 @@ export default defineComponent({
     margin-left: -0.5px;
     transition-duration: 0.2s;
     z-index: 2;
+    transition-duration: 0.05s;
 }
 </style>

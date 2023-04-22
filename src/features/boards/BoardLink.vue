@@ -39,6 +39,10 @@ const endPosition = computed(() => {
 </script>
 
 <style scoped>
+.link {
+    transition-duration: 0s;
+}
+
 .link.pulsing {
     animation: pulsing 2s ease-in infinite;
 }
