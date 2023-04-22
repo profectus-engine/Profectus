@@ -4,11 +4,12 @@ import Formula, {
     calculateMaxAffordable,
     unrefFormulaSource
 } from "game/formulas/formulas";
-import type { GenericFormula, InvertibleFormula } from "game/formulas/types";
+import type { GenericFormula, IntegrableFormula, InvertibleFormula } from "game/formulas/types";
 import Decimal, { DecimalSource } from "util/bignum";
 import { beforeAll, describe, expect, test } from "vitest";
 import { ref } from "vue";
 import "../utils";
+import { InvertibleIntegralFormula } from "game/formulas/types";
 
 type FormulaFunctions = keyof GenericFormula & keyof typeof Formula & keyof typeof Decimal;
 
@@ -224,9 +225,15 @@ describe("Creating Formulas", () => {
                     expect(formula.hasVariable()).toBe(false));
                 test("Evaluates correctly", () =>
                     expect(formula.evaluate()).compare_tolerance(expectedValue));
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                /* @ts-ignore */
                 test("Invert throws", () => expect(() => formula.invert(25)).toThrow());
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                /* @ts-ignore */
                 test("Integrate throws", () => expect(() => formula.evaluateIntegral()).toThrow());
                 test("Invert integral throws", () =>
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    /* @ts-ignore */
                     expect(() => formula.invertIntegral(25)).toThrow());
             });
         }
@@ -250,6 +257,8 @@ describe("Creating Formulas", () => {
         test("Is not marked as having a variable", () => expect(formula.hasVariable()).toBe(false));
         test("Is not invertible", () => expect(formula.isInvertible()).toBe(false));
         test(`Formula throws if trying to invert`, () =>
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            /* @ts-ignore */
             expect(() => formula.invert(10)).toThrow());
         test("Is not integrable", () => expect(formula.isIntegrable()).toBe(false));
         test("Has a non-invertible integral", () =>
@@ -361,7 +370,7 @@ describe("Variables", () => {
 });
 
 describe("Inverting", () => {
-    let variable: GenericFormula;
+    let variable: IntegrableFormula;
     let constant: GenericFormula;
     beforeAll(() => {
         variable = Formula.variable(10);
@@ -437,8 +446,8 @@ describe("Inverting", () => {
     });
 
     describe("Inverting calculates the value of the variable", () => {
-        let variable: GenericFormula;
-        let constant: GenericFormula;
+        let variable: IntegrableFormula;
+        let constant: IntegrableFormula;
         beforeAll(() => {
             variable = Formula.variable(2);
             constant = Formula.constant(3);
@@ -448,7 +457,8 @@ describe("Inverting", () => {
                 test(`${name}(var, const).invert()`, () => {
                     const formula = Formula[name](variable, constant);
                     const result = formula.evaluate();
-                    expect(formula.invert(result)).compare_tolerance(2);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    expect(formula.invert!(result)).compare_tolerance(2);
                 });
                 if (name !== "layeradd") {
                     test(`${name}(const, var).invert()`, () => {
@@ -489,8 +499,8 @@ describe("Inverting", () => {
 });
 
 describe("Integrating", () => {
-    let variable: GenericFormula;
-    let constant: GenericFormula;
+    let variable: IntegrableFormula;
+    let constant: IntegrableFormula;
     beforeAll(() => {
         variable = Formula.variable(ref(10));
         constant = Formula.constant(10);
@@ -502,7 +512,7 @@ describe("Integrating", () => {
         expect(variable.evaluateIntegral(20)).compare_tolerance(Decimal.pow(20, 2).div(2)));
 
     describe("Integrable functions marked as such", () => {
-        function checkFormula(formula: GenericFormula) {
+        function checkFormula(formula: IntegrableFormula) {
             expect(formula.isIntegrable()).toBe(true);
             expect(() => formula.evaluateIntegral()).to.not.throw();
         }
@@ -612,8 +622,8 @@ describe("Integrating", () => {
 });
 
 describe("Inverting integrals", () => {
-    let variable: GenericFormula;
-    let constant: GenericFormula;
+    let variable: InvertibleIntegralFormula;
+    let constant: InvertibleIntegralFormula;
     beforeAll(() => {
         variable = Formula.variable(10);
         constant = Formula.constant(10);
@@ -625,7 +635,7 @@ describe("Inverting integrals", () => {
         ));
 
     describe("Invertible Integral functions marked as such", () => {
-        function checkFormula(formula: GenericFormula) {
+        function checkFormula(formula: InvertibleIntegralFormula) {
             expect(formula.isIntegralInvertible()).toBe(true);
             expect(() => formula.invertIntegral(10)).to.not.throw();
         }
@@ -918,7 +928,7 @@ describe("Conditionals", () => {
 });
 
 describe("Custom Formulas", () => {
-    let variable: GenericFormula;
+    let variable: InvertibleIntegralFormula;
     beforeAll(() => {
         variable = Formula.variable(1);
     });
@@ -1020,7 +1030,7 @@ describe("Custom Formulas", () => {
     });
 
     describe("Formula as input", () => {
-        let customFormula: GenericFormula;
+        let customFormula: InvertibleIntegralFormula;
         beforeAll(() => {
             customFormula = new Formula({
                 inputs: [variable],
@@ -1045,6 +1055,8 @@ describe("Buy Max", () => {
     });
     describe("Without spending", () => {
         test("Throws on formula with non-invertible integral", () => {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            /* @ts-ignore */
             const maxAffordable = calculateMaxAffordable(Formula.neg(10), resource, false);
             expect(() => maxAffordable.value).toThrow();
         });

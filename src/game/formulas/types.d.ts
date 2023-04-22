@@ -1,32 +1,38 @@
-import Formula from "game/formulas/formulas";
+import { InternalFormula } from "game/formulas/formulas";
 import { DecimalSource } from "util/bignum";
 import { ProcessedComputable } from "util/computed";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-type GenericFormula = Formula<any>;
+type GenericFormula = InternalFormula<any>;
 type FormulaSource = ProcessedComputable<DecimalSource> | GenericFormula;
 type InvertibleFormula = GenericFormula & {
-    invert: (value: DecimalSource) => DecimalSource;
+    invert: NonNullable<GenericFormula["invert"]>;
 };
-type IntegrableFormula = GenericFormula & {
-    evaluateIntegral: (variable?: DecimalSource) => DecimalSource;
+type IntegrableFormula = InvertibleFormula & {
+    evaluateIntegral: NonNullable<GenericFormula["evaluateIntegral"]>;
+    getIntegralFormula: NonNullable<GenericFormula["getIntegralFormula"]>;
+    calculateConstantOfIntegration: NonNullable<GenericFormula["calculateConstantOfIntegration"]>;
 };
-type InvertibleIntegralFormula = GenericFormula & {
-    invertIntegral: (value: DecimalSource) => DecimalSource;
+type InvertibleIntegralFormula = IntegrableFormula & {
+    invertIntegral: NonNullable<GenericFormula["invertIntegral"]>;
 };
 
 type EvaluateFunction<T> = (
-    this: Formula<T>,
+    this: InternalFormula<T>,
     ...inputs: GuardedFormulasToDecimals<T>
 ) => DecimalSource;
-type InvertFunction<T> = (this: Formula<T>, value: DecimalSource, ...inputs: T) => DecimalSource;
+type InvertFunction<T> = (
+    this: InternalFormula<T>,
+    value: DecimalSource,
+    ...inputs: T
+) => DecimalSource;
 type IntegrateFunction<T> = (
-    this: Formula<T>,
+    this: InternalFormula<T>,
     stack: SubstitutionStack | undefined,
     ...inputs: T
 ) => GenericFormula;
 type SubstitutionFunction<T> = (
-    this: Formula<T>,
+    this: InternalFormula<T>,
     variable: GenericFormula,
     ...inputs: T
 ) => GenericFormula;
