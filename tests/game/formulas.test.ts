@@ -1174,6 +1174,24 @@ describe("Buy Max", () => {
             // Since we're summing all the purchases this should be equivalent
             expect(calculatedCost).compare_tolerance(actualCost);
         });
+        test("Handles summing purchases when making very few purchases", () => {
+            const purchases = ref(0);
+            const variable = Formula.variable(purchases);
+            const formula = variable.add(1);
+            const resource = createResource(ref(3));
+            const maxAffordable = calculateMaxAffordable(formula, resource, true);
+            expect(maxAffordable.value).compare_tolerance(2);
+
+            const actualCost = new Array(2)
+                .fill(null)
+                .reduce(
+                    (acc, _, i) => acc.add(formula.evaluate(i + purchases.value)),
+                    new Decimal(0)
+                );
+            const calculatedCost = calculateCost(formula, maxAffordable.value, true);
+            // Since we're summing all the purchases this should be equivalent
+            expect(calculatedCost).compare_tolerance(actualCost);
+        });
         test("Handles summing purchases when over e308 purchases", () => {
             resource.value = "1ee308";
             const purchases = ref(0);

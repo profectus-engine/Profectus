@@ -1426,14 +1426,14 @@ export function calculateMaxAffordable(
                 summedPurchases = 0;
             }
         }
-        if (summedPurchases > 0) {
+        if (summedPurchases > 0 && Decimal.lt(calculateCost(formula, affordable, true, 0), 1e308)) {
             affordable = affordable.sub(summedPurchases).clampMin(0);
             let summedCost = calculateCost(formula, affordable, true, 0);
             while (true) {
                 const nextCost = formula.evaluate(
                     affordable.add(unref(formula.innermostVariable) ?? 0)
                 );
-                if (Decimal.add(summedCost, nextCost).lt(resource.value)) {
+                if (Decimal.add(summedCost, nextCost).lte(resource.value)) {
                     affordable = affordable.add(1);
                     summedCost = Decimal.add(summedCost, nextCost);
                 } else {
