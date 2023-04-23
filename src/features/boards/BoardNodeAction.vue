@@ -52,6 +52,10 @@ const _props = defineProps<{
 }>();
 const props = toRefs(_props);
 
+const emit = defineEmits<{
+    (e: "clickAction", actionId: string): void;
+}>();
+
 const size = computed(() => getNodeProperty(props.nodeType.value.size, unref(props.node)));
 const outlineColor = computed(
     () =>
@@ -68,12 +72,9 @@ const actionDistance = computed(() =>
 );
 
 function performAction(e: MouseEvent | TouchEvent, action: GenericBoardNodeAction) {
-    // If the onClick function made this action selected,
-    // don't propagate the event (which will deselect everything)
-    if (action.onClick(unref(props.node)) || unref(props.selectedAction)?.id === action.id) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
+    emit("clickAction", action.id);
+    e.preventDefault();
+    e.stopPropagation();
 }
 
 function actionMouseUp(e: MouseEvent | TouchEvent, action: GenericBoardNodeAction) {

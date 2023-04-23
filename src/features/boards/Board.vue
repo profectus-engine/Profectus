@@ -44,6 +44,7 @@
                             :selectedAction="unref(selectedAction)"
                             @mouseDown="mouseDown"
                             @endDragging="endDragging"
+                            @clickAction="actionId => clickAction(node, actionId)"
                         />
                     </g>
                 </transition-group>
@@ -238,6 +239,15 @@ function endDragging(nodeID: number | null) {
     } else if (!hasDragged.value) {
         props.state.value.selectedNode = null;
         props.state.value.selectedAction = null;
+    }
+}
+
+function clickAction(node: BoardNode, actionId: string) {
+    if (props.state.value.selectedAction === actionId) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        unref(props.selectedAction)!.onClick(unref(props.selectedNode)!);
+    } else {
+        props.state.value = { ...props.state.value, selectedAction: actionId };
     }
 }
 </script>

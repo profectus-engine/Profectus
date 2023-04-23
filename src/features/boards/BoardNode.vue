@@ -12,6 +12,7 @@
             :node="node"
             :node-type="nodeType"
             :selected-action="selectedAction"
+            @click-action="actionId => emit('clickAction', actionId)"
         />
 
         <g
@@ -165,6 +166,7 @@ const props = toRefs(_props);
 const emit = defineEmits<{
     (e: "mouseDown", event: MouseEvent | TouchEvent, node: number, isDraggable: boolean): void;
     (e: "endDragging", node: number): void;
+    (e: "clickAction", actionId: string): void;
 }>();
 
 const isSelected = computed(() => unref(props.selectedNode) === unref(props.node));

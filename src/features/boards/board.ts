@@ -188,7 +188,7 @@ export interface BoardNodeActionOptions {
     /** An array of board node links associated with the action. They appear when the action is focused. */
     links?: NodeComputable<BoardNodeLink[]>;
     /** A function that is called when the action is clicked. */
-    onClick: (node: BoardNode) => boolean | undefined;
+    onClick: (node: BoardNode) => void;
 }
 
 /**
