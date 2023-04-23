@@ -48,7 +48,7 @@ const _props = defineProps<{
     nodeType: GenericNodeType;
     actions?: GenericBoardNodeAction[];
     isSelected: boolean;
-    selectedAction?: GenericBoardNodeAction;
+    selectedAction: GenericBoardNodeAction | null;
 }>();
 const props = toRefs(_props);
 

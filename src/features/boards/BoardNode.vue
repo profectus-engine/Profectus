@@ -11,6 +11,7 @@
             :is-selected="isSelected"
             :node="node"
             :node-type="nodeType"
+            :selected-action="selectedAction"
         />
 
         <g
@@ -157,8 +158,8 @@ const _props = defineProps<{
     };
     hasDragged?: boolean;
     receivingNode?: boolean;
-    selectedNode?: BoardNode | null;
-    selectedAction?: GenericBoardNodeAction | null;
+    selectedNode: BoardNode | null;
+    selectedAction: GenericBoardNodeAction | null;
 }>();
 const props = toRefs(_props);
 const emit = defineEmits<{
