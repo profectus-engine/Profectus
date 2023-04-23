@@ -462,13 +462,13 @@ export function createFormulaPreview(
     formula: GenericFormula,
     showPreview: Computable<boolean>,
     previewAmount: Computable<DecimalSource> = 1
-): ComputedRef<CoercableComponent> {
+) {
     const processedShowPreview = convertComputable(showPreview);
     const processedPreviewAmount = convertComputable(previewAmount);
     if (!formula.hasVariable()) {
         throw new Error("Cannot create formula preview if the formula does not have a variable");
     }
-    return computed(() => {
+    return jsx(() => {
         if (unref(processedShowPreview)) {
             const curr = formatSmall(formula.evaluate());
             const preview = formatSmall(
@@ -479,16 +479,16 @@ export function createFormulaPreview(
                     )
                 )
             );
-            return jsx(() => (
+            return (
                 <>
                     <b>
                         <i>
-                            {curr}→{preview}
+                            {curr} → {preview}
                         </i>
                     </b>
                 </>
-            ));
+            );
         }
-        return formatSmall(formula.evaluate());
+        return <>{formatSmall(formula.evaluate())}</>;
     });
 }
