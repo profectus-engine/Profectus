@@ -297,6 +297,7 @@ function mouseUp(e: MouseEvent | TouchEvent) {
     font-family: monospace;
     font-size: 200%;
     pointer-events: none;
+    filter: drop-shadow(3px 3px 2px var(--tooltip-background));
 }
 
 .progress {
