@@ -16,7 +16,7 @@ import player from "game/player";
 import settings from "game/settings";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatSmall, formatTime } from "util/bignum";
-import type { WithRequired } from "util/common";
+import { WithRequired, camelToTitle } from "util/common";
 import type {
     Computable,
     GetComputableType,
@@ -177,11 +177,6 @@ export interface LayerTreeNodeOptions extends TreeNodeOptions {
     layerID: string;
     /** The color to display this tree node as */
     color: Computable<string>; // marking as required
-    /**
-     * The content to display in the tree node.
-     * Defaults to the layer's ID
-     */
-    display?: Computable<CoercableComponent>;
     /** Whether or not to append the layer to the tabs list.
      * If set to false, then the tree node will instead always remove all tabs to its right and then add the layer tab.
      * Defaults to true.
@@ -214,12 +209,10 @@ export function createLayerTreeNode<T extends LayerTreeNodeOptions>(
 ): LayerTreeNode<T> {
     return createTreeNode(feature => {
         const options = optionsFunc.call(feature, feature);
-        processComputable(options as T, "display");
-        setDefault(options, "display", options.layerID);
+        setDefault(options, "display", camelToTitle(options.layerID));
         processComputable(options as T, "append");
         return {
             ...options,
-            display: options.display,
             onClick: unref((options as unknown as GenericLayerTreeNode).append)
                 ? function () {
                       if (player.tabs.includes(options.layerID)) {
