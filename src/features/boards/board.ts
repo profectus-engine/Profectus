@@ -21,7 +21,7 @@ import type {
 } from "util/computed";
 import { processComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { computed, ref, Ref, unref } from "vue";
+import { computed, isRef, ref, Ref, unref } from "vue";
 import panZoom from "vue-panzoom";
 import type { Link } from "../links/links";
 
@@ -337,12 +337,52 @@ export function createBoard<T extends BoardOptions>(
         }
 
         board.nodes = computed(() => unref(processedBoard.state).nodes);
-        board.selectedNode = computed(
-            () =>
-                processedBoard.nodes.value.find(
-                    node => node.id === unref(processedBoard.state).selectedNode
-                ) || null
-        );
+        board.selectedNode = computed({
+            get() {
+                return (
+                    processedBoard.nodes.value.find(
+                        node => node.id === unref(processedBoard.state).selectedNode
+                    ) || null
+                );
+            },
+            set(node) {
+                if (isRef(processedBoard.state)) {
+                    processedBoard.state.value = {
+                        ...processedBoard.state.value,
+                        selectedNode: node?.id ?? null
+                    };
+                } else {
+                    processedBoard.state.selectedNode = node?.id ?? null;
+                }
+            }
+        });
+        board.selectedAction = computed({
+            get() {
+                const selectedNode = processedBoard.selectedNode.value;
+                if (selectedNode == null) {
+                    return null;
+                }
+                const type = processedBoard.types[selectedNode.type];
+                if (type.actions == null) {
+                    return null;
+                }
+                return (
+                    type.actions.find(
+                        action => action.id === unref(processedBoard.state).selectedAction
+                    ) || null
+                );
+            },
+            set(action) {
+                if (isRef(processedBoard.state)) {
+                    processedBoard.state.value = {
+                        ...processedBoard.state.value,
+                        selectedAction: action?.id ?? null
+                    };
+                } else {
+                    processedBoard.state.selectedAction = action?.id ?? null;
+                }
+            }
+        });
         board.selectedAction = computed(() => {
             const selectedNode = processedBoard.selectedNode.value;
             if (selectedNode == null) {
