@@ -122,7 +122,7 @@ watchEffect(() => {
                 return smallest;
             }
             const nodeType = props.types.value[curr.type];
-            const canAccept = getNodeProperty(nodeType.canAccept, curr);
+            const canAccept = getNodeProperty(nodeType.canAccept, curr, node);
             if (!canAccept) {
                 return smallest;
             }
@@ -225,8 +225,10 @@ function drag(e: MouseEvent | TouchEvent) {
 
 function endDragging(node: BoardNode | null) {
     if (props.draggingNode.value != null && props.draggingNode.value === node) {
-        props.draggingNode.value.position.x += Math.round(dragged.value.x / 25) * 25;
-        props.draggingNode.value.position.y += Math.round(dragged.value.y / 25) * 25;
+        if (props.receivingNode.value == null) {
+            props.draggingNode.value.position.x += Math.round(dragged.value.x / 25) * 25;
+            props.draggingNode.value.position.y += Math.round(dragged.value.y / 25) * 25;
+        }
 
         const nodes = props.nodes.value;
         nodes.push(nodes.splice(nodes.indexOf(props.draggingNode.value), 1)[0]);

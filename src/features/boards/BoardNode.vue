@@ -253,9 +253,9 @@ const progressDisplay = computed(() =>
 );
 const canAccept = computed(
     () =>
-        unref(props.dragging) != null &&
+        props.dragging.value != null &&
         unref(props.hasDragged) &&
-        getNodeProperty(props.nodeType.value.canAccept, unref(props.node))
+        getNodeProperty(props.nodeType.value.canAccept, unref(props.node), props.dragging.value)
 );
 const style = computed(() => getNodeProperty(props.nodeType.value.style, unref(props.node)));
 const classes = computed(() => getNodeProperty(props.nodeType.value.classes, unref(props.node)));

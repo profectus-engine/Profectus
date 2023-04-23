@@ -33,7 +33,9 @@ export const BoardType = Symbol("Board");
 /**
  * A type representing a computable value for a node on the board. Used for node types to return different values based on the given node and the state of the board.
  */
-export type NodeComputable<T> = Computable<T> | ((node: BoardNode) => T);
+export type NodeComputable<T, S extends unknown[] = []> =
+    | Computable<T>
+    | ((node: BoardNode, ...args: S) => T);
 
 /** Ways to display progress of an action with a duration. */
 export enum ProgressDisplay {
@@ -101,7 +103,7 @@ export interface NodeTypeOptions {
     /** The shape of the node. */
     shape: NodeComputable<Shape>;
     /** Whether the node can accept another node being dropped upon it. */
-    canAccept?: boolean | Ref<boolean> | ((node: BoardNode, otherNode: BoardNode) => boolean);
+    canAccept?: NodeComputable<boolean, [BoardNode]>;
     /** The progress value of the node. */
     progress?: NodeComputable<number>;
     /** How the progress should be displayed on the node. */
@@ -164,7 +166,7 @@ export type GenericNodeType = Replace<
         size: NodeComputable<number>;
         draggable: NodeComputable<boolean>;
         shape: NodeComputable<Shape>;
-        canAccept: NodeComputable<boolean>;
+        canAccept: NodeComputable<boolean, [BoardNode]>;
         progressDisplay: NodeComputable<ProgressDisplay>;
         progressColor: NodeComputable<string>;
         actionDistance: NodeComputable<number>;
@@ -490,8 +492,14 @@ export function createBoard<T extends BoardOptions>(
  * @param property The property to find the value of
  * @param node The node to get the property of
  */
-export function getNodeProperty<T>(property: NodeComputable<T>, node: BoardNode): T {
-    return isFunction<T, [BoardNode], Computable<T>>(property) ? property(node) : unref(property);
+export function getNodeProperty<T, S extends unknown[]>(
+    property: NodeComputable<T, S>,
+    node: BoardNode,
+    ...args: S
+): T {
+    return isFunction<T, [BoardNode, ...S], Computable<T>>(property)
+        ? property(node, ...args)
+        : unref(property);
 }
 
 /**
