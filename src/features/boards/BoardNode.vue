@@ -117,7 +117,7 @@
         <transition name="fade" appear>
             <g v-if="label">
                 <text
-                    :fill="label.color || titleColor"
+                    :fill="label.color ?? titleColor"
                     class="node-title"
                     :class="{ pulsing: label.pulsing }"
                     :y="-size - 20"
@@ -129,10 +129,11 @@
         <transition name="fade" appear>
             <text
                 v-if="isSelected && selectedAction"
-                :fill="titleColor"
+                :fill="confirmationLabel.color ?? titleColor"
                 class="node-title"
+                :class="{ pulsing: confirmationLabel.pulsing }"
                 :y="size + 75"
-                >Tap again to confirm</text
+                >{{ confirmationLabel.text }}</text
             >
         </transition>
     </g>
@@ -215,6 +216,14 @@ const label = computed(
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               getNodeProperty(unref(props.selectedAction)!.tooltip, unref(props.node))
             : null) ?? getNodeProperty(props.nodeType.value.label, unref(props.node))
+);
+const confirmationLabel = computed(() =>
+    getNodeProperty(
+        unref(props.selectedAction)?.confirmationLabel ?? {
+            text: "Tap again to confirm"
+        },
+        unref(props.node)
+    )
 );
 const size = computed(() => getNodeProperty(props.nodeType.value.size, unref(props.node)));
 const progress = computed(

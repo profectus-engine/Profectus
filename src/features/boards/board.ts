@@ -185,6 +185,8 @@ export interface BoardNodeActionOptions {
     fillColor?: NodeComputable<string>;
     /** The tooltip text to display for the action. */
     tooltip: NodeComputable<NodeLabel>;
+    /** The confirmation label that appears under the action. */
+    confirmationLabel?: NodeComputable<NodeLabel>;
     /** An array of board node links associated with the action. They appear when the action is focused. */
     links?: NodeComputable<BoardNodeLink[]>;
     /** A function that is called when the action is clicked. */
@@ -206,6 +208,7 @@ export type BoardNodeAction<T extends BoardNodeActionOptions> = Replace<
         icon: GetComputableType<T["icon"]>;
         fillColor: GetComputableType<T["fillColor"]>;
         tooltip: GetComputableType<T["tooltip"]>;
+        confirmationLabel: GetComputableTypeWithDefault<T["confirmationLabel"], NodeLabel>;
         links: GetComputableType<T["links"]>;
     }
 >;
@@ -215,6 +218,7 @@ export type GenericBoardNodeAction = Replace<
     BoardNodeAction<BoardNodeActionOptions>,
     {
         visibility: NodeComputable<Visibility | boolean>;
+        confirmationLabel: NodeComputable<NodeLabel>;
     }
 >;
 
@@ -416,6 +420,8 @@ export function createBoard<T extends BoardOptions>(
                     processComputable(action, "icon");
                     processComputable(action, "fillColor");
                     processComputable(action, "tooltip");
+                    processComputable(action, "confirmationLabel");
+                    setDefault(action, "confirmationLabel", { text: "Tap again to confirm" });
                     processComputable(action, "links");
                 }
             }

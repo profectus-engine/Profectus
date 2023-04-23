@@ -1,7 +1,6 @@
 <template>
     <transition name="actions" appear>
         <g v-if="isSelected && actions">
-            <!-- TODO move to separate file -->
             <g
                 v-for="(action, index) in actions"
                 :key="action.id"
