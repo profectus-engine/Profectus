@@ -385,21 +385,6 @@ export function createBoard<T extends BoardOptions>(
                 }
             }
         });
-        board.selectedAction = computed(() => {
-            const selectedNode = processedBoard.selectedNode.value;
-            if (selectedNode == null) {
-                return null;
-            }
-            const type = processedBoard.types[selectedNode.type];
-            if (type.actions == null) {
-                return null;
-            }
-            return (
-                type.actions.find(
-                    action => action.id === unref(processedBoard.state).selectedAction
-                ) || null
-            );
-        });
         board.mousePosition = ref(null);
         if (board.links) {
             processComputable(board as T, "links");
