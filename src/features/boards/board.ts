@@ -12,7 +12,7 @@ import { globalBus } from "game/events";
 import { DefaultValue, deletePersistent, Persistent, State } from "game/persistence";
 import { persistent } from "game/persistence";
 import type { Unsubscribe } from "nanoevents";
-import { isFunction } from "util/common";
+import { Direction, isFunction } from "util/common";
 import type {
     Computable,
     GetComputableType,
@@ -266,6 +266,8 @@ export interface BaseBoard {
     receivingNode: Ref<BoardNode | null>;
     /** The current mouse position, if over the board. */
     mousePosition: Ref<{ x: number; y: number } | null>;
+    /** Places a node in the nearest empty space in the given direction with the specified space around it. */
+    placeInAvailableSpace: (node: BoardNode, radius?: number, direction?: Direction) => void;
     /** A symbol that helps identify features of the same type. */
     type: typeof BoardType;
     /** The Vue component used to render this feature. */
@@ -483,6 +485,76 @@ export function createBoard<T extends BoardOptions>(
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             board.receivingNode!.value = node;
         }
+
+        board.placeInAvailableSpace = function (
+            node: BoardNode,
+            radius = 100,
+            direction = Direction.Right
+        ) {
+            const nodes = processedBoard.nodes.value
+                .slice()
+                .filter(n => {
+                    // Exclude self
+                    if (n === node) {
+                        return false;
+                    }
+
+                    // Exclude nodes that aren't within the corridor we'll be moving within
+                    if (
+                        (direction === Direction.Down || direction === Direction.Up) &&
+                        Math.abs(n.position.x - node.position.x) > radius
+                    ) {
+                        return false;
+                    }
+                    if (
+                        (direction === Direction.Left || direction === Direction.Right) &&
+                        Math.abs(n.position.y - node.position.y) > radius
+                    ) {
+                        return false;
+                    }
+
+                    // Exclude nodes in the wrong direction
+                    return !(
+                        (direction === Direction.Right &&
+                            n.position.x < node.position.x - radius) ||
+                        (direction === Direction.Left && n.position.x > node.position.x + radius) ||
+                        (direction === Direction.Up && n.position.y > node.position.y + radius) ||
+                        (direction === Direction.Down && n.position.y < node.position.y - radius)
+                    );
+                })
+                .sort(
+                    direction === Direction.Right
+                        ? (a, b) => a.position.x - b.position.x
+                        : direction === Direction.Left
+                        ? (a, b) => b.position.x - a.position.x
+                        : direction === Direction.Up
+                        ? (a, b) => b.position.y - a.position.y
+                        : (a, b) => a.position.y - b.position.y
+                );
+            for (let i = 0; i < nodes.length; i++) {
+                const nodeToCheck = nodes[i];
+                const distance =
+                    direction === Direction.Right || direction === Direction.Left
+                        ? Math.abs(node.position.x - nodeToCheck.position.x)
+                        : Math.abs(node.position.y - nodeToCheck.position.y);
+
+                // If we're too close to this node, move further
+                if (distance < radius) {
+                    if (direction === Direction.Right) {
+                        node.position.x = nodeToCheck.position.x + radius;
+                    } else if (direction === Direction.Left) {
+                        node.position.x = nodeToCheck.position.x - radius;
+                    } else if (direction === Direction.Up) {
+                        node.position.y = nodeToCheck.position.y - radius;
+                    } else if (direction === Direction.Down) {
+                        node.position.y = nodeToCheck.position.y + radius;
+                    }
+                } else if (i > 0 && distance > radius) {
+                    // If we're further from this node than the radius, then the nodes are past us and we can early exit
+                    break;
+                }
+            }
+        };
 
         board[GatherProps] = function (this: GenericBoard) {
             const {
