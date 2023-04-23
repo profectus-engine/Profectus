@@ -44,7 +44,7 @@
                             :selectedAction="unref(selectedAction)"
                             @mouseDown="mouseDown"
                             @endDragging="endDragging"
-                            @clickAction="actionId => clickAction(node, actionId)"
+                            @clickAction="(actionId: string) => clickAction(node, actionId)"
                         />
                     </g>
                 </transition-group>

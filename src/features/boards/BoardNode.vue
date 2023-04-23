@@ -12,7 +12,7 @@
             :node="node"
             :node-type="nodeType"
             :selected-action="selectedAction"
-            @click-action="actionId => emit('clickAction', actionId)"
+            @click-action="(actionId: string) => emit('clickAction', actionId)"
         />
 
         <g
