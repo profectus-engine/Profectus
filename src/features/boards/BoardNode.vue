@@ -153,7 +153,7 @@ const sqrtTwo = Math.sqrt(2);
 const _props = defineProps<{
     node: BoardNode;
     nodeType: GenericNodeType;
-    dragging?: BoardNode;
+    dragging: BoardNode | null;
     dragged?: {
         x: number;
         y: number;
@@ -165,8 +165,8 @@ const _props = defineProps<{
 }>();
 const props = toRefs(_props);
 const emit = defineEmits<{
-    (e: "mouseDown", event: MouseEvent | TouchEvent, node: number, isDraggable: boolean): void;
-    (e: "endDragging", node: number): void;
+    (e: "mouseDown", event: MouseEvent | TouchEvent, node: BoardNode, isDraggable: boolean): void;
+    (e: "endDragging", node: BoardNode): void;
     (e: "clickAction", actionId: string): void;
 }>();
 
@@ -178,7 +178,7 @@ const isDraggable = computed(() =>
 watch(isDraggable, value => {
     const node = unref(props.node);
     if (unref(props.dragging) === node && !value) {
-        emit("endDragging", node.id);
+        emit("endDragging", node);
     }
 });
 
@@ -261,12 +261,12 @@ const style = computed(() => getNodeProperty(props.nodeType.value.style, unref(p
 const classes = computed(() => getNodeProperty(props.nodeType.value.classes, unref(props.node)));
 
 function mouseDown(e: MouseEvent | TouchEvent) {
-    emit("mouseDown", e, props.node.value.id, isDraggable.value);
+    emit("mouseDown", e, props.node.value, isDraggable.value);
 }
 
 function mouseUp(e: MouseEvent | TouchEvent) {
     if (!props.hasDragged?.value) {
-        emit("endDragging", props.node.value.id);
+        emit("endDragging", props.node.value);
         props.nodeType.value.onClick?.(props.node.value);
         e.stopPropagation();
     }

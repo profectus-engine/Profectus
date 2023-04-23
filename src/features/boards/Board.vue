@@ -17,9 +17,9 @@
         @touchmove="drag"
         @mousedown="(e: MouseEvent) => mouseDown(e)"
         @touchstart="(e: TouchEvent) => mouseDown(e)"
-        @mouseup="() => endDragging(dragging)"
-        @touchend.passive="() => endDragging(dragging)"
-        @mouseleave="() => endDragging(dragging)"
+        @mouseup="() => endDragging(unref(draggingNode))"
+        @touchend.passive="() => endDragging(unref(draggingNode))"
+        @mouseleave="() => endDragging(unref(draggingNode))"
     >
         <svg class="stage" width="100%" height="100%">
             <g class="g1">
@@ -36,10 +36,10 @@
                         <BoardNodeVue
                             :node="node"
                             :nodeType="types[node.type]"
-                            :dragging="draggingNode"
-                            :dragged="draggingNode === node ? dragged : undefined"
+                            :dragging="unref(draggingNode)"
+                            :dragged="unref(draggingNode) === node ? dragged : undefined"
                             :hasDragged="hasDragged"
-                            :receivingNode="receivingNode?.id === node.id"
+                            :receivingNode="unref(receivingNode)?.id === node.id"
                             :selectedNode="unref(selectedNode)"
                             :selectedAction="unref(selectedAction)"
                             @mouseDown="mouseDown"
@@ -65,7 +65,7 @@ import { getNodeProperty } from "features/boards/board";
 import type { StyleValue } from "features/feature";
 import { Visibility, isVisible } from "features/feature";
 import type { ProcessedComputable } from "util/computed";
-import { Ref, computed, ref, toRefs, unref } from "vue";
+import { Ref, computed, ref, toRefs, unref, watchEffect } from "vue";
 import BoardLinkVue from "./BoardLink.vue";
 import BoardNodeVue from "./BoardNode.vue";
 
@@ -81,32 +81,31 @@ const _props = defineProps<{
     links: Ref<BoardNodeLink[] | null>;
     selectedAction: Ref<GenericBoardNodeAction | null>;
     selectedNode: Ref<BoardNode | null>;
+    draggingNode: Ref<BoardNode | null>;
+    receivingNode: Ref<BoardNode | null>;
     mousePosition: Ref<{ x: number; y: number } | null>;
+    setReceivingNode: (node: BoardNode | null) => void;
+    setDraggingNode: (node: BoardNode | null) => void;
 }>();
 const props = toRefs(_props);
 
 const lastMousePosition = ref({ x: 0, y: 0 });
 const dragged = ref({ x: 0, y: 0 });
-const dragging = ref<number | null>(null);
 const hasDragged = ref(false);
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const stage = ref<any>(null);
 
-const draggingNode = computed(() =>
-    dragging.value == null ? undefined : props.nodes.value.find(node => node.id === dragging.value)
-);
-
 const sortedNodes = computed(() => {
     const nodes = props.nodes.value.slice();
-    if (draggingNode.value) {
-        const node = nodes.splice(nodes.indexOf(draggingNode.value), 1)[0];
+    if (props.draggingNode.value) {
+        const node = nodes.splice(nodes.indexOf(props.draggingNode.value), 1)[0];
         nodes.push(node);
     }
     return nodes;
 });
 
-const receivingNode = computed(() => {
-    const node = draggingNode.value;
+watchEffect(() => {
+    const node = props.draggingNode.value;
     if (node == null) {
         return null;
     }
@@ -116,26 +115,30 @@ const receivingNode = computed(() => {
         y: node.position.y + dragged.value.y
     };
     let smallestDistance = Number.MAX_VALUE;
-    return props.nodes.value.reduce((smallest: BoardNode | null, curr: BoardNode) => {
-        if (curr.id === node.id) {
-            return smallest;
-        }
-        const nodeType = props.types.value[curr.type];
-        const canAccept = getNodeProperty(nodeType.canAccept, curr);
-        if (!canAccept) {
-            return smallest;
-        }
 
-        const distanceSquared =
-            Math.pow(position.x - curr.position.x, 2) + Math.pow(position.y - curr.position.y, 2);
-        let size = getNodeProperty(nodeType.size, curr);
-        if (distanceSquared > smallestDistance || distanceSquared > size * size) {
-            return smallest;
-        }
+    props.setReceivingNode.value(
+        props.nodes.value.reduce((smallest: BoardNode | null, curr: BoardNode) => {
+            if (curr.id === node.id) {
+                return smallest;
+            }
+            const nodeType = props.types.value[curr.type];
+            const canAccept = getNodeProperty(nodeType.canAccept, curr);
+            if (!canAccept) {
+                return smallest;
+            }
 
-        smallestDistance = distanceSquared;
-        return curr;
-    }, null);
+            const distanceSquared =
+                Math.pow(position.x - curr.position.x, 2) +
+                Math.pow(position.y - curr.position.y, 2);
+            let size = getNodeProperty(nodeType.size, curr);
+            if (distanceSquared > smallestDistance || distanceSquared > size * size) {
+                return smallest;
+            }
+
+            smallestDistance = distanceSquared;
+            return curr;
+        }, null)
+    );
 });
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -144,8 +147,8 @@ function onInit(panzoomInstance: any) {
     panzoomInstance.moveTo(stage.value.$el.clientWidth / 2, stage.value.$el.clientHeight / 2);
 }
 
-function mouseDown(e: MouseEvent | TouchEvent, nodeID: number | null = null, draggable = false) {
-    if (dragging.value == null) {
+function mouseDown(e: MouseEvent | TouchEvent, node: BoardNode | null = null, draggable = false) {
+    if (props.draggingNode.value == null) {
         e.preventDefault();
         e.stopPropagation();
 
@@ -169,10 +172,10 @@ function mouseDown(e: MouseEvent | TouchEvent, nodeID: number | null = null, dra
         hasDragged.value = false;
 
         if (draggable) {
-            dragging.value = nodeID;
+            props.setDraggingNode.value(node);
         }
     }
-    if (nodeID != null) {
+    if (node != null) {
         props.state.value.selectedNode = null;
         props.state.value.selectedAction = null;
     }
@@ -187,7 +190,7 @@ function drag(e: MouseEvent | TouchEvent) {
             clientX = e.touches[0].clientX;
             clientY = e.touches[0].clientY;
         } else {
-            endDragging(dragging.value);
+            endDragging(props.draggingNode.value);
             props.mousePosition.value = null;
             return;
         }
@@ -214,28 +217,28 @@ function drag(e: MouseEvent | TouchEvent) {
         hasDragged.value = true;
     }
 
-    if (dragging.value != null) {
+    if (props.draggingNode.value != null) {
         e.preventDefault();
         e.stopPropagation();
     }
 }
 
-function endDragging(nodeID: number | null) {
-    if (dragging.value != null && dragging.value === nodeID && draggingNode.value != null) {
-        draggingNode.value.position.x += Math.round(dragged.value.x / 25) * 25;
-        draggingNode.value.position.y += Math.round(dragged.value.y / 25) * 25;
+function endDragging(node: BoardNode | null) {
+    if (props.draggingNode.value != null && props.draggingNode.value === node) {
+        props.draggingNode.value.position.x += Math.round(dragged.value.x / 25) * 25;
+        props.draggingNode.value.position.y += Math.round(dragged.value.y / 25) * 25;
 
         const nodes = props.nodes.value;
-        nodes.push(nodes.splice(nodes.indexOf(draggingNode.value), 1)[0]);
+        nodes.push(nodes.splice(nodes.indexOf(props.draggingNode.value), 1)[0]);
 
-        if (receivingNode.value) {
-            props.types.value[receivingNode.value.type].onDrop?.(
-                receivingNode.value,
-                draggingNode.value
+        if (props.receivingNode.value) {
+            props.types.value[props.receivingNode.value.type].onDrop?.(
+                props.receivingNode.value,
+                props.draggingNode.value
             );
         }
 
-        dragging.value = null;
+        props.setDraggingNode.value(null);
     } else if (!hasDragged.value) {
         props.state.value.selectedNode = null;
         props.state.value.selectedAction = null;
