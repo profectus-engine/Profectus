@@ -92,6 +92,10 @@ export interface NodeTypeOptions {
     label?: NodeComputable<NodeLabel | null>;
     /** The size of the node - diameter for circles, width and height for squares. */
     size: NodeComputable<number>;
+    /** CSS to apply to this node. */
+    style?: NodeComputable<StyleValue>;
+    /** Dictionary of CSS classes to apply to this node. */
+    classes?: NodeComputable<Record<string, boolean>>;
     /** Whether the node is draggable or not. */
     draggable?: NodeComputable<boolean>;
     /** The shape of the node. */
@@ -137,6 +141,8 @@ export type NodeType<T extends NodeTypeOptions> = Replace<
         title: GetComputableType<T["title"]>;
         label: GetComputableType<T["label"]>;
         size: GetComputableTypeWithDefault<T["size"], 50>;
+        style: GetComputableType<T["style"]>;
+        classes: GetComputableType<T["classes"]>;
         draggable: GetComputableTypeWithDefault<T["draggable"], false>;
         shape: GetComputableTypeWithDefault<T["shape"], Shape.Circle>;
         canAccept: GetComputableTypeWithDefault<T["canAccept"], false>;
@@ -378,6 +384,8 @@ export function createBoard<T extends BoardOptions>(
             processComputable(nodeType as NodeTypeOptions, "label");
             processComputable(nodeType as NodeTypeOptions, "size");
             setDefault(nodeType, "size", 50);
+            processComputable(nodeType as NodeTypeOptions, "style");
+            processComputable(nodeType as NodeTypeOptions, "classes");
             processComputable(nodeType as NodeTypeOptions, "draggable");
             setDefault(nodeType, "draggable", false);
             processComputable(nodeType as NodeTypeOptions, "shape");

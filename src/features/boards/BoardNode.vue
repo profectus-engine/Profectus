@@ -1,8 +1,9 @@
 <template>
+    <!-- Ugly casting to prevent TS compiler error about style because vue doesn't think it supports arrays when it does -->
     <g
         class="boardnode"
-        :class="{ [node.type]: true, isSelected, isDraggable }"
-        :style="{ opacity: dragging?.id === node.id && hasDragged ? 0.5 : 1 }"
+        :class="{ [node.type]: true, isSelected, isDraggable, ...classes }"
+        :style="[{ opacity: dragging?.id === node.id && hasDragged ? 0.5 : 1 }, style ?? []] as unknown as (string | CSSProperties)"
         :transform="`translate(${position.x},${position.y})${isSelected ? ' scale(1.2)' : ''}`"
     >
         <BoardNodeAction
@@ -141,7 +142,7 @@ import type { BoardNode, GenericBoardNodeAction, GenericNodeType } from "feature
 import { ProgressDisplay, Shape, getNodeProperty } from "features/boards/board";
 import { isVisible } from "features/feature";
 import settings from "game/settings";
-import { computed, toRefs, unref, watch } from "vue";
+import { CSSProperties, computed, toRefs, unref, watch } from "vue";
 import BoardNodeAction from "./BoardNodeAction.vue";
 
 const sqrtTwo = Math.sqrt(2);
@@ -244,6 +245,8 @@ const canAccept = computed(
         unref(props.hasDragged) &&
         getNodeProperty(props.nodeType.value.canAccept, unref(props.node))
 );
+const style = computed(() => getNodeProperty(props.nodeType.value.style, unref(props.node)));
+const classes = computed(() => getNodeProperty(props.nodeType.value.classes, unref(props.node)));
 
 function mouseDown(e: MouseEvent | TouchEvent) {
     emit("mouseDown", e, props.node.value.id, isDraggable.value);
