@@ -118,7 +118,7 @@ export interface NodeTypeOptions {
     titleColor?: NodeComputable<string>;
     /** The list of action options for the node. */
     actions?: BoardNodeActionOptions[];
-    /** The distance between the center of the node and its actions. */
+    /** The arc between each action, in radians. */
     actionDistance?: NodeComputable<number>;
     /** A function that is called when the node is clicked. */
     onClick?: (node: BoardNode) => void;
