@@ -19,7 +19,7 @@
         @touchstart="(e: TouchEvent) => mouseDown(e)"
         @mouseup="() => endDragging(unref(draggingNode))"
         @touchend.passive="() => endDragging(unref(draggingNode))"
-        @mouseleave="() => endDragging(unref(draggingNode))"
+        @mouseleave="() => endDragging(unref(draggingNode), true)"
     >
         <svg class="stage" width="100%" height="100%">
             <g class="g1">
@@ -223,7 +223,7 @@ function drag(e: MouseEvent | TouchEvent) {
     }
 }
 
-function endDragging(node: BoardNode | null) {
+function endDragging(node: BoardNode | null, mouseLeave = false) {
     if (props.draggingNode.value != null && props.draggingNode.value === node) {
         if (props.receivingNode.value == null) {
             props.draggingNode.value.position.x += Math.round(dragged.value.x / 25) * 25;
@@ -241,7 +241,7 @@ function endDragging(node: BoardNode | null) {
         }
 
         props.setDraggingNode.value(null);
-    } else if (!hasDragged.value) {
+    } else if (!hasDragged.value && !mouseLeave) {
         props.state.value.selectedNode = null;
         props.state.value.selectedAction = null;
     }
