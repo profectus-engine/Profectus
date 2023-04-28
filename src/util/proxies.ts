@@ -36,8 +36,13 @@ export function createLazyProxy<T extends object, S extends T>(
 ): T {
     const obj: S & Partial<T> = baseObject;
     let calculated = false;
+    let calculating = false;
     function calculateObj(): T {
         if (!calculated) {
+            if (calculating) {
+                throw new Error("Cyclical dependency detected. Cannot evaluate lazy proxy.");
+            }
+            calculating = true;
             Object.assign(obj, objectFunc.call(obj, obj));
             calculated = true;
         }
