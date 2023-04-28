@@ -437,7 +437,7 @@ export function estimateTime(
         const currTarget = unref(processedTarget);
         if (Decimal.gte(resource.value, currTarget)) {
             return "Now";
-        } else if (Decimal.lt(currRate, 0)) {
+        } else if (Decimal.lte(currRate, 0)) {
             return "Never";
         }
         return formatTime(Decimal.sub(currTarget, resource.value).div(currRate));
