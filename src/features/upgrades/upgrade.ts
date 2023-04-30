@@ -137,7 +137,9 @@ export function createUpgrade<T extends UpgradeOptions>(
         upgrade.bought = bought;
         Object.assign(upgrade, decoratedData);
 
-        upgrade.canPurchase = computed(() => requirementsMet(upgrade.requirements));
+        upgrade.canPurchase = computed(
+            () => !bought.value && requirementsMet(upgrade.requirements)
+        );
         upgrade.purchase = function () {
             const genericUpgrade = upgrade as GenericUpgrade;
             if (!unref(genericUpgrade.canPurchase)) {
