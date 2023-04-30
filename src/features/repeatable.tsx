@@ -235,12 +235,10 @@ export function createRepeatable<T extends RepeatableOptions>(
                         {currDisplay.showAmount === false ? null : (
                             <div>
                                 <br />
-                                joinJSX(
-                                <>Amount: {formatWhole(genericRepeatable.amount.value)}</>,
-                                {unref(genericRepeatable.limit) !== Decimal.dInf ? (
+                                <>Amount: {formatWhole(genericRepeatable.amount.value)}</>
+                                {Decimal.isFinite(unref(genericRepeatable.limit)) ? (
                                     <> / {formatWhole(unref(genericRepeatable.limit))}</>
                                 ) : undefined}
-                                )
                             </div>
                         )}
                         {currDisplay.effectDisplay == null ? null : (
