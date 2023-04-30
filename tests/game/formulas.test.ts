@@ -491,10 +491,17 @@ describe("Inverting", () => {
         expect(formula.invert(100)).compare_tolerance(0);
     });
 
-    test("Inverting with non-invertible sections", () => {
-        const formula = Formula.add(variable, constant.ceil());
-        expect(formula.isInvertible()).toBe(true);
-        expect(formula.invert(10)).compare_tolerance(0);
+    describe("Inverting with non-invertible sections", () => {
+        test("Non-invertible constant", () => {
+            const formula = Formula.add(variable, constant.ceil());
+            expect(formula.isInvertible()).toBe(true);
+            expect(() => formula.invert(10)).not.toThrow();
+        });
+        test("Non-invertible variable", () => {
+            const formula = Formula.add(variable.ceil(), constant);
+            expect(formula.isInvertible()).toBe(false);
+            expect(() => formula.invert(10)).toThrow();
+        });
     });
 });
 
@@ -618,6 +625,19 @@ describe("Integrating", () => {
     test("Integrating nested complex formulas", () => {
         const formula = Formula.pow(1.05, variable).times(100).pow(0.5);
         expect(() => formula.evaluateIntegral()).toThrow();
+    });
+
+    describe("Integrating with non-integrable sections", () => {
+        test("Non-integrable constant", () => {
+            const formula = Formula.add(variable, constant.ceil());
+            expect(formula.isIntegrable()).toBe(true);
+            expect(() => formula.evaluateIntegral()).not.toThrow();
+        });
+        test("Non-integrable variable", () => {
+            const formula = Formula.add(variable.ceil(), constant);
+            expect(formula.isIntegrable()).toBe(false);
+            expect(() => formula.evaluateIntegral()).toThrow();
+        });
     });
 });
 

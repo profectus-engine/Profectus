@@ -124,11 +124,14 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
 
         const innermostVariable = numVariables === 1 ? variable?.innermostVariable : undefined;
 
+        const invertible = variable?.isInvertible() ?? false;
+        const integrable = variable?.isIntegrable() ?? false;
+
         return {
             inputs,
             internalEvaluate: evaluate,
-            internalInvert: invert,
-            internalIntegrate: integrate,
+            internalInvert: invertible ? invert : undefined,
+            internalIntegrate: integrable ? integrate : undefined,
             internalIntegrateInner: integrateInner,
             applySubstitution,
             innermostVariable,
