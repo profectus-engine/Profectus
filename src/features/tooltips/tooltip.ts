@@ -52,7 +52,7 @@ export interface BaseTooltip {
 export type Tooltip<T extends TooltipOptions> = Replace<
     T & BaseTooltip,
     {
-        pinnable: T["pinnable"] extends undefined ? false : T["pinnable"];
+        pinnable: undefined extends T["pinnable"] ? false : T["pinnable"];
         pinned: T["pinnable"] extends true ? Ref<boolean> : undefined;
         display: GetComputableType<T["display"]>;
         classes: GetComputableType<T["classes"]>;

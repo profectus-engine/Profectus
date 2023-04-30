@@ -41,11 +41,11 @@ export interface Modifier {
 /**
  * Utility type used to narrow down a modifier type that will have a description and/or enabled property based on optional parameters, T and S (respectively).
  */
-export type ModifierFromOptionalParams<T, S> = T extends undefined
-    ? S extends undefined
+export type ModifierFromOptionalParams<T, S> = undefined extends T
+    ? undefined extends S
         ? Omit<WithRequired<Modifier, "invert" | "getFormula">, "description" | "enabled">
         : Omit<WithRequired<Modifier, "invert" | "enabled" | "getFormula">, "description">
-    : S extends undefined
+    : undefined extends S
     ? Omit<WithRequired<Modifier, "invert" | "description" | "getFormula">, "enabled">
     : WithRequired<Modifier, "invert" | "enabled" | "description" | "getFormula">;
 
