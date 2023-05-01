@@ -244,8 +244,9 @@ export function createAction<T extends ActionOptions>(
             decorator.postConstruct?.(action);
         }
 
-        const decoratedProps = decorators.reduce((current, next) =>
-            Object.assign(current, next.getGatheredProps?.(action))
+        const decoratedProps = decorators.reduce(
+            (current, next) => Object.assign(current, next.getGatheredProps?.(action)),
+            {}
         );
         action[GatherProps] = function (this: GenericAction) {
             const {
