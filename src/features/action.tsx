@@ -169,7 +169,6 @@ export function createAction<T extends ActionOptions>(
             direction: Direction.Right,
             width: 100,
             height: 10,
-            style: "margin-top: 8px",
             borderStyle: "border-color: black",
             baseStyle: "margin-top: -1px",
             progress: () => Decimal.div(progress.value, unref(genericAction.duration)),
