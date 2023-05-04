@@ -26,11 +26,6 @@ npm run build
 npm run preview
 ```
 
-### Lints and fixes files
-```
-npm run lint
-```
-
 ### Runs the tests using vite-jest
 ```
 npm run test
