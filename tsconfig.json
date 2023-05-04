@@ -16,7 +16,7 @@
         "allowSyntheticDefaultImports": true,
         "sourceMap": true,
         "baseUrl": "src",
-        "types": ["vite/client", "node"],
+        "types": ["vite/client"],
         "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
     },
     "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "tests/**/*.ts", "tests/**/*.tsx"],
