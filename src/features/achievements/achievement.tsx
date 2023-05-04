@@ -1,4 +1,4 @@
-import { computed } from "@vue/reactivity";
+import { computed } from "vue";
 import { isArray } from "@vue/shared";
 import Select from "components/fields/Select.vue";
 import AchievementComponent from "features/achievements/Achievement.vue";
