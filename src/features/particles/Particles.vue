@@ -47,7 +47,8 @@ export default defineComponent({
                     resizeTo: resListener,
                     backgroundAlpha: 0
                 });
-                resizeListener.value?.appendChild(app.value.view);
+                // I think it's supporsed to be a canvas element
+                resizeListener.value?.appendChild(app.value.view as HTMLCanvasElement);
                 props.onInit?.(app.value as Application);
             }
             updateBounds();

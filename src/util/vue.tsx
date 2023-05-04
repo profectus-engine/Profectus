@@ -125,7 +125,9 @@ export function setupHoldToClick(
     handleHolding: VoidFunction;
 } {
     const interval = ref<NodeJS.Timer | null>(null);
-    const event = ref<MouseEvent | TouchEvent | undefined>(undefined);
+    const event = ref<MouseEvent | TouchEvent | undefined>(undefined) as Ref<
+        MouseEvent | TouchEvent | undefined
+    >;
 
     function start(e: MouseEvent | TouchEvent) {
         if (!interval.value) {

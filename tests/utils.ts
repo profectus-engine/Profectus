@@ -1,5 +1,5 @@
 import Decimal, { DecimalSource, format } from "util/bignum";
-import { expect, Assertion } from "vitest";
+import { expect } from "vitest";
 
 interface CustomMatchers<R = unknown> {
     compare_tolerance(expected: DecimalSource, tolerance?: number): R;
