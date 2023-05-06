@@ -1089,9 +1089,21 @@ describe("Buy Max", () => {
                 Decimal.pow(1.05, 141).times(100)
             );
         });
+        test("Calculates max affordable and cost correctly with summing last purchases", () => {
+            const variable = Formula.variable(0);
+            const formula = Formula.pow(1.05, variable).times(100);
+            const maxAffordable = calculateMaxAffordable(formula, resource, false, 4);
+            expect(maxAffordable.value).compare_tolerance(141 - 4);
+
+            const actualCost = new Array(4)
+                .fill(null)
+                .reduce((acc, _, i) => acc.add(formula.evaluate(133 + i)), new Decimal(0));
+            const calculatedCost = calculateCost(formula, maxAffordable.value, false, 4);
+            expect(calculatedCost).compare_tolerance(actualCost);
+        });
     });
     describe("With spending", () => {
-        test("Throws on non-invertible formula", () => {
+        test("Throws on calculating max affordable of non-invertible formula", () => {
             const maxAffordable = calculateMaxAffordable(Formula.abs(10), resource);
             expect(() => maxAffordable.value).toThrow();
         });
@@ -1220,7 +1232,7 @@ describe("Buy Max", () => {
                     (acc, _, i) => acc.add(formula.evaluate(i + purchases.value)),
                     new Decimal(0)
                 );
-            const calculatedCost = calculateCost(formula, maxAffordable.value, true);
+            const calculatedCost = calculateCost(formula, maxAffordable.value);
             // Since we're summing all the purchases this should be equivalent
             expect(calculatedCost).compare_tolerance(actualCost);
         });
@@ -1234,6 +1246,11 @@ describe("Buy Max", () => {
             expect(Decimal.isNaN(calculatedCost)).toBe(false);
             expect(Decimal.isFinite(calculatedCost)).toBe(true);
             resource.value = 100000;
+        });
+        test("Handles summing purchases of non-integrable formula", () => {
+            const purchases = ref(0);
+            const formula = Formula.variable(purchases).abs();
+            expect(() => calculateCost(formula, 10)).not.toThrow();
         });
     });
 });

@@ -1491,33 +1491,35 @@ export function calculateCost(
     spendResources = true,
     summedPurchases?: number
 ) {
-    let newValue = Decimal.add(amountToBuy, unref(formula.innermostVariable) ?? 0);
+    const origValue = unref(formula.innermostVariable) ?? 0;
+    let newValue = Decimal.add(amountToBuy, origValue);
+    const targetValue = newValue;
+    summedPurchases ??= spendResources ? 10 : 0;
+    newValue = newValue.sub(summedPurchases).clampMin(origValue);
+    let cost: DecimalSource = 0;
     if (spendResources) {
-        if (!formula.isIntegrable()) {
-            throw new Error(
-                "Cannot calculate cost with spending resources of non-integrable formula"
-            );
+        if (Decimal.gt(amountToBuy, summedPurchases)) {
+            if (!formula.isIntegrable()) {
+                throw new Error(
+                    "Cannot calculate cost with spending resources of non-integrable formula"
+                );
+            }
+            cost = Decimal.sub(formula.evaluateIntegral(newValue), formula.evaluateIntegral());
         }
-        const targetValue = newValue;
-        newValue = newValue
-            .sub(summedPurchases ?? 10)
-            .clampMin(unref(formula.innermostVariable) ?? 0);
-        let cost = Decimal.sub(formula.evaluateIntegral(newValue), formula.evaluateIntegral());
         if (targetValue.gt(1e308)) {
             // Too large of a number for summedPurchases to make a difference,
             // just get the cost and multiply by summed purchases
-            return cost.add(Decimal.sub(targetValue, newValue).times(formula.evaluate(newValue)));
+            return Decimal.add(
+                cost,
+                Decimal.sub(targetValue, newValue).times(formula.evaluate(newValue))
+            );
         }
         for (let i = newValue.toNumber(); i < targetValue.toNumber(); i++) {
-            cost = cost.add(formula.evaluate(i));
+            cost = Decimal.add(cost, formula.evaluate(i));
         }
-        return cost;
     } else {
-        const targetValue = newValue;
-        newValue = newValue
-            .sub(summedPurchases ?? 0)
-            .clampMin(unref(formula.innermostVariable) ?? 0);
-        let cost = formula.evaluate(newValue);
+        cost = formula.evaluate(newValue);
+        newValue = newValue.add(1);
         if (targetValue.gt(1e308)) {
             // Too large of a number for summedPurchases to make a difference,
             // just get the cost and multiply by summed purchases
@@ -1526,6 +1528,6 @@ export function calculateCost(
         for (let i = newValue.toNumber(); i < targetValue.toNumber(); i++) {
             cost = Decimal.add(cost, formula.evaluate(i));
         }
-        return cost;
     }
+    return cost;
 }
