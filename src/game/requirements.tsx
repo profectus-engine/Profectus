@@ -20,7 +20,7 @@ import { createLazyProxy } from "util/proxies";
 import { joinJSX, renderJSX } from "util/vue";
 import { computed, unref } from "vue";
 import Formula, { calculateCost, calculateMaxAffordable } from "./formulas/formulas";
-import type { GenericFormula, InvertibleFormula } from "./formulas/types";
+import type { GenericFormula } from "./formulas/types";
 import { DefaultValue, Persistent } from "./persistence";
 
 /**
@@ -86,7 +86,15 @@ export interface CostRequirementOptions {
      * When calculating multiple levels to be handled at once, whether it should consider resources used for each level as spent. Setting this to false causes calculations to be faster with larger numbers and supports more math functions.
      * @see {Formula}
      */
-    spendResources?: Computable<boolean>;
+    cumulativeCost?: Computable<boolean>;
+    /**
+     * Upper limit on levels that can be performed at once. Defaults to 1.
+     */
+    maxBulkAmount?: Computable<DecimalSource>;
+    /**
+     * When calculating requirement for multiple levels, how many should be directly summed for increase accuracy. High numbers can cause lag. Defaults to 10 if cumulative cost, 0 otherwise.
+     */
+    directSum?: Computable<number>;
     /**
      * Pass-through to {@link Requirement.pay}. May be required for maximizing support.
      * @see {@link cost} for restrictions on maximizing support.
@@ -100,7 +108,7 @@ export type CostRequirement = Replace<
         cost: ProcessedComputable<DecimalSource> | GenericFormula;
         visibility: ProcessedComputable<Visibility.Visible | Visibility.None | boolean>;
         requiresPay: ProcessedComputable<boolean>;
-        spendResources: ProcessedComputable<boolean>;
+        cumulativeCost: ProcessedComputable<boolean>;
         canMaximize: ProcessedComputable<boolean>;
     }
 >;
@@ -126,7 +134,12 @@ export function createCostRequirement<T extends CostRequirementOptions>(
                 {displayResource(
                     req.resource,
                     req.cost instanceof Formula
-                        ? calculateCost(req.cost, amount ?? 1, unref(req.spendResources) as boolean)
+                        ? calculateCost(
+                              req.cost,
+                              amount ?? 1,
+                              unref(req.cumulativeCost) as boolean,
+                              unref(req.directSum) as number
+                          )
                         : unref(req.cost as ProcessedComputable<DecimalSource>)
                 )}{" "}
                 {req.resource.displayName}
@@ -138,7 +151,12 @@ export function createCostRequirement<T extends CostRequirementOptions>(
                 {displayResource(
                     req.resource,
                     req.cost instanceof Formula
-                        ? calculateCost(req.cost, amount ?? 1, unref(req.spendResources) as boolean)
+                        ? calculateCost(
+                              req.cost,
+                              amount ?? 1,
+                              unref(req.cumulativeCost) as boolean,
+                              unref(req.directSum) as number
+                          )
                         : unref(req.cost as ProcessedComputable<DecimalSource>)
                 )}{" "}
                 {req.resource.displayName}
@@ -150,54 +168,62 @@ export function createCostRequirement<T extends CostRequirementOptions>(
         processComputable(req as T, "cost");
         processComputable(req as T, "requiresPay");
         setDefault(req, "requiresPay", true);
-        processComputable(req as T, "spendResources");
-        setDefault(req, "spendResources", true);
+        processComputable(req as T, "cumulativeCost");
+        setDefault(req, "cumulativeCost", true);
+        processComputable(req as T, "maxBulkAmount");
+        setDefault(req, "maxBulkAmount", 1);
+        processComputable(req as T, "directSum");
         setDefault(req, "pay", function (amount?: DecimalSource) {
             const cost =
                 req.cost instanceof Formula
-                    ? calculateCost(req.cost, amount ?? 1, unref(req.spendResources) as boolean)
+                    ? calculateCost(
+                          req.cost,
+                          amount ?? 1,
+                          unref(req.cumulativeCost) as boolean,
+                          unref(req.directSum) as number
+                      )
                     : unref(req.cost as ProcessedComputable<DecimalSource>);
             req.resource.value = Decimal.sub(req.resource.value, cost).max(0);
         });
 
-        req.canMaximize = computed(
-            () =>
-                req.cost instanceof Formula &&
-                req.cost.isInvertible() &&
-                (unref(req.spendResources) === false || req.cost.isIntegrable())
-        );
+        req.canMaximize = computed(() => {
+            if (!(req.cost instanceof Formula)) {
+                return false;
+            }
+            const maxBulkAmount = unref(req.maxBulkAmount as ProcessedComputable<DecimalSource>);
+            if (Decimal.lte(maxBulkAmount, 1)) {
+                return false;
+            }
+            const cumulativeCost = unref(req.cumulativeCost as ProcessedComputable<boolean>);
+            const directSum =
+                unref(req.directSum as ProcessedComputable<number>) ?? (cumulativeCost ? 10 : 0);
+            if (Decimal.lte(maxBulkAmount, directSum)) {
+                return true;
+            }
+            if (!req.cost.isInvertible()) {
+                return false;
+            }
+            if (cumulativeCost === true && !req.cost.isIntegrable()) {
+                return false;
+            }
+            return true;
+        });
 
-        if (req.cost instanceof Formula && req.cost.isInvertible()) {
-            const maxAffordable = calculateMaxAffordable(
+        if (req.cost instanceof Formula) {
+            req.requirementMet = calculateMaxAffordable(
                 req.cost,
                 req.resource,
-                unref(req.spendResources) as boolean
+                req.cumulativeCost ?? true,
+                req.directSum,
+                req.maxBulkAmount
             );
-            req.requirementMet = computed(() => {
-                if (unref(req.canMaximize)) {
-                    return maxAffordable.value;
-                } else {
-                    if (req.cost instanceof Formula) {
-                        return Decimal.gte(req.resource.value, req.cost.evaluate());
-                    } else {
-                        return Decimal.gte(
-                            req.resource.value,
-                            unref(req.cost as ProcessedComputable<DecimalSource>)
-                        );
-                    }
-                }
-            });
         } else {
-            req.requirementMet = computed(() => {
-                if (req.cost instanceof Formula) {
-                    return Decimal.gte(req.resource.value, req.cost.evaluate());
-                } else {
-                    return Decimal.gte(
-                        req.resource.value,
-                        unref(req.cost as ProcessedComputable<DecimalSource>)
-                    );
-                }
-            });
+            req.requirementMet = computed(() =>
+                Decimal.gte(
+                    req.resource.value,
+                    unref(req.cost as ProcessedComputable<DecimalSource>)
+                )
+            );
         }
 
         return req as CostRequirement;
@@ -328,7 +354,7 @@ export function payByDivision(this: CostRequirement, amount?: DecimalSource) {
             ? calculateCost(
                   this.cost,
                   amount ?? 1,
-                  unref(this.spendResources as ProcessedComputable<boolean> | undefined) ?? true
+                  unref(this.cumulativeCost as ProcessedComputable<boolean> | undefined) ?? true
               )
             : unref(this.cost as ProcessedComputable<DecimalSource>);
     this.resource.value = Decimal.div(this.resource.value, cost);

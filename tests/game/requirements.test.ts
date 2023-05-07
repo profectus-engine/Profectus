@@ -11,6 +11,7 @@ import {
     Requirement,
     requirementsMet
 } from "game/requirements";
+import Decimal from "util/bignum";
 import { beforeAll, describe, expect, test } from "vitest";
 import { isRef, ref, unref } from "vue";
 import "../utils";
@@ -26,8 +27,7 @@ describe("Creating cost requirement", () => {
         beforeAll(() => {
             requirement = createCostRequirement(() => ({
                 resource,
-                cost: 10,
-                spendResources: false
+                cost: 10
             }));
         });
 
@@ -44,7 +44,7 @@ describe("Creating cost requirement", () => {
         });
         test("is visible", () => expect(requirement.visibility).toBe(Visibility.Visible));
         test("requires pay", () => expect(requirement.requiresPay).toBe(true));
-        test("does not spend resources", () => expect(requirement.spendResources).toBe(false));
+        test("does not spend resources", () => expect(requirement.cumulativeCost).toBe(true));
         test("cannot maximize", () => expect(unref(requirement.canMaximize)).toBe(false));
     });
 
@@ -56,8 +56,9 @@ describe("Creating cost requirement", () => {
                 cost: Formula.variable(resource).times(10),
                 visibility: Visibility.None,
                 requiresPay: false,
-                maximize: true,
-                spendResources: true,
+                cumulativeCost: false,
+                maxBulkAmount: Decimal.dInf,
+                directSum: 5,
                 // eslint-disable-next-line @typescript-eslint/no-empty-function
                 pay() {}
             }));
@@ -69,15 +70,18 @@ describe("Creating cost requirement", () => {
             requirement.pay.length === 1);
         test("is not visible", () => expect(requirement.visibility).toBe(Visibility.None));
         test("does not require pay", () => expect(requirement.requiresPay).toBe(false));
-        test("spends resources", () => expect(requirement.spendResources).toBe(true));
+        test("spends resources", () => expect(requirement.cumulativeCost).toBe(false));
         test("can maximize", () => expect(unref(requirement.canMaximize)).toBe(true));
+        test("maxBulkAmount is set", () =>
+            expect(unref(requirement.maxBulkAmount)).compare_tolerance(Decimal.dInf));
+        test("directSum is set", () => expect(unref(requirement.directSum)).toBe(5));
     });
 
     test("Requirement met when meeting the cost", () => {
         const requirement = createCostRequirement(() => ({
             resource,
             cost: 10,
-            spendResources: false
+            cumulativeCost: false
         }));
         expect(unref(requirement.requirementMet)).toBe(true);
     });
@@ -86,7 +90,7 @@ describe("Creating cost requirement", () => {
         const requirement = createCostRequirement(() => ({
             resource,
             cost: 100,
-            spendResources: false
+            cumulativeCost: false
         }));
         expect(unref(requirement.requirementMet)).toBe(false);
     });
@@ -97,86 +101,128 @@ describe("Creating cost requirement", () => {
                 unref(
                     createCostRequirement(() => ({
                         resource,
+                        cost: () => 10,
+                        maxBulkAmount: Decimal.dInf
+                    })).canMaximize
+                )
+            ).toBe(false));
+        test("Integrable formula cannot maximize if maxBulkAmount is left at 1", () =>
+            expect(
+                unref(
+                    createCostRequirement(() => ({
+                        resource,
                         cost: () => 10
                     })).canMaximize
                 )
             ).toBe(false));
-        test("Non-invertible formula cannot maximize", () =>
+        test("Non-invertible formula cannot maximize when max bulk amount is above direct sum", () =>
             expect(
                 unref(
                     createCostRequirement(() => ({
                         resource,
-                        cost: Formula.variable(resource).abs()
+                        cost: Formula.variable(resource).abs(),
+                        maxBulkAmount: Decimal.dInf
                     })).canMaximize
                 )
             ).toBe(false));
-        test("Invertible formula can maximize if spendResources is false", () =>
+        test("Non-invertible formula can maximize when max bulk amount is lte direct sum", () =>
+            expect(
+                unref(
+                    createCostRequirement(() => ({
+                        resource,
+                        cost: Formula.variable(resource).abs(),
+                        maxBulkAmount: 20,
+                        directSum: 20
+                    })).canMaximize
+                )
+            ).toBe(true));
+        test("Invertible formula can maximize if cumulativeCost is false", () =>
             expect(
                 unref(
                     createCostRequirement(() => ({
                         resource,
                         cost: Formula.variable(resource).lambertw(),
-                        spendResources: false
+                        cumulativeCost: false,
+                        maxBulkAmount: Decimal.dInf
                     })).canMaximize
                 )
             ).toBe(true));
-        test("Invertible formula cannot maximize if spendResources is true", () =>
+        test("Invertible formula cannot maximize if cumulativeCost is true", () =>
             expect(
                 unref(
                     createCostRequirement(() => ({
                         resource,
                         cost: Formula.variable(resource).lambertw(),
-                        spendResources: true
+                        cumulativeCost: true,
+                        maxBulkAmount: Decimal.dInf
                     })).canMaximize
                 )
             ).toBe(false));
-        test("Integrable formula can maximize if spendResources is false", () =>
+        test("Integrable formula can maximize if cumulativeCost is false", () =>
             expect(
                 unref(
                     createCostRequirement(() => ({
                         resource,
                         cost: Formula.variable(resource).pow(2),
-                        spendResources: false
+                        cumulativeCost: false,
+                        maxBulkAmount: Decimal.dInf
                     })).canMaximize
                 )
             ).toBe(true));
-        test("Integrable formula can maximize if spendResources is true", () =>
+        test("Integrable formula can maximize if cumulativeCost is true", () =>
             expect(
                 unref(
                     createCostRequirement(() => ({
                         resource,
                         cost: Formula.variable(resource).pow(2),
-                        spendResources: true
+                        cumulativeCost: true,
+                        maxBulkAmount: Decimal.dInf
                     })).canMaximize
                 )
             ).toBe(true));
     });
+
+    test("Requirements met capped by maxBulkAmount", () =>
+        expect(
+            unref(
+                createCostRequirement(() => ({
+                    resource,
+                    cost: Formula.variable(resource).times(0),
+                    maxBulkAmount: 10
+                })).requirementMet
+            )
+        ).compare_tolerance(10));
+
+    test("Direct sum respected", () =>
+        expect(
+            unref(
+                createCostRequirement(() => ({
+                    resource,
+                    cost: Formula.variable(resource).times(0),
+                    maxBulkAmount: 10
+                })).requirementMet
+            )
+        ).compare_tolerance(10));
 });
 
-describe("Creating visibility requirement", () => {
-    test("Requirement met when visible", () => {
-        const requirement = createVisibilityRequirement({ visibility: Visibility.Visible });
-        expect(unref(requirement.requirementMet)).toBe(true);
-    });
-
-    test("Requirement not met when not visible", () => {
-        let requirement = createVisibilityRequirement({ visibility: Visibility.None });
-        expect(unref(requirement.requirementMet)).toBe(false);
-        requirement = createVisibilityRequirement({ visibility: false });
-        expect(unref(requirement.requirementMet)).toBe(false);
-    });
+test("Creating visibility requirement", () => {
+    const visibility = ref<Visibility.None | Visibility.Visible | boolean>(Visibility.Visible);
+    const requirement = createVisibilityRequirement({ visibility });
+    expect(unref(requirement.requirementMet)).toBe(true);
+    visibility.value = true;
+    expect(unref(requirement.requirementMet)).toBe(true);
+    visibility.value = Visibility.None;
+    expect(unref(requirement.requirementMet)).toBe(false);
+    visibility.value = false;
+    expect(unref(requirement.requirementMet)).toBe(false);
 });
 
-describe("Creating boolean requirement", () => {
-    test("Requirement met when true", () => {
-        const requirement = createBooleanRequirement(ref(true));
-        expect(unref(requirement.requirementMet)).toBe(true);
-    });
-
-    test("Requirement not met when false", () => {
-        const requirement = createBooleanRequirement(ref(false));
-        expect(unref(requirement.requirementMet)).toBe(false);
-    });
+test("Creating boolean requirement", () => {
+    const req = ref(true);
+    const requirement = createBooleanRequirement(req);
+    expect(unref(requirement.requirementMet)).toBe(true);
+    req.value = false;
+    expect(unref(requirement.requirementMet)).toBe(false);
 });
 
 describe("Checking all requirements met", () => {
@@ -208,7 +254,7 @@ describe("Checking maximum levels of requirements met", () => {
             createCostRequirement(() => ({
                 resource: createResource(ref(10)),
                 cost: Formula.variable(0),
-                spendResources: false
+                cumulativeCost: false
             }))
         ];
         expect(maxRequirementsMet(requirements)).compare_tolerance(0);
@@ -220,7 +266,8 @@ describe("Checking maximum levels of requirements met", () => {
             createCostRequirement(() => ({
                 resource: createResource(ref(10)),
                 cost: Formula.variable(0),
-                spendResources: false
+                cumulativeCost: false,
+                maxBulkAmount: Decimal.dInf
             }))
         ];
         expect(maxRequirementsMet(requirements)).compare_tolerance(10);
@@ -233,12 +280,12 @@ test("Paying requirements", () => {
         resource,
         cost: 10,
         requiresPay: false,
-        spendResources: false
+        cumulativeCost: false
     }));
     const payment = createCostRequirement(() => ({
         resource,
         cost: 10,
-        spendResources: false
+        cumulativeCost: false
     }));
     payRequirements([noPayment, payment]);
     expect(resource.value).compare_tolerance(90);

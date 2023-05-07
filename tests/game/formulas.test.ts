@@ -1073,12 +1073,19 @@ describe("Buy Max", () => {
     beforeAll(() => {
         resource = createResource(ref(100000));
     });
-    describe("Without spending", () => {
-        test("Throws on formula with non-invertible integral", () => {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            /* @ts-ignore */
-            const maxAffordable = calculateMaxAffordable(Formula.neg(10), resource, false);
+    describe("Without cumulative cost", () => {
+        test("Throws on calculating max affordable of non-invertible formula", () => {
+            const purchases = ref(1);
+            const variable = Formula.variable(purchases);
+            const formula = Formula.abs(variable);
+            const maxAffordable = calculateMaxAffordable(formula, resource, false);
             expect(() => maxAffordable.value).toThrow();
+        });
+        test("Throws on calculating cost of non-invertible formula", () => {
+            const purchases = ref(1);
+            const variable = Formula.variable(purchases);
+            const formula = Formula.abs(variable);
+            expect(() => calculateCost(formula, 5, false, 0)).toThrow();
         });
         test("Calculates max affordable and cost correctly", () => {
             const variable = Formula.variable(0);
@@ -1089,7 +1096,7 @@ describe("Buy Max", () => {
                 Decimal.pow(1.05, 141).times(100)
             );
         });
-        test("Calculates max affordable and cost correctly with summing last purchases", () => {
+        test("Calculates max affordable and cost correctly with direct sum", () => {
             const variable = Formula.variable(0);
             const formula = Formula.pow(1.05, variable).times(100);
             const maxAffordable = calculateMaxAffordable(formula, resource, false, 4);
@@ -1102,10 +1109,19 @@ describe("Buy Max", () => {
             expect(calculatedCost).compare_tolerance(actualCost);
         });
     });
-    describe("With spending", () => {
+    describe("With cumulative cost", () => {
         test("Throws on calculating max affordable of non-invertible formula", () => {
-            const maxAffordable = calculateMaxAffordable(Formula.abs(10), resource);
+            const purchases = ref(1);
+            const variable = Formula.variable(purchases);
+            const formula = Formula.abs(variable);
+            const maxAffordable = calculateMaxAffordable(formula, resource, true);
             expect(() => maxAffordable.value).toThrow();
+        });
+        test("Throws on calculating cost of non-invertible formula", () => {
+            const purchases = ref(1);
+            const variable = Formula.variable(purchases);
+            const formula = Formula.abs(variable);
+            expect(() => calculateCost(formula, 5, true, 0)).toThrow();
         });
         test("Estimates max affordable and cost correctly with 0 purchases", () => {
             const purchases = ref(0);
@@ -1163,7 +1179,7 @@ describe("Buy Max", () => {
                 Decimal.sub(actualCost, calculatedCost).abs().div(actualCost).toNumber()
             ).toBeLessThan(0.1);
         });
-        test("Estimates max affordable and cost more accurately with summing last purchases", () => {
+        test("Estimates max affordable and cost more accurately with direct sum", () => {
             const purchases = ref(1);
             const variable = Formula.variable(purchases);
             const formula = Formula.pow(1.05, variable).times(100);
@@ -1190,7 +1206,7 @@ describe("Buy Max", () => {
                 Decimal.sub(actualCost, calculatedCost).abs().div(actualCost).toNumber()
             ).toBeLessThan(0.02);
         });
-        test("Handles summing purchases when making few purchases", () => {
+        test("Handles direct sum when making few purchases", () => {
             const purchases = ref(90);
             const variable = Formula.variable(purchases);
             const formula = Formula.pow(1.05, variable).times(100);
@@ -1218,7 +1234,7 @@ describe("Buy Max", () => {
             // Since we're summing all the purchases this should be equivalent
             expect(calculatedCost).compare_tolerance(actualCost);
         });
-        test("Handles summing purchases when making very few purchases", () => {
+        test("Handles direct sum when making very few purchases", () => {
             const purchases = ref(0);
             const variable = Formula.variable(purchases);
             const formula = variable.add(1);
@@ -1236,7 +1252,7 @@ describe("Buy Max", () => {
             // Since we're summing all the purchases this should be equivalent
             expect(calculatedCost).compare_tolerance(actualCost);
         });
-        test("Handles summing purchases when over e308 purchases", () => {
+        test("Handles direct sum when over e308 purchases", () => {
             resource.value = "1ee308";
             const purchases = ref(0);
             const variable = Formula.variable(purchases);
@@ -1247,7 +1263,7 @@ describe("Buy Max", () => {
             expect(Decimal.isFinite(calculatedCost)).toBe(true);
             resource.value = 100000;
         });
-        test("Handles summing purchases of non-integrable formula", () => {
+        test("Handles direct sum of non-integrable formula", () => {
             const purchases = ref(0);
             const formula = Formula.variable(purchases).abs();
             expect(() => calculateCost(formula, 10)).not.toThrow();

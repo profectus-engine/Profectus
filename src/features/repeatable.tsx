@@ -67,8 +67,6 @@ export interface RepeatableOptions {
     mark?: Computable<boolean | string>;
     /** Toggles a smaller design for the feature. */
     small?: Computable<boolean>;
-    /** Whether or not clicking this repeatable should attempt to maximize amount based on the requirements met. Requires {@link requirements} to be a requirement or array of requirements with {@link Requirement.canMaximize} true. */
-    maximize?: Computable<boolean>;
     /** The display to use for this repeatable. */
     display?: Computable<RepeatableDisplay>;
 }
@@ -87,7 +85,6 @@ export interface BaseRepeatable {
     canClick: ProcessedComputable<boolean>;
     /**
      * How much amount can be increased by, or 1 if unclickable.
-     * Capped at 1 if {@link RepeatableOptions.maximize} is false.
      **/
     amountToIncrease: Ref<DecimalSource>;
     /** A function that gets called when this repeatable is clicked. */
@@ -111,7 +108,6 @@ export type Repeatable<T extends RepeatableOptions> = Replace<
         style: GetComputableType<T["style"]>;
         mark: GetComputableType<T["mark"]>;
         small: GetComputableType<T["small"]>;
-        maximize: GetComputableType<T["maximize"]>;
         display: Ref<CoercableComponent>;
     }
 >;
@@ -195,9 +191,7 @@ export function createRepeatable<T extends RepeatableOptions>(
             return currClasses;
         });
         repeatable.amountToIncrease = computed(() =>
-            unref((repeatable as GenericRepeatable).maximize)
-                ? maxRequirementsMet(repeatable.requirements)
-                : 1
+            Decimal.clampMin(maxRequirementsMet(repeatable.requirements), 1)
         );
         repeatable.canClick = computed(() => requirementsMet(repeatable.requirements));
         const onClick = repeatable.onClick;
@@ -274,7 +268,6 @@ export function createRepeatable<T extends RepeatableOptions>(
         processComputable(repeatable as T, "style");
         processComputable(repeatable as T, "mark");
         processComputable(repeatable as T, "small");
-        processComputable(repeatable as T, "maximize");
 
         for (const decorator of decorators) {
             decorator.postConstruct?.(repeatable);

@@ -52,8 +52,6 @@ export interface ChallengeOptions {
     reset?: GenericReset;
     /** The requirement(s) to complete this challenge. */
     requirements: Requirements;
-    /** Whether or not completing this challenge should grant multiple completions if requirements met. Requires {@link requirements} to be a requirement or array of requirements with {@link Requirement.canMaximize} true. */
-    maximize?: Computable<boolean>;
     /** The maximum number of times the challenge can be completed. */
     completionLimit?: Computable<DecimalSource>;
     /** Shows a marker on the corner of the feature. */
@@ -124,7 +122,6 @@ export type Challenge<T extends ChallengeOptions> = Replace<
         visibility: GetComputableTypeWithDefault<T["visibility"], Visibility.Visible>;
         canStart: GetComputableTypeWithDefault<T["canStart"], true>;
         requirements: GetComputableType<T["requirements"]>;
-        maximize: GetComputableType<T["maximize"]>;
         completionLimit: GetComputableTypeWithDefault<T["completionLimit"], 1>;
         mark: GetComputableTypeWithDefault<T["mark"], Ref<boolean>>;
         classes: GetComputableType<T["classes"]>;
@@ -210,10 +207,7 @@ export function createChallenge<T extends ChallengeOptions>(
             }
         };
         challenge.canComplete = computed(() =>
-            Decimal.max(
-                maxRequirementsMet((challenge as GenericChallenge).requirements),
-                unref((challenge as GenericChallenge).maximize) ? Decimal.dInf : 1
-            )
+            maxRequirementsMet((challenge as GenericChallenge).requirements)
         );
         challenge.complete = function (remainInChallenge?: boolean) {
             const genericChallenge = challenge as GenericChallenge;
@@ -254,7 +248,6 @@ export function createChallenge<T extends ChallengeOptions>(
 
         processComputable(challenge as T, "canStart");
         setDefault(challenge, "canStart", true);
-        processComputable(challenge as T, "maximize");
         processComputable(challenge as T, "completionLimit");
         setDefault(challenge, "completionLimit", 1);
         processComputable(challenge as T, "mark");
