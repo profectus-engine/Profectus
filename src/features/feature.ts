@@ -42,9 +42,9 @@ export type Replace<T, S> = S & Omit<T, keyof S>;
  * with "this" bound to what the type will eventually be processed into.
  * Intended for making lazily evaluated objects.
  */
-export type OptionsFunc<T, R = unknown, S = R> = (obj: R) => OptionsObject<T, R, S>;
+export type OptionsFunc<T, R = unknown> = (this: R, obj: R) => OptionsObject<T, R>;
 
-export type OptionsObject<T, R = unknown, S = R> = T & Partial<R> & ThisType<T & S>;
+export type OptionsObject<T, R = unknown> = Exclude<T, R> & Partial<R>;
 
 let id = 0;
 /**
