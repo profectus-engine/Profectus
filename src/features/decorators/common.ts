@@ -27,8 +27,8 @@ export type Decorator<
 
 export type GenericDecorator = Decorator<unknown>;
 
-export interface EffectFeatureOptions {
-    effect: Computable<unknown>;
+export interface EffectFeatureOptions<T = unknown> {
+    effect: Computable<T>;
 }
 
 export type EffectFeature<T extends EffectFeatureOptions> = Replace<
@@ -36,9 +36,9 @@ export type EffectFeature<T extends EffectFeatureOptions> = Replace<
     { effect: GetComputableType<T["effect"]> }
 >;
 
-export type GenericEffectFeature = Replace<
+export type GenericEffectFeature<T = unknown> = Replace<
     EffectFeature<EffectFeatureOptions>,
-    { effect: ProcessedComputable<unknown> }
+    { effect: ProcessedComputable<T> }
 >;
 
 /**
