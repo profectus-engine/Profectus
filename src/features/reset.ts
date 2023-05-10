@@ -19,7 +19,7 @@ export const ResetType = Symbol("Reset");
  */
 export interface ResetOptions {
     /** List of things to reset. Can include objects which will be recursed over for persistent values. */
-    thingsToReset: Computable<Record<string, unknown>[]>;
+    thingsToReset: Computable<unknown[]>;
     /** A function that is called when the reset is performed. */
     onReset?: VoidFunction;
 }
