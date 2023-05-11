@@ -1,4 +1,3 @@
-import { isArray } from "@vue/shared";
 import ClickableComponent from "features/clickables/Clickable.vue";
 import {
     Component,
@@ -31,7 +30,7 @@ import { coerceComponent, isCoercableComponent, render } from "util/vue";
 import { computed, Ref, ref, unref } from "vue";
 import { BarOptions, createBar, GenericBar } from "./bars/bar";
 import { ClickableOptions } from "./clickables/clickable";
-import { Decorator, GenericDecorator } from "./decorators/common";
+import { GenericDecorator } from "./decorators/common";
 
 /** A symbol used to identify {@link Action} features. */
 export const ActionType = Symbol("Action");
@@ -157,7 +156,7 @@ export function createAction<T extends ActionOptions>(
                 }
             ];
             const originalStyle = unref(style);
-            if (isArray(originalStyle)) {
+            if (Array.isArray(originalStyle)) {
                 currStyle.push(...originalStyle);
             } else if (originalStyle != null) {
                 currStyle.push(originalStyle);

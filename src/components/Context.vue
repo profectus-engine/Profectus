@@ -11,7 +11,7 @@ import {
     BoundsInjectionKey
 } from "game/layers";
 import type { FeatureNode } from "game/layers";
-import { nextTick, onMounted, provide, ref } from "vue";
+import { Ref, nextTick, onMounted, provide, ref } from "vue";
 import { globalBus } from "game/events";
 
 const emit = defineEmits<{
@@ -21,7 +21,7 @@ const emit = defineEmits<{
 const nodes = ref<Record<string, FeatureNode | undefined>>({});
 
 const resizeObserver = new ResizeObserver(updateBounds);
-const resizeListener = ref<Element | null>(null);
+const resizeListener = ref<Element | null>(null) as Ref<Element | null>;
 onMounted(() => {
     // ResizeListener exists because ResizeObserver's don't work when told to observe an SVG element
     const resListener = resizeListener.value;
@@ -30,7 +30,7 @@ onMounted(() => {
     }
 });
 let isDirty = true;
-let boundingRect = ref(resizeListener.value?.getBoundingClientRect());
+const boundingRect = ref(resizeListener.value?.getBoundingClientRect());
 function updateBounds() {
     if (isDirty) {
         isDirty = false;

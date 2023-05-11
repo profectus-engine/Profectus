@@ -1,50 +1,34 @@
 {
-  "compilerOptions": {
-    "noErrorTruncation": true,
-    "target": "esnext",
-    "module": "esnext",
-    "strict": true,
-    "checkJs": false,
-    "jsx": "preserve",
-    "importHelpers": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "experimentalDecorators": true,
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "sourceMap": true,
-    "baseUrl": "src",
-    "types": [
-      "vite/client",
-      "node"
-    ],
-    "lib": [
-      "esnext",
-      "dom",
-      "dom.iterable",
-      "scripthost"
-    ]
-  },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "tests/**/*.ts",
-    "tests/**/*.tsx"
-  ],
-  "exclude": [
-    "node_modules"
-  ],
-  "typedocOptions": {
-      "entryPoints": ["src"],
-      "entryPointStrategy": "expand",
-      "cleanOutputDir": true,
-      "name": "Profectus",
-      "includeVersion": true,
-      "categorizeByGroup": false,
-      "readme": "none",
-      "out": "../docs/api"
-  }
+    "compilerOptions": {
+        "noErrorTruncation": true,
+        "target": "esnext",
+        "module": "esnext",
+        "strict": true,
+        "checkJs": false,
+        "jsx": "preserve",
+        "importHelpers": true,
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "experimentalDecorators": true,
+        "allowJs": true,
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "sourceMap": true,
+        "baseUrl": "src",
+        "types": ["vite/client", "vite-plugin-pwa/vue"],
+        "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
+    },
+    "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "tests/**/*.ts", "tests/**/*.tsx"],
+    "exclude": ["node_modules"],
+    "typedocOptions": {
+        "entryPoints": ["src"],
+        "entryPointStrategy": "expand",
+        "cleanOutputDir": true,
+        "name": "Profectus",
+        "includeVersion": true,
+        "categorizeByGroup": false,
+        "readme": "none",
+        "out": "../docs/api"
+    }
 }

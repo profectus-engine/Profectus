@@ -4,8 +4,15 @@
             <div class="header">
                 <h2>Settings</h2>
                 <div class="option-tabs">
-                    <button :class="{selected: isTab('behaviour')}" @click="setTab('behaviour')">Behaviour</button>
-                    <button :class="{selected: isTab('appearance')}" @click="setTab('appearance')">Appearance</button>
+                    <button :class="{ selected: isTab('behaviour') }" @click="setTab('behaviour')">
+                        Behaviour
+                    </button>
+                    <button
+                        :class="{ selected: isTab('appearance') }"
+                        @click="setTab('appearance')"
+                    >
+                        Appearance
+                    </button>
                 </div>
             </div>
         </template>
@@ -15,7 +22,9 @@
                 <Toggle v-if="projInfo.enablePausing" :title="isPausedTitle" v-model="isPaused" />
                 <Toggle :title="offlineProdTitle" v-model="offlineProd" />
                 <Toggle :title="autosaveTitle" v-model="autosave" />
-                <FeedbackButton v-if="!autosave" class="button save-button" @click="save()">Manually save</FeedbackButton>
+                <FeedbackButton v-if="!autosave" class="button save-button" @click="save()"
+                    >Manually save</FeedbackButton
+                >
             </div>
             <div v-if="isTab('appearance')">
                 <Select :title="themeTitle" :options="themes" v-model="theme" />
@@ -69,7 +78,7 @@ const themes = Object.keys(rawThemes).map(theme => ({
 }));
 
 const settingFieldsComponent = computed(() => {
-    return coerceComponent(jsx(() => (<>{settingFields.map(render)}</>)));
+    return coerceComponent(jsx(() => <>{settingFields.map(render)}</>));
 });
 
 const { showTPS, theme, unthrottled, alignUnits } = toRefs(settings);
@@ -91,19 +100,28 @@ const unthrottledTitle = jsx(() => (
 ));
 const offlineProdTitle = jsx(() => (
     <span class="option-title">
-        Offline Production<Tooltip display="Save-specific" direction={Direction.Right}>*</Tooltip>
+        Offline Production
+        <Tooltip display="Save-specific" direction={Direction.Right}>
+            *
+        </Tooltip>
         <desc>Simulate production that occurs while the game is closed.</desc>
     </span>
 ));
 const autosaveTitle = jsx(() => (
     <span class="option-title">
-        Autosave<Tooltip display="Save-specific" direction={Direction.Right}>*</Tooltip>
+        Autosave
+        <Tooltip display="Save-specific" direction={Direction.Right}>
+            *
+        </Tooltip>
         <desc>Automatically save the game every second or when the game is closed.</desc>
     </span>
 ));
 const isPausedTitle = jsx(() => (
     <span class="option-title">
-        Pause game<Tooltip display="Save-specific" direction={Direction.Right}>*</Tooltip>
+        Pause game
+        <Tooltip display="Save-specific" direction={Direction.Right}>
+            *
+        </Tooltip>
         <desc>Stop everything from moving.</desc>
     </span>
 ));
