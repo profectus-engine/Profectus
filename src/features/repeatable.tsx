@@ -162,7 +162,8 @@ export function createRepeatable<T extends RepeatableOptions>(
                 )
             ),
             requiresPay: false,
-            visibility: Visibility.None
+            visibility: Visibility.None,
+            canMaximize: true
         } as const;
         const visibilityRequirement = createVisibilityRequirement(repeatable as GenericRepeatable);
         if (isArray(repeatable.requirements)) {
@@ -205,8 +206,12 @@ export function createRepeatable<T extends RepeatableOptions>(
             if (!unref(genericRepeatable.canClick)) {
                 return;
             }
-            payRequirements(repeatable.requirements, unref(repeatable.amountToIncrease));
-            genericRepeatable.amount.value = Decimal.add(genericRepeatable.amount.value, 1);
+            const amountToIncrease = unref(repeatable.amountToIncrease) ?? 1;
+            payRequirements(repeatable.requirements, amountToIncrease);
+            genericRepeatable.amount.value = Decimal.add(
+                genericRepeatable.amount.value,
+                amountToIncrease
+            );
             onClick?.(event);
         };
         processComputable(repeatable as T, "display");
