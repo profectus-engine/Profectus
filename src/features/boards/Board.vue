@@ -38,7 +38,7 @@
                             :nodeType="types[node.type]"
                             :dragging="unref(draggingNode)"
                             :dragged="unref(draggingNode) === node ? dragged : undefined"
-                            :hasDragged="hasDragged"
+                            :hasDragged="unref(draggingNode) == null ? false : hasDragged"
                             :receivingNode="unref(receivingNode)?.id === node.id"
                             :selectedNode="unref(selectedNode)"
                             :selectedAction="unref(selectedAction)"
