@@ -99,6 +99,10 @@ const stage = ref<any>(null);
 
 const sortedNodes = computed(() => {
     const nodes = props.nodes.value.slice();
+    if (props.selectedNode.value) {
+        const node = nodes.splice(nodes.indexOf(props.selectedNode.value), 1)[0];
+        nodes.push(node);
+    }
     if (props.draggingNode.value) {
         const node = nodes.splice(nodes.indexOf(props.draggingNode.value), 1)[0];
         nodes.push(node);
