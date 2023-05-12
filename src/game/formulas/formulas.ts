@@ -229,15 +229,16 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
         start: Computable<DecimalSource>,
         formulaModifier: (value: InvertibleIntegralFormula) => GenericFormula
     ) {
-        const lhsRef = ref<DecimalSource>(0);
-        const formula = formulaModifier(Formula.variable(lhsRef));
+        const formula = formulaModifier(Formula.variable(0));
         const processedStart = convertComputable(start);
         function evalStep(lhs: DecimalSource) {
             if (Decimal.lt(lhs, unref(processedStart))) {
                 return lhs;
             }
-            lhsRef.value = Decimal.sub(lhs, unref(processedStart));
-            return Decimal.add(formula.evaluate(), unref(processedStart));
+            return Decimal.add(
+                formula.evaluate(Decimal.sub(lhs, unref(processedStart))),
+                unref(processedStart)
+            );
         }
         function invertStep(value: DecimalSource, lhs: FormulaSource) {
             if (hasVariable(lhs) && formula.isInvertible()) {
