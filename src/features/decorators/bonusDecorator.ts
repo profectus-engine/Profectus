@@ -69,14 +69,12 @@ export const bonusAmountDecorator: Decorator<
     BaseBonusAmountFeature,
     GenericBonusAmountFeature
 > = {
-    preConstruct(feature) {
+    postConstruct(feature) {
         if (feature.amount === undefined) {
             console.error(
                 `Decorated feature ${feature.id} does not contain the required 'amount' property"`
             );
         }
-    },
-    postConstruct(feature) {
         processComputable(feature, "bonusAmount");
         if (feature.totalAmount === undefined) {
             feature.totalAmount = computed(() =>
