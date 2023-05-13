@@ -1447,6 +1447,7 @@ export function calculateMaxAffordable(
         }
         affordable = Decimal.clampMax(affordable, maxBulkAmount);
         if (directSum > 0) {
+            const preSumAffordable = affordable;
             affordable = Decimal.sub(affordable, directSum).clampMin(0);
             let summedCost;
             if (cumulativeCost) {
@@ -1458,7 +1459,8 @@ export function calculateMaxAffordable(
             }
             while (
                 Decimal.lt(affordable, maxBulkAmount) &&
-                Decimal.lt(affordable, Number.MAX_SAFE_INTEGER)
+                Decimal.lt(affordable, Number.MAX_SAFE_INTEGER) &&
+                Decimal.add(preSumAffordable, 1).gte(affordable)
             ) {
                 const nextCost = formula.evaluate(
                     affordable.add(unref(formula.innermostVariable) ?? 0)
