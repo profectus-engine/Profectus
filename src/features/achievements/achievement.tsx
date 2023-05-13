@@ -160,6 +160,9 @@ export function createAchievement<T extends AchievementOptions>(
 
         achievement.earned = earned;
         achievement.complete = function () {
+            if (earned.value) {
+                return;
+            }
             earned.value = true;
             const genericAchievement = achievement as GenericAchievement;
             genericAchievement.onComplete?.();

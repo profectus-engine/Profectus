@@ -9,6 +9,7 @@ import type { Ref, WritableComputedRef } from "vue";
 import { computed, isReactive, isRef, ref } from "vue";
 import player from "./player";
 import state from "./state";
+import Formula from "./formulas/formulas";
 
 /**
  * A symbol used in {@link Persistent} objects.
@@ -325,6 +326,7 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
                     }
                 } else if (
                     !(value instanceof Decimal) &&
+                    !(value instanceof Formula) &&
                     !isRef(value) &&
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     !features.includes(value as { type: typeof Symbol })
