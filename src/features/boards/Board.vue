@@ -28,7 +28,16 @@
                         v-for="link in unref(links) || []"
                         :key="`${link.startNode.id}-${link.endNode.id}`"
                     >
-                        <BoardLinkVue :link="link" />
+                        <BoardLinkVue
+                            :link="link"
+                            :dragging="unref(draggingNode)"
+                            :dragged="
+                                link.startNode === unref(draggingNode) ||
+                                link.endNode === unref(draggingNode)
+                                    ? dragged
+                                    : undefined
+                            "
+                        />
                     </g>
                 </transition-group>
                 <transition-group name="grow" :duration="500" appear>
