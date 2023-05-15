@@ -187,19 +187,9 @@ describe("Creating cost requirement", () => {
             unref(
                 createCostRequirement(() => ({
                     resource,
-                    cost: Formula.variable(resource).times(0),
-                    maxBulkAmount: 10
-                })).requirementMet
-            )
-        ).compare_tolerance(10));
-
-    test("Direct sum respected", () =>
-        expect(
-            unref(
-                createCostRequirement(() => ({
-                    resource,
-                    cost: Formula.variable(resource).times(0),
-                    maxBulkAmount: 10
+                    cost: Formula.variable(resource).times(0.0001),
+                    maxBulkAmount: 10,
+                    cumulativeCost: false
                 })).requirementMet
             )
         ).compare_tolerance(10));
