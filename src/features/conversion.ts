@@ -292,3 +292,20 @@ export function setupPassiveGeneration(
         }
     });
 }
+
+/**
+ * Creates requirement that is met when the conversion hits a specified gain amount
+ * @param conversion The conversion to check the gain amount of
+ * @param minGainAmount The minimum gain amount that must be met for the requirement to be met
+ */
+export function createCanConvertRequirement(
+    conversion: GenericConversion,
+    minGainAmount: Computable<DecimalSource> = 1,
+    display?: CoercableComponent
+) {
+    const computedMinGainAmount = convertComputable(minGainAmount);
+    return createBooleanRequirement(
+        () => Decimal.gte(unref(conversion.actualGain), unref(computedMinGainAmount)),
+        display
+    );
+}
