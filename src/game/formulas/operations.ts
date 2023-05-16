@@ -399,7 +399,7 @@ export function integratePow10(stack: SubstitutionStack, lhs: FormulaSource) {
 
 export function invertPowBase(value: DecimalSource, lhs: FormulaSource, rhs: FormulaSource) {
     if (hasVariable(lhs)) {
-        return lhs.invert(Decimal.ln(value).div(unrefFormulaSource(rhs)));
+        return lhs.invert(Decimal.ln(value).div(Decimal.ln(unrefFormulaSource(rhs))));
     } else if (hasVariable(rhs)) {
         return rhs.invert(Decimal.root(unrefFormulaSource(lhs), value));
     }
