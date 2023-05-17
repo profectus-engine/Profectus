@@ -1344,6 +1344,7 @@ export default class Formula<
             // "Inner" part of the formula
             if (this.applySubstitution == null) {
                 console.error("Cannot have two complex operations in an integrable formula");
+                return Formula.constant(0);
             }
             stack.push((variable: GenericFormula) =>
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
