@@ -116,12 +116,7 @@ function checkNaNAndWrite<T extends State>(persistent: Persistent<T>, value: T) 
             state.NaNPath = persistent[SaveDataPath];
             state.NaNPersistent = persistent as Persistent<DecimalSource>;
         }
-        console.error(
-            `Attempted to save NaN value to`,
-            persistent[SaveDataPath]?.join("."),
-            persistent
-        );
-        throw new Error("Attempted to set NaN value. See above for details");
+        console.error(`Attempted to save NaN value to ${persistent[SaveDataPath]?.join(".")}`);
     }
     persistent[PersistentState].value = value;
 }
@@ -292,8 +287,8 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
                                 "."
                             )}\` when it's already present at \`${value[SaveDataPath].join(
                                 "."
-                            )}\`. This can cause unexpected behavior when loading saves between updates.`,
-                            value
+                            )}\`.`,
+                            "This can cause unexpected behavior when loading saves between updates."
                         );
                     }
                     value[SaveDataPath] = newPath;
@@ -368,9 +363,9 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
             return;
         }
         console.error(
-            `Created persistent ref in ${layer.id} without registering it to the layer! Make sure to include everything persistent in the returned object`,
-            persistent,
-            "\nCreated at:\n" + persistent[StackTrace]
+            `Created persistent ref in ${layer.id} without registering it to the layer!`,
+            "Make sure to include everything persistent in the returned object.\n\nCreated at:\n" +
+                persistent[StackTrace]
         );
     });
     persistentRefs[layer.id].clear();

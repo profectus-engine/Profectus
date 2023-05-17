@@ -1,18 +1,25 @@
 <template>
-    <div id="modal-root" :style="theme" />
-    <div class="app" :style="theme" :class="{ useHeader }">
-        <Nav v-if="useHeader" />
-        <Game />
-        <TPS v-if="unref(showTPS)" />
-        <GameOverScreen />
-        <NaNScreen />
-        <component :is="gameComponent" />
-    </div>
+    <div v-if="appErrors.length > 0" class="error-container" :style="theme"><Error :errors="appErrors" /></div>
+    <template v-else>
+        <div id="modal-root" :style="theme" />
+        <div class="app" :style="theme" :class="{ useHeader }">
+            <Nav v-if="useHeader" />
+            <Game />
+            <TPS v-if="unref(showTPS)" />
+            <GameOverScreen />
+            <NaNScreen />
+            <component :is="gameComponent" />
+        </div>
+    </template>
 </template>
 
 <script setup lang="tsx">
+import "@fontsource/roboto-mono";
+import Error from "components/Error.vue";
 import { jsx } from "features/feature";
+import state from "game/state";
 import { coerceComponent, render } from "util/vue";
+import { CSSProperties, watch } from "vue";
 import { computed, toRef, unref } from "vue";
 import Game from "./components/Game.vue";
 import GameOverScreen from "./components/GameOverScreen.vue";
@@ -23,12 +30,11 @@ import projInfo from "./data/projInfo.json";
 import themes from "./data/themes";
 import settings, { gameComponents } from "./game/settings";
 import "./main.css";
-import "@fontsource/roboto-mono";
-import type { CSSProperties } from "vue";
 
 const useHeader = projInfo.useHeader;
 const theme = computed(() => themes[settings.theme].variables as CSSProperties);
 const showTPS = toRef(settings, "showTPS");
+const appErrors = toRef(state, "errors");
 
 const gameComponent = computed(() => {
     return coerceComponent(jsx(() => (<>{gameComponents.map(render)}</>)));
@@ -50,5 +56,16 @@ const gameComponent = computed(() => {
     min-height: 100%;
     height: 100%;
     color: var(--foreground);
+}
+
+.error-container {
+    background: var(--background);
+    overflow: auto;
+    width: 100%;
+    height: 100%;
+}
+
+.error-container > .error {
+    position: static;
 }
 </style>
