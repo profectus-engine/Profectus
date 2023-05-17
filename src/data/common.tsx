@@ -459,7 +459,7 @@ export function createFormulaPreview(
     const processedShowPreview = convertComputable(showPreview);
     const processedPreviewAmount = convertComputable(previewAmount);
     if (!formula.hasVariable()) {
-        throw new Error("Cannot create formula preview if the formula does not have a variable");
+        console.error("Cannot create formula preview if the formula does not have a variable");
     }
     return jsx(() => {
         if (unref(processedShowPreview)) {

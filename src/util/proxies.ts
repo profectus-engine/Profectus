@@ -40,7 +40,7 @@ export function createLazyProxy<T extends object, S extends T>(
     function calculateObj(): T {
         if (!calculated) {
             if (calculating) {
-                throw new Error("Cyclical dependency detected. Cannot evaluate lazy proxy.");
+                console.error("Cyclical dependency detected. Cannot evaluate lazy proxy.");
             }
             calculating = true;
             Object.assign(obj, objectFunc.call(obj, obj));

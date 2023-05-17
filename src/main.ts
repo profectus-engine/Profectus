@@ -2,6 +2,7 @@ import "@fontsource/material-icons";
 import App from "App.vue";
 import projInfo from "data/projInfo.json";
 import "game/notifications";
+import state from "game/state";
 import { load } from "util/save";
 import { useRegisterSW } from "virtual:pwa-register/vue";
 import type { App as VueApp } from "vue";
@@ -23,11 +24,30 @@ declare global {
     }
 }
 
+const error = console.error;
+console.error = function (...args) {
+    if (import.meta.env.DEV) {
+        state.errors.push(new Error(args[0], { cause: args[1] }));
+    }
+    error(...args);
+};
+
+window.onerror = function (event, source, lineno, colno, error) {
+    state.errors.push(error instanceof Error ? error : new Error(JSON.stringify(error)));
+    return true;
+};
+window.onunhandledrejection = function (event) {
+    state.errors.push(
+        event.reason instanceof Error ? event.reason : new Error(JSON.stringify(event.reason))
+    );
+};
+
 document.title = projInfo.title;
 window.projInfo = projInfo;
 if (projInfo.id === "") {
-    throw new Error(
-        "Project ID is empty! Please select a unique ID for this project in /src/data/projInfo.json"
+    console.error(
+        "Project ID is empty!",
+        "Please select a unique ID for this project in /src/data/projInfo.json"
     );
 }
 
@@ -43,6 +63,9 @@ requestAnimationFrame(async () => {
 
     // Create Vue
     const vue = (window.vue = createApp(App));
+    vue.config.errorHandler = function (err, instance, info) {
+        console.error(err, info, instance);
+    };
     globalBus.emit("setupVue", vue);
     vue.mount("#app");
 

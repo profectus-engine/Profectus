@@ -225,7 +225,9 @@ export function createLayer<T extends LayerOptions>(
             addingLayers[addingLayers.length - 1] == null ||
             addingLayers[addingLayers.length - 1] !== id
         ) {
-            throw `Adding layers stack in invalid state. This should not happen\nStack: ${addingLayers}\nTrying to pop ${layer.id}`;
+            throw new Error(
+                `Adding layers stack in invalid state. This should not happen\nStack: ${addingLayers}\nTrying to pop ${layer.id}`
+            );
         }
         addingLayers.pop();
 

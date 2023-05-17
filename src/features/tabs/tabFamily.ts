@@ -151,8 +151,7 @@ export function createTabFamily<T extends TabFamilyOptions>(
     optionsFunc?: OptionsFunc<T, BaseTabFamily, GenericTabFamily>
 ): TabFamily<T> {
     if (Object.keys(tabs).length === 0) {
-        console.warn("Cannot create tab family with 0 tabs");
-        throw new Error("Cannot create tab family with 0 tabs");
+        console.error("Cannot create tab family with 0 tabs");
     }
 
     const selected = persistent(Object.keys(tabs)[0], false);

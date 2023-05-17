@@ -1,5 +1,6 @@
 <template>
-    <div class="layer-container" :style="{ '--layer-color': unref(color) }">
+    <ErrorVue v-if="errors.length > 0" :errors="errors" />
+    <div class="layer-container" :style="{ '--layer-color': unref(color) }" v-bind="$attrs" v-else>
         <button v-if="showGoBack" class="goBack" @click="goBack">❌</button>
 
         <button
@@ -28,12 +29,12 @@ import type { CoercableComponent } from "features/feature";
 import type { FeatureNode } from "game/layers";
 import player from "game/player";
 import { computeComponent, computeOptionalComponent, processedPropType, unwrapRef } from "util/vue";
-import type { PropType, Ref } from "vue";
-import { computed, defineComponent, toRefs, unref } from "vue";
+import { PropType, Ref, computed, defineComponent, onErrorCaptured, ref, toRefs, unref } from "vue";
 import Context from "./Context.vue";
+import ErrorVue from "./Error.vue";
 
 export default defineComponent({
-    components: { Context },
+    components: { Context, ErrorVue },
     props: {
         index: {
             type: Number,
@@ -77,13 +78,23 @@ export default defineComponent({
             props.nodes.value = nodes;
         }
 
+        const errors = ref<Error[]>([]);
+        onErrorCaptured((err, instance, info) => {
+            console.warn(`Error caught in "${props.name}" layer`, err, instance, info);
+            errors.value.push(
+                err instanceof Error ? (err as Error) : new Error(JSON.stringify(err))
+            );
+            return false;
+        });
+
         return {
             component,
             minimizedComponent,
             showGoBack,
             updateNodes,
             unref,
-            goBack
+            goBack,
+            errors
         };
     }
 });

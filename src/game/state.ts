@@ -1,5 +1,5 @@
 import type { DecimalSource } from "util/bignum";
-import { shallowReactive } from "vue";
+import { reactive, shallowReactive } from "vue";
 import type { Persistent } from "./persistence";
 
 /** An object of global data that is not persistent. */
@@ -12,6 +12,8 @@ export interface Transient {
     NaNPath?: string[];
     /** The ref that was being set to NaN. */
     NaNPersistent?: Persistent<DecimalSource>;
+    /** List of errors that have occurred, to show the user. */
+    errors: Error[];
 }
 
 declare global {
@@ -24,5 +26,6 @@ declare global {
 export default window.state = shallowReactive<Transient>({
     lastTenTicks: [],
     hasNaN: false,
-    NaNPath: []
+    NaNPath: [],
+    errors: reactive([])
 });
