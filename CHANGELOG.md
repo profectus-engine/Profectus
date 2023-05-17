@@ -6,6 +6,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2023-05-17
+### Added
+- Error boundaries around each layer, and errors now display on the page when in development
+- Utility for creating requirement based on whether a conversion has met a requirement
+### Changed 
+- **BREAKING** Formulas/requirements refactor
+    - spendResources renamed to cumulativeCost
+    - summedPurchases renamed to directSum
+    - calculateMaxAffordable now takes optional 'maxBulkAmount' parameter
+    - cost requirements now pass cumulativeCost, maxBulkAmount, and directSum to calculateMaxAffordable
+    - Non-integrable and non-invertible formulas will now work in more situations
+    - Repeatable.maximize is removed
+    - Challenge.maximize is removed
+- Formulas have better typing information now
+- Integrate functions now log errors if the variable input is not integrable
+- Cyclical proxies now throw errors
+- createFormulaPreview is now a JSX function
+- Tree nodes are not automatically capitalized anymore
+- upgrade.canPurchase now returns false if the upgrade is already bought
+- TPS display is simplified and more performant now
+### Fixed
+- Actions could not be constructed
+- Progress bar on actions was misaligned
+- Many different issues the Board features (and many changes/improvements)
+- Calculating max affordable could sometimes infinite loop
+- Non-integrable formulas could cause errors in cost requirements
+- estimateTime would not show "never" when production is 0
+- isInvertible and isIntegrable now properly handle nested formulas
+- Repeatables' amount display would show the literal text "joinJSX"
+- Repeatables would not buy max properly
+- Reset buttons were showing wrong "currentAt" vs "nextAt"
+- Step-wise formulas not updating their value correctly
+- Bonus amount decorator now checks for `amount` property in the post construct callback
+### Documentation
+- Various typos fixed and a few sections made more thorough
+
 ## [0.6.0] - 2023-04-20
 ### Added
 - **BREAKING** New requirements system
