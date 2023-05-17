@@ -2,7 +2,7 @@ import { Resource } from "features/resources/resource";
 import { NonPersistent } from "game/persistence";
 import Decimal, { DecimalSource, format } from "util/bignum";
 import { Computable, ProcessedComputable, convertComputable } from "util/computed";
-import { Ref, computed, ref, unref } from "vue";
+import { ComputedRef, Ref, computed, ref, unref } from "vue";
 import * as ops from "./operations";
 import type {
     EvaluateFunction,

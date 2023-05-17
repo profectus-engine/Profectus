@@ -1,4 +1,4 @@
-import type { OptionsFunc, Replace } from "features/feature";
+import type { CoercableComponent, OptionsFunc, Replace } from "features/feature";
 import { setDefault } from "features/feature";
 import type { Resource } from "features/resources/resource";
 import Formula from "game/formulas/formulas";
@@ -12,6 +12,7 @@ import { createLazyProxy } from "util/proxies";
 import type { Ref } from "vue";
 import { computed, unref } from "vue";
 import { GenericDecorator } from "./decorators/common";
+import { createBooleanRequirement } from "game/requirements";
 
 /** An object that configures a {@link Conversion}. */
 export interface ConversionOptions {
