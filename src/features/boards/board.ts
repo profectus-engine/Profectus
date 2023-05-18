@@ -104,7 +104,7 @@ export interface NodeTypeOptions {
     shape: NodeComputable<Shape>;
     /** Whether the node can accept another node being dropped upon it. */
     canAccept?: NodeComputable<boolean, [BoardNode]>;
-    /** The progress value of the node. */
+    /** The progress value of the node, from 0 to 1. */
     progress?: NodeComputable<number>;
     /** How the progress should be displayed on the node. */
     progressDisplay?: NodeComputable<ProgressDisplay>;
