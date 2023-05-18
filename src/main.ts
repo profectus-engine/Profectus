@@ -32,14 +32,16 @@ console.error = function (...args) {
     error(...args);
 };
 
-window.onerror = function (event, source, lineno, colno, error) {
-    state.errors.push(error instanceof Error ? error : new Error(JSON.stringify(error)));
+window.onerror = function (event, source, lineno, colno, err) {
+    state.errors.push(err instanceof Error ? err : new Error(JSON.stringify(err)));
+    error(err);
     return true;
 };
 window.onunhandledrejection = function (event) {
     state.errors.push(
         event.reason instanceof Error ? event.reason : new Error(JSON.stringify(event.reason))
     );
+    error(event.reason);
 };
 
 document.title = projInfo.title;
