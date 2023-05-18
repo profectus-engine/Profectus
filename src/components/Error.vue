@@ -13,7 +13,11 @@
             Check the console for more details, and consider sharing it with the developers on
             <a :href="projInfo.discordLink || 'https://discord.gg/yJ4fjnjU54'" class="discord-link"
                 >discord</a
-            >!<br />
+            >!
+            <FeedbackButton @click="exportSave" class="button" style="display: inline-flex"
+                ><span class="material-icons" style="font-size: 16px">content_paste</span
+                ><span style="margin-left: 8px; font-size: medium">Copy Save</span></FeedbackButton
+            ><br />
             <div v-if="errors.length > 1" style="margin-top: 20px"><h3>Other errors</h3></div>
             <div v-for="(error, i) in errors.slice(1)" :key="i" style="margin-top: 20px">
                 <details class="error-details">
@@ -32,8 +36,10 @@
 
 <script setup lang="ts">
 import projInfo from "data/projInfo.json";
-import player from "game/player";
+import player, { stringifySave } from "game/player";
+import LZString from "lz-string";
 import { computed, onMounted } from "vue";
+import FeedbackButton from "./fields/FeedbackButton.vue";
 
 const props = defineProps<{
     errors: Error[];
@@ -52,6 +58,32 @@ const causes = computed(() =>
               )
     )
 );
+
+function exportSave() {
+    let saveToExport = stringifySave(player);
+    switch (projInfo.exportEncoding) {
+        default:
+            console.warn(`Unknown save encoding: ${projInfo.exportEncoding}. Defaulting to lz`);
+        case "lz":
+            saveToExport = LZString.compressToUTF16(saveToExport);
+            break;
+        case "base64":
+            saveToExport = btoa(unescape(encodeURIComponent(saveToExport)));
+            break;
+        case "plain":
+            break;
+    }
+    console.log(saveToExport);
+
+    // Put on clipboard. Using the clipboard API asks for permissions and stuff
+    const el = document.createElement("textarea");
+    el.value = saveToExport;
+    document.body.appendChild(el);
+    el.select();
+    el.setSelectionRange(0, 99999);
+    document.execCommand("copy");
+    document.body.removeChild(el);
+}
 
 onMounted(() => {
     player.autosave = false;
