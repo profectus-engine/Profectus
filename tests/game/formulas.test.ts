@@ -13,7 +13,7 @@ import { InvertibleIntegralFormula } from "game/formulas/types";
 
 type FormulaFunctions = keyof GenericFormula & keyof typeof Formula & keyof typeof Decimal;
 
-const testValues = [-1, "0", Decimal.dOne] as const;
+const testValues = [-2, "0", new Decimal(10.5)] as const;
 
 const invertibleZeroParamFunctionNames = [
     "neg",
