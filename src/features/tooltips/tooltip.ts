@@ -95,18 +95,6 @@ export function addTooltip<T extends TooltipOptions>(
     }
 
     nextTick(() => {
-        if (options.pinnable) {
-            if ("pinned" in element) {
-                console.error(
-                    "Cannot add pinnable tooltip to element that already has a property called 'pinned'"
-                );
-                options.pinnable = false;
-                deletePersistent(options.pinned as Persistent<boolean>);
-            } else {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (element as any).pinned = options.pinned;
-            }
-        }
         const elementComponent = element[Component];
         element[Component] = TooltipComponent as GenericComponent;
         const elementGatherProps = element[GatherProps].bind(element);

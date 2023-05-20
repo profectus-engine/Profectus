@@ -37,7 +37,7 @@ const layer = createLayer(id, function (this: BaseLayer) {
         color,
         reset
     }));
-    addTooltip(treeNode, {
+    const tooltip = addTooltip(treeNode, {
         display: createResourceTooltip(points),
         pinnable: true
     });
@@ -58,6 +58,7 @@ const layer = createLayer(id, function (this: BaseLayer) {
         name,
         color,
         points,
+        tooltip,
         display: jsx(() => (
             <>
                 <MainDisplay resource={points} color={color} />
