@@ -83,7 +83,7 @@ describe("Creating cost requirement", () => {
             cost: 10,
             cumulativeCost: false
         }));
-        expect(unref(requirement.requirementMet)).toBe(true);
+        expect(unref(requirement.requirementMet)).toBe(1);
     });
 
     test("Requirement not met when not meeting the cost", () => {
@@ -92,7 +92,7 @@ describe("Creating cost requirement", () => {
             cost: 100,
             cumulativeCost: false
         }));
-        expect(unref(requirement.requirementMet)).toBe(false);
+        expect(unref(requirement.requirementMet)).toBe(0);
     });
 
     describe("canMaximize works correctly", () => {
