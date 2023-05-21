@@ -38,7 +38,7 @@
                         target="_blank"
                     >
                         <span class="material-icons info-modal-discord">discord</span>
-                        The Paper Pilot Community
+                        Profectus & Friends
                     </a>
                 </div>
                 <div>

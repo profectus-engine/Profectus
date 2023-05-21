@@ -19,7 +19,7 @@
                     class="nan-modal-discord-link"
                 >
                     <span class="material-icons nan-modal-discord">discord</span>
-                    {{ discordName || "The Paper Pilot Community" }}
+                    {{ discordName || "Profectus & Friends" }}
                 </a>
             </div>
             <br />

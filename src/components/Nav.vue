@@ -15,9 +15,7 @@
                     <a :href="discordLink" target="_blank">{{ discordName }}</a>
                 </li>
                 <li>
-                    <a href="https://discord.gg/yJ4fjnjU54" target="_blank"
-                        >The Paper Pilot Community</a
-                    >
+                    <a href="https://discord.gg/yJ4fjnjU54" target="_blank">Profectus & Friends</a>
                 </li>
                 <li>
                     <a href="https://discord.gg/F3xveHV" target="_blank">The Modding Tree</a>
@@ -82,9 +80,7 @@
                     <a :href="discordLink" target="_blank">{{ discordName }}</a>
                 </li>
                 <li>
-                    <a href="https://discord.gg/yJ4fjnjU54" target="_blank"
-                        >The Paper Pilot Community</a
-                    >
+                    <a href="https://discord.gg/yJ4fjnjU54" target="_blank">Profectus & Friends</a>
                 </li>
                 <li>
                     <a href="https://discord.gg/F3xveHV" target="_blank">The Modding Tree</a>
