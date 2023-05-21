@@ -2,7 +2,7 @@
     <line
         stroke-width="15px"
         stroke="white"
-        v-bind="link"
+        v-bind="linkProps"
         :x1="startPosition.x"
         :y1="startPosition.y"
         :x2="endPosition.x"
@@ -13,6 +13,7 @@
 <script setup lang="ts">
 import type { Link } from "features/links/links";
 import type { FeatureNode } from "game/layers";
+import { kebabifyObject } from "util/vue";
 import { computed, toRefs } from "vue";
 
 const _props = defineProps<{
@@ -54,4 +55,6 @@ const endPosition = computed(() => {
     }
     return position;
 });
+
+const linkProps = computed(() => kebabifyObject(_props.link as unknown as Record<string, unknown>));
 </script>

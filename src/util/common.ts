@@ -12,6 +12,11 @@ export function camelToTitle(camel: string): string {
     return title;
 }
 
+export function camelToKebab(camel: string) {
+    // Split off first character so function works on upper camel (pascal) case
+    return (camel[0] + camel.slice(1).replace(/[A-Z]/g, c => `-${c}`)).toLowerCase();
+}
+
 export function isFunction<T, S extends ReadonlyArray<unknown>, R>(
     functionOrValue: ((...args: S) => T) | R
 ): functionOrValue is (...args: S) => T {

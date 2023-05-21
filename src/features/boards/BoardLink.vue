@@ -1,7 +1,7 @@
 <template>
     <line
         class="link"
-        v-bind="link"
+        v-bind="linkProps"
         :class="{ pulsing: link.pulsing }"
         :x1="startPosition.x"
         :y1="startPosition.y"
@@ -12,6 +12,7 @@
 
 <script setup lang="ts">
 import type { BoardNode, BoardNodeLink } from "features/boards/board";
+import { kebabifyObject } from "util/vue";
 import { computed, toRefs, unref } from "vue";
 
 const _props = defineProps<{
@@ -49,6 +50,8 @@ const endPosition = computed(() => {
     }
     return position;
 });
+
+const linkProps = computed(() => kebabifyObject(_props.link as unknown as Record<string, unknown>));
 </script>
 
 <style scoped>

@@ -21,6 +21,7 @@ import {
     unref,
     watchEffect
 } from "vue";
+import { camelToKebab } from "./common";
 
 export function coerceComponent(
     component: CoercableComponent,
@@ -240,4 +241,11 @@ export function trackHover(element: VueFeature): Ref<boolean> {
     });
 
     return isHovered;
+}
+
+export function kebabifyObject(object: Record<string, unknown>) {
+    return Object.keys(object).reduce((acc, curr) => {
+        acc[camelToKebab(curr)] = object[curr];
+        return acc;
+    }, {} as Record<string, unknown>);
 }
