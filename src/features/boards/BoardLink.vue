@@ -57,6 +57,7 @@ const linkProps = computed(() => kebabifyObject(_props.link as unknown as Record
 <style scoped>
 .link {
     transition-duration: 0s;
+    pointer-events: none;
 }
 
 .link.pulsing {
