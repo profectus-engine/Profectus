@@ -1,11 +1,26 @@
 import Decimal, { DecimalSource } from "util/bignum";
 import Formula, { hasVariable, unrefFormulaSource } from "./formulas";
-import { FormulaSource, GenericFormula, InvertFunction, SubstitutionStack } from "./types";
+import {
+    FormulaSource,
+    GenericFormula,
+    InvertFunction,
+    InvertibleFormula,
+    SubstitutionStack
+} from "./types";
 
 const ln10 = Decimal.ln(10);
 
 export function passthrough<T extends GenericFormula | DecimalSource>(value: T): T {
     return value;
+}
+
+export function invertPassthrough(value: DecimalSource, ...inputs: FormulaSource[]) {
+    const variable = inputs.find(input => hasVariable(input)) as InvertibleFormula | undefined;
+    if (variable == null) {
+        console.error("Could not invert due to no input being a variable");
+        return 0;
+    }
+    return variable.invert(value);
 }
 
 export function invertNeg(value: DecimalSource, lhs: FormulaSource) {

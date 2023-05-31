@@ -16,6 +16,10 @@ type FormulaFunctions = keyof GenericFormula & keyof typeof Formula & keyof type
 const testValues = [-2, "0", new Decimal(10.5)] as const;
 
 const invertibleZeroParamFunctionNames = [
+    "round",
+    "floor",
+    "ceil",
+    "trunc",
     "neg",
     "recip",
     "log10",
@@ -48,10 +52,6 @@ const invertibleZeroParamFunctionNames = [
 const nonInvertibleZeroParamFunctionNames = [
     "abs",
     "sign",
-    "round",
-    "floor",
-    "ceil",
-    "trunc",
     "pLog10",
     "absLog10",
     "factorial",
@@ -85,6 +85,10 @@ const integrableZeroParamFunctionNames = [
 ] as const;
 const nonIntegrableZeroParamFunctionNames = [
     ...nonInvertibleZeroParamFunctionNames,
+    "round",
+    "floor",
+    "ceil",
+    "trunc",
     "lambertw",
     "ssqrt"
 ] as const;
@@ -151,7 +155,7 @@ describe("Formula Equality Checking", () => {
     describe("Formula aliases", () => {
         function testAliases<T extends FormulaFunctions>(
             aliases: T[],
-            args: Parameters<(typeof Formula)[T]>
+            args: Parameters<typeof Formula[T]>
         ) {
             describe(aliases[0], () => {
                 let formula: GenericFormula;
@@ -246,7 +250,7 @@ describe("Creating Formulas", () => {
 
     function checkFormula<T extends FormulaFunctions>(
         functionName: T,
-        args: Readonly<Parameters<(typeof Formula)[T]>>
+        args: Readonly<Parameters<typeof Formula[T]>>
     ) {
         let formula: GenericFormula;
         beforeAll(() => {
@@ -270,7 +274,7 @@ describe("Creating Formulas", () => {
     // It's a lot of tests, but I'd rather be exhaustive
     function testFormulaCall<T extends FormulaFunctions>(
         functionName: T,
-        args: Readonly<Parameters<(typeof Formula)[T]>>
+        args: Readonly<Parameters<typeof Formula[T]>>
     ) {
         if ((functionName === "slog" || functionName === "layeradd") && args[0] === -1) {
             // These cases in particular take a long time, so skip them
@@ -488,18 +492,18 @@ describe("Inverting", () => {
     });
 
     test("Inverting nested formulas", () => {
-        const formula = Formula.add(variable, constant).times(constant);
+        const formula = Formula.add(variable, constant).times(constant).floor();
         expect(formula.invert(100)).compare_tolerance(0);
     });
 
     describe("Inverting with non-invertible sections", () => {
         test("Non-invertible constant", () => {
-            const formula = Formula.add(variable, constant.ceil());
+            const formula = Formula.add(variable, constant.sign());
             expect(formula.isInvertible()).toBe(true);
             expect(() => formula.invert(10)).not.toLogError();
         });
         test("Non-invertible variable", () => {
-            const formula = Formula.add(variable.ceil(), constant);
+            const formula = Formula.add(variable.sign(), constant);
             expect(formula.isInvertible()).toBe(false);
             expect(() => formula.invert(10)).toLogError();
         });

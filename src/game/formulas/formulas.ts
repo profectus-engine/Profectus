@@ -345,19 +345,35 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
     public static sgn = InternalFormula.sign;
 
     public static round(value: FormulaSource) {
-        return new Formula({ inputs: [value], evaluate: Decimal.round });
+        return new Formula({
+            inputs: [value],
+            evaluate: Decimal.round,
+            invert: ops.invertPassthrough
+        });
     }
 
     public static floor(value: FormulaSource) {
-        return new Formula({ inputs: [value], evaluate: Decimal.floor });
+        return new Formula({
+            inputs: [value],
+            evaluate: Decimal.floor,
+            invert: ops.invertPassthrough
+        });
     }
 
     public static ceil(value: FormulaSource) {
-        return new Formula({ inputs: [value], evaluate: Decimal.ceil });
+        return new Formula({
+            inputs: [value],
+            evaluate: Decimal.ceil,
+            invert: ops.invertPassthrough
+        });
     }
 
     public static trunc(value: FormulaSource) {
-        return new Formula({ inputs: [value], evaluate: Decimal.trunc });
+        return new Formula({
+            inputs: [value],
+            evaluate: Decimal.trunc,
+            invert: ops.invertPassthrough
+        });
     }
 
     public static add<T extends GenericFormula>(value: T, other: FormulaSource): T;
@@ -459,7 +475,7 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
         return new Formula({
             inputs: [value, min, max],
             evaluate: Decimal.clamp,
-            invert: ops.passthrough as InvertFunction<[FormulaSource, FormulaSource, FormulaSource]>
+            invert: ops.invertPassthrough
         });
     }
 
