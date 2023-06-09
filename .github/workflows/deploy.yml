@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - 'main'
+  workflow_dispatch:
 jobs:
   build-and-deploy:
     if: github.repository != 'profectus-engine/Profectus' # Don't build placeholder mod on main repo
