@@ -10,7 +10,7 @@ jobs:
     runs-on: docker
     steps:
       - name: Setup RSync
-        uses: GuillaumeFalourd/setup-rsync@v1.1
+        uses: https://github.com/GuillaumeFalourd/setup-rsync@v1.1
         run: rsync --version
 
       - name: Checkout 🛎️
