@@ -12,7 +12,7 @@ jobs:
       - name: Setup RSync
         run: |
           apt-get update
-          apt-get install rsync
+          apt-get install -y rsync
 
       - name: Checkout 🛎️
         uses: actions/checkout@v2
