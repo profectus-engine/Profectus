@@ -9,6 +9,7 @@ import { Resource, displayResource } from "features/resources/resource";
 import type { GenericTree, GenericTreeNode, TreeNode, TreeNodeOptions } from "features/trees/tree";
 import { createTreeNode } from "features/trees/tree";
 import type { GenericFormula } from "game/formulas/types";
+import { BaseLayer } from "game/layers";
 import type { Modifier } from "game/modifiers";
 import type { Persistent } from "game/persistence";
 import { DefaultValue, persistent } from "game/persistence";
@@ -484,4 +485,23 @@ export function createFormulaPreview(
         }
         return <>{formatSmall(formula.evaluate())}</>;
     });
+}
+
+/**
+ * Utility function for getting a computed boolean for whether or not a given feature is currently rendered in the DOM.
+ * Note it will have a true value even if the feature is off screen.
+ * @param layer The layer the feature appears within
+ * @param id The ID of the feature
+ */
+export function isRendered(layer: BaseLayer, id: string): ComputedRef<boolean>;
+/**
+ * Utility function for getting a computed boolean for whether or not a given feature is currently rendered in the DOM.
+ * Note it will have a true value even if the feature is off screen.
+ * @param layer The layer the feature appears within
+ * @param feature The feature that may be rendered
+ */
+export function isRendered(layer: BaseLayer, feature: { id: string }): ComputedRef<boolean>;
+export function isRendered(layer: BaseLayer, idOrFeature: string | { id: string }) {
+    const id = typeof idOrFeature === "string" ? idOrFeature : idOrFeature.id;
+    return computed(() => id in layer.nodes.value);
 }
