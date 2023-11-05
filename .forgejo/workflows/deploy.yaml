@@ -10,7 +10,7 @@ jobs:
     runs-on: docker
     steps:
       - name: Setup RSync
-        run: apt get install rsync
+        run: apt-get install rsync
 
       - name: Checkout 🛎️
         uses: actions/checkout@v2
