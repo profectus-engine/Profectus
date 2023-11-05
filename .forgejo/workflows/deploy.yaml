@@ -20,7 +20,7 @@ jobs:
           npm run build
 
       - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4.2.5
+        uses: https://github.com/JamesIves/github-pages-deploy-action@v4.2.5
         with:
           branch: pages # The branch the action should deploy to.
           folder: dist # The folder the action should deploy.
