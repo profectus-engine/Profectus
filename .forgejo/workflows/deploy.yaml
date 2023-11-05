@@ -10,6 +10,11 @@ jobs:
     runs-on: docker
     container: alpine:3.18
     steps:
+      - name: Setup NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
       - name: Checkout 🛎️
         uses: actions/checkout@v2
         with:
