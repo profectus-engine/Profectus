@@ -1,0 +1,31 @@
+name: Build and Deploy
+on:
+  push:
+    branches:
+      - 'main'
+  workflow_dispatch:
+jobs:
+  build-and-deploy:
+    if: github.repository != 'profectus-engine/Profectus' # Don't build placeholder mod on main repo
+    runs-on: docker
+    steps:
+      - name: Setup RSync
+        run: |
+          apt-get update
+          apt-get install -y rsync
+
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Install and Build 🔧 # This example project is built using npm and outputs the result to the 'build' folder. Replace with the commands required to build your project, or remove this step entirely if your site is pre-built.
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy 🚀
+        uses: https://github.com/JamesIves/github-pages-deploy-action@v4.2.5
+        with:
+          branch: pages # The branch the action should deploy to.
+          folder: dist # The folder the action should deploy.
