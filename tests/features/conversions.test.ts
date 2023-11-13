@@ -47,6 +47,10 @@ describe("Creating conversion", () => {
                 baseResource.value = Decimal.pow(100, 2).times(10).add(1);
                 expect(unref(conversion.currentGain)).compare_tolerance(100);
             });
+            test("Zero", () => {
+                baseResource.value = Decimal.dZero;
+                expect(unref(conversion.currentGain)).compare_tolerance(0);
+            });
         });
         describe("Calculates actualGain correctly", () => {
             let conversion: GenericConversion;
@@ -68,6 +72,10 @@ describe("Creating conversion", () => {
             test("Just over", () => {
                 baseResource.value = Decimal.pow(100, 2).times(10).add(1);
                 expect(unref(conversion.actualGain)).compare_tolerance(100);
+            });
+            test("Zero", () => {
+                baseResource.value = Decimal.dZero;
+                expect(unref(conversion.actualGain)).compare_tolerance(0);
             });
         });
         describe("Calculates currentAt correctly", () => {
@@ -95,6 +103,10 @@ describe("Creating conversion", () => {
                     Decimal.pow(100, 2).times(10)
                 );
             });
+            test("Zero", () => {
+                baseResource.value = Decimal.dZero;
+                expect(unref(conversion.currentAt)).compare_tolerance(0);
+            });
         });
         describe("Calculates nextAt correctly", () => {
             let conversion: GenericConversion;
@@ -116,6 +128,10 @@ describe("Creating conversion", () => {
             test("Just over", () => {
                 baseResource.value = Decimal.pow(100, 2).times(10).add(1);
                 expect(unref(conversion.nextAt)).compare_tolerance(Decimal.pow(101, 2).times(10));
+            });
+            test("Zero", () => {
+                baseResource.value = Decimal.dZero;
+                expect(unref(conversion.nextAt)).compare_tolerance(Decimal.dTen);
             });
         });
         test("Converts correctly", () => {
@@ -193,6 +209,10 @@ describe("Creating conversion", () => {
                 baseResource.value = Decimal.pow(100, 2).times(10).add(1);
                 expect(unref(conversion.currentGain)).compare_tolerance(100);
             });
+            test("Zero", () => {
+                baseResource.value = Decimal.dZero;
+                expect(unref(conversion.currentGain)).compare_tolerance(1);
+            });
         });
         describe("Calculates actualGain correctly", () => {
             let conversion: GenericConversion;
@@ -215,6 +235,10 @@ describe("Creating conversion", () => {
             test("Just over", () => {
                 baseResource.value = Decimal.pow(100, 2).times(10).add(1);
                 expect(unref(conversion.actualGain)).compare_tolerance(99);
+            });
+            test("Zero", () => {
+                baseResource.value = Decimal.dZero;
+                expect(unref(conversion.actualGain)).compare_tolerance(0);
             });
         });
         describe("Calculates currentAt correctly", () => {
@@ -243,6 +267,10 @@ describe("Creating conversion", () => {
                     Decimal.pow(100, 2).times(10)
                 );
             });
+            test("Zero", () => {
+                baseResource.value = Decimal.dZero;
+                expect(unref(conversion.currentAt)).compare_tolerance(Decimal.pow(1, 2).times(10));
+            });
         });
         describe("Calculates nextAt correctly", () => {
             let conversion: GenericConversion;
@@ -265,6 +293,10 @@ describe("Creating conversion", () => {
             test("Just over", () => {
                 baseResource.value = Decimal.pow(100, 2).times(10).add(1);
                 expect(unref(conversion.nextAt)).compare_tolerance(Decimal.pow(101, 2).times(10));
+            });
+            test("Zero", () => {
+                baseResource.value = Decimal.dZero;
+                expect(unref(conversion.nextAt)).compare_tolerance(Decimal.pow(2, 2).times(10));
             });
         });
         test("Converts correctly", () => {
