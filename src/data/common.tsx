@@ -134,8 +134,8 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
                             {unref(resetButton.conversion.buyMax) ? "Next:" : "Req:"}{" "}
                             {displayResource(
                                 resetButton.conversion.baseResource,
-                                !unref(resetButton.conversion.buyMax) ||
-                                    Decimal.lt(unref(resetButton.conversion.actualGain), 1)
+                                !unref(resetButton.conversion.buyMax) &&
+                                    Decimal.gte(unref(resetButton.conversion.actualGain), 1)
                                     ? unref(resetButton.conversion.currentAt)
                                     : unref(resetButton.conversion.nextAt)
                             )}{" "}
