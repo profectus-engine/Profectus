@@ -37,9 +37,13 @@ type SubstitutionFunction<T> = (
     ...inputs: T
 ) => GenericFormula;
 
-type VariableFormulaOptions = { variable: ProcessedComputable<DecimalSource> };
+type VariableFormulaOptions = {
+    variable: ProcessedComputable<DecimalSource>;
+    description?: string;
+};
 type ConstantFormulaOptions = {
     inputs: [FormulaSource];
+    description?: string;
 };
 type GeneralFormulaOptions<T extends [FormulaSource] | FormulaSource[]> = {
     inputs: T;
@@ -48,6 +52,7 @@ type GeneralFormulaOptions<T extends [FormulaSource] | FormulaSource[]> = {
     integrate?: IntegrateFunction<T>;
     integrateInner?: IntegrateFunction<T>;
     applySubstitution?: SubstitutionFunction<T>;
+    description?: string;
 };
 type FormulaOptions<T extends [FormulaSource] | FormulaSource[]> =
     | VariableFormulaOptions
@@ -63,6 +68,7 @@ type InternalFormulaProperties<T extends [FormulaSource] | FormulaSource[]> = {
     internalIntegrateInner?: IntegrateFunction<T>;
     applySubstitution?: SubstitutionFunction<T>;
     innermostVariable?: ProcessedComputable<DecimalSource>;
+    description?: string;
 };
 
 type SubstitutionStack = ((value: GenericFormula) => GenericFormula)[] | undefined;

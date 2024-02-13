@@ -155,7 +155,7 @@ describe("Formula Equality Checking", () => {
     describe("Formula aliases", () => {
         function testAliases<T extends FormulaFunctions>(
             aliases: T[],
-            args: Parameters<typeof Formula[T]>
+            args: Parameters<(typeof Formula)[T]>
         ) {
             describe(aliases[0], () => {
                 let formula: GenericFormula;
@@ -250,7 +250,7 @@ describe("Creating Formulas", () => {
 
     function checkFormula<T extends FormulaFunctions>(
         functionName: T,
-        args: Readonly<Parameters<typeof Formula[T]>>
+        args: Readonly<Parameters<(typeof Formula)[T]>>
     ) {
         let formula: GenericFormula;
         beforeAll(() => {
@@ -274,7 +274,7 @@ describe("Creating Formulas", () => {
     // It's a lot of tests, but I'd rather be exhaustive
     function testFormulaCall<T extends FormulaFunctions>(
         functionName: T,
-        args: Readonly<Parameters<typeof Formula[T]>>
+        args: Readonly<Parameters<(typeof Formula)[T]>>
     ) {
         if ((functionName === "slog" || functionName === "layeradd") && args[0] === -1) {
             // These cases in particular take a long time, so skip them
@@ -1273,5 +1273,18 @@ describe("Buy Max", () => {
             const formula = Formula.variable(purchases).abs();
             expect(() => calculateCost(formula, 10)).not.toLogError();
         });
+    });
+});
+
+describe("Stringifies", () => {
+    test("Nested formula", () => {
+        const variable = Formula.variable(ref(0));
+        expect(variable.add(5).pow(Formula.constant(10)).stringify()).toBe(
+            "pow(add(x, 5.00), 10.00)"
+        );
+    });
+    test("Indeterminate", () => {
+        expect(Formula.if(10, true, f => f.add(5)).stringify()).toBe("indeterminate");
+        expect(Formula.step(10, 5, f => f.add(5)).stringify()).toBe("indeterminate");
     });
 });

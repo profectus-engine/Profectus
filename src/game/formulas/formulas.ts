@@ -56,6 +56,7 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
     protected readonly internalIntegrate: IntegrateFunction<T> | undefined;
     protected readonly internalIntegrateInner: IntegrateFunction<T> | undefined;
     protected readonly applySubstitution: SubstitutionFunction<T> | undefined;
+    protected readonly description: string | undefined;
     protected readonly internalVariables: number;
 
     public readonly innermostVariable: ProcessedComputable<DecimalSource> | undefined;
@@ -85,6 +86,7 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
         this.internalIntegrate = readonlyProperties.internalIntegrate;
         this.internalIntegrateInner = readonlyProperties.internalIntegrateInner;
         this.applySubstitution = readonlyProperties.applySubstitution;
+        this.description = options.description;
     }
 
     private setupVariable({
@@ -216,6 +218,25 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
         return new Formula({ variable: value });
     }
 
+    /**
+     * Stringifies the formula so it's more easy to read in the console
+     * @param formula The formula source to print, used for mapping inputs
+     */
+    public static stringify(formula: FormulaSource): string {
+        if (formula instanceof InternalFormula) {
+            if (formula.description != null) {
+                return formula.description;
+            }
+            if (formula.internalEvaluate == null) {
+                return formula.hasVariable() ? "x" : format(formula.inputs[0] ?? 0);
+            }
+            return `${formula.internalEvaluate.name}(${formula.inputs
+                .map(Formula.stringify)
+                .join(", ")})`;
+        }
+        return format(unref(formula));
+    }
+
     // TODO add integration support to step-wise functions
     /**
      * Creates a step-wise formula. After {@link start} the formula will have an additional modifier.
@@ -256,7 +277,9 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
         return new Formula({
             inputs: [value],
             evaluate: evalStep,
-            invert: formula.isInvertible() && formula.hasVariable() ? invertStep : undefined
+            invert: formula.isInvertible() && formula.hasVariable() ? invertStep : undefined,
+            // Can't do anything more descriptive, due to formula's input always being a variable
+            description: "indeterminate"
         });
     }
 
@@ -309,7 +332,9 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
         return new Formula({
             inputs: [value],
             evaluate: evalStep,
-            invert: formula.isInvertible() && formula.hasVariable() ? invertStep : undefined
+            invert: formula.isInvertible() && formula.hasVariable() ? invertStep : undefined,
+            // Can't do anything more descriptive, due to formula's input always being a variable
+            description: "indeterminate"
         });
     }
     public static conditional(
@@ -878,6 +903,10 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
         });
     }
 
+    public stringify() {
+        return Formula.stringify(this);
+    }
+
     public step(
         start: Computable<DecimalSource>,
         formulaModifier: (value: InvertibleIntegralFormula) => GenericFormula
@@ -1400,28 +1429,6 @@ export function findNonInvertible(formula: GenericFormula): GenericFormula | nul
         }
     }
     return null;
-}
-
-/**
- * Stringifies a formula so it's more easy to read in the console
- * @param formula The formula to print
- */
-export function printFormula(formula: FormulaSource): string {
-    if (formula instanceof InternalFormula) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        return formula.internalEvaluate == null
-            ? formula.hasVariable()
-                ? "x"
-                : formula.inputs[0] ?? 0
-            : // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
-              formula.internalEvaluate.name +
-                  "(" +
-                  formula.inputs.map(printFormula).join(", ") +
-                  ")";
-    }
-    return format(unref(formula));
 }
 
 /**
