@@ -224,7 +224,7 @@ export interface BaseTree {
     id: string;
     /** The link objects for each of the branches of the tree.  */
     links: Ref<Link[]>;
-    /** Cause a reset on this node and propagate it through the tree according to {@link resetPropagation}. */
+    /** Cause a reset on this node and propagate it through the tree according to {@link TreeOptions.resetPropagation}. */
     reset: (node: GenericTreeNode) => void;
     /** A flag that is true while the reset is still propagating through the tree. */
     isResetting: Ref<boolean>;
