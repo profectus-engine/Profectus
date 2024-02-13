@@ -276,8 +276,12 @@ export function createExponentialModifier<T extends ExponentialModifierOptions>(
 export function createSequentialModifier<
     T extends Modifier[],
     S = T extends WithRequired<Modifier, "invert">[]
-        ? WithRequired<Modifier, "description" | "invert">
-        : Omit<WithRequired<Modifier, "description">, "invert">
+        ? T extends WithRequired<Modifier, "getFormula">[]
+            ? WithRequired<Modifier, "description" | "invert" | "getFormula">
+            : Omit<WithRequired<Modifier, "description" | "getFormula">, "invert">
+        : T extends WithRequired<Modifier, "invert">[]
+        ? WithRequired<Modifier, "getFormula" | "invert">
+        : Omit<WithRequired<Modifier, "getFormula">, "invert">
 >(modifiersFunc: () => T): S {
     return createLazyProxy(() => {
         const modifiers = modifiersFunc();
@@ -296,10 +300,14 @@ export function createSequentialModifier<
                 : undefined,
             getFormula: modifiers.every(m => m.getFormula != null)
                 ? (gain: FormulaSource) =>
-                      modifiers
+                      modifiers.reduce((acc, curr) => {
+                          if (curr.enabled == null || curr.enabled === true) {
+                              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                              return curr.getFormula!(acc);
+                          }
                           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                          .reduce((acc, curr) => Formula.if(acc, curr.enabled ?? true,
-                            acc => curr.getFormula!(acc), acc => acc), gain)
+                          return Formula.if(acc, curr.enabled, acc => curr.getFormula!(acc));
+                      }, gain)
                 : undefined,
             enabled: modifiers.some(m => m.enabled != null)
                 ? computed(() => modifiers.filter(m => unref(m.enabled) !== false).length > 0)

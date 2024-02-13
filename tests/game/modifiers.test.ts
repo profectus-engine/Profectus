@@ -199,6 +199,20 @@ describe("Sequential Modifiers", () => {
             // So long as one is true or undefined, enable should be true
             expect(unref(modifier.enabled)).toBe(true);
         });
+        test("respects enabled", () => {
+            const value = ref(10);
+            const enabled = ref(false);
+            const modifier = createSequentialModifier(() => [
+                createMultiplicativeModifier(() => ({ multiplier: 5, enabled }))
+            ]);
+            expect(modifier.getFormula(Formula.variable(value)).evaluate()).compare_tolerance(
+                value.value
+            );
+            enabled.value = true;
+            expect(modifier.getFormula(Formula.variable(value)).evaluate()).not.compare_tolerance(
+                value.value
+            );
+        });
     });
 
     describe("applies smallerIsBetter correctly", () => {
