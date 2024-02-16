@@ -3,7 +3,7 @@ import { Themes } from "data/themes";
 import type { CoercableComponent } from "features/feature";
 import { globalBus } from "game/events";
 import LZString from "lz-string";
-import { hardReset } from "util/save";
+import { decodeSave, hardReset } from "util/save";
 import { reactive, watch } from "vue";
 
 /** The player's settings object. */
@@ -78,16 +78,8 @@ export function loadSettings(): void {
     try {
         let item: string | null = localStorage.getItem(projInfo.id);
         if (item != null && item !== "") {
-            if (item[0] === "{") {
-                // plaintext. No processing needed
-            } else if (item[0] === "e") {
-                // Assumed to be base64, which starts with e
-                item = decodeURIComponent(escape(atob(item)));
-            } else if (item[0] === "ᯡ") {
-                // Assumed to be lz, which starts with ᯡ
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                item = LZString.decompressFromUTF16(item)!;
-            } else {
+            item = decodeSave(item);
+            if (item == null) {
                 console.warn("Unable to determine settings encoding", item);
                 return;
             }
