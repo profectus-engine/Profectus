@@ -10,6 +10,7 @@ export const galaxy = ref<GalaxyApi>();
 export const conflictingSaves = ref<
     { id: string; local: LoadablePlayerData; cloud: LoadablePlayerData; slot: number }[]
 >([]);
+export const syncedSaves = ref<string[]>([]);
 
 export function sync() {
     if (galaxy.value == null || !galaxy.value.loggedIn) {
@@ -19,7 +20,13 @@ export function sync() {
         // Pause syncing while resolving conflicted saves
         return;
     }
-    galaxy.value.getSaveList().then(syncSaves).catch(console.error);
+    galaxy.value
+        .getSaveList()
+        .then(syncSaves)
+        .then(list => {
+            syncedSaves.value = list.map(s => s.content.id);
+        })
+        .catch(console.error);
 }
 
 // Setup Galaxy API

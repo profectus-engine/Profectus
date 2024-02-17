@@ -53,6 +53,9 @@
             </button>
         </div>
         <div class="details" v-if="save.error == undefined && !isEditing">
+            <Tooltip display="Synced!" :direction="Direction.Right" v-if="synced"
+                ><span class="material-icons synced">cloud</span></Tooltip
+            >
             <button class="button open" @click="emit('open')" :disabled="readonly">
                 <h3>{{ save.name }}</h3>
             </button>
@@ -80,6 +83,7 @@ import DangerButton from "../fields/DangerButton.vue";
 import FeedbackButton from "../fields/FeedbackButton.vue";
 import Text from "../fields/Text.vue";
 import type { LoadablePlayerData } from "./SavesManager.vue";
+import { galaxy, syncedSaves } from "util/galaxy";
 
 const _props = defineProps<{
     save: LoadablePlayerData;
@@ -114,6 +118,9 @@ const isActive = computed(
 );
 const currentTime = computed(() =>
     isActive.value ? player.time : (save.value != null && save.value.time) ?? 0
+);
+const synced = computed(
+    () => !unref(readonly) && galaxy.value?.loggedIn && syncedSaves.value.includes(save.value.id)
 );
 
 function changeName() {
@@ -196,6 +203,13 @@ function changeName() {
 .time {
     font-size: small;
 }
+
+.synced {
+    font-size: 100%;
+    margin-right: 0.5em;
+    vertical-align: middle;
+    cursor: default;
+}
 </style>
 
 <style>
@@ -220,5 +234,9 @@ function changeName() {
 
 .save .field {
     margin: 0;
+}
+
+.details > .tooltip-container {
+    display: inline;
 }
 </style>
