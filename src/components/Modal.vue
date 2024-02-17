@@ -4,6 +4,7 @@
             name="modal"
             @before-enter="isAnimating = true"
             @after-leave="isAnimating = false"
+            appear
         >
             <div
                 class="modal-mask"
@@ -12,7 +13,7 @@
                 v-bind="$attrs"
             >
                 <div class="modal-wrapper">
-                    <div class="modal-container">
+                    <div class="modal-container" :width="width">
                         <div class="modal-header">
                             <slot name="header" :shown="isOpen"> default header </slot>
                         </div>
@@ -45,6 +46,8 @@ import Context from "./Context.vue";
 
 const _props = defineProps<{
     modelValue: boolean;
+    closable?: boolean;
+    width?: string;
 }>();
 const props = toRefs(_props);
 const emit = defineEmits<{
@@ -53,7 +56,9 @@ const emit = defineEmits<{
 
 const isOpen = computed(() => unref(props.modelValue) || isAnimating.value);
 function close() {
-    emit("update:modelValue", false);
+    if (unref(props.closable) !== false) {
+        emit("update:modelValue", false);
+    }
 }
 
 const isAnimating = ref(false);

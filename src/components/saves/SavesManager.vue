@@ -76,8 +76,8 @@ import {
 import type { ComponentPublicInstance } from "vue";
 import { computed, nextTick, ref, watch } from "vue";
 import Draggable from "vuedraggable";
-import Select from "./fields/Select.vue";
-import Text from "./fields/Text.vue";
+import Select from "../fields/Select.vue";
+import Text from "../fields/Text.vue";
 import Save from "./Save.vue";
 
 export type LoadablePlayerData = Omit<Partial<Player>, "id"> & { id: string; error?: unknown };

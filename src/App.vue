@@ -8,6 +8,7 @@
             <TPS v-if="unref(showTPS)" />
             <GameOverScreen />
             <NaNScreen />
+            <CloudSaveResolver />
             <component :is="gameComponent" />
         </div>
     </template>
@@ -16,10 +17,11 @@
 <script setup lang="tsx">
 import "@fontsource/roboto-mono";
 import Error from "components/Error.vue";
+import CloudSaveResolver from "components/saves/CloudSaveResolver.vue";
 import { jsx } from "features/feature";
 import state from "game/state";
 import { coerceComponent, render } from "util/vue";
-import { CSSProperties } from "vue";
+import type { CSSProperties } from "vue";
 import { computed, toRef, unref } from "vue";
 import Game from "./components/Game.vue";
 import GameOverScreen from "./components/GameOverScreen.vue";

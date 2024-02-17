@@ -103,7 +103,7 @@ import type { ComponentPublicInstance } from "vue";
 import { ref } from "vue";
 import Info from "./Info.vue";
 import Options from "./Options.vue";
-import SavesManager from "./SavesManager.vue";
+import SavesManager from "./saves/SavesManager.vue";
 
 const info = ref<ComponentPublicInstance<typeof Info> | null>(null);
 const savesManager = ref<ComponentPublicInstance<typeof SavesManager> | null>(null);

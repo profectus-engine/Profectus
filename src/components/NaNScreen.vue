@@ -55,7 +55,7 @@ import Decimal, { format } from "util/bignum";
 import type { ComponentPublicInstance } from "vue";
 import { computed, ref, toRef, watch } from "vue";
 import Toggle from "./fields/Toggle.vue";
-import SavesManager from "./SavesManager.vue";
+import SavesManager from "./saves/SavesManager.vue";
 
 const { discordName, discordLink } = projInfo;
 const autosave = ref(true);
