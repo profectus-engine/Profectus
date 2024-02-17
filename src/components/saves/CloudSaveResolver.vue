@@ -1,5 +1,5 @@
 <template>
-    <Modal v-model="isOpen" width="960px" ref="modal">
+    <Modal v-model="isOpen" width="960px" ref="modal" :prevent-closing="true">
         <template v-slot:header>
             <div class="cloud-saves-modal-header">
                 <h2>Cloud {{ pluralizedSave }} loaded!</h2>
@@ -19,7 +19,7 @@
                 :key="conflict.id"
                 class="conflict-container"
             >
-                <div @click="selectCloud(i)" :class="{ selected: selectedSaves[i] }">
+                <div @click="selectCloud(i)" :class="{ selected: selectedSaves[i] === 'cloud' }">
                     <h2>
                         Cloud
                         <span
@@ -37,7 +37,7 @@
                     </h2>
                     <Save :save="conflict.cloud" :readonly="true" />
                 </div>
-                <div @click="selectLocal(i)" :class="{ selected: !selectedSaves[i] }">
+                <div @click="selectLocal(i)" :class="{ selected: selectedSaves[i] === 'local' }">
                     <h2>
                         Local
                         <span
@@ -55,6 +55,14 @@
                     </h2>
                     <Save :save="conflict.local" :readonly="true" />
                 </div>
+                <div
+                    @click="selectBoth(i)"
+                    :class="{ selected: selectedSaves[i] === 'both' }"
+                    style="flex-basis: 30%"
+                >
+                    <h2>Both</h2>
+                    <div class="save">Keep Both</div>
+                </div>
             </div>
         </template>
         <template v-slot:footer>
@@ -68,15 +76,16 @@
 <script setup lang="ts">
 import Modal from "components/Modal.vue";
 import { stringifySave } from "game/player";
+import settings from "game/settings";
 import LZString from "lz-string";
 import { conflictingSaves, galaxy } from "util/galaxy";
-import { save, setupInitialStore } from "util/save";
+import { getUniqueID, save, setupInitialStore } from "util/save";
 import { ComponentPublicInstance, computed, ref, unref, watch } from "vue";
 import Save from "./Save.vue";
 
 const isOpen = ref(false);
 // True means replacing local save with cloud save
-const selectedSaves = ref<boolean[]>([]);
+const selectedSaves = ref<("cloud" | "local" | "both")[]>([]);
 
 const pluralizedSave = computed(() => (conflictingSaves.value.length > 1 ? "saves" : "save"));
 
@@ -87,7 +96,7 @@ watch(
     shouldOpen => {
         if (shouldOpen) {
             selectedSaves.value = conflictingSaves.value.map(({ local, cloud }) => {
-                return (local.time ?? 0) < (cloud.time ?? 0);
+                return (local.time ?? 0) < (cloud.time ?? 0) ? "cloud" : "local";
             });
             isOpen.value = true;
         }
@@ -98,43 +107,55 @@ watch(
 watch(
     () => modal.value?.isOpen,
     open => {
-        console.log("!!", open);
         if (open === false) {
             conflictingSaves.value = [];
         }
     }
 );
 
-watch(
-    () => modal.value?.isAnimating,
-    open => {
-        console.log("!! anim", open);
-    }
-);
-
 function selectLocal(index: number) {
-    selectedSaves.value[index] = false;
+    selectedSaves.value[index] = "local";
 }
 
 function selectCloud(index: number) {
-    selectedSaves.value[index] = true;
+    selectedSaves.value[index] = "cloud";
+}
+
+function selectBoth(index: number) {
+    selectedSaves.value[index] = "both";
 }
 
 function close() {
     for (let i = 0; i < selectedSaves.value.length; i++) {
         const { slot, local, cloud } = conflictingSaves.value[i];
-        if (selectedSaves.value[i]) {
-            // Replace local save with cloud
-            save(setupInitialStore(cloud));
-        } else {
-            // Replace cloud save with cloud
-            galaxy.value
-                ?.save(
-                    slot,
-                    LZString.compressToUTF16(stringifySave(setupInitialStore(local))),
-                    cloud.name ?? null
-                )
-                .catch(console.error);
+        switch (selectedSaves.value[i]) {
+            case "local":
+                // Replace cloud save with local
+                galaxy.value
+                    ?.save(
+                        slot,
+                        LZString.compressToUTF16(stringifySave(setupInitialStore(local))),
+                        cloud.name ?? null
+                    )
+                    .catch(console.error);
+                break;
+            case "cloud":
+                // Replace local save with cloud
+                save(setupInitialStore(cloud));
+                break;
+            case "both":
+                // Get a new save ID for the cloud save, and sync the local one to the cloud
+                const id = getUniqueID();
+                save({ ...setupInitialStore(cloud), id });
+                settings.saves.push(id);
+                galaxy.value
+                    ?.save(
+                        slot,
+                        LZString.compressToUTF16(stringifySave(setupInitialStore(local))),
+                        cloud.name ?? null
+                    )
+                    .catch(console.error);
+                break;
         }
     }
     isOpen.value = false;
@@ -162,16 +183,37 @@ function close() {
 
 .conflict-container > * {
     flex-basis: 50%;
+    display: flex;
+    flex-flow: column;
+    margin: 0;
 }
 
 .conflict-container + .conflict-container {
     margin-top: 1em;
 }
 
+.conflict-container h2 {
+    display: flex;
+    flex-flow: column wrap;
+    height: 1.5em;
+    margin: 0;
+}
+
 .note {
     font-size: x-small;
     opacity: 0.7;
     margin-right: 1em;
+}
+
+.save {
+    border: solid 4px var(--outline);
+    padding: 4px;
+    background: var(--raised-background);
+    margin: var(--feature-margin);
+    display: flex;
+    align-items: center;
+    min-height: 30px;
+    height: 100%;
 }
 </style>
 

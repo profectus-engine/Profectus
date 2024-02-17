@@ -46,7 +46,7 @@ import Context from "./Context.vue";
 
 const _props = defineProps<{
     modelValue: boolean;
-    closable?: boolean;
+    preventClosing?: boolean;
     width?: string;
 }>();
 const props = toRefs(_props);
@@ -56,7 +56,7 @@ const emit = defineEmits<{
 
 const isOpen = computed(() => unref(props.modelValue) || isAnimating.value);
 function close() {
-    if (unref(props.closable) !== false) {
+    if (unref(props.preventClosing) !== true) {
         emit("update:modelValue", false);
     }
 }
