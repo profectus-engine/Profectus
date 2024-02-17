@@ -4,6 +4,9 @@
             <h2>Saves Manager</h2>
         </template>
         <template #body="{ shown }">
+            <div v-if="showNotSyncedWarning" style="color: var(--danger)">
+                Not all saves are synced! You may need to delete stale saves.
+            </div>
             <Draggable
                 :list="settings.saves"
                 handle=".handle"
@@ -79,6 +82,7 @@ import Draggable from "vuedraggable";
 import Select from "../fields/Select.vue";
 import Text from "../fields/Text.vue";
 import Save from "./Save.vue";
+import { galaxy, syncedSaves } from "util/galaxy";
 
 export type LoadablePlayerData = Omit<Partial<Player>, "id"> & { id: string; error?: unknown };
 
@@ -152,6 +156,10 @@ const saves = computed(() =>
         acc[curr] = getCachedSave(curr);
         return acc;
     }, {})
+);
+
+const showNotSyncedWarning = computed(
+    () => galaxy.value?.loggedIn && settings.saves.length < syncedSaves.value.length
 );
 
 function exportSave(id: string) {
