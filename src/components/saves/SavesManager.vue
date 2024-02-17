@@ -204,6 +204,23 @@ function duplicateSave(id: string) {
 }
 
 function deleteSave(id: string) {
+    if (galaxy.value?.loggedIn) {
+        galaxy.value.getSaveList().then(list => {
+            const slot = Object.keys(list).find(slot => {
+                const content = list[slot as unknown as number].content;
+                try {
+                    if (JSON.parse(content).id === id) {
+                        return true;
+                    }
+                } catch (e) {
+                    return false;
+                }
+            });
+            if (slot != null) {
+                galaxy.value?.save(parseInt(slot), "", "").catch(console.error);
+            }
+        });
+    }
     settings.saves = settings.saves.filter((save: string) => save !== id);
     localStorage.removeItem(id);
     clearCachedSave(id);
