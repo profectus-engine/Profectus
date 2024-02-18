@@ -53,9 +53,10 @@ function onLoggedInChanged(g: GalaxyApi) {
     g.getSaveList()
         .then(list => {
             const saves = syncSaves(list);
+            syncedSaves.value = saves.map(s => s.content.id);
 
             // If our current save has under 2 minutes of playtime, load the cloud save with the most recent time.
-            if (player.timePlayed < 120 && saves.length > 0) {
+            if (player.timePlayed < 120 * 1000 && saves.length > 0) {
                 const longestSave = saves.reduce((acc, curr) =>
                     acc.content.time < curr.content.time ? curr : acc
                 );
@@ -64,7 +65,7 @@ function onLoggedInChanged(g: GalaxyApi) {
         })
         .catch(console.error);
 
-    setInterval(sync, 60000);
+    setInterval(sync, 60 * 1000);
 }
 
 function syncSaves(
@@ -83,7 +84,11 @@ function syncSaves(
             .map(slot => {
                 const { label, content } = list[slot as unknown as number];
                 try {
-                    return { slot: parseInt(slot), label, content: JSON.parse(content) };
+                    return {
+                        slot: parseInt(slot),
+                        label,
+                        content: JSON.parse(decodeSave(content) ?? "")
+                    };
                 } catch (e) {
                     return null;
                 }
@@ -127,7 +132,7 @@ function syncSaves(
                 const timeDiff = Math.abs(localSave.time - cloudSave.content.time);
                 // If their last played time and total time played are both within 2 minutes, just use the newer save (very unlikely to be coincidence)
                 // Otherwise, ask the player
-                if (timePlayedDiff < 120 && timeDiff < 120) {
+                if (timePlayedDiff < 120 * 1000 && timeDiff < 120 * 1000) {
                     if (localSave.time < cloudSave.content.time) {
                         save(setupInitialStore(cloudSave.content));
                         if (settings.active === localSaveId) {
@@ -138,9 +143,9 @@ function syncSaves(
                             ?.save(
                                 cloudSave.slot,
                                 LZString.compressToUTF16(
-                                    stringifySave(setupInitialStore(cloudSave.content))
+                                    stringifySave(setupInitialStore(localSave))
                                 ),
-                                cloudSave.label
+                                localSave.name ?? cloudSave.label
                             )
                             .catch(console.error);
                         // Update cloud save content for the return value
@@ -162,13 +167,18 @@ function syncSaves(
     });
 
     savesToUpload.forEach(id => {
-        const localSave = decodeSave(localStorage.getItem(id) ?? "");
-        if (localSave != null && availableSlots.size > 0) {
-            const parsedLocalSave = JSON.parse(localSave);
-            const slot = parseInt(Object.keys(availableSlots)[0]);
-            galaxy.value?.save(slot, localSave, parsedLocalSave.name).catch(console.error);
-            availableSlots.delete(slot);
-        }
+        try {
+            if (availableSlots.size > 0) {
+                const localSave = localStorage.getItem(id) ?? "";
+                const parsedLocalSave = JSON.parse(decodeSave(localSave) ?? "");
+                const slot = availableSlots.values().next().value;
+                galaxy.value
+                    ?.save(slot, localSave, parsedLocalSave.name)
+                    .then(() => syncedSaves.value.push(parsedLocalSave.id))
+                    .catch(console.error);
+                availableSlots.delete(slot);
+            }
+        } catch (e) {}
     });
 
     return saves;
