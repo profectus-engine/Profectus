@@ -296,10 +296,17 @@ export function createSequentialModifier<
                 : undefined,
             getFormula: modifiers.every(m => m.getFormula != null)
                 ? (gain: FormulaSource) =>
-                      modifiers
-                          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                          .reduce((acc, curr) => Formula.if(acc, curr.enabled ?? true,
-                            acc => curr.getFormula!(acc), acc => acc), gain)
+                      modifiers.reduce(
+                          (acc, curr) =>
+                              Formula.if(
+                                  acc,
+                                  curr.enabled ?? true,
+                                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                                  acc => curr.getFormula!(acc),
+                                  acc => acc
+                              ),
+                          gain
+                      )
                 : undefined,
             enabled: modifiers.some(m => m.enabled != null)
                 ? computed(() => modifiers.filter(m => unref(m.enabled) !== false).length > 0)

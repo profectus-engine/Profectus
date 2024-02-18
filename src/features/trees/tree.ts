@@ -1,4 +1,4 @@
-import { Decorator, GenericDecorator } from "features/decorators/common";
+import { GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,
