@@ -6,7 +6,6 @@ import player, { stringifySave } from "game/player";
 import settings, { loadSettings } from "game/settings";
 import LZString from "lz-string";
 import { ref, shallowReactive } from "vue";
-import { sync } from "./galaxy";
 
 export function setupInitialStore(player: Partial<Player> = {}): Player {
     return Object.assign(
@@ -31,7 +30,6 @@ export function setupInitialStore(player: Partial<Player> = {}): Player {
 export function save(playerData?: Player): string {
     const stringifiedSave = LZString.compressToUTF16(stringifySave(playerData ?? player));
     localStorage.setItem((playerData ?? player).id, stringifiedSave);
-    sync();
     return stringifiedSave;
 }
 

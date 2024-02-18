@@ -54,8 +54,8 @@ function onLoggedInChanged(g: GalaxyApi) {
         .then(list => {
             const saves = syncSaves(list);
 
-            // If our current save has under a minute of playtime, load the cloud save with the most recent time.
-            if (player.timePlayed < 60 && saves.length > 0) {
+            // If our current save has under 2 minutes of playtime, load the cloud save with the most recent time.
+            if (player.timePlayed < 120 && saves.length > 0) {
                 const longestSave = saves.reduce((acc, curr) =>
                     acc.content.time < curr.content.time ? curr : acc
                 );
@@ -63,6 +63,8 @@ function onLoggedInChanged(g: GalaxyApi) {
             }
         })
         .catch(console.error);
+
+    setInterval(sync, 60000);
 }
 
 function syncSaves(
@@ -123,9 +125,9 @@ function syncSaves(
                     localSave.timePlayed - cloudSave.content.timePlayed
                 );
                 const timeDiff = Math.abs(localSave.time - cloudSave.content.time);
-                // If their last played time and total time played are both within a minute, just use the newer save (very unlikely to be coincidence)
+                // If their last played time and total time played are both within 2 minutes, just use the newer save (very unlikely to be coincidence)
                 // Otherwise, ask the player
-                if (timePlayedDiff < 60 && timeDiff < 60) {
+                if (timePlayedDiff < 120 && timeDiff < 120) {
                     if (localSave.time < cloudSave.content.time) {
                         save(setupInitialStore(cloudSave.content));
                         if (settings.active === localSaveId) {
