@@ -135,7 +135,7 @@ function close() {
                     ?.save(
                         slot,
                         LZString.compressToUTF16(stringifySave(setupInitialStore(local))),
-                        cloud.name ?? null
+                        cloud.name
                     )
                     .catch(console.error);
                 break;
@@ -152,7 +152,7 @@ function close() {
                     ?.save(
                         slot,
                         LZString.compressToUTF16(stringifySave(setupInitialStore(local))),
-                        cloud.name ?? null
+                        cloud.name
                     )
                     .catch(console.error);
                 break;

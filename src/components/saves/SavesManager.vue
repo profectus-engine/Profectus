@@ -159,7 +159,7 @@ const saves = computed(() =>
 );
 
 const showNotSyncedWarning = computed(
-    () => galaxy.value?.loggedIn && settings.saves.length < syncedSaves.value.length
+    () => galaxy.value?.loggedIn === true && settings.saves.length < syncedSaves.value.length
 );
 
 function exportSave(id: string) {
@@ -204,7 +204,7 @@ function duplicateSave(id: string) {
 }
 
 function deleteSave(id: string) {
-    if (galaxy.value?.loggedIn) {
+    if (galaxy.value?.loggedIn === true) {
         galaxy.value.getSaveList().then(list => {
             const slot = Object.keys(list).find(slot => {
                 const content = list[slot as unknown as number].content;

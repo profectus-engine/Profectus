@@ -121,7 +121,7 @@ function openDiscord() {
 }
 
 const needsSync = computed(
-    () => galaxy.value?.loggedIn && !syncedSaves.value.includes(settings.active)
+    () => galaxy.value?.loggedIn === true && !syncedSaves.value.includes(settings.active)
 );
 </script>
 

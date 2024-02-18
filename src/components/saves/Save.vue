@@ -120,7 +120,10 @@ const currentTime = computed(() =>
     isActive.value ? player.time : (save.value != null && save.value.time) ?? 0
 );
 const synced = computed(
-    () => !unref(readonly) && galaxy.value?.loggedIn && syncedSaves.value.includes(save.value.id)
+    () =>
+        !unref(readonly) &&
+        galaxy.value?.loggedIn === true &&
+        syncedSaves.value.includes(save.value.id)
 );
 
 function changeName() {

@@ -1,7 +1,7 @@
 import { LoadablePlayerData } from "components/saves/SavesManager.vue";
 import player, { Player, stringifySave } from "game/player";
 import settings from "game/settings";
-import { GalaxyApi, initGalaxy } from "lib/galaxy";
+import { GalaxyApi, initGalaxy } from "unofficial-galaxy-sdk";
 import LZString from "lz-string";
 import { ref } from "vue";
 import { decodeSave, loadSave, save, setupInitialStore } from "./save";
@@ -13,7 +13,7 @@ export const conflictingSaves = ref<
 export const syncedSaves = ref<string[]>([]);
 
 export function sync() {
-    if (galaxy.value == null || !galaxy.value.loggedIn) {
+    if (galaxy.value?.loggedIn !== true) {
         return;
     }
     if (conflictingSaves.value.length > 0) {
@@ -138,7 +138,7 @@ function syncSaves(
                                 LZString.compressToUTF16(
                                     stringifySave(setupInitialStore(cloudSave.content))
                                 ),
-                                cloudSave.label ?? null
+                                cloudSave.label
                             )
                             .catch(console.error);
                         // Update cloud save content for the return value
