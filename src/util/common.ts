@@ -1,3 +1,11 @@
+export type RequiredKeys<T> = {
+    [K in keyof T]-?: NonNullable<unknown> extends Pick<T, K> ? never : K;
+}[keyof T];
+export type OptionalKeys<T> = {
+    [K in keyof T]-?: NonNullable<unknown> extends Pick<T, K> ? K : never;
+}[keyof T];
+
+export type OmitOptional<T> = Pick<T, RequiredKeys<T>>;
 export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
 export type ArrayElements<T extends ReadonlyArray<unknown>> = T extends ReadonlyArray<infer S>

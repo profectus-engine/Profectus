@@ -133,14 +133,14 @@ describe("Exponential Modifiers", () =>
     testModifiers(createExponentialModifier, "exponent", Decimal.pow));
 
 describe("Sequential Modifiers", () => {
-    function createModifier(
+    function createModifier<T extends Partial<ModifierConstructorOptions>>(
         value: Computable<DecimalSource>,
-        options: Partial<ModifierConstructorOptions> = {}
-    ): WithRequired<Modifier, "invert" | "getFormula"> {
+        options?: T
+    ) {
         return createSequentialModifier(() => [
-            createAdditiveModifier(() => ({ ...options, addend: value })),
-            createMultiplicativeModifier(() => ({ ...options, multiplier: value })),
-            createExponentialModifier(() => ({ ...options, exponent: value }))
+            createAdditiveModifier(() => ({ ...(options ?? {}), addend: value })),
+            createMultiplicativeModifier(() => ({ ...(options ?? {}), multiplier: value })),
+            createExponentialModifier(() => ({ ...(options ?? {}), exponent: value }))
         ]);
     }
 
