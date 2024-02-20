@@ -205,13 +205,10 @@ describe("Sequential Modifiers", () => {
             const modifier = createSequentialModifier(() => [
                 createMultiplicativeModifier(() => ({ multiplier: 5, enabled }))
             ]);
-            expect(modifier.getFormula(Formula.variable(value)).evaluate()).compare_tolerance(
-                value.value
-            );
+            const formula = modifier.getFormula(Formula.variable(value));
+            expect(formula.evaluate()).compare_tolerance(value.value);
             enabled.value = true;
-            expect(modifier.getFormula(Formula.variable(value)).evaluate()).not.compare_tolerance(
-                value.value
-            );
+            expect(formula.evaluate()).not.compare_tolerance(value.value);
         });
     });
 
