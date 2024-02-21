@@ -1,3 +1,4 @@
+import Node from "components/Node.vue";
 import Spacer from "components/layout/Spacer.vue";
 import { jsx } from "features/feature";
 import { createResource, trackBest, trackOOMPS, trackTotal } from "features/resources/resource";
@@ -48,19 +49,35 @@ export const main = createLayer("main", function (this: BaseLayer) {
         links: tree.links,
         display: jsx(() => (
             <>
-                {player.devSpeed === 0 ? <div>Game Paused</div> : null}
+                {player.devSpeed === 0 ? (
+                    <div>
+                        Game Paused
+                        <Node id="paused" />
+                    </div>
+                ) : null}
                 {player.devSpeed != null && player.devSpeed !== 0 && player.devSpeed !== 1 ? (
-                    <div>Dev Speed: {format(player.devSpeed)}x</div>
+                    <div>
+                        Dev Speed: {format(player.devSpeed)}x
+                        <Node id="devspeed" />
+                    </div>
                 ) : null}
                 {player.offlineTime != null && player.offlineTime !== 0 ? (
-                    <div>Offline Time: {formatTime(player.offlineTime)}</div>
+                    <div>
+                        Offline Time: {formatTime(player.offlineTime)}
+                        <Node id="offline" />
+                    </div>
                 ) : null}
                 <div>
                     {Decimal.lt(points.value, "1e1000") ? <span>You have </span> : null}
                     <h2>{format(points.value)}</h2>
                     {Decimal.lt(points.value, "1e1e6") ? <span> points</span> : null}
                 </div>
-                {Decimal.gt(pointGain.value, 0) ? <div>({oomps.value})</div> : null}
+                {Decimal.gt(pointGain.value, 0) ? (
+                    <div>
+                        ({oomps.value})
+                        <Node id="oomps" />
+                    </div>
+                ) : null}
                 <Spacer />
                 {render(tree)}
             </>

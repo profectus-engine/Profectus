@@ -133,14 +133,14 @@ describe("Exponential Modifiers", () =>
     testModifiers(createExponentialModifier, "exponent", Decimal.pow));
 
 describe("Sequential Modifiers", () => {
-    function createModifier(
+    function createModifier<T extends Partial<ModifierConstructorOptions>>(
         value: Computable<DecimalSource>,
-        options: Partial<ModifierConstructorOptions> = {}
-    ): WithRequired<Modifier, "invert" | "getFormula"> {
+        options?: T
+    ) {
         return createSequentialModifier(() => [
-            createAdditiveModifier(() => ({ ...options, addend: value })),
-            createMultiplicativeModifier(() => ({ ...options, multiplier: value })),
-            createExponentialModifier(() => ({ ...options, exponent: value }))
+            createAdditiveModifier(() => ({ ...(options ?? {}), addend: value })),
+            createMultiplicativeModifier(() => ({ ...(options ?? {}), multiplier: value })),
+            createExponentialModifier(() => ({ ...(options ?? {}), exponent: value }))
         ]);
     }
 
@@ -198,6 +198,17 @@ describe("Sequential Modifiers", () => {
             expect(modifier.enabled).not.toBeUndefined();
             // So long as one is true or undefined, enable should be true
             expect(unref(modifier.enabled)).toBe(true);
+        });
+        test("respects enabled", () => {
+            const value = ref(10);
+            const enabled = ref(false);
+            const modifier = createSequentialModifier(() => [
+                createMultiplicativeModifier(() => ({ multiplier: 5, enabled }))
+            ]);
+            const formula = modifier.getFormula(Formula.variable(value));
+            expect(formula.evaluate()).compare_tolerance(value.value);
+            enabled.value = true;
+            expect(formula.evaluate()).not.compare_tolerance(value.value);
         });
     });
 

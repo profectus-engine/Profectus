@@ -4,7 +4,7 @@ import { jsx } from "features/feature";
 import settings from "game/settings";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { formatSmall } from "util/bignum";
-import type { WithRequired } from "util/common";
+import type { RequiredKeys, WithRequired } from "util/common";
 import type { Computable, ProcessedComputable } from "util/computed";
 import { convertComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
@@ -38,16 +38,11 @@ export interface Modifier {
     description?: ProcessedComputable<CoercableComponent>;
 }
 
-/**
- * Utility type used to narrow down a modifier type that will have a description and/or enabled property based on optional parameters, T and S (respectively).
- */
-export type ModifierFromOptionalParams<T, S> = undefined extends T
-    ? undefined extends S
-        ? Omit<WithRequired<Modifier, "invert" | "getFormula">, "description" | "enabled">
-        : Omit<WithRequired<Modifier, "invert" | "enabled" | "getFormula">, "description">
-    : undefined extends S
-    ? Omit<WithRequired<Modifier, "invert" | "description" | "getFormula">, "enabled">
-    : WithRequired<Modifier, "invert" | "enabled" | "description" | "getFormula">;
+/** Utility type that represents the output of all modifiers that represent a single operation. */
+export type OperationModifier<T> = WithRequired<
+    Modifier,
+    "invert" | "getFormula" | Extract<RequiredKeys<T>, keyof Modifier>
+>;
 
 /** An object that configures an additive modifier via {@link createAdditiveModifier}. */
 export interface AdditiveModifierOptions {
@@ -65,9 +60,9 @@ export interface AdditiveModifierOptions {
  * Create a modifier that adds some value to the input value.
  * @param optionsFunc Additive modifier options.
  */
-export function createAdditiveModifier<T extends AdditiveModifierOptions>(
+export function createAdditiveModifier<T extends AdditiveModifierOptions, S = OperationModifier<T>>(
     optionsFunc: OptionsFunc<T>
-): ModifierFromOptionalParams<T["description"], T["enabled"]> {
+) {
     return createLazyProxy(feature => {
         const { addend, description, enabled, smallerIsBetter } = optionsFunc.call(
             feature,
@@ -111,7 +106,7 @@ export function createAdditiveModifier<T extends AdditiveModifierOptions>(
                           </div>
                       ))
         };
-    }) as unknown as ModifierFromOptionalParams<T["description"], T["enabled"]>;
+    }) as S;
 }
 
 /** An object that configures an multiplicative modifier via {@link createMultiplicativeModifier}. */
@@ -130,9 +125,10 @@ export interface MultiplicativeModifierOptions {
  * Create a modifier that multiplies the input value by some value.
  * @param optionsFunc Multiplicative modifier options.
  */
-export function createMultiplicativeModifier<T extends MultiplicativeModifierOptions>(
-    optionsFunc: OptionsFunc<T>
-): ModifierFromOptionalParams<T["description"], T["enabled"]> {
+export function createMultiplicativeModifier<
+    T extends MultiplicativeModifierOptions,
+    S = OperationModifier<T>
+>(optionsFunc: OptionsFunc<T>) {
     return createLazyProxy(feature => {
         const { multiplier, description, enabled, smallerIsBetter } = optionsFunc.call(
             feature,
@@ -175,7 +171,7 @@ export function createMultiplicativeModifier<T extends MultiplicativeModifierOpt
                           </div>
                       ))
         };
-    }) as unknown as ModifierFromOptionalParams<T["description"], T["enabled"]>;
+    }) as S;
 }
 
 /** An object that configures an exponential modifier via {@link createExponentialModifier}. */
@@ -196,9 +192,10 @@ export interface ExponentialModifierOptions {
  * Create a modifier that raises the input value to the power of some value.
  * @param optionsFunc Exponential modifier options.
  */
-export function createExponentialModifier<T extends ExponentialModifierOptions>(
-    optionsFunc: OptionsFunc<T>
-): ModifierFromOptionalParams<T["description"], T["enabled"]> {
+export function createExponentialModifier<
+    T extends ExponentialModifierOptions,
+    S = OperationModifier<T>
+>(optionsFunc: OptionsFunc<T>) {
     return createLazyProxy(feature => {
         const { exponent, description, enabled, supportLowNumbers, smallerIsBetter } =
             optionsFunc.call(feature, feature);
@@ -263,7 +260,7 @@ export function createExponentialModifier<T extends ExponentialModifierOptions>(
                           </div>
                       ))
         };
-    }) as unknown as ModifierFromOptionalParams<T["description"], T["enabled"]>;
+    }) as S;
 }
 
 /**
@@ -274,11 +271,9 @@ export function createExponentialModifier<T extends ExponentialModifierOptions>(
  * @see {@link createModifierSection}.
  */
 export function createSequentialModifier<
-    T extends Modifier[],
-    S = T extends WithRequired<Modifier, "invert">[]
-        ? WithRequired<Modifier, "description" | "invert">
-        : Omit<WithRequired<Modifier, "description">, "invert">
->(modifiersFunc: () => T): S {
+    T extends Modifier,
+    S = WithRequired<Modifier, Extract<RequiredKeys<T>, keyof Modifier>>
+>(modifiersFunc: () => T[]) {
     return createLazyProxy(() => {
         const modifiers = modifiersFunc();
 
@@ -296,17 +291,14 @@ export function createSequentialModifier<
                 : undefined,
             getFormula: modifiers.every(m => m.getFormula != null)
                 ? (gain: FormulaSource) =>
-                      modifiers.reduce(
-                          (acc, curr) =>
-                              Formula.if(
-                                  acc,
-                                  curr.enabled ?? true,
-                                  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                                  acc => curr.getFormula!(acc),
-                                  acc => acc
-                              ),
-                          gain
-                      )
+                      modifiers.reduce((acc, curr) => {
+                          if (curr.enabled == null || curr.enabled === true) {
+                              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                              return curr.getFormula!(acc);
+                          }
+                          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                          return Formula.if(acc, curr.enabled, acc => curr.getFormula!(acc));
+                      }, gain)
                 : undefined,
             enabled: modifiers.some(m => m.enabled != null)
                 ? computed(() => modifiers.filter(m => unref(m.enabled) !== false).length > 0)
@@ -324,7 +316,7 @@ export function createSequentialModifier<
                   ))
                 : undefined
         };
-    }) as unknown as S;
+    }) as S;
 }
 
 /** An object that configures a modifier section via {@link createModifierSection}. */
