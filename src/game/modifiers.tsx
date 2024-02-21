@@ -4,7 +4,7 @@ import { jsx } from "features/feature";
 import settings from "game/settings";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { formatSmall } from "util/bignum";
-import type { OmitOptional, OptionalKeys, RequiredKeys, WithRequired } from "util/common";
+import type { RequiredKeys, WithRequired } from "util/common";
 import type { Computable, ProcessedComputable } from "util/computed";
 import { convertComputable } from "util/computed";
 import { createLazyProxy } from "util/proxies";
