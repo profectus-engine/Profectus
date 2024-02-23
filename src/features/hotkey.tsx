@@ -99,16 +99,30 @@ document.onkeydown = function (e) {
     if (hasWon.value && !player.keepGoing) {
         return;
     }
-    let key = e.key;
-    if (uppercaseNumbers.includes(key)) {
-        key = "shift+" + uppercaseNumbers.indexOf(key);
+    const keysToCheck: string[] = [e.key];
+    if (e.shiftKey && e.ctrlKey) {
+        keysToCheck.splice(0, 1);
+        keysToCheck.push("ctrl+shift+" + e.key.toUpperCase());
+        keysToCheck.push("shift+ctrl+" + e.key.toUpperCase());
+        if (uppercaseNumbers.includes(e.key)) {
+            keysToCheck.push("ctrl+shift+" + uppercaseNumbers.indexOf(e.key));
+            keysToCheck.push("shift+ctrl+" + uppercaseNumbers.indexOf(e.key));
+        } else {
+            keysToCheck.push("ctrl+shift+" + e.key.toLowerCase());
+            keysToCheck.push("shift+ctrl+" + e.key.toLowerCase());
+        }
+    } else if (uppercaseNumbers.includes(e.key)) {
+        keysToCheck.push("shift+" + e.key);
+        keysToCheck.push("shift+" + uppercaseNumbers.indexOf(e.key));
     } else if (e.shiftKey) {
-        key = "shift+" + key;
+        keysToCheck.push("shift+" + e.key.toUpperCase());
+        keysToCheck.push("shift+" + e.key.toLowerCase());
+    } else if (e.ctrlKey) {
+        // remove e.key since the key doesn't change based on ctrl being held or not
+        keysToCheck.splice(0, 1);
+        keysToCheck.push("ctrl+" + e.key);
     }
-    if (e.ctrlKey) {
-        key = "ctrl+" + key;
-    }
-    const hotkey = hotkeys[key] ?? hotkeys[key.toLowerCase()];
+    const hotkey = hotkeys[keysToCheck.find(key => key in hotkeys) ?? ""];
     if (hotkey && unref(hotkey.enabled)) {
         e.preventDefault();
         hotkey.onPress();
