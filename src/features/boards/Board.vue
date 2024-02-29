@@ -1,278 +1,75 @@
 <template>
     <panZoom
-        v-if="isVisible(visibility)"
-        :style="[
-            {
-                width,
-                height
-            },
-            style
-        ]"
-        :class="classes"
-        selector=".g1"
+        selector=".stage"
         :options="{ initialZoom: 1, minZoom: 0.1, maxZoom: 10, zoomDoubleClickSpeed: 1 }"
         ref="stage"
         @init="onInit"
-        @mousemove="drag"
-        @touchmove="drag"
-        @mousedown="(e: MouseEvent) => mouseDown(e)"
-        @touchstart="(e: TouchEvent) => mouseDown(e)"
-        @mouseup="() => endDragging(unref(draggingNode))"
-        @touchend.passive="() => endDragging(unref(draggingNode))"
-        @mouseleave="() => endDragging(unref(draggingNode), true)"
+        @mousemove="(e: MouseEvent) => emit('drag', e)"
+        @touchmove="(e: TouchEvent) => emit('drag', e)"
+        @mouseleave="(e: MouseEvent) => emit('mouseLeave', e)"
+        @mouseup="(e: MouseEvent) => emit('mouseUp', e)"
+        @touchend.passive="(e: TouchEvent) => emit('mouseUp', e)"
     >
-        <svg class="stage" width="100%" height="100%">
-            <g class="g1">
-                <transition-group name="link" appear>
-                    <g
-                        v-for="link in unref(links) || []"
-                        :key="`${link.startNode.id}-${link.endNode.id}`"
-                    >
-                        <BoardLinkVue
-                            :link="link"
-                            :dragging="unref(draggingNode)"
-                            :dragged="
-                                link.startNode === unref(draggingNode) ||
-                                link.endNode === unref(draggingNode)
-                                    ? dragged
-                                    : undefined
-                            "
-                        />
-                    </g>
-                </transition-group>
-                <transition-group name="grow" :duration="500" appear>
-                    <g v-for="node in sortedNodes" :key="node.id" style="transition-duration: 0s">
-                        <BoardNodeVue
-                            :node="node"
-                            :nodeType="types[node.type]"
-                            :dragging="unref(draggingNode)"
-                            :dragged="unref(draggingNode) === node ? dragged : undefined"
-                            :hasDragged="unref(draggingNode) == null ? false : hasDragged"
-                            :receivingNode="unref(receivingNode) === node"
-                            :isSelected="unref(selectedNode) === node"
-                            :selectedAction="
-                                unref(selectedNode) === node ? unref(selectedAction) : null
-                            "
-                            @mouseDown="mouseDown"
-                            @endDragging="endDragging"
-                            @clickAction="(actionId: string) => clickAction(node, actionId)"
-                        />
-                    </g>
-                </transition-group>
-            </g>
-        </svg>
+        <div
+            class="event-listener"
+            @mousedown="(e: MouseEvent) => emit('mouseDown', e)"
+            @touchstart="(e: TouchEvent) => emit('mouseDown', e)"
+        />
+        <div class="stage">
+            <slot />
+        </div>
     </panZoom>
 </template>
 
 <script setup lang="ts">
-import type {
-    BoardData,
-    BoardNode,
-    BoardNodeLink,
-    GenericBoardNodeAction,
-    GenericNodeType
-} from "features/boards/board";
-import { getNodeProperty } from "features/boards/board";
-import type { StyleValue } from "features/feature";
-import { Visibility, isVisible } from "features/feature";
-import type { ProcessedComputable } from "util/computed";
-import { Ref, computed, ref, toRefs, unref, watchEffect } from "vue";
-import BoardLinkVue from "./BoardLink.vue";
-import BoardNodeVue from "./BoardNode.vue";
+import type { PanZoom } from "panzoom";
+import type { ComponentPublicInstance } from "vue";
+import { computed, ref } from "vue";
+// Required to make sure panzoom component gets registered:
+import "features/boards/board";
 
-const _props = defineProps<{
-    nodes: Ref<BoardNode[]>;
-    types: Record<string, GenericNodeType>;
-    state: Ref<BoardData>;
-    visibility: ProcessedComputable<Visibility | boolean>;
-    width?: ProcessedComputable<string>;
-    height?: ProcessedComputable<string>;
-    style?: ProcessedComputable<StyleValue>;
-    classes?: ProcessedComputable<Record<string, boolean>>;
-    links: Ref<BoardNodeLink[] | null>;
-    selectedAction: Ref<GenericBoardNodeAction | null>;
-    selectedNode: Ref<BoardNode | null>;
-    draggingNode: Ref<BoardNode | null>;
-    receivingNode: Ref<BoardNode | null>;
-    mousePosition: Ref<{ x: number; y: number } | null>;
-    setReceivingNode: (node: BoardNode | null) => void;
-    setDraggingNode: (node: BoardNode | null) => void;
+defineExpose({
+    panZoomInstance: computed(() => stage.value?.panZoomInstance)
+});
+const emit = defineEmits<{
+    (event: "drag", e: MouseEvent | TouchEvent): void;
+    (event: "mouseDown", e: MouseEvent | TouchEvent): void;
+    (event: "mouseUp", e: MouseEvent | TouchEvent): void;
+    (event: "mouseLeave", e: MouseEvent | TouchEvent): void;
 }>();
-const props = toRefs(_props);
 
-const lastMousePosition = ref({ x: 0, y: 0 });
-const dragged = ref({ x: 0, y: 0 });
-const hasDragged = ref(false);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const stage = ref<any>(null);
+const stage = ref<{ panZoomInstance: PanZoom } & ComponentPublicInstance<HTMLElement>>();
 
-const sortedNodes = computed(() => {
-    const nodes = props.nodes.value.slice();
-    if (props.selectedNode.value) {
-        const node = nodes.splice(nodes.indexOf(props.selectedNode.value), 1)[0];
-        nodes.push(node);
-    }
-    if (props.draggingNode.value) {
-        const node = nodes.splice(nodes.indexOf(props.draggingNode.value), 1)[0];
-        nodes.push(node);
-    }
-    return nodes;
-});
-
-watchEffect(() => {
-    const node = props.draggingNode.value;
-    if (node == null) {
-        return null;
-    }
-
-    const position = {
-        x: node.position.x + dragged.value.x,
-        y: node.position.y + dragged.value.y
-    };
-    let smallestDistance = Number.MAX_VALUE;
-
-    props.setReceivingNode.value(
-        props.nodes.value.reduce((smallest: BoardNode | null, curr: BoardNode) => {
-            if (curr.id === node.id) {
-                return smallest;
-            }
-            const nodeType = props.types.value[curr.type];
-            const canAccept = getNodeProperty(nodeType.canAccept, curr, node);
-            if (!canAccept) {
-                return smallest;
-            }
-
-            const distanceSquared =
-                Math.pow(position.x - curr.position.x, 2) +
-                Math.pow(position.y - curr.position.y, 2);
-            let size = getNodeProperty(nodeType.size, curr);
-            if (distanceSquared > smallestDistance || distanceSquared > size * size) {
-                return smallest;
-            }
-
-            smallestDistance = distanceSquared;
-            return curr;
-        }, null)
-    );
-});
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function onInit(panzoomInstance: any) {
+function onInit(panzoomInstance: PanZoom) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     panzoomInstance.setTransformOrigin(null);
-    panzoomInstance.moveTo(stage.value.$el.clientWidth / 2, stage.value.$el.clientHeight / 2);
-}
-
-function mouseDown(e: MouseEvent | TouchEvent, node: BoardNode | null = null, draggable = false) {
-    if (props.draggingNode.value == null) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        let clientX, clientY;
-        if ("touches" in e) {
-            if (e.touches.length === 1) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            } else {
-                return;
-            }
-        } else {
-            clientX = e.clientX;
-            clientY = e.clientY;
-        }
-        lastMousePosition.value = {
-            x: clientX,
-            y: clientY
-        };
-        dragged.value = { x: 0, y: 0 };
-        hasDragged.value = false;
-
-        if (draggable) {
-            props.setDraggingNode.value(node);
-        }
-    }
-    if (node != null) {
-        props.state.value.selectedNode = null;
-        props.state.value.selectedAction = null;
-    }
-}
-
-function drag(e: MouseEvent | TouchEvent) {
-    const { x, y, scale } = stage.value.panZoomInstance.getTransform();
-
-    let clientX, clientY;
-    if ("touches" in e) {
-        if (e.touches.length === 1) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-        } else {
-            endDragging(props.draggingNode.value);
-            props.mousePosition.value = null;
-            return;
-        }
-    } else {
-        clientX = e.clientX;
-        clientY = e.clientY;
-    }
-
-    props.mousePosition.value = {
-        x: (clientX - x) / scale,
-        y: (clientY - y) / scale
-    };
-
-    dragged.value = {
-        x: dragged.value.x + (clientX - lastMousePosition.value.x) / scale,
-        y: dragged.value.y + (clientY - lastMousePosition.value.y) / scale
-    };
-    lastMousePosition.value = {
-        x: clientX,
-        y: clientY
-    };
-
-    if (Math.abs(dragged.value.x) > 10 || Math.abs(dragged.value.y) > 10) {
-        hasDragged.value = true;
-    }
-
-    if (props.draggingNode.value != null) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-}
-
-function endDragging(node: BoardNode | null, mouseLeave = false) {
-    if (props.draggingNode.value != null && props.draggingNode.value === node) {
-        if (props.receivingNode.value == null) {
-            props.draggingNode.value.position.x += Math.round(dragged.value.x / 25) * 25;
-            props.draggingNode.value.position.y += Math.round(dragged.value.y / 25) * 25;
-        }
-
-        const nodes = props.nodes.value;
-        nodes.push(nodes.splice(nodes.indexOf(props.draggingNode.value), 1)[0]);
-
-        if (props.receivingNode.value) {
-            props.types.value[props.receivingNode.value.type].onDrop?.(
-                props.receivingNode.value,
-                props.draggingNode.value
-            );
-        }
-
-        props.setDraggingNode.value(null);
-    } else if (!hasDragged.value && !mouseLeave) {
-        props.state.value.selectedNode = null;
-        props.state.value.selectedAction = null;
-    }
-}
-
-function clickAction(node: BoardNode, actionId: string) {
-    if (props.state.value.selectedAction === actionId) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        unref(props.selectedAction)!.onClick(unref(props.selectedNode)!);
-    } else {
-        props.state.value = { ...props.state.value, selectedAction: actionId };
-    }
+    panzoomInstance.moveTo(0, stage.value?.$el.clientHeight / 2);
 }
 </script>
 
+<style scoped>
+.event-listener {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.stage {
+    transition-duration: 0s;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+</style>
+
 <style>
+.vue-pan-zoom-item {
+    overflow: hidden;
+}
+
 .vue-pan-zoom-scene {
     width: 100%;
     height: 100%;
@@ -283,12 +80,14 @@ function clickAction(node: BoardNode, actionId: string) {
     cursor: grabbing;
 }
 
-.g1 {
-    transition-duration: 0s;
+.stage > * {
+    pointer-events: initial;
 }
 
-.link-enter-from,
-.link-leave-to {
-    opacity: 0;
+/* "Only" child (excluding resize listener) */
+.layer-tab > .vue-pan-zoom-item:first-child:nth-last-child(2) {
+    width: calc(100% + 20px);
+    height: calc(100% + 100px);
+    margin: -50px -10px;
 }
 </style>

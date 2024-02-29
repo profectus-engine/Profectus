@@ -7,3 +7,12 @@
 .modifier-toggle.collapsed {
     transform: translate(-5px, -5px) rotate(-90deg);
 }
+
+.node-text {
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-family: monospace;
+    font-size: 200%;
+    pointer-events: none;
+    filter: drop-shadow(3px 3px 2px var(--tooltip-background));
+}
