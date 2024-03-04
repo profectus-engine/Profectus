@@ -160,7 +160,7 @@ export function setupDraggableNode<T>(options: {
         },
         drag: function (e: MouseEvent | TouchEvent) {
             const panZoomInstance = options.board.value?.panZoomInstance as PanZoom | undefined;
-            if (panZoomInstance == null) {
+            if (panZoomInstance == null || nodeBeingDragged.value == null) {
                 return;
             }
 
@@ -199,10 +199,8 @@ export function setupDraggableNode<T>(options: {
                 hasDragged.value = true;
             }
 
-            if (nodeBeingDragged.value != null) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
+            e.preventDefault();
+            e.stopPropagation();
         }
     };
     return result;
