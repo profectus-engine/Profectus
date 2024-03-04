@@ -4,6 +4,7 @@ import SVGNode from "features/boards/SVGNode.vue";
 import SquareProgress from "features/boards/SquareProgress.vue";
 import {
     NodePosition,
+    makeDraggable,
     placeInAvailableSpace,
     setupActions,
     setupDraggableNode,
@@ -11,24 +12,29 @@ import {
     setupUniqueIds
 } from "features/boards/board";
 import { jsx } from "features/feature";
+import { createResource } from "features/resources/resource";
+import { createUpgrade } from "features/upgrades/upgrade";
 import type { BaseLayer, GenericLayer } from "game/layers";
 import { createLayer } from "game/layers";
-import { persistent } from "game/persistence";
+import { Persistent, persistent } from "game/persistence";
 import type { Player } from "game/player";
+import { createCostRequirement } from "game/requirements";
+import { render } from "util/vue";
 import { ComponentPublicInstance, computed, ref, watch } from "vue";
-import prestige from "./layers/prestige";
-
-type ANode = NodePosition & { id: number; links: number[]; type: "anode" };
-type BNode = NodePosition & { id: number; links: number[]; type: "bnode" };
-type NodeTypes = ANode | BNode;
+import "./common.css";
 
 /**
  * @hidden
  */
 export const main = createLayer("main", function (this: BaseLayer) {
+    type ANode = NodePosition & { id: number; links: number[]; type: "anode" };
+    type BNode = NodePosition & { id: number; links: number[]; type: "bnode" };
+    type CNode = typeof cNode & { position: Persistent<NodePosition> };
+    type NodeTypes = ANode | BNode;
+
     const board = ref<ComponentPublicInstance<typeof Board>>();
 
-    const { select, deselect, selected } = setupSelectable<NodeTypes>();
+    const { select, deselect, selected } = setupSelectable<number>();
     const {
         select: selectAction,
         deselect: deselectAction,
@@ -50,10 +56,15 @@ export const main = createLayer("main", function (this: BaseLayer) {
         receivingNodes,
         receivingNode,
         dragDelta
-    } = setupDraggableNode<NodeTypes /* | typeof cNode*/>({
+    } = setupDraggableNode<number | "cnode">({
         board,
-        isDraggable: function (node) {
-            return nodes.value.includes(node);
+        getPosition(id) {
+            return nodesById.value[id] ?? (cNode as CNode).position.value;
+        },
+        setPosition(id, position) {
+            const node = nodesById.value[id] ?? (cNode as CNode).position.value;
+            node.x = position.x;
+            node.y = position.y;
         }
     });
 
@@ -64,26 +75,26 @@ export const main = createLayer("main", function (this: BaseLayer) {
     // c node also exists but is a single Upgrade element that cannot be selected, but can be dragged
     // d nodes are a performance test - 1000 simple nodes that have no interactions
     // Make all nodes animate in (decorator? `fadeIn(feature)?)
-    const nodes = persistent<NodeTypes[]>([{ id: 0, x: 0, y: 0, links: [], type: "anode" }]);
+    const nodes = persistent<(ANode | BNode)[]>([{ id: 0, x: 0, y: 0, links: [], type: "anode" }]);
     const nodesById = computed<Record<string, NodeTypes>>(() =>
         nodes.value.reduce((acc, curr) => ({ ...acc, [curr.id]: curr }), {})
     );
     function mouseDownNode(e: MouseEvent | TouchEvent, node: NodeTypes) {
         if (nodeBeingDragged.value == null) {
-            startDrag(e, node);
+            startDrag(e, node.id);
         }
         deselect();
     }
     function mouseUpNode(e: MouseEvent | TouchEvent, node: NodeTypes) {
         if (!hasDragged.value) {
             endDrag();
-            select(node);
+            if (typeof node.id === "number") {
+                select(node.id);
+            }
             e.stopPropagation();
         }
     }
-    function getTranslateString(node: NodePosition, overrideSelected?: boolean) {
-        const isSelected = overrideSelected == null ? selected.value === node : overrideSelected;
-        const isDragging = !isSelected && nodeBeingDragged.value === node;
+    function getTranslateString(node: NodePosition, isDragging: boolean) {
         let x = node.x;
         let y = node.y;
         if (isDragging) {
@@ -95,13 +106,13 @@ export const main = createLayer("main", function (this: BaseLayer) {
     function getRotateString(rotation: number) {
         return ` rotate(${rotation}deg) `;
     }
-    function getScaleString(node: NodePosition, overrideSelected?: boolean) {
-        const isSelected = overrideSelected == null ? selected.value === node : overrideSelected;
+    function getScaleString(nodeOrBool: NodeTypes | boolean) {
+        const isSelected =
+            typeof nodeOrBool === "boolean" ? nodeOrBool : selected.value === nodeOrBool.id;
         return isSelected ? " scale(1.2)" : "";
     }
-    function getOpacityString(node: NodePosition, overrideSelected?: boolean) {
-        const isSelected = overrideSelected == null ? selected.value === node : overrideSelected;
-        const isDragging = !isSelected && nodeBeingDragged.value === node;
+    function getOpacityString(node: NodeTypes) {
+        const isDragging = selected.value !== node.id && nodeBeingDragged.value === node.id;
         if (isDragging) {
             return "; opacity: 0.5;";
         }
@@ -111,16 +122,19 @@ export const main = createLayer("main", function (this: BaseLayer) {
     const renderANode = function (node: ANode) {
         return (
             <SVGNode
-                style={`transform: ${getTranslateString(node)}${getOpacityString(node)}`}
+                style={`transform: ${getTranslateString(
+                    node,
+                    selected.value === node.id && nodeBeingDragged.value === node.id
+                )}${getOpacityString(node)}`}
                 onMouseDown={e => mouseDownNode(e, node)}
                 onMouseUp={e => mouseUpNode(e, node)}
             >
-                <g style={`transform: ${getScaleString(node)}; transition-duration: 0s`}>
-                    {receivingNodes.value.includes(node) && (
+                <g style={`transform: ${getScaleString(node)}`}>
+                    {receivingNodes.value.includes(node.id) && (
                         <circle
                             r="58"
                             fill="var(--background)"
-                            stroke={receivingNode.value === node ? "#0F0" : "#0F03"}
+                            stroke={receivingNode.value === node.id ? "#0F0" : "#0F03"}
                             stroke-width="2"
                         />
                     )}
@@ -132,7 +146,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
                         stroke-width="4"
                     />
                 </g>
-                {selected.value === node && selectedAction.value === 0 && (
+                {selected.value === node.id && selectedAction.value === 0 && (
                     <text y="140" fill="var(--foreground)" class="node-text">
                         Spawn B Node
                     </text>
@@ -144,8 +158,8 @@ export const main = createLayer("main", function (this: BaseLayer) {
         );
     };
     const aActions = setupActions({
-        node: selected,
-        shouldShowActions: () => selected.value?.type === "anode",
+        node: () => nodesById.value[selected.value ?? ""],
+        shouldShowActions: node => node.type === "anode",
         actions(node) {
             return [
                 p => (
@@ -153,10 +167,10 @@ export const main = createLayer("main", function (this: BaseLayer) {
                         style={`transform: ${getTranslateString(
                             p,
                             selectedAction.value === 0
-                        )}${getScaleString(p, selectedAction.value === 0)}`}
+                        )}${getScaleString(selectedAction.value === 0)}`}
                         onClick={() => {
                             if (selectedAction.value === 0) {
-                                spawnBNode(node);
+                                spawnBNode(node as ANode);
                             } else {
                                 selectAction(0);
                             }
@@ -176,16 +190,15 @@ export const main = createLayer("main", function (this: BaseLayer) {
     const renderBNode = function (node: BNode) {
         return (
             <SVGNode
-                style={`transform: ${getTranslateString(node)}${getOpacityString(node)}`}
+                style={`transform: ${getTranslateString(
+                    node,
+                    selected.value === node.id && nodeBeingDragged.value === node.id
+                )}${getOpacityString(node)}`}
                 onMouseDown={e => mouseDownNode(e, node)}
                 onMouseUp={e => mouseUpNode(e, node)}
             >
-                <g
-                    style={`transform: ${getScaleString(node)}${getRotateString(
-                        45
-                    )}; transition-duration: 0s`}
-                >
-                    {receivingNodes.value.includes(node) && (
+                <g style={`transform: ${getScaleString(node)}${getRotateString(45)}`}>
+                    {receivingNodes.value.includes(node.id) && (
                         <rect
                             width={50 * sqrtTwo + 16}
                             height={50 * sqrtTwo + 16}
@@ -193,7 +206,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
                                 (-50 * sqrtTwo + 16) / 2
                             })`}
                             fill="var(--background)"
-                            stroke={receivingNode.value === node ? "#0F0" : "#0F03"}
+                            stroke={receivingNode.value === node.id ? "#0F0" : "#0F03"}
                             stroke-width="2"
                         />
                     )}
@@ -213,7 +226,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
                         stroke-width="4"
                     />
                 </g>
-                {selected.value === node && selectedAction.value === 0 && (
+                {selected.value === node.id && selectedAction.value === 0 && (
                     <text y="140" fill="var(--foreground)" class="node-text">
                         Spawn A Node
                     </text>
@@ -225,8 +238,8 @@ export const main = createLayer("main", function (this: BaseLayer) {
         );
     };
     const bActions = setupActions({
-        node: selected,
-        shouldShowActions: () => selected.value?.type === "bnode",
+        node: () => nodesById.value[selected.value ?? ""],
+        shouldShowActions: node => node.type === "bnode",
         actions(node) {
             return [
                 p => (
@@ -234,10 +247,10 @@ export const main = createLayer("main", function (this: BaseLayer) {
                         style={`transform: ${getTranslateString(
                             p,
                             selectedAction.value === 0
-                        )}${getScaleString(p, selectedAction.value === 0)}`}
+                        )}${getScaleString(selectedAction.value === 0)}`}
                         onClick={() => {
                             if (selectedAction.value === 0) {
-                                spawnANode(node);
+                                spawnANode(node as BNode);
                             } else {
                                 selectAction(0);
                             }
@@ -253,7 +266,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
         },
         distance: 100
     });
-    function spawnANode(parent: NodeTypes) {
+    function spawnANode(parent: ANode | BNode) {
         const node: ANode = {
             x: parent.x,
             y: parent.y,
@@ -264,7 +277,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
         placeInAvailableSpace(node, nodes.value);
         nodes.value.push(node);
     }
-    function spawnBNode(parent: NodeTypes) {
+    function spawnBNode(parent: ANode | BNode) {
         const node: BNode = {
             x: parent.x,
             y: parent.y,
@@ -276,14 +289,29 @@ export const main = createLayer("main", function (this: BaseLayer) {
         nodes.value.push(node);
     }
 
-    // const cNode = createUpgrade(() => ({
-    //     requirements: createCostRequirement(() => ({ cost: 10, resource: points })),
-    //     style: {
-    //         x: "100px",
-    //         y: "100px"
-    //     }
-    // }));
-    // makeDraggable(cNode); // TODO make decorator
+    const points = createResource(10);
+    const cNode = createUpgrade(() => ({
+        display: "<h1>C</h1>",
+        // Purposefully not using noPersist
+        requirements: createCostRequirement(() => ({ cost: 10, resource: points })),
+        style: {
+            x: "100px",
+            y: "100px"
+        }
+    }));
+    makeDraggable(cNode, {
+        id: "cnode",
+        endDrag,
+        startDrag,
+        hasDragged,
+        nodeBeingDragged,
+        dragDelta,
+        onMouseUp() {
+            if (!hasDragged.value) {
+                cNode.purchase();
+            }
+        }
+    });
 
     // const dNodes;
 
@@ -302,22 +330,22 @@ export const main = createLayer("main", function (this: BaseLayer) {
                         stroke="white"
                         stroke-width={4}
                         x1={
-                            nodeBeingDragged.value === link.from
+                            nodeBeingDragged.value === link.from.id
                                 ? dragDelta.value.x + link.from.x
                                 : link.from.x
                         }
                         y1={
-                            nodeBeingDragged.value === link.from
+                            nodeBeingDragged.value === link.from.id
                                 ? dragDelta.value.y + link.from.y
                                 : link.from.y
                         }
                         x2={
-                            nodeBeingDragged.value === link.to
+                            nodeBeingDragged.value === link.to.id
                                 ? dragDelta.value.x + link.to.x
                                 : link.to.x
                         }
                         y2={
-                            nodeBeingDragged.value === link.to
+                            nodeBeingDragged.value === link.to.id
                                 ? dragDelta.value.y + link.to.y
                                 : link.to.y
                         }
@@ -328,22 +356,30 @@ export const main = createLayer("main", function (this: BaseLayer) {
 
     const nextId = setupUniqueIds(() => nodes.value);
 
-    function filterNodes(n: NodeTypes) {
+    function filterNodes(n: number | "cnode") {
         return n !== nodeBeingDragged.value && n !== selected.value;
     }
 
-    function renderNode(node: NodeTypes | undefined) {
-        if (node == undefined) {
+    function renderNodeById(id: number | "cnode" | undefined) {
+        if (id == null) {
             return undefined;
-        } else if (node.type === "anode") {
+        }
+        return renderNode(nodesById.value[id] ?? cNode);
+    }
+
+    function renderNode(node: NodeTypes | typeof cNode) {
+        if (node.type === "anode") {
             return renderANode(node);
         } else if (node.type === "bnode") {
             return renderBNode(node);
+        } else {
+            return render(node);
         }
     }
 
     return {
         name: "Tree",
+        color: "var(--accent1)",
         display: jsx(() => (
             <>
                 <Board
@@ -354,18 +390,20 @@ export const main = createLayer("main", function (this: BaseLayer) {
                     ref={board}
                 >
                     <SVGNode>{links()}</SVGNode>
-                    {nodes.value.filter(filterNodes).map(renderNode)}
+                    {nodes.value.filter(n => filterNodes(n.id)).map(renderNode)}
+                    {filterNodes("cnode") && render(cNode)}
                     <SVGNode>
                         {aActions()}
                         {bActions()}
                     </SVGNode>
-                    {renderNode(selected.value)}
-                    {renderNode(nodeBeingDragged.value)}
+                    {renderNodeById(selected.value)}
+                    {renderNodeById(nodeBeingDragged.value)}
                 </Board>
             </>
         )),
-        boardNodes: nodes
-        // cNode
+        boardNodes: nodes,
+        cNode,
+        selected: persistent(selected)
     };
 });
 
@@ -376,7 +414,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
 export const getInitialLayers = (
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     player: Partial<Player>
-): Array<GenericLayer> => [main, prestige];
+): Array<GenericLayer> => [main];
 
 /**
  * A computed ref whose value is true whenever the game is over.
