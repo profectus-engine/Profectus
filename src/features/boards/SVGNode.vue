@@ -23,5 +23,6 @@ svg {
     cursor: pointer;
     transition-duration: 0s;
     overflow: visible;
+    position: absolute;
 }
 </style>
