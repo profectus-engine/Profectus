@@ -309,7 +309,8 @@ export const main = createLayer("main", function (this: BaseLayer) {
         requirements: createCostRequirement(() => ({ cost: 10, resource: points })),
         style: {
             x: "100px",
-            y: "100px"
+            y: "100px",
+            pointerEvents: "none"
         }
     }));
     makeDraggable(cNode, {
