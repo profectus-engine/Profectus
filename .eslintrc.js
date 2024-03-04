@@ -27,6 +27,13 @@ module.exports = {
                 allowNullableObject: true,
                 allowNullableBoolean: true
             }
+        ],
+        "eqeqeq": [
+            "error",
+            "always",
+            {
+                "null": "never"
+            }
         ]
     },
     globals: {

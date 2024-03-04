@@ -64,7 +64,8 @@ export default window.player = player;
 
 /** Convert a player save data object into a JSON string. Unwraps refs. */
 export function stringifySave(player: Player): string {
-    return JSON.stringify(player, (key, value) => unref(value));
+    // Convert undefineds into nulls for proper parsing
+    return JSON.stringify(player, (key, value) => unref(value) ?? null);
 }
 
 declare global {

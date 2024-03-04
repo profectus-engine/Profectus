@@ -62,6 +62,8 @@ export type State =
     | number
     | boolean
     | DecimalSource
+    | null
+    | undefined
     | { [key: string]: State }
     | { [key: number]: State };
 
@@ -227,7 +229,7 @@ export function noPersist<T extends Persistent<S>, S extends State>(persistent: 
                   if (key === PersistentState) {
                       return false;
                   }
-                  if (key == SkipPersistence) {
+                  if (key === SkipPersistence) {
                       return true;
                   }
                   return Reflect.has(target, key);
@@ -279,7 +281,7 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
                     // Handle SaveDataPath
                     const newPath = [layer.id, ...path, key];
                     if (
-                        value[SaveDataPath] != undefined &&
+                        value[SaveDataPath] != null &&
                         JSON.stringify(newPath) !== JSON.stringify(value[SaveDataPath])
                     ) {
                         console.error(

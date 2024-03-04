@@ -119,7 +119,7 @@ export async function loadSave(playerObj: Partial<Player>): Promise<void> {
         playerObj.time &&
         playerObj.devSpeed !== 0
     ) {
-        if (playerObj.offlineTime == undefined) playerObj.offlineTime = 0;
+        if (playerObj.offlineTime == null) playerObj.offlineTime = 0;
         playerObj.offlineTime += Math.min(
             playerObj.offlineTime + (Date.now() - playerObj.time) / 1000,
             projInfo.offlineLimit * 3600
