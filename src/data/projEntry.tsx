@@ -313,6 +313,21 @@ export const main = createLayer("main", function (this: BaseLayer) {
         }
     });
 
+    const dNodesPerAxis = 50;
+    const dNodes = jsx(() =>
+        new Array(dNodesPerAxis * dNodesPerAxis).fill(0).map((_, i) => {
+            const x = (Math.floor(i / dNodesPerAxis) - dNodesPerAxis / 2) * 100;
+            const y = ((i % dNodesPerAxis) - dNodesPerAxis / 2) * 100;
+            return (
+                <path
+                    fill="var(--bought)"
+                    style={`transform: translate(${x}px, ${y}px) scale(0.05)`}
+                    d="M62.43,122.88h-1.98c0-16.15-6.04-30.27-18.11-42.34C30.27,68.47,16.16,62.43,0,62.43v-1.98 c16.16,0,30.27-6.04,42.34-18.14C54.41,30.21,60.45,16.1,60.45,0h1.98c0,16.15,6.04,30.27,18.11,42.34 c12.07,12.07,26.18,18.11,42.34,18.11v1.98c-16.15,0-30.27,6.04-42.34,18.11C68.47,92.61,62.43,106.72,62.43,122.88L62.43,122.88z"
+                />
+            );
+        })
+    );
+
     // const dNodes;
 
     const links = jsx(() => (
@@ -389,7 +404,10 @@ export const main = createLayer("main", function (this: BaseLayer) {
                     onMouseLeave={endDrag}
                     ref={board}
                 >
-                    <SVGNode>{links()}</SVGNode>
+                    <SVGNode>
+                        {dNodes()}
+                        {links()}
+                    </SVGNode>
                     {nodes.value.filter(n => filterNodes(n.id)).map(renderNode)}
                     {filterNodes("cnode") && render(cNode)}
                     <SVGNode>
