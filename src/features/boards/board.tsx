@@ -1,12 +1,15 @@
 import Board from "features/boards/Board.vue";
-import { jsx } from "features/feature";
+import Draggable from "features/boards/Draggable.vue";
+import { Component, GatherProps, GenericComponent, jsx } from "features/feature";
 import { globalBus } from "game/events";
+import { Persistent, persistent } from "game/persistence";
 import type { PanZoom } from "panzoom";
 import { Direction, isFunction } from "util/common";
 import type { Computable, ProcessedComputable } from "util/computed";
 import { convertComputable } from "util/computed";
+import { VueFeature } from "util/vue";
 import type { ComponentPublicInstance, Ref } from "vue";
-import { computed, ref, unref, watchEffect } from "vue";
+import { computed, nextTick, ref, unref, watchEffect } from "vue";
 import panZoom from "vue-panzoom";
 
 globalBus.on("setupVue", app => panZoom.install(app));
@@ -53,20 +56,20 @@ export function setupSelectable<T>() {
     };
 }
 
-export function setupDraggableNode<T extends NodePosition, S extends NodePosition = T>(options: {
+export function setupDraggableNode<T>(options: {
     board: Ref<ComponentPublicInstance<typeof Board> | undefined>;
-    receivingNodes?: NodeComputable<T, S[]>;
-    dropAreaRadius?: NodeComputable<S, number>;
-    isDraggable?: NodeComputable<T, boolean>;
-    onDrop?: (acceptingNode: S, draggingNode: T) => void;
+    getPosition: (node: T) => NodePosition;
+    setPosition: (node: T, position: NodePosition) => void;
+    receivingNodes?: NodeComputable<T, T[]>;
+    dropAreaRadius?: NodeComputable<T, number>;
+    onDrop?: (acceptingNode: T, draggingNode: T) => void;
 }) {
     const nodeBeingDragged = ref<T>();
-    const receivingNode = ref<S>();
+    const receivingNode = ref<T>();
     const hasDragged = ref(false);
     const mousePosition = ref<NodePosition>();
     const lastMousePosition = ref({ x: 0, y: 0 });
     const dragDelta = ref({ x: 0, y: 0 });
-    const isDraggable = options.isDraggable ?? true;
     const receivingNodes = computed(() =>
         nodeBeingDragged.value == null
             ? []
@@ -76,30 +79,25 @@ export function setupDraggableNode<T extends NodePosition, S extends NodePositio
     const dropAreaRadius = options.dropAreaRadius ?? 50;
 
     watchEffect(() => {
-        if (nodeBeingDragged.value != null && !unwrapNodeRef(isDraggable, nodeBeingDragged.value)) {
-            result.endDrag();
-        }
-    });
-
-    watchEffect(() => {
         const node = nodeBeingDragged.value;
         if (node == null) {
             return null;
         }
 
+        const originalPosition = options.getPosition(node);
         const position = {
-            x: node.x + dragDelta.value.x,
-            y: node.y + dragDelta.value.y
+            x: originalPosition.x + dragDelta.value.x,
+            y: originalPosition.y + dragDelta.value.y
         };
         let smallestDistance = Number.MAX_VALUE;
 
-        receivingNode.value = unref(receivingNodes).reduce((smallest: S | undefined, curr: S) => {
-            if ((curr as S | T) === node) {
+        receivingNode.value = unref(receivingNodes).reduce((smallest: T | undefined, curr: T) => {
+            if ((curr as T) === node) {
                 return smallest;
             }
 
-            const distanceSquared =
-                Math.pow(position.x - curr.x, 2) + Math.pow(position.y - curr.y, 2);
+            const { x, y } = options.getPosition(curr);
+            const distanceSquared = Math.pow(position.x - x, 2) + Math.pow(position.y - y, 2);
             const size = unwrapNodeRef(dropAreaRadius, curr);
             if (distanceSquared > smallestDistance || distanceSquared > size * size) {
                 return smallest;
@@ -118,7 +116,7 @@ export function setupDraggableNode<T extends NodePosition, S extends NodePositio
         lastMousePosition,
         dragDelta,
         receivingNodes,
-        startDrag: function (e: MouseEvent | TouchEvent, node?: T) {
+        startDrag: function (e: MouseEvent | TouchEvent, node: T) {
             e.preventDefault();
             e.stopPropagation();
 
@@ -141,17 +139,17 @@ export function setupDraggableNode<T extends NodePosition, S extends NodePositio
             dragDelta.value = { x: 0, y: 0 };
             hasDragged.value = false;
 
-            if (node != null && unwrapNodeRef(isDraggable, node)) {
-                nodeBeingDragged.value = node;
-            }
+            nodeBeingDragged.value = node;
         },
         endDrag: function () {
             if (nodeBeingDragged.value == null) {
                 return;
             }
             if (receivingNode.value == null) {
-                nodeBeingDragged.value.x += Math.round(dragDelta.value.x / 25) * 25;
-                nodeBeingDragged.value.y += Math.round(dragDelta.value.y / 25) * 25;
+                const { x, y } = options.getPosition(nodeBeingDragged.value);
+                const newX = x + Math.round(dragDelta.value.x / 25) * 25;
+                const newY = y + Math.round(dragDelta.value.y / 25) * 25;
+                options.setPosition(nodeBeingDragged.value, { x: newX, y: newY });
             }
 
             if (receivingNode.value != null) {
@@ -208,6 +206,64 @@ export function setupDraggableNode<T extends NodePosition, S extends NodePositio
         }
     };
     return result;
+}
+
+export function makeDraggable<T extends VueFeature, S>(
+    element: T,
+    options: {
+        id: S;
+        nodeBeingDragged: Ref<S | undefined>;
+        hasDragged: Ref<boolean>;
+        dragDelta: Ref<NodePosition>;
+        startDrag: (e: MouseEvent | TouchEvent, id: S) => void;
+        endDrag: VoidFunction;
+        onMouseDown?: (e: MouseEvent | TouchEvent) => boolean | void;
+        onMouseUp?: (e: MouseEvent | TouchEvent) => boolean | void;
+        initialPosition?: NodePosition;
+    }
+): asserts element is T & { position: Persistent<NodePosition> } {
+    const position = persistent(options.initialPosition ?? { x: 0, y: 0 });
+    (element as T & { position: Persistent<NodePosition> }).position = position;
+    const computedPosition = computed(() => {
+        if (options.nodeBeingDragged.value === options.id) {
+            return {
+                x: position.value.x + options.dragDelta.value.x,
+                y: position.value.y + options.dragDelta.value.y
+            };
+        }
+        return position.value;
+    });
+
+    function handleMouseDown(e: MouseEvent | TouchEvent) {
+        if (options.onMouseDown?.(e) === false) {
+            return;
+        }
+
+        if (options.nodeBeingDragged.value == null) {
+            options.startDrag(e, options.id);
+        }
+    }
+
+    function handleMouseUp(e: MouseEvent | TouchEvent) {
+        options.onMouseUp?.(e);
+    }
+
+    nextTick(() => {
+        const elementComponent = element[Component];
+        const elementGatherProps = element[GatherProps].bind(element);
+        element[Component] = Draggable as GenericComponent;
+        element[GatherProps] = function gatherTooltipProps(this: typeof options) {
+            return {
+                element: {
+                    [Component]: elementComponent,
+                    [GatherProps]: elementGatherProps
+                },
+                mouseDown: handleMouseDown,
+                mouseUp: handleMouseUp,
+                position: computedPosition
+            };
+        }.bind(options);
+    });
 }
 
 export function setupActions<T extends NodePosition>(options: {
