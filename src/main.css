@@ -66,3 +66,7 @@ ul {
 .Vue-Toastification__toast {
 	margin: unset;
 }
+
+:disabled {
+	pointer-events: none;
+}
