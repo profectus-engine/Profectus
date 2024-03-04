@@ -108,7 +108,7 @@ document.onkeydown = function (e) {
     if (e.ctrlKey) {
         key = "ctrl+" + key;
     }
-    const hotkey = hotkeys[key];
+    const hotkey = hotkeys[key] ?? hotkeys[key.toLowerCase()];
     if (hotkey && unref(hotkey.enabled)) {
         e.preventDefault();
         hotkey.onPress();
