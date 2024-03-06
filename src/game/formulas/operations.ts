@@ -552,7 +552,9 @@ export function tetrate(
 export function invertTetrate(
     value: DecimalSource,
     base: FormulaSource,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     height: FormulaSource,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     payload: FormulaSource
 ) {
     if (hasVariable(base)) {
@@ -576,6 +578,7 @@ export function invertIteratedExp(
     value: DecimalSource,
     lhs: FormulaSource,
     height: FormulaSource,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     payload: FormulaSource
 ) {
     if (hasVariable(lhs)) {
@@ -626,6 +629,7 @@ export function invertLayeradd(
     value: DecimalSource,
     lhs: FormulaSource,
     diff: FormulaSource,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     base: FormulaSource
 ) {
     if (hasVariable(lhs)) {

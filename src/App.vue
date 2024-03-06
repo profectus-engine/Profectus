@@ -19,7 +19,7 @@ import Error from "components/Error.vue";
 import { jsx } from "features/feature";
 import state from "game/state";
 import { coerceComponent, render } from "util/vue";
-import { CSSProperties, watch } from "vue";
+import { CSSProperties } from "vue";
 import { computed, toRef, unref } from "vue";
 import Game from "./components/Game.vue";
 import GameOverScreen from "./components/GameOverScreen.vue";

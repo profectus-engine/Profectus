@@ -222,7 +222,9 @@ export function createCostRequirement<T extends CostRequirementOptions>(
                 Decimal.gte(
                     req.resource.value,
                     unref(req.cost as ProcessedComputable<DecimalSource>)
-                ) ? 1 : 0
+                )
+                    ? 1
+                    : 0
             );
         }
 

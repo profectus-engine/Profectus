@@ -1,6 +1,6 @@
 import type { CoercableComponent, GenericComponent, Replace, StyleValue } from "features/feature";
 import { Component, GatherProps, setDefault } from "features/feature";
-import { deletePersistent, Persistent, persistent } from "game/persistence";
+import { persistent } from "game/persistence";
 import { Direction } from "util/common";
 import type {
     Computable,

@@ -9,7 +9,9 @@
     "preview": "vite preview",
     "test": "vitest run",
     "testw": "vitest",
-    "serve": "vite preview --host"
+    "serve": "vite preview --host",
+    "lint": "eslint src --max-warnings 0",
+    "lint:fix": "eslint --fix --max-warnings 0 src"
   },
   "dependencies": {
     "@fontsource/material-icons": "^4.5.4",

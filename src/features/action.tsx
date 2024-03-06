@@ -31,7 +31,7 @@ import { coerceComponent, isCoercableComponent, render } from "util/vue";
 import { computed, Ref, ref, unref } from "vue";
 import { BarOptions, createBar, GenericBar } from "./bars/bar";
 import { ClickableOptions } from "./clickables/clickable";
-import { Decorator, GenericDecorator } from "./decorators/common";
+import { GenericDecorator } from "./decorators/common";
 
 /** A symbol used to identify {@link Action} features. */
 export const ActionType = Symbol("Action");
