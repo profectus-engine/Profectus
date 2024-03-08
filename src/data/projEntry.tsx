@@ -8,7 +8,6 @@ import {
     placeInAvailableSpace,
     setupActions,
     setupDraggableNode,
-    setupSelectable,
     setupUniqueIds
 } from "features/boards/board";
 import { jsx } from "features/feature";
@@ -21,6 +20,7 @@ import type { Player } from "game/player";
 import { createCostRequirement } from "game/requirements";
 import { render } from "util/vue";
 import { ComponentPublicInstance, computed, ref, watch } from "vue";
+import { setupSelectable } from "./common";
 import "./common.css";
 
 /**
