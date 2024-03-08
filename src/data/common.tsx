@@ -27,7 +27,7 @@ import type {
 import { convertComputable, processComputable } from "util/computed";
 import { getFirstFeature, renderColJSX, renderJSX } from "util/vue";
 import type { ComputedRef, Ref } from "vue";
-import { computed, unref } from "vue";
+import { computed, ref, unref } from "vue";
 import "./common.css";
 
 /** An object that configures a {@link ResetButton} */
@@ -504,4 +504,22 @@ export function isRendered(layer: BaseLayer, feature: { id: string }): ComputedR
 export function isRendered(layer: BaseLayer, idOrFeature: string | { id: string }) {
     const id = typeof idOrFeature === "string" ? idOrFeature : idOrFeature.id;
     return computed(() => id in layer.nodes.value);
+}
+
+/**
+ * Utility function for setting up a system where one of many things can be selected.
+ * It's recommended to use an ID or index rather than the object itself, so that you can wrap the ref in a persistent without breaking anything.
+ * @returns The ref containing the selection, as well as a select and deselect function
+ */
+export function setupSelectable<T>() {
+    const selected = ref<T>();
+    return {
+        select: function (node: T) {
+            selected.value = node;
+        },
+        deselect: function () {
+            selected.value = undefined;
+        },
+        selected
+    };
 }
