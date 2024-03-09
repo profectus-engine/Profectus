@@ -418,6 +418,7 @@ export function placeInAvailableSpace<T extends NodePosition>(
                 : Math.abs(nodeToPlace.y - nodeToCheck.y);
 
         // If we're too close to this node, move further
+        // Keep in mind positions start at top right, so "down" means increasing Y
         if (distance < radius) {
             if (direction === Direction.Right) {
                 nodeToPlace.x = nodeToCheck.x + radius;
