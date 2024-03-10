@@ -91,3 +91,4 @@ function onInit(panzoomInstance: PanZoom) {
     margin: -50px -10px;
 }
 </style>
+game/boards/board

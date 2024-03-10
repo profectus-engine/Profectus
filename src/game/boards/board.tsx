@@ -1,5 +1,5 @@
-import Board from "features/boards/Board.vue";
-import Draggable from "features/boards/Draggable.vue";
+import Board from "./Board.vue";
+import Draggable from "./Draggable.vue";
 import { Component, GatherProps, GenericComponent, jsx } from "features/feature";
 import { globalBus } from "game/events";
 import { Persistent, persistent } from "game/persistence";

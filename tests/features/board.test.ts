@@ -3,7 +3,7 @@ import {
     placeInAvailableSpace,
     setupUniqueIds,
     unwrapNodeRef
-} from "features/boards/board";
+} from "game/boards/board";
 import { beforeEach, describe, expect, test } from "vitest";
 import { Ref, ref } from "vue";
 import "../utils";

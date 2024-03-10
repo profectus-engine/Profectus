@@ -1,7 +1,7 @@
-import Board from "features/boards/Board.vue";
-import CircleProgress from "features/boards/CircleProgress.vue";
-import SVGNode from "features/boards/SVGNode.vue";
-import SquareProgress from "features/boards/SquareProgress.vue";
+import Board from "game/boards/Board.vue";
+import CircleProgress from "game/boards/CircleProgress.vue";
+import SVGNode from "game/boards/SVGNode.vue";
+import SquareProgress from "game/boards/SquareProgress.vue";
 import {
     NodePosition,
     makeDraggable,
@@ -9,7 +9,7 @@ import {
     setupActions,
     setupDraggableNode,
     setupUniqueIds
-} from "features/boards/board";
+} from "game/boards/board";
 import { jsx } from "features/feature";
 import { createResource } from "features/resources/resource";
 import { createUpgrade } from "features/upgrades/upgrade";
