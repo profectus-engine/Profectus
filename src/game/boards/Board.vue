@@ -26,7 +26,7 @@ import type { PanZoom } from "panzoom";
 import type { ComponentPublicInstance } from "vue";
 import { computed, ref } from "vue";
 // Required to make sure panzoom component gets registered:
-import "features/boards/board";
+import "./board";
 
 defineExpose({
     panZoomInstance: computed(() => stage.value?.panZoomInstance)
@@ -89,6 +89,13 @@ function onInit(panzoomInstance: PanZoom) {
     width: calc(100% + 20px);
     height: calc(100% + 100px);
     margin: -50px -10px;
+}
+
+.board-node {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transition-duration: 0s;
 }
 </style>
 game/boards/board
