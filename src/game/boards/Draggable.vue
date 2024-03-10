@@ -1,5 +1,6 @@
 <template>
     <div
+        class="board-node"
         :style="`transform: translate(calc(${unref(position).x}px - 50%), ${unref(position).y}px);`"
         @mousedown="e => mouseDown(e)"
         @touchstart.passive="e => mouseDown(e)"
@@ -26,12 +27,3 @@ const props = defineProps<{
 
 const comp = shallowRef(coerceComponent(jsx(() => renderJSX(props.element))));
 </script>
-
-<style scoped>
-div {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transition-duration: 0s;
-}
-</style>
