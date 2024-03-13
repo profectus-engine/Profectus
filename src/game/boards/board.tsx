@@ -89,8 +89,6 @@ export interface DraggableNode<T> {
 /**
  * Sets up a system to allow nodes to be moved within a board by dragging and dropping.
  * Also allows for dropping nodes on other nodes to trigger code.
- * Using this function is fairly advanced, consider reading through this docs page for guidance:
- * https://moddingtree.com/guide/advanced-concepts/boards
  * @param options Draggable node options.
  * @returns A DraggableNode object.
  */
