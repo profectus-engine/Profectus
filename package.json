@@ -14,8 +14,8 @@
     "lint:fix": "eslint --fix --max-warnings 0 src"
   },
   "dependencies": {
-    "@fontsource/material-icons": "^4.5.4",
-    "@fontsource/roboto-mono": "^4.5.8",
+    "@fontsource/material-icons": "^5.0.16",
+    "@fontsource/roboto-mono": "^5.0.17",
     "@pixi/app": "~6.3.2",
     "@pixi/constants": "~6.3.2",
     "@pixi/core": "~6.3.2",
