@@ -129,24 +129,26 @@ document.onkeydown = function (e) {
     }
 };
 
-registerInfoComponent(
-    jsx(() => {
-        const keys = Object.values(hotkeys).filter(hotkey => unref(hotkey?.enabled));
-        if (keys.length === 0) {
-            return "";
-        }
-        return (
-            <div>
-                <br />
-                <h4>Hotkeys</h4>
-                <div style="column-count: 2">
-                    {keys.map(hotkey => (
-                        <div>
-                            <Hotkey hotkey={hotkey as GenericHotkey} /> {unref(hotkey?.description)}
-                        </div>
-                    ))}
+globalBus.on("setupVue", () =>
+    registerInfoComponent(
+        jsx(() => {
+            const keys = Object.values(hotkeys).filter(hotkey => unref(hotkey?.enabled));
+            if (keys.length === 0) {
+                return "";
+            }
+            return (
+                <div>
+                    <br />
+                    <h4>Hotkeys</h4>
+                    <div style="column-count: 2">
+                        {keys.map(hotkey => (
+                            <div>
+                                <Hotkey hotkey={hotkey as GenericHotkey} /> {unref(}
+                            </div>
+                        ))}
+                    </div>
                 </div>
-            </div>
-        );
-    })
+            );
+        })
+    )
 );

@@ -3,12 +3,14 @@ import App from "App.vue";
 import projInfo from "data/projInfo.json";
 import "game/notifications";
 import state from "game/state";
+import "util/galaxy";
 import { load } from "util/save";
 import { useRegisterSW } from "virtual:pwa-register/vue";
 import type { App as VueApp } from "vue";
 import { createApp, nextTick } from "vue";
 import { useToast } from "vue-toastification";
-import "util/galaxy";
+import { globalBus } from "./game/events";
+import { startGameLoop } from "./game/gameLoop";
 
 declare global {
     /**
@@ -56,8 +58,6 @@ requestAnimationFrame(async () => {
         "padding: 4px;"
     );
     await load();
-    const { globalBus } = await import("./game/events");
-    const { startGameLoop } = await import("./game/gameLoop");
 
     // Create Vue
     const vue = (window.vue = createApp(App));

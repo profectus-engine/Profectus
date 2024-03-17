@@ -306,18 +306,20 @@ const msDisplayOptions = Object.values(AchievementDisplay).map(option => ({
     value: option
 }));
 
-registerSettingField(
-    jsx(() => (
-        <Select
-            title={jsx(() => (
-                <span class="option-title">
-                    Show achievements
-                    <desc>Select which achievements to display based on criterias.</desc>
-                </span>
-            ))}
-            options={msDisplayOptions}
-            onUpdate:modelValue={value => (settings.msDisplay = value as AchievementDisplay)}
-            modelValue={settings.msDisplay}
-        />
-    ))
+globalBus.on("setupVue", () =>
+    registerSettingField(
+        jsx(() => (
+            <Select
+                title={jsx(() => (
+                    <span class="option-title">
+                        Show achievements
+                        <desc>Select which achievements to display based on criterias.</desc>
+                    </span>
+                ))}
+                options={msDisplayOptions}
+                onUpdate:modelValue={value => (settings.msDisplay = value as AchievementDisplay)}
+                modelValue={settings.msDisplay}
+            />
+        ))
+    )
 );

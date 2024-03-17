@@ -364,17 +364,19 @@ globalBus.on("loadSettings", settings => {
     setDefault(settings, "hideChallenges", false);
 });
 
-registerSettingField(
-    jsx(() => (
-        <Toggle
-            title={jsx(() => (
-                <span class="option-title">
-                    Hide maxed challenges
-                    <desc>Hide challenges that have been fully completed.</desc>
-                </span>
-            ))}
-            onUpdate:modelValue={value => (settings.hideChallenges = value)}
-            modelValue={settings.hideChallenges}
-        />
-    ))
+globalBus.on("setupVue", () =>
+    registerSettingField(
+        jsx(() => (
+            <Toggle
+                title={jsx(() => (
+                    <span class="option-title">
+                        Hide maxed challenges
+                        <desc>Hide challenges that have been fully completed.</desc>
+                    </span>
+                ))}
+                onUpdate:modelValue={value => (settings.hideChallenges = value)}
+                modelValue={settings.hideChallenges}
+            />
+        ))
+    )
 );
