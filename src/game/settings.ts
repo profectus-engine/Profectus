@@ -20,6 +20,8 @@ export interface Settings {
     unthrottled: boolean;
     /** Whether to align modifiers to the unit. */
     alignUnits: boolean;
+    /** Whether or not to show a video game health warning after playing excessively. */
+    showHealthWarning: boolean;
 }
 
 const state = reactive<Partial<Settings>>({
@@ -28,7 +30,8 @@ const state = reactive<Partial<Settings>>({
     showTPS: true,
     theme: Themes.Nordic,
     unthrottled: false,
-    alignUnits: false
+    alignUnits: false,
+    showHealthWarning: true
 });
 
 watch(
@@ -56,12 +59,15 @@ declare global {
 export default window.settings = state as Settings;
 /** A function that erases all player settings, including all saves. */
 export const hardResetSettings = (window.hardResetSettings = () => {
-    const settings = {
+    // Only partial because of any properties that are only added during the loadSettings event.
+    const settings: Partial<Settings> = {
         active: "",
         saves: [],
         showTPS: true,
         theme: Themes.Nordic,
-        alignUnits: false
+        unthrottled: false,
+        alignUnits: false,
+        showHealthWarning: true
     };
     globalBus.emit("loadSettings", settings);
     Object.assign(state, settings);

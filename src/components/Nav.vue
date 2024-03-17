@@ -103,9 +103,9 @@ import { Direction } from "util/common";
 import { galaxy, syncedSaves } from "util/galaxy";
 import type { ComponentPublicInstance } from "vue";
 import { computed, ref } from "vue";
-import Info from "./Info.vue";
-import Options from "./Options.vue";
-import SavesManager from "./saves/SavesManager.vue";
+import Info from "./modals/Info.vue";
+import Options from "./modals/Options.vue";
+import SavesManager from "./modals/SavesManager.vue";
 
 const info = ref<ComponentPublicInstance<typeof Info> | null>(null);
 const savesManager = ref<ComponentPublicInstance<typeof SavesManager> | null>(null);

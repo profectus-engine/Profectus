@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import type { FeatureNode } from "game/layers";
 import { computed, ref, toRefs, unref } from "vue";
-import Context from "./Context.vue";
+import Context from "../Context.vue";
 
 const _props = defineProps<{
     modelValue: boolean;

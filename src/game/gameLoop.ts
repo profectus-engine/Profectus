@@ -107,3 +107,7 @@ export async function startGameLoop() {
         intervalID = setInterval(update, 50);
     }
 }
+
+setInterval(() => {
+    state.mouseActivity = [...state.mouseActivity.slice(-7), false];
+}, 1000 * 60 * 60);

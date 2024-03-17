@@ -46,7 +46,6 @@
 </template>
 
 <script setup lang="ts">
-import Modal from "components/Modal.vue";
 import projInfo from "data/projInfo.json";
 import player from "game/player";
 import state from "game/state";
@@ -54,8 +53,9 @@ import type { DecimalSource } from "util/bignum";
 import Decimal, { format } from "util/bignum";
 import type { ComponentPublicInstance } from "vue";
 import { computed, ref, toRef, watch } from "vue";
-import Toggle from "./fields/Toggle.vue";
-import SavesManager from "./saves/SavesManager.vue";
+import Toggle from "../fields/Toggle.vue";
+import Modal from "./Modal.vue";
+import SavesManager from "./SavesManager.vue";
 
 const { discordName, discordLink } = projInfo;
 const autosave = ref(true);

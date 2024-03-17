@@ -74,13 +74,13 @@
 </template>
 
 <script setup lang="ts">
-import Modal from "components/Modal.vue";
 import { stringifySave } from "game/player";
 import settings from "game/settings";
 import LZString from "lz-string";
 import { conflictingSaves, galaxy } from "util/galaxy";
 import { getUniqueID, save, setupInitialStore } from "util/save";
 import { ComponentPublicInstance, computed, ref, unref, watch } from "vue";
+import Modal from "./Modal.vue";
 import Save from "./Save.vue";
 
 const isOpen = ref(false);
