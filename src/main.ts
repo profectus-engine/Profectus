@@ -18,11 +18,6 @@ declare global {
         vue: VueApp;
         projInfo: typeof projInfo;
     }
-
-    /** Fix for typedoc treating import functions as taking AssertOptions instead of GlobOptions. */
-    interface AssertOptions {
-        as: string;
-    }
 }
 
 const error = console.error;
@@ -75,33 +70,13 @@ requestAnimationFrame(async () => {
     // Setup PWA update prompt
     nextTick(() => {
         const toast = useToast();
-        const { updateServiceWorker } = useRegisterSW({
-            onNeedRefresh() {
-                toast.info("New content available, click here to update.", {
-                    timeout: false,
-                    closeOnClick: false,
-                    draggable: false,
-                    icon: {
-                        iconClass: "material-icons",
-                        iconChildren: "refresh",
-                        iconTag: "i"
-                    },
-                    rtl: false,
-                    onClick() {
-                        updateServiceWorker();
-                    }
-                });
-            },
+        useRegisterSW({
+            immediate: true,
             onOfflineReady() {
                 toast.info("App ready to work offline");
             },
             onRegisterError: console.warn,
-            onRegistered(r) {
-                if (r) {
-                    // https://stackoverflow.com/questions/65500916/typeerror-failed-to-execute-update-on-serviceworkerregistration-illegal-in
-                    setInterval(() => r.update(), 60 * 60 * 1000);
-                }
-            }
+            onRegistered: console.info
         });
     });
 
