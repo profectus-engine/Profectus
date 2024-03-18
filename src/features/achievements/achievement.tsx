@@ -1,5 +1,4 @@
-import { computed } from "@vue/reactivity";
-import { isArray } from "@vue/shared";
+import { computed } from "vue";
 import Select from "components/fields/Select.vue";
 import AchievementComponent from "features/achievements/Achievement.vue";
 import { GenericDecorator } from "features/decorators/common";
@@ -275,7 +274,7 @@ export function createAchievement<T extends AchievementOptions>(
             const requirements = [
                 createVisibilityRequirement(genericAchievement),
                 createBooleanRequirement(() => !genericAchievement.earned.value),
-                ...(isArray(achievement.requirements)
+                ...(Array.isArray(achievement.requirements)
                     ? achievement.requirements
                     : [achievement.requirements])
             ];

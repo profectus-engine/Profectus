@@ -1,4 +1,3 @@
-import { isArray } from "@vue/shared";
 import {
     CoercableComponent,
     isVisible,
@@ -270,7 +269,7 @@ export function createBooleanRequirement(
  * @param requirements The 1+ requirements to check
  */
 export function requirementsMet(requirements: Requirements): boolean {
-    if (isArray(requirements)) {
+    if (Array.isArray(requirements)) {
         return requirements.every(requirementsMet);
     }
     const reqsMet = unref(requirements.requirementMet);
@@ -282,7 +281,7 @@ export function requirementsMet(requirements: Requirements): boolean {
  * @param requirements The 1+ requirements to check
  */
 export function maxRequirementsMet(requirements: Requirements): DecimalSource {
-    if (isArray(requirements)) {
+    if (Array.isArray(requirements)) {
         return requirements.map(maxRequirementsMet).reduce(Decimal.min);
     }
     const reqsMet = unref(requirements.requirementMet);
@@ -300,13 +299,13 @@ export function maxRequirementsMet(requirements: Requirements): DecimalSource {
  * @param amount The amount of levels earned to be displayed
  */
 export function displayRequirements(requirements: Requirements, amount: DecimalSource = 1) {
-    if (isArray(requirements)) {
+    if (Array.isArray(requirements)) {
         requirements = requirements.filter(r => isVisible(r.visibility));
         if (requirements.length === 1) {
             requirements = requirements[0];
         }
     }
-    if (isArray(requirements)) {
+    if (Array.isArray(requirements)) {
         requirements = requirements.filter(r => "partialDisplay" in r);
         const withCosts = requirements.filter(r => unref(r.requiresPay));
         const withoutCosts = requirements.filter(r => !unref(r.requiresPay));
@@ -344,7 +343,7 @@ export function displayRequirements(requirements: Requirements, amount: DecimalS
  * @param amount How many levels to pay for
  */
 export function payRequirements(requirements: Requirements, amount: DecimalSource = 1) {
-    if (isArray(requirements)) {
+    if (Array.isArray(requirements)) {
         requirements.filter(r => unref(r.requiresPay)).forEach(r => r.pay?.(amount));
     } else if (unref(requirements.requiresPay)) {
         requirements.pay?.(amount);

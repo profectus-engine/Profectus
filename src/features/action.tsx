@@ -1,4 +1,3 @@
-import { isArray } from "@vue/shared";
 import ClickableComponent from "features/clickables/Clickable.vue";
 import {
     Component,
@@ -157,7 +156,7 @@ export function createAction<T extends ActionOptions>(
                 }
             ];
             const originalStyle = unref(style);
-            if (isArray(originalStyle)) {
+            if (Array.isArray(originalStyle)) {
                 currStyle.push(...originalStyle);
             } else if (originalStyle != null) {
                 currStyle.push(originalStyle);

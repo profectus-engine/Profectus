@@ -48,6 +48,7 @@ export interface InternalFormula<T extends [FormulaSource] | FormulaSource[]> {
     invertIntegral?(value: DecimalSource): DecimalSource;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[]> {
     readonly inputs: T;
 
