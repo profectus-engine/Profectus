@@ -4,9 +4,9 @@ import type { CoercableComponent, GenericComponent, JSXFunction } from "features
 import {
     Component as ComponentKey,
     GatherProps,
+    Visibility,
     isVisible,
-    jsx,
-    Visibility
+    jsx
 } from "features/feature";
 import type { ProcessedComputable } from "util/computed";
 import { DoNotCache } from "util/computed";
@@ -21,6 +21,7 @@ import {
     unref,
     watchEffect
 } from "vue";
+import { JSX } from "vue/jsx-runtime";
 import { camelToKebab } from "./common";
 
 export function coerceComponent(

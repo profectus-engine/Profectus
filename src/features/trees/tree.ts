@@ -141,7 +141,9 @@ export function createTreeNode<T extends TreeNodeOptions>(
         if (treeNode.onClick) {
             const onClick = treeNode.onClick.bind(treeNode);
             treeNode.onClick = function (e) {
-                if (unref(treeNode.canClick) !== false) {
+                if (
+                    unref(treeNode.canClick as ProcessedComputable<boolean | undefined>) !== false
+                ) {
                     onClick(e);
                 }
             };
@@ -149,7 +151,9 @@ export function createTreeNode<T extends TreeNodeOptions>(
         if (treeNode.onHold) {
             const onHold = treeNode.onHold.bind(treeNode);
             treeNode.onHold = function () {
-                if (unref(treeNode.canClick) !== false) {
+                if (
+                    unref(treeNode.canClick as ProcessedComputable<boolean | undefined>) !== false
+                ) {
                     onHold();
                 }
             };

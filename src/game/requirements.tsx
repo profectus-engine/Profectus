@@ -19,6 +19,7 @@ import {
 import { createLazyProxy } from "util/proxies";
 import { joinJSX, renderJSX } from "util/vue";
 import { computed, unref } from "vue";
+import { JSX } from "vue/jsx-runtime";
 import Formula, { calculateCost, calculateMaxAffordable } from "./formulas/formulas";
 import type { GenericFormula } from "./formulas/types";
 import { DefaultValue, Persistent } from "./persistence";
@@ -179,7 +180,7 @@ export function createCostRequirement<T extends CostRequirementOptions>(
                     ? calculateCost(
                           req.cost,
                           amount ?? 1,
-                          unref(req.cumulativeCost) as boolean,
+                          unref(req.cumulativeCost as ProcessedComputable<boolean>),
                           unref(req.directSum) as number
                       )
                     : unref(req.cost as ProcessedComputable<DecimalSource>);

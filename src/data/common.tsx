@@ -28,6 +28,7 @@ import { convertComputable, processComputable } from "util/computed";
 import { getFirstFeature, renderColJSX, renderJSX } from "util/vue";
 import type { ComputedRef, Ref } from "vue";
 import { computed, ref, unref } from "vue";
+import { JSX } from "vue/jsx-runtime";
 import "./common.css";
 
 /** An object that configures a {@link ResetButton} */
@@ -128,7 +129,7 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
                         )}
                     </b>{" "}
                     {resetButton.conversion.gainResource.displayName}
-                    {unref(resetButton.showNextAt) != null ? (
+                    {unref(resetButton.showNextAt as ProcessedComputable<boolean>) != null ? (
                         <div>
                             <br />
                             {unref(resetButton.conversion.buyMax) ? "Next:" : "Req:"}{" "}

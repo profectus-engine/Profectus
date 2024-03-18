@@ -129,7 +129,7 @@ export function createClickable<T extends ClickableOptions>(
         if (clickable.onClick) {
             const onClick = clickable.onClick.bind(clickable);
             clickable.onClick = function (e) {
-                if (unref(clickable.canClick) !== false) {
+                if (unref(clickable.canClick as ProcessedComputable<boolean>) !== false) {
                     onClick(e);
                 }
             };
@@ -137,7 +137,7 @@ export function createClickable<T extends ClickableOptions>(
         if (clickable.onHold) {
             const onHold = clickable.onHold.bind(clickable);
             clickable.onHold = function () {
-                if (unref(clickable.canClick) !== false) {
+                if (unref(clickable.canClick as ProcessedComputable<boolean>) !== false) {
                     onHold();
                 }
             };

@@ -219,7 +219,7 @@ export function createAction<T extends ActionOptions>(
 
         const onClick = action.onClick.bind(action);
         action.onClick = function () {
-            if (unref(action.canClick) === false) {
+            if (unref(action.canClick as ProcessedComputable<boolean>) === false) {
                 return;
             }
             const amount = Decimal.div(progress.value, unref(genericAction.duration));
