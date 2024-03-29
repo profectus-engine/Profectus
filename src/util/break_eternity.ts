@@ -26,7 +26,7 @@ export function exponentialFormat(num: DecimalSource, precision: number, mantiss
 }
 
 export function commaFormat(num: DecimalSource, precision: number): string {
-    if (num === null || num === undefined) {
+    if (num == null) {
         return "NaN";
     }
     num = new Decimal(num);
@@ -36,12 +36,12 @@ export function commaFormat(num: DecimalSource, precision: number): string {
     const init = num.toStringWithDecimalPlaces(precision);
     const portions = init.split(".");
     portions[0] = portions[0].replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1,");
-    if (portions.length == 1) return portions[0];
+    if (portions.length === 1) return portions[0];
     return portions[0] + "." + portions[1];
 }
 
 export function regularFormat(num: DecimalSource, precision: number): string {
-    if (num === null || num === undefined) {
+    if (num == null) {
         return "NaN";
     }
     num = new Decimal(num);

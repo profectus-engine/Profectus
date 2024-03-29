@@ -191,7 +191,7 @@ export function computeOptionalComponent(
     watchEffect(() => {
         const currComponent = unwrapRef(component);
         comp.value =
-            currComponent == "" || currComponent == null
+            currComponent === "" || currComponent == null
                 ? null
                 : coerceComponent(currComponent, defaultWrapper);
     });

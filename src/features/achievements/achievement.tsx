@@ -208,7 +208,7 @@ export function createAchievement<T extends AchievementOptions>(
                         unref(achievement.earned) &&
                         !(
                             display != null &&
-                            typeof display == "object" &&
+                            typeof display === "object" &&
                             "optionsDisplay" in (display as Record<string, unknown>)
                         )
                     ) {

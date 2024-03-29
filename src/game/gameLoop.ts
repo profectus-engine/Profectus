@@ -43,7 +43,7 @@ function update() {
     loadingSave.value = false;
 
     // Add offline time if any
-    if (player.offlineTime != undefined) {
+    if (player.offlineTime != null) {
         if (Decimal.gt(player.offlineTime, projInfo.offlineLimit * 3600)) {
             player.offlineTime = projInfo.offlineLimit * 3600;
         }
@@ -63,7 +63,7 @@ function update() {
     diff = Math.min(diff, projInfo.maxTickLength);
 
     // Apply dev speed
-    if (player.devSpeed != undefined) {
+    if (player.devSpeed != null) {
         diff *= player.devSpeed;
     }
 

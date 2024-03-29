@@ -110,7 +110,7 @@ function syncSaves(
         }
         availableSlots.delete(cloudSave.slot);
         const localSaveId = settings.saves.find(id => id === cloudSave.content.id);
-        if (localSaveId == undefined) {
+        if (localSaveId == null) {
             settings.saves.push(cloudSave.content.id);
             save(setupInitialStore(cloudSave.content));
         } else {

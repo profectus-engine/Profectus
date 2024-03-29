@@ -342,7 +342,7 @@ export const branchedResetPropagation = function (
     if (links == null) return;
     const reset: GenericTreeNode[] = [];
     let current = [resettingNode];
-    while (current.length != 0) {
+    while (current.length !== 0) {
         const next: GenericTreeNode[] = [];
         for (const node of current) {
             for (const link of links.filter(link => link.startNode === node)) {
