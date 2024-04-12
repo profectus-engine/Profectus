@@ -130,7 +130,7 @@ watch(saveToImport, importedSave => {
     }
 });
 
-let bankContext = import.meta.globEager("./../../saves/*.txt", { as: "raw" });
+let bankContext = import.meta.globEager("./../../../saves/*.txt", { as: "raw" });
 let bank = ref(
     Object.keys(bankContext).reduce((acc: Array<{ label: string; value: string }>, curr) => {
         acc.push({
