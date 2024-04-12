@@ -1,4 +1,4 @@
-import { LoadablePlayerData } from "components/saves/SavesManager.vue";
+import { LoadablePlayerData } from "components/modals/SavesManager.vue";
 import projInfo from "data/projInfo.json";
 import { globalBus } from "game/events";
 import type { Player } from "game/player";
