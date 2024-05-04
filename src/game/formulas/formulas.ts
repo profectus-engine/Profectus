@@ -1476,7 +1476,9 @@ export function calculateMaxAffordable(
                     formula.invertIntegral(Decimal.add(resource.value, formula.evaluateIntegral()))
                 ).sub(unref(formula.innermostVariable) ?? 0);
             } else {
-                affordable = Decimal.floor(formula.invert(resource.value));
+                affordable = Decimal.floor(
+                    formula.invert(resource.value)
+                ).add(1).sub(unref(formula.innermostVariable) ?? 0);
             }
         }
         affordable = Decimal.clampMax(affordable, maxBulkAmount);
