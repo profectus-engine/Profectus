@@ -36,7 +36,7 @@ onMounted(() => (boundingRect.value = resizeListener.value?.getBoundingClientRec
 const validLinks = computed(() => {
     const n = nodes.value;
     return (
-        links.value?.filter(link => n[link.startNode.id]?.rect && n[link.startNode.id]?.rect) ?? []
+        links.value?.filter(link => n[link.startNode.id]?.rect && n[link.endNode.id]?.rect) ?? []
     );
 });
 </script>
