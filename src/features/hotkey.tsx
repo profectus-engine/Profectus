@@ -143,7 +143,8 @@ globalBus.on("setupVue", () =>
                     <div style="column-count: 2">
                         {keys.map(hotkey => (
                             <div>
-                                <Hotkey hotkey={hotkey as GenericHotkey} /> {unref(}
+                                <Hotkey hotkey={hotkey as GenericHotkey} />{" "}
+                                {unref(hotkey?.description)}
                             </div>
                         ))}
                     </div>

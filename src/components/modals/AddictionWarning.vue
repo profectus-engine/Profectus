@@ -16,8 +16,8 @@
                 playing incremental games is taking priority over other things in your life, or
                 manipulating your sleep schedule, it may be prudent to seek help.
             </p>
+            <h4>Resources:</h4>
             <p>
-                <h4>Resources:</h4>
                 <span>
                     <a style="display: inline" href="https://www.samhsa.gov/" target="_blank">
                         SAMHSA
