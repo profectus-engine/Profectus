@@ -1,5 +1,3 @@
-import Board from "./Board.vue";
-import Draggable from "./Draggable.vue";
 import { Component, GatherProps, GenericComponent, jsx } from "features/feature";
 import { globalBus } from "game/events";
 import { Persistent, persistent } from "game/persistence";
@@ -11,6 +9,9 @@ import { VueFeature } from "util/vue";
 import type { ComponentPublicInstance, Ref } from "vue";
 import { computed, nextTick, ref, unref, watchEffect } from "vue";
 import panZoom from "vue-panzoom";
+import { JSX } from "vue/jsx-runtime";
+import Board from "./Board.vue";
+import Draggable from "./Draggable.vue";
 
 // Register panzoom so it can be used in Board.vue
 globalBus.on("setupVue", app => panZoom.install(app));

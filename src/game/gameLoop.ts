@@ -8,7 +8,7 @@ import { watch } from "vue";
 import player from "./player";
 import state from "./state";
 
-let intervalID: NodeJS.Timer | null = null;
+let intervalID: NodeJS.Timeout | null = null;
 
 function update() {
     const now = Date.now();

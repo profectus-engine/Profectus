@@ -172,6 +172,7 @@ function syncSaves(
                 const localSave = localStorage.getItem(id) ?? "";
                 const parsedLocalSave = JSON.parse(decodeSave(localSave) ?? "");
                 const slot = availableSlots.values().next().value;
+                if (slot == null) return;
                 galaxy.value
                     ?.save(slot, localSave, parsedLocalSave.name)
                     .then(() => syncedSaves.value.push(parsedLocalSave.id))

@@ -126,17 +126,17 @@ export function setupHoldToClick(
     stop: VoidFunction;
     handleHolding: VoidFunction;
 } {
-    const interval = ref<NodeJS.Timer | null>(null);
+    const interval = ref<NodeJS.Timeout | null>(null);
     const event = ref<MouseEvent | TouchEvent | undefined>(undefined);
 
     function start(e: MouseEvent | TouchEvent) {
-        if (!interval.value) {
+        if (interval.value == null) {
             interval.value = setInterval(handleHolding, 250);
         }
         event.value = e;
     }
     function stop() {
-        if (interval.value) {
+        if (interval.value != null) {
             clearInterval(interval.value);
             interval.value = null;
         }
@@ -245,11 +245,8 @@ export function trackHover(element: VueFeature): Ref<boolean> {
 }
 
 export function kebabifyObject(object: Record<string, unknown>) {
-    return Object.keys(object).reduce(
-        (acc, curr) => {
-            acc[camelToKebab(curr)] = object[curr];
-            return acc;
-        },
-        {} as Record<string, unknown>
-    );
+    return Object.keys(object).reduce((acc, curr) => {
+        acc[camelToKebab(curr)] = object[curr];
+        return acc;
+    }, {} as Record<string, unknown>);
 }
