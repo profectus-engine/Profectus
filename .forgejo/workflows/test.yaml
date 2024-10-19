@@ -8,7 +8,7 @@ jobs:
   test:
     runs-on: docker
     container:
-      image: node:20-bullseye
+      image: node:21-bullseye
 
     steps:
       - uses: actions/checkout@v3
