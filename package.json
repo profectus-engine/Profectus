@@ -56,6 +56,9 @@
     "vitest": "^1.4.0",
     "vue-tsc": "^2.0.6"
   },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.24.0"
+  },
   "engines": {
     "node": "21.x"
   }
