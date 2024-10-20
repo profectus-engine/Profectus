@@ -4,10 +4,9 @@
 
 <script setup lang="ts">
 import { RegisterNodeInjectionKey, UnregisterNodeInjectionKey } from "game/layers";
-import { computed, inject, onUnmounted, shallowRef, toRefs, unref, watch } from "vue";
+import { computed, inject, onUnmounted, shallowRef, toRef, unref, watch } from "vue";
 
-const _props = defineProps<{ id: string }>();
-const props = toRefs(_props);
+const props = defineProps<{ id: string }>();
 
 // eslint-disable-next-line @typescript-eslint/no-empty-function
 const register = inject(RegisterNodeInjectionKey, () => {});
@@ -17,7 +16,7 @@ const unregister = inject(UnregisterNodeInjectionKey, () => {});
 const node = shallowRef<HTMLElement | null>(null);
 const parentNode = computed(() => node.value && node.value.parentElement);
 
-watch([parentNode, props.id], ([newNode, newID], [prevNode, prevID]) => {
+watch([parentNode, toRef(props, "id")], ([newNode, newID], [prevNode, prevID]) => {
     if (prevNode) {
         unregister(unref(prevID));
     }
@@ -26,7 +25,7 @@ watch([parentNode, props.id], ([newNode, newID], [prevNode, prevID]) => {
     }
 });
 
-onUnmounted(() => unregister(unref(props.id)));
+onUnmounted(() => unregister(props.id));
 </script>
 
 <style scoped>

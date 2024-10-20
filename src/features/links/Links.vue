@@ -16,11 +16,10 @@
 import type { Link } from "features/links/links";
 import type { FeatureNode } from "game/layers";
 import { BoundsInjectionKey, NodesInjectionKey } from "game/layers";
-import { computed, inject, onMounted, ref, toRef, watch } from "vue";
+import { computed, inject, onMounted, ref, watch } from "vue";
 import LinkVue from "./Link.vue";
 
-const _props = defineProps<{ links?: Link[] }>();
-const links = toRef(_props, "links");
+const props = defineProps<{ links?: Link[] }>();
 
 const resizeListener = ref<Element | null>(null);
 
@@ -36,7 +35,7 @@ onMounted(() => (boundingRect.value = resizeListener.value?.getBoundingClientRec
 const validLinks = computed(() => {
     const n = nodes.value;
     return (
-        links.value?.filter(link => n[link.startNode.id]?.rect && n[link.endNode.id]?.rect) ?? []
+        props.links?.filter(link => n[link.startNode.id]?.rect && n[link.endNode.id]?.rect) ?? []
     );
 });
 </script>

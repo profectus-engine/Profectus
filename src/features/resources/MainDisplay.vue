@@ -25,23 +25,19 @@ import type { Resource } from "features/resources/resource";
 import ResourceVue from "features/resources/Resource.vue";
 import Decimal from "util/bignum";
 import { computeOptionalComponent } from "util/vue";
-import { ComponentPublicInstance, ref, Ref, StyleValue } from "vue";
-import { computed, toRefs } from "vue";
+import { ComponentPublicInstance, computed, ref, StyleValue, toRef } from "vue";
 
-const _props = defineProps<{
+const props = defineProps<{
     resource: Resource;
     color?: string;
     classes?: Record<string, boolean>;
     style?: StyleValue;
     effectDisplay?: CoercableComponent;
 }>();
-const props = toRefs(_props);
 
 const effectRef = ref<ComponentPublicInstance | null>(null);
 
-const effectComponent = computeOptionalComponent(
-    props.effectDisplay as Ref<CoercableComponent | undefined>
-);
+const effectComponent = computeOptionalComponent(toRef(props, "effectDisplay"));
 
 const showPrefix = computed(() => {
     return Decimal.lt(props.resource.value, "1e1000");
