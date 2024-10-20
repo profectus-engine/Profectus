@@ -405,10 +405,10 @@ export function placeInAvailableSpace<T extends NodePosition>(
             direction === Direction.Right
                 ? (a, b) => a.x - b.x
                 : direction === Direction.Left
-                ? (a, b) => b.x - a.x
-                : direction === Direction.Up
-                ? (a, b) => b.y - a.y
-                : (a, b) => a.y - b.y
+                  ? (a, b) => b.x - a.x
+                  : direction === Direction.Up
+                    ? (a, b) => b.y - a.y
+                    : (a, b) => a.y - b.y
         );
 
     for (let i = 0; i < nodes.length; i++) {

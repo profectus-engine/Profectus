@@ -104,6 +104,9 @@ watch(hasWon, hasWon => {
     }
 });
 
-setInterval(() => {
-    state.mouseActivity = [...state.mouseActivity.slice(-7), false];
-}, 1000 * 60 * 60);
+setInterval(
+    () => {
+        state.mouseActivity = [...state.mouseActivity.slice(-7), false];
+    },
+    1000 * 60 * 60
+);
