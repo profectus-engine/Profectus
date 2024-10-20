@@ -1,3 +1,7 @@
+/* eslint-disable vue/multi-word-component-names */
+// ^ I have no idea why that's necessary; the rule is disabled, and this file isn't a vue component?
+// I'm _guessing_ it's related to us using DefineComponent, but I figured that eslint rule should
+// only apply to SFCs
 import Col from "components/layout/Column.vue";
 import Row from "components/layout/Row.vue";
 import type { CoercableComponent, GenericComponent, JSXFunction } from "features/feature";
