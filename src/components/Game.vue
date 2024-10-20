@@ -29,14 +29,23 @@ import player from "game/player";
 import { computed, toRef, unref } from "vue";
 import Layer from "./Layer.vue";
 import Nav from "./Nav.vue";
+import { deepUnref } from "util/vue";
 
 const tabs = toRef(player, "tabs");
 const layerKeys = computed(() => Object.keys(layers));
 const useHeader = projInfo.useHeader;
 
 function gatherLayerProps(layer: GenericLayer) {
-    const { display, minimized, name, color, minimizable, nodes, minimizedDisplay } = layer;
-    return { display, minimized, name, color, minimizable, nodes, minimizedDisplay };
+    const { display, name, color, minimizable, minimizedDisplay } = deepUnref(layer);
+    return {
+        display,
+        name,
+        color,
+        minimizable,
+        minimizedDisplay,
+        minimized: layer.minimized,
+        nodes: layer.nodes
+    };
 }
 </script>
 

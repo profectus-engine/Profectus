@@ -28,67 +28,33 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import CollapseTransition from "@ivanv/vue-collapse-transition/src/CollapseTransition.vue";
 import Node from "components/Node.vue";
 import themes from "data/themes";
 import type { CoercableComponent } from "features/feature";
 import { isHidden, isVisible, Visibility } from "features/feature";
 import settings from "game/settings";
-import { computeComponent, processedPropType } from "util/vue";
-import type { PropType, Ref, StyleValue } from "vue";
-import { computed, defineComponent, toRefs, unref } from "vue";
+import { computeComponent } from "util/vue";
+import type { Ref, StyleValue } from "vue";
+import { computed, toRef, unref } from "vue";
 
-export default defineComponent({
-    props: {
-        visibility: {
-            type: processedPropType<Visibility | boolean>(Number, Boolean),
-            required: true
-        },
-        display: {
-            type: processedPropType<CoercableComponent>(Object, String, Function),
-            required: true
-        },
-        title: {
-            type: processedPropType<CoercableComponent>(Object, String, Function),
-            required: true
-        },
-        color: processedPropType<string>(String),
-        collapsed: {
-            type: Object as PropType<Ref<boolean>>,
-            required: true
-        },
-        style: processedPropType<StyleValue>(Object, String, Array),
-        titleStyle: processedPropType<StyleValue>(Object, String, Array),
-        bodyStyle: processedPropType<StyleValue>(Object, String, Array),
-        classes: processedPropType<Record<string, boolean>>(Object),
-        id: {
-            type: String,
-            required: true
-        }
-    },
-    components: {
-        Node,
-        CollapseTransition
-    },
-    setup(props) {
-        const { title, display } = toRefs(props);
+const props = defineProps<{
+    visibility: Visibility | boolean;
+    display: CoercableComponent;
+    title: CoercableComponent;
+    color?: string;
+    collapsed: Ref<boolean>;
+    style?: StyleValue;
+    titleStyle?: StyleValue;
+    bodyStyle?: StyleValue;
+    classes?: Record<string, boolean>;
+    id: string;
+}>();
 
-        const titleComponent = computeComponent(title);
-        const bodyComponent = computeComponent(display);
-        const stacked = computed(() => themes[settings.theme].mergeAdjacent);
-
-        return {
-            titleComponent,
-            bodyComponent,
-            stacked,
-            unref,
-            Visibility,
-            isVisible,
-            isHidden
-        };
-    }
-});
+const titleComponent = computeComponent(toRef(props, "title"));
+const bodyComponent = computeComponent(toRef(props, "display"));
+const stacked = computed(() => themes[settings.theme].mergeAdjacent);
 </script>
 
 <style scoped>

@@ -41,107 +41,68 @@
     </div>
 </template>
 
-<script lang="ts">
-import MarkNode from "components/MarkNode.vue";
-import Node from "components/Node.vue";
+<script setup lang="ts">
 import { CoercableComponent, isHidden, isVisible, Visibility } from "features/feature";
 import type { DecimalSource } from "util/bignum";
 import Decimal from "util/bignum";
 import { Direction } from "util/common";
-import { computeOptionalComponent, processedPropType, unwrapRef } from "util/vue";
+import { computeOptionalComponent } from "util/vue";
 import type { CSSProperties, StyleValue } from "vue";
-import { computed, defineComponent, toRefs, unref } from "vue";
+import { computed, toRef, unref } from "vue";
 
-export default defineComponent({
-    props: {
-        progress: {
-            type: processedPropType<DecimalSource>(String, Object, Number),
-            required: true
-        },
-        width: {
-            type: processedPropType<number>(Number),
-            required: true
-        },
-        height: {
-            type: processedPropType<number>(Number),
-            required: true
-        },
-        direction: {
-            type: processedPropType<Direction>(String),
-            required: true
-        },
-        display: processedPropType<CoercableComponent>(Object, String, Function),
-        visibility: {
-            type: processedPropType<Visibility | boolean>(Number, Boolean),
-            required: true
-        },
-        style: processedPropType<StyleValue>(Object, String, Array),
-        classes: processedPropType<Record<string, boolean>>(Object),
-        borderStyle: processedPropType<StyleValue>(Object, String, Array),
-        textStyle: processedPropType<StyleValue>(Object, String, Array),
-        baseStyle: processedPropType<StyleValue>(Object, String, Array),
-        fillStyle: processedPropType<StyleValue>(Object, String, Array),
-        mark: processedPropType<boolean | string>(Boolean, String),
-        id: {
-            type: String,
-            required: true
-        }
-    },
-    components: {
-        MarkNode,
-        Node
-    },
-    setup(props) {
-        const { progress, width, height, direction, display } = toRefs(props);
+const props = defineProps<{
+    progress: DecimalSource;
+    width: number;
+    height: number;
+    direction: Direction;
+    display?: CoercableComponent;
+    visibility: Visibility | boolean;
+    style?: StyleValue;
+    classes?: Record<string, boolean>;
+    borderStyle?: StyleValue;
+    textStyle?: StyleValue;
+    baseStyle?: StyleValue;
+    fillStyle?: StyleValue;
+    mark?: boolean | string;
+    id: string;
+}>();
 
-        const normalizedProgress = computed(() => {
-            let progressNumber =
-                progress.value instanceof Decimal
-                    ? progress.value.toNumber()
-                    : Number(progress.value);
-            return (1 - Math.min(Math.max(progressNumber, 0), 1)) * 100;
-        });
-
-        const barStyle = computed(() => {
-            const barStyle: Partial<CSSProperties> = {
-                width: unwrapRef(width) + 0.5 + "px",
-                height: unwrapRef(height) + 0.5 + "px"
-            };
-            switch (unref(direction)) {
-                case Direction.Up:
-                    barStyle.clipPath = `inset(${normalizedProgress.value}% 0% 0% 0%)`;
-                    barStyle.width = unwrapRef(width) + 1 + "px";
-                    break;
-                case Direction.Down:
-                    barStyle.clipPath = `inset(0% 0% ${normalizedProgress.value}% 0%)`;
-                    barStyle.width = unwrapRef(width) + 1 + "px";
-                    break;
-                case Direction.Right:
-                    barStyle.clipPath = `inset(0% ${normalizedProgress.value}% 0% 0%)`;
-                    break;
-                case Direction.Left:
-                    barStyle.clipPath = `inset(0% 0% 0% ${normalizedProgress.value}%)`;
-                    break;
-                case Direction.Default:
-                    barStyle.clipPath = "inset(0% 50% 0% 0%)";
-                    break;
-            }
-            return barStyle;
-        });
-
-        const component = computeOptionalComponent(display);
-
-        return {
-            normalizedProgress,
-            barStyle,
-            component,
-            unref,
-            Visibility,
-            isVisible,
-            isHidden
-        };
-    }
+const normalizedProgress = computed(() => {
+    let progressNumber =
+        props.progress instanceof Decimal
+            ? props.progress.toNumber()
+            : Number(props.progress);
+    return (1 - Math.min(Math.max(progressNumber, 0), 1)) * 100;
 });
+
+const barStyle = computed(() => {
+    const barStyle: Partial<CSSProperties> = {
+        width: props.width + 0.5 + "px",
+        height: props.height + 0.5 + "px"
+    };
+    switch (props.direction) {
+        case Direction.Up:
+            barStyle.clipPath = `inset(${normalizedProgress.value}% 0% 0% 0%)`;
+            barStyle.width = props.width + 1 + "px";
+            break;
+        case Direction.Down:
+            barStyle.clipPath = `inset(0% 0% ${normalizedProgress.value}% 0%)`;
+            barStyle.width = props.width + 1 + "px";
+            break;
+        case Direction.Right:
+            barStyle.clipPath = `inset(0% ${normalizedProgress.value}% 0% 0%)`;
+            break;
+        case Direction.Left:
+            barStyle.clipPath = `inset(0% 0% 0% ${normalizedProgress.value}%)`;
+            break;
+        case Direction.Default:
+            barStyle.clipPath = "inset(0% 50% 0% 0%)";
+            break;
+    }
+    return barStyle;
+});
+
+const component = computeOptionalComponent(toRef(props, "display"));
 </script>
 
 <style scoped>

@@ -33,7 +33,7 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import Sticky from "components/layout/Sticky.vue";
 import themes from "data/themes";
 import type { CoercableComponent, StyleValue } from "features/feature";
@@ -42,93 +42,60 @@ import type { GenericTab } from "features/tabs/tab";
 import TabButton from "features/tabs/TabButton.vue";
 import type { GenericTabButton } from "features/tabs/tabFamily";
 import settings from "game/settings";
-import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "util/vue";
-import type { Component, PropType, Ref } from "vue";
-import { computed, defineComponent, shallowRef, toRefs, unref, watchEffect } from "vue";
+import { coerceComponent, deepUnref, isCoercableComponent } from "util/vue";
+import type { Component, Ref } from "vue";
+import { computed, shallowRef, unref, watchEffect } from "vue";
 
-export default defineComponent({
-    props: {
-        visibility: {
-            type: processedPropType<Visibility | boolean>(Number, Boolean),
-            required: true
-        },
-        activeTab: {
-            type: processedPropType<GenericTab | CoercableComponent | null>(Object),
-            required: true
-        },
-        selected: {
-            type: Object as PropType<Ref<string>>,
-            required: true
-        },
-        tabs: {
-            type: processedPropType<Record<string, GenericTabButton>>(Object),
-            required: true
-        },
-        style: processedPropType<StyleValue>(String, Object, Array),
-        classes: processedPropType<Record<string, boolean>>(Object),
-        buttonContainerStyle: processedPropType<StyleValue>(String, Object, Array),
-        buttonContainerClasses: processedPropType<Record<string, boolean>>(Object)
-    },
-    components: {
-        Sticky,
-        TabButton
-    },
-    setup(props) {
-        const { activeTab } = toRefs(props);
+const props = defineProps<{
+    visibility: Visibility | boolean;
+    activeTab: GenericTab | CoercableComponent | null;
+    selected: Ref<string>;
+    tabs: Record<string, GenericTabButton>;
+    style?: StyleValue;
+    classes?: Record<string, boolean>;
+    buttonContainerStyle?: StyleValue;
+    buttonContainerClasses?: Record<string, boolean>;
+}>();
 
-        const floating = computed(() => {
-            return themes[settings.theme].floatingTabs;
-        });
-
-        const component = shallowRef<Component | string>("");
-
-        watchEffect(() => {
-            const currActiveTab = unwrapRef(activeTab);
-            if (currActiveTab == null) {
-                component.value = "";
-                return;
-            }
-            if (isCoercableComponent(currActiveTab)) {
-                component.value = coerceComponent(currActiveTab);
-                return;
-            }
-            component.value = coerceComponent(unref(currActiveTab.display));
-        });
-
-        const tabClasses = computed(() => {
-            const currActiveTab = unwrapRef(activeTab);
-            const tabClasses =
-                isCoercableComponent(currActiveTab) || !currActiveTab
-                    ? undefined
-                    : unref(currActiveTab.classes);
-            return tabClasses;
-        });
-
-        const tabStyle = computed(() => {
-            const currActiveTab = unwrapRef(activeTab);
-            return isCoercableComponent(currActiveTab) || !currActiveTab
-                ? undefined
-                : unref(currActiveTab.style);
-        });
-
-        function gatherButtonProps(button: GenericTabButton) {
-            const { display, style, classes, glowColor, visibility } = button;
-            return { display, style: unref(style), classes, glowColor, visibility };
-        }
-
-        return {
-            floating,
-            tabClasses,
-            tabStyle,
-            Visibility,
-            component,
-            gatherButtonProps,
-            unref,
-            isVisible,
-            isHidden
-        };
-    }
+const floating = computed(() => {
+    return themes[settings.theme].floatingTabs;
 });
+
+const component = shallowRef<Component | string>("");
+
+watchEffect(() => {
+    const currActiveTab = props.activeTab;
+    if (currActiveTab == null) {
+        component.value = "";
+        return;
+    }
+    if (isCoercableComponent(currActiveTab)) {
+        component.value = coerceComponent(currActiveTab);
+        return;
+    }
+    component.value = coerceComponent(unref(currActiveTab.display));
+});
+
+const tabClasses = computed(() => {
+    const currActiveTab = props.activeTab;
+    const tabClasses =
+        isCoercableComponent(currActiveTab) || !currActiveTab
+            ? undefined
+            : unref(currActiveTab.classes);
+    return tabClasses;
+});
+
+const tabStyle = computed(() => {
+    const currActiveTab = props.activeTab;
+    return isCoercableComponent(currActiveTab) || !currActiveTab
+        ? undefined
+        : unref(currActiveTab.style);
+});
+
+function gatherButtonProps(button: GenericTabButton) {
+    const { display, style, classes, glowColor, visibility } = deepUnref(button);
+    return { display, style, classes, glowColor, visibility };
+}
 </script>
 
 <style scoped>

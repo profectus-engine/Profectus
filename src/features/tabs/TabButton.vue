@@ -19,61 +19,43 @@
     </button>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import type { CoercableComponent, StyleValue } from "features/feature";
 import { isHidden, isVisible, Visibility } from "features/feature";
 import { getNotifyStyle } from "game/notifications";
-import { computeComponent, processedPropType, unwrapRef } from "util/vue";
-import { computed, defineComponent, toRefs, unref } from "vue";
+import { computeComponent } from "util/vue";
+import { computed, toRef, unref } from "vue";
 
-export default defineComponent({
-    props: {
-        visibility: {
-            type: processedPropType<Visibility | boolean>(Number, Boolean),
-            required: true
-        },
-        display: {
-            type: processedPropType<CoercableComponent>(Object, String, Function),
-            required: true
-        },
-        style: processedPropType<StyleValue>(String, Object, Array),
-        classes: processedPropType<Record<string, boolean>>(Object),
-        glowColor: processedPropType<string>(String),
-        active: Boolean,
-        floating: Boolean
-    },
-    emits: ["selectTab"],
-    setup(props, { emit }) {
-        const { display, glowColor, floating } = toRefs(props);
+const props = defineProps<{
+    visibility: Visibility | boolean;
+    display: CoercableComponent;
+    style?: StyleValue;
+    classes?: Record<string, boolean>;
+    glowColor?: string;
+    active?: boolean;
+    floating?: boolean;
+}>();
 
-        const component = computeComponent(display);
+const emit = defineEmits<{
+    selectTab: [];
+}>();
 
-        const glowColorStyle = computed(() => {
-            const color = unwrapRef(glowColor);
-            if (color == null || color === "") {
-                return {};
-            }
-            if (unref(floating)) {
-                return getNotifyStyle(color);
-            }
-            return { boxShadow: `0px 9px 5px -6px ${color}` };
-        });
+const component = computeComponent(toRef(props, "display"));
 
-        function selectTab() {
-            emit("selectTab");
-        }
-
-        return {
-            selectTab,
-            component,
-            glowColorStyle,
-            unref,
-            Visibility,
-            isVisible,
-            isHidden
-        };
+const glowColorStyle = computed(() => {
+    const color = props.glowColor;
+    if (color == null || color === "") {
+        return {};
     }
+    if (props.floating) {
+        return getNotifyStyle(color);
+    }
+    return { boxShadow: `0px 9px 5px -6px ${color}` };
 });
+
+function selectTab() {
+    emit("selectTab");
+}
 </script>
 
 <style scoped>

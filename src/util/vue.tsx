@@ -10,7 +10,7 @@ import {
 } from "features/feature";
 import type { ProcessedComputable } from "util/computed";
 import { DoNotCache } from "util/computed";
-import type { Component, ComputedRef, DefineComponent, PropType, Ref, ShallowRef } from "vue";
+import type { Component, DefineComponent, Ref, ShallowRef, UnwrapRef } from "vue";
 import {
     computed,
     defineComponent,
@@ -175,22 +175,22 @@ export function getFirstFeature<
 }
 
 export function computeComponent(
-    component: Ref<ProcessedComputable<CoercableComponent>>,
+    component: Ref<CoercableComponent>,
     defaultWrapper = "div"
 ): ShallowRef<Component | ""> {
     const comp = shallowRef<Component | "">();
     watchEffect(() => {
-        comp.value = coerceComponent(unwrapRef(component), defaultWrapper);
+        comp.value = coerceComponent(unref(component), defaultWrapper);
     });
     return comp as ShallowRef<Component | "">;
 }
 export function computeOptionalComponent(
-    component: Ref<ProcessedComputable<CoercableComponent | undefined> | undefined>,
+    component: Ref<CoercableComponent | undefined>,
     defaultWrapper = "div"
 ): ShallowRef<Component | "" | null> {
     const comp = shallowRef<Component | "" | null>(null);
     watchEffect(() => {
-        const currComponent = unwrapRef(component);
+        const currComponent = unref(component);
         comp.value =
             currComponent === "" || currComponent == null
                 ? null
@@ -199,12 +199,14 @@ export function computeOptionalComponent(
     return comp;
 }
 
-export function wrapRef<T>(ref: Ref<ProcessedComputable<T>>): ComputedRef<T> {
-    return computed(() => unwrapRef(ref));
-}
-
-export function unwrapRef<T>(ref: Ref<ProcessedComputable<T>>): T {
-    return unref<T>(unref(ref));
+export function deepUnref<T extends object>(refObject: T): { [K in keyof T]: UnwrapRef<T[K]> } {
+    return (Object.keys(refObject) as (keyof T)[]).reduce(
+        (acc, curr) => {
+            acc[curr] = unref(refObject[curr]) as UnwrapRef<T[keyof T]>;
+            return acc;
+        },
+        {} as { [K in keyof T]: UnwrapRef<T[K]> }
+    );
 }
 
 export function setRefValue<T>(ref: Ref<T | Ref<T>>, value: T) {
@@ -222,14 +224,6 @@ export type PropTypes =
     | typeof Function
     | typeof Object
     | typeof Array;
-// TODO Unfortunately, the typescript engine gives up on typing completely when you use this method,
-// Even though it has the same typing as when doing it manually
-export function processedPropType<T>(...types: PropTypes[]): PropType<ProcessedComputable<T>> {
-    if (!types.includes(Object)) {
-        types.push(Object);
-    }
-    return types as PropType<ProcessedComputable<T>>;
-}
 
 export function trackHover(element: VueFeature): Ref<boolean> {
     const isHovered = ref(false);
@@ -245,8 +239,11 @@ export function trackHover(element: VueFeature): Ref<boolean> {
 }
 
 export function kebabifyObject(object: Record<string, unknown>) {
-    return Object.keys(object).reduce((acc, curr) => {
-        acc[camelToKebab(curr)] = object[curr];
-        return acc;
-    }, {} as Record<string, unknown>);
+    return Object.keys(object).reduce(
+        (acc, curr) => {
+            acc[camelToKebab(curr)] = object[curr];
+            return acc;
+        },
+        {} as Record<string, unknown>
+    );
 }

@@ -22,7 +22,7 @@
     </button>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import "components/common/features.css";
 import Node from "components/Node.vue";
 import type { CoercableComponent, StyleValue } from "features/feature";
@@ -30,58 +30,26 @@ import { isHidden, isVisible, Visibility } from "features/feature";
 import {
     computeComponent,
     computeOptionalComponent,
-    processedPropType,
     setupHoldToClick
 } from "util/vue";
-import type { PropType } from "vue";
-import { defineComponent, toRefs, unref } from "vue";
+import { toRef, unref } from "vue";
 
-export default defineComponent({
-    props: {
-        visibility: {
-            type: processedPropType<Visibility | boolean>(Number, Boolean),
-            required: true
-        },
-        onClick: Function as PropType<(e?: MouseEvent | TouchEvent) => void>,
-        onHold: Function as PropType<VoidFunction>,
-        display: {
-            type: processedPropType<CoercableComponent>(Object, String, Function),
-            required: true
-        },
-        title: processedPropType<CoercableComponent>(Object, String, Function),
-        style: processedPropType<StyleValue>(String, Object, Array),
-        canClick: {
-            type: processedPropType<boolean>(Boolean),
-            required: true
-        },
-        id: {
-            type: String,
-            required: true
-        }
-    },
-    components: {
-        Node
-    },
-    setup(props) {
-        const { onClick, onHold, title, display } = toRefs(props);
+const props = defineProps<{
+    visibility: Visibility | boolean;
+    onClick?: (e?: MouseEvent | TouchEvent) => void;
+    onHold?: VoidFunction;
+    display: CoercableComponent;
+    title?: CoercableComponent;
+    style?: StyleValue;
+    canClick: boolean;
+    id: string;
+}>();
 
-        const { start, stop } = setupHoldToClick(onClick, onHold);
 
-        const titleComponent = computeOptionalComponent(title);
-        const component = computeComponent(display);
+const { start, stop } = setupHoldToClick(toRef(props, "onClick"), toRef(props, "onHold"));
 
-        return {
-            start,
-            stop,
-            titleComponent,
-            component,
-            Visibility,
-            unref,
-            isVisible,
-            isHidden
-        };
-    }
-});
+const titleComponent = computeOptionalComponent(toRef(props, "title"));
+const component = computeComponent(toRef(props, "display"));
 </script>
 
 <style scoped>

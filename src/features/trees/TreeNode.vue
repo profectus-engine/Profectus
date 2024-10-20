@@ -33,66 +33,32 @@
     </div>
 </template>
 
-<script lang="ts">
-import MarkNode from "components/MarkNode.vue";
-import Node from "components/Node.vue";
-import type { CoercableComponent, StyleValue } from "features/feature";
-import { isHidden, isVisible, Visibility } from "features/feature";
+<script setup lang="ts">
+import type { CoercableComponent, StyleValue, Visibility } from "features/feature";
+import { isHidden, isVisible } from "features/feature";
 import {
     computeOptionalComponent,
-    isCoercableComponent,
-    processedPropType,
     setupHoldToClick
 } from "util/vue";
-import type { PropType } from "vue";
-import { defineComponent, toRefs, unref } from "vue";
+import { toRef, unref } from "vue";
 
-export default defineComponent({
-    props: {
-        display: processedPropType<CoercableComponent>(Object, String, Function),
-        visibility: {
-            type: processedPropType<Visibility | boolean>(Number, Boolean),
-            required: true
-        },
-        style: processedPropType<StyleValue>(String, Object, Array),
-        classes: processedPropType<Record<string, boolean>>(Object),
-        onClick: Function as PropType<(e?: MouseEvent | TouchEvent) => void>,
-        onHold: Function as PropType<VoidFunction>,
-        color: processedPropType<string>(String),
-        glowColor: processedPropType<string>(String),
-        canClick: {
-            type: processedPropType<boolean>(Boolean),
-            required: true
-        },
-        mark: processedPropType<boolean | string>(Boolean, String),
-        id: {
-            type: String,
-            required: true
-        }
-    },
-    components: {
-        MarkNode,
-        Node
-    },
-    setup(props) {
-        const { onClick, onHold, display } = toRefs(props);
+const props = defineProps<{
+    visibility: Visibility | boolean;
+    canClick: boolean;
+    id: string;
+    display?: CoercableComponent;
+    style?: StyleValue;
+    classes?: Record<string, boolean>;
+    onClick?: (e?: MouseEvent | TouchEvent) => void;
+    onHold?: VoidFunction;
+    color?: string;
+    glowColor?: string;
+    mark?: boolean | string;
+}>();
 
-        const comp = computeOptionalComponent(display);
+const comp = computeOptionalComponent(toRef(props, "display"));
 
-        const { start, stop } = setupHoldToClick(onClick, onHold);
-
-        return {
-            start,
-            stop,
-            comp,
-            unref,
-            Visibility,
-            isCoercableComponent,
-            isVisible,
-            isHidden
-        };
-    }
-});
+const { start, stop } = setupHoldToClick(toRef(props, "onClick"), toRef(props, "onHold"));
 </script>
 
 <style scoped>

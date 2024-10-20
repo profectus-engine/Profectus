@@ -5,74 +5,58 @@
     <Links v-if="branches" :links="unref(branches)" />
 </template>
 
-<script lang="tsx">
+<script setup lang="tsx">
 import "components/common/table.css";
 import { jsx } from "features/feature";
 import Links from "features/links/Links.vue";
 import type { GenericTreeNode, TreeBranch } from "features/trees/tree";
-import { coerceComponent, processedPropType, renderJSX, unwrapRef } from "util/vue";
+import { coerceComponent, renderJSX } from "util/vue";
 import type { Component } from "vue";
-import { defineComponent, shallowRef, toRefs, unref, watchEffect } from "vue";
+import { shallowRef, unref, watchEffect } from "vue";
 
-export default defineComponent({
-    props: {
-        nodes: {
-            type: processedPropType<GenericTreeNode[][]>(Array),
-            required: true
-        },
-        leftSideNodes: processedPropType<GenericTreeNode[]>(Array),
-        rightSideNodes: processedPropType<GenericTreeNode[]>(Array),
-        branches: processedPropType<TreeBranch[]>(Array)
-    },
-    components: { Links },
-    setup(props) {
-        const { nodes, leftSideNodes, rightSideNodes } = toRefs(props);
+const props = defineProps<{
+    nodes: GenericTreeNode[][];
+    leftSideNodes?: GenericTreeNode[];
+    rightSideNodes?: GenericTreeNode[];
+    branches?: TreeBranch[];
+}>();
 
-        const nodesComp = shallowRef<Component | "">();
-        watchEffect(() => {
-            const currNodes = unwrapRef(nodes);
-            nodesComp.value = coerceComponent(
+const nodesComp = shallowRef<Component | "">();
+watchEffect(() => {
+    const currNodes = props.nodes;
+    nodesComp.value = coerceComponent(
+        jsx(() => (
+            <>
+                {currNodes.map(row => (
+                    <span class="row tree-row" style="margin: 50px auto;">
+                        {row.map(renderJSX)}
+                    </span>
+                ))}
+            </>
+        ))
+    );
+});
+
+const leftNodesComp = shallowRef<Component | "">();
+watchEffect(() => {
+    const currNodes = props.leftSideNodes;
+    leftNodesComp.value = currNodes
+        ? coerceComponent(
                 jsx(() => (
-                    <>
-                        {currNodes.map(row => (
-                            <span class="row tree-row" style="margin: 50px auto;">
-                                {row.map(renderJSX)}
-                            </span>
-                        ))}
-                    </>
+                    <span class="left-side-nodes small">{currNodes.map(renderJSX)}</span>
                 ))
-            );
-        });
+            )
+        : "";
+});
 
-        const leftNodesComp = shallowRef<Component | "">();
-        watchEffect(() => {
-            const currNodes = unwrapRef(leftSideNodes);
-            leftNodesComp.value = currNodes
-                ? coerceComponent(
-                      jsx(() => (
-                          <span class="left-side-nodes small">{currNodes.map(renderJSX)}</span>
-                      ))
-                  )
-                : "";
-        });
-
-        const rightNodesComp = shallowRef<Component | "">();
-        watchEffect(() => {
-            const currNodes = unwrapRef(rightSideNodes);
-            rightNodesComp.value = currNodes
-                ? coerceComponent(
-                      jsx(() => <span class="side-nodes small">{currNodes.map(renderJSX)}</span>)
-                  )
-                : "";
-        });
-
-        return {
-            unref,
-            nodesComp,
-            leftNodesComp,
-            rightNodesComp
-        };
-    }
+const rightNodesComp = shallowRef<Component | "">();
+watchEffect(() => {
+    const currNodes = props.rightSideNodes;
+    rightNodesComp.value = currNodes
+        ? coerceComponent(
+                jsx(() => <span class="side-nodes small">{currNodes.map(renderJSX)}</span>)
+            )
+        : "";
 });
 </script>
 
