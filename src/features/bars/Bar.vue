@@ -1,18 +1,10 @@
 <template>
     <div
-        v-if="isVisible(visibility)"
-        :style="[
-            {
-                width: unref(width) + 'px',
-                height: unref(height) + 'px',
-                visibility: isHidden(visibility) ? 'hidden' : undefined
-            },
-            unref(style) ?? {}
-        ]"
-        :class="{
-            bar: true,
-            ...unref(classes)
+        :style="{
+            width: unref(width) + 'px',
+            height: unref(height) + 'px',
         }"
+        class="bar"
     >
         <div
             class="overlayTextContainer border"
@@ -21,50 +13,41 @@
                 unref(borderStyle) ?? {}
             ]"
         >
-            <span v-if="component" class="overlayText" :style="unref(textStyle)">
-                <component :is="component" />
+            <span v-if="display" class="overlayText" :style="unref(textStyle)">
+                <Component />
             </span>
         </div>
         <div
             class="border"
             :style="[
                 { width: unref(width) + 'px', height: unref(height) + 'px' },
-                unref(style) ?? {},
                 unref(baseStyle) ?? {},
                 unref(borderStyle) ?? {}
             ]"
         >
-            <div class="fill" :style="[barStyle, unref(style) ?? {}, unref(fillStyle) ?? {}]" />
+            <div class="fill" :style="[barStyle, unref(fillStyle) ?? {}]" />
         </div>
-        <MarkNode :mark="unref(mark)" />
-        <Node :id="id" />
     </div>
 </template>
 
 <script setup lang="ts">
-import { CoercableComponent, isHidden, isVisible, Visibility } from "features/feature";
-import type { DecimalSource } from "util/bignum";
 import Decimal from "util/bignum";
 import { Direction } from "util/common";
-import { computeOptionalComponent } from "util/vue";
-import type { CSSProperties, StyleValue } from "vue";
-import { computed, toRef, unref } from "vue";
+import { render } from "util/vue";
+import type { CSSProperties } from "vue";
+import { computed, unref } from "vue";
+import { Bar } from "./bar";
 
 const props = defineProps<{
-    progress: DecimalSource;
-    width: number;
-    height: number;
-    direction: Direction;
-    display?: CoercableComponent;
-    visibility: Visibility | boolean;
-    style?: StyleValue;
-    classes?: Record<string, boolean>;
-    borderStyle?: StyleValue;
-    textStyle?: StyleValue;
-    baseStyle?: StyleValue;
-    fillStyle?: StyleValue;
-    mark?: boolean | string;
-    id: string;
+    width: Bar["width"];
+    height: Bar["height"];
+    direction: Bar["direction"];
+    borderStyle: Bar["borderStyle"];
+    baseStyle: Bar["baseStyle"];
+    textStyle: Bar["textStyle"];
+    fillStyle: Bar["fillStyle"];
+    progress: Bar["progress"];
+    display: Bar["display"];
 }>();
 
 const normalizedProgress = computed(() => {
@@ -77,17 +60,17 @@ const normalizedProgress = computed(() => {
 
 const barStyle = computed(() => {
     const barStyle: Partial<CSSProperties> = {
-        width: props.width + 0.5 + "px",
-        height: props.height + 0.5 + "px"
+        width: unref(props.width) + 0.5 + "px",
+        height: unref(props.height) + 0.5 + "px"
     };
     switch (props.direction) {
         case Direction.Up:
             barStyle.clipPath = `inset(${normalizedProgress.value}% 0% 0% 0%)`;
-            barStyle.width = props.width + 1 + "px";
+            barStyle.width = unref(props.width) + 1 + "px";
             break;
         case Direction.Down:
             barStyle.clipPath = `inset(0% 0% ${normalizedProgress.value}% 0%)`;
-            barStyle.width = props.width + 1 + "px";
+            barStyle.width = unref(props.width) + 1 + "px";
             break;
         case Direction.Right:
             barStyle.clipPath = `inset(0% ${normalizedProgress.value}% 0% 0%)`;
@@ -102,7 +85,7 @@ const barStyle = computed(() => {
     return barStyle;
 });
 
-const component = computeOptionalComponent(toRef(props, "display"));
+const Component = () => props.display ? render(props.display) : null;
 </script>
 
 <style scoped>

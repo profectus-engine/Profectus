@@ -2,25 +2,20 @@
     <div
         ref="resizeListener"
         class="resize-listener"
-        :style="unref(style)"
-        :class="unref(classes)"
     />
 </template>
 
 <script setup lang="tsx">
 import { Application } from "@pixi/app";
-import type { StyleValue } from "features/feature";
 import { globalBus } from "game/events";
 import "lib/pixi";
 import { nextTick, onBeforeUnmount, onMounted, shallowRef, unref } from "vue";
+import type { Particles } from "./particles";
 
 const props = defineProps<{
-    style?: StyleValue;
-    classes?: Record<string, boolean>;
+    onContainerResized: Particles["onContainerResized"];
+    onHotReload: Particles["onHotReload"];
     onInit: (app: Application) => void;
-    id: string;
-    onContainerResized?: (rect: DOMRect) => void;
-    onHotReload?: VoidFunction;
 }>();
 
 const app = shallowRef<null | Application>(null);
@@ -38,7 +33,7 @@ onMounted(() => {
             backgroundAlpha: 0
         });
         resizeListener.value?.appendChild(app.value.view);
-        props.onInit?.(app.value as Application);
+        props.onInit(app.value);
     }
     updateBounds();
     if (props.onHotReload) {

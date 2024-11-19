@@ -1,28 +1,26 @@
 import Modal from "components/modals/Modal.vue";
-import type {
-    CoercableComponent,
-    JSXFunction,
-    OptionsFunc,
-    Replace,
-    StyleValue
-} from "features/feature";
-import { jsx, setDefault } from "features/feature";
+import type { OptionsFunc, Replace } from "features/feature";
 import { globalBus } from "game/events";
 import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
 import player from "game/player";
 import type { Emitter } from "nanoevents";
 import { createNanoEvents } from "nanoevents";
-import type {
-    Computable,
-    GetComputableType,
-    GetComputableTypeWithDefault,
-    ProcessedComputable
-} from "util/computed";
-import { processComputable } from "util/computed";
+import { ProcessedRefOrGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { computed, InjectionKey, Ref } from "vue";
-import { ref, shallowReactive, unref } from "vue";
+import { Renderable } from "util/vue";
+import {
+    computed,
+    type CSSProperties,
+    InjectionKey,
+    MaybeRef,
+    MaybeRefOrGetter,
+    Ref,
+    ref,
+    shallowReactive,
+    unref
+} from "vue";
+import { JSX } from "vue/jsx-runtime";
 
 /** A feature's node in the DOM that has its size tracked. */
 export interface FeatureNode {
@@ -74,12 +72,12 @@ export interface LayerEvents {
  * A reference to all the current layers.
  * It is shallow reactive so it will update when layers are added or removed, but not interfere with the existing refs within each layer.
  */
-export const layers: Record<string, Readonly<GenericLayer> | undefined> = shallowReactive({});
+export const layers: Record<string, Readonly<Layer>> = shallowReactive({});
 
 declare global {
     /** Augment the window object so the layers can be accessed from the console. */
     interface Window {
-        layers: Record<string, Readonly<GenericLayer> | undefined>;
+        layers: Record<string, Readonly<Layer> | undefined>;
     }
 }
 window.layers = layers;
@@ -106,42 +104,42 @@ export interface Position {
  */
 export interface LayerOptions {
     /** The color of the layer, used to theme the entire layer's display. */
-    color?: Computable<string>;
+    color?: MaybeRefOrGetter<string>;
     /**
      * The layout of this layer's features.
      * When the layer is open in {@link game/player.PlayerData.tabs}, this is the content that is displayed.
      */
-    display: Computable<CoercableComponent>;
+    display: MaybeRefOrGetter<Renderable>;
     /** An object of classes that should be applied to the display. */
-    classes?: Computable<Record<string, boolean>>;
+    classes?: MaybeRefOrGetter<Record<string, boolean>>;
     /** Styles that should be applied to the display. */
-    style?: Computable<StyleValue>;
+    style?: MaybeRefOrGetter<CSSProperties>;
     /**
      * The name of the layer, used on minimized tabs.
      * Defaults to {@link BaseLayer.id}.
      */
-    name?: Computable<string>;
+    name?: MaybeRefOrGetter<string>;
     /**
      * Whether or not the layer can be minimized.
      * Defaults to true.
      */
-    minimizable?: Computable<boolean>;
+    minimizable?: MaybeRefOrGetter<boolean>;
     /**
      * The layout of this layer's features.
      * When the layer is open in {@link game/player.PlayerData.tabs}, but the tab is {@link Layer.minimized} this is the content that is displayed.
      */
-    minimizedDisplay?: Computable<CoercableComponent>;
+    minimizedDisplay?: MaybeRefOrGetter<Renderable>;
     /**
      * Whether or not to force the go back button to be hidden.
      * If true, go back will be hidden regardless of {@link data/projInfo.allowGoBack}.
      */
-    forceHideGoBack?: Computable<boolean>;
+    forceHideGoBack?: MaybeRefOrGetter<boolean>;
     /**
      * A CSS min-width value that is applied to the layer.
      * Can be a number, in which case the unit is assumed to be px.
      * Defaults to 600px.
      */
-    minWidth?: Computable<number | string>;
+    minWidth?: MaybeRefOrGetter<number | string>;
 }
 
 /** The properties that are added onto a processed {@link LayerOptions} to create a {@link Layer} */
@@ -165,28 +163,18 @@ export interface BaseLayer {
 }
 
 /** An unit of game content. Displayed to the user as a tab or modal. */
-export type Layer<T extends LayerOptions> = Replace<
-    T & BaseLayer,
+export type Layer = Replace<
+    Replace<LayerOptions, BaseLayer>,
     {
-        color: GetComputableType<T["color"]>;
-        display: GetComputableType<T["display"]>;
-        classes: GetComputableType<T["classes"]>;
-        style: GetComputableType<T["style"]>;
-        name: GetComputableTypeWithDefault<T["name"], string>;
-        minWidth: GetComputableTypeWithDefault<T["minWidth"], 600>;
-        minimizable: GetComputableTypeWithDefault<T["minimizable"], true>;
-        minimizedDisplay: GetComputableType<T["minimizedDisplay"]>;
-        forceHideGoBack: GetComputableType<T["forceHideGoBack"]>;
-    }
->;
-
-/** A type that matches any valid {@link Layer} object. */
-export type GenericLayer = Replace<
-    Layer<LayerOptions>,
-    {
-        name: ProcessedComputable<string>;
-        minWidth: ProcessedComputable<number>;
-        minimizable: ProcessedComputable<boolean>;
+        color?: ProcessedRefOrGetter<LayerOptions["color"]>;
+        display: ProcessedRefOrGetter<LayerOptions["display"]>;
+        classes?: ProcessedRefOrGetter<LayerOptions["classes"]>;
+        style?: ProcessedRefOrGetter<LayerOptions["style"]>;
+        name: MaybeRef<string>;
+        minWidth: MaybeRef<string | number>;
+        minimizable: MaybeRef<boolean>;
+        minimizedDisplay?: ProcessedRefOrGetter<LayerOptions["minimizedDisplay"]>;
+        forceHideGoBack?: ProcessedRefOrGetter<LayerOptions["forceHideGoBack"]>;
     }
 >;
 
@@ -206,72 +194,85 @@ export const addingLayers: string[] = [];
 export function createLayer<T extends LayerOptions>(
     id: string,
     optionsFunc: OptionsFunc<T, BaseLayer>
-): Layer<T> {
+) {
     return createLazyProxy(() => {
-        const layer = {} as T & Partial<BaseLayer>;
-        const emitter = (layer.emitter = createNanoEvents<LayerEvents>());
-        layer.on = emitter.on.bind(emitter);
-        layer.emit = emitter.emit.bind(emitter) as <K extends keyof LayerEvents>(
-            ...args: [K, ...Parameters<LayerEvents[K]>]
-        ) => void;
-        layer.nodes = ref({});
-        layer.id = id;
-
+        const emitter = createNanoEvents<LayerEvents>();
         addingLayers.push(id);
         persistentRefs[id] = new Set();
-        layer.minimized = persistent(false, false);
-        Object.assign(layer, optionsFunc.call(layer, layer as BaseLayer));
+
+        const baseLayer = {
+            id,
+            emitter,
+            ...emitter,
+            nodes: ref({}),
+            minimized: persistent(false, false)
+        } satisfies BaseLayer;
+
+        const options = optionsFunc.call(baseLayer, baseLayer);
+        const {
+            color,
+            display,
+            classes,
+            style: _style,
+            name,
+            forceHideGoBack,
+            minWidth,
+            minimizable,
+            minimizedDisplay,
+            ...props
+        } = options;
         if (
             addingLayers[addingLayers.length - 1] == null ||
             addingLayers[addingLayers.length - 1] !== id
         ) {
             throw new Error(
-                `Adding layers stack in invalid state. This should not happen\nStack: ${addingLayers}\nTrying to pop ${layer.id}`
+                `Adding layers stack in invalid state. This should not happen\nStack: ${addingLayers}\nTrying to pop ${id}`
             );
         }
         addingLayers.pop();
 
-        processComputable(layer as T, "color");
-        processComputable(layer as T, "display");
-        processComputable(layer as T, "classes");
-        processComputable(layer as T, "style");
-        processComputable(layer as T, "name");
-        setDefault(layer, "name", layer.id);
-        processComputable(layer as T, "minWidth");
-        setDefault(layer, "minWidth", 600);
-        processComputable(layer as T, "minimizable");
-        setDefault(layer, "minimizable", true);
-        processComputable(layer as T, "minimizedDisplay");
+        const style = processGetter(_style);
 
-        const style = layer.style as ProcessedComputable<StyleValue> | undefined;
-        layer.style = computed(() => {
-            let width = unref(layer.minWidth as ProcessedComputable<number | string>);
-            if (typeof width === "number" || !Number.isNaN(parseInt(width))) {
-                width = width + "px";
-            }
-            return [
-                unref(style) ?? "",
-                layer.minimized?.value
-                    ? {
-                          flexGrow: "0",
-                          flexShrink: "0",
-                          width: "60px",
-                          minWidth: "",
-                          flexBasis: "",
-                          margin: "0"
-                      }
-                    : {
-                          flexGrow: "",
-                          flexShrink: "",
-                          width: "",
-                          minWidth: width,
-                          flexBasis: width,
-                          margin: ""
-                      }
-            ];
-        }) as Ref<StyleValue>;
+        const layer = {
+            ...baseLayer,
+            ...(props as Omit<typeof props, keyof LayerOptions>),
+            color: processGetter(color),
+            display: processGetter(display),
+            classes: processGetter(classes),
+            style: computed((): CSSProperties => {
+                let width = unref(layer.minWidth);
+                if (typeof width === "number" || !Number.isNaN(parseInt(width))) {
+                    width = width + "px";
+                }
+                return {
+                    ...unref(style),
+                    ...(baseLayer.minimized.value
+                        ? {
+                              flexGrow: "0",
+                              flexShrink: "0",
+                              width: "60px",
+                              minWidth: "",
+                              flexBasis: "",
+                              margin: "0"
+                          }
+                        : {
+                              flexGrow: "",
+                              flexShrink: "",
+                              width: "",
+                              minWidth: width,
+                              flexBasis: width,
+                              margin: ""
+                          })
+                };
+            }),
+            name: processGetter(name) ?? id,
+            forceHideGoBack: processGetter(forceHideGoBack),
+            minWidth: processGetter(minWidth) ?? 600,
+            minimizable: processGetter(minimizable) ?? true,
+            minimizedDisplay: processGetter(minimizedDisplay)
+        } satisfies Layer;
 
-        return layer as unknown as Layer<T>;
+        return layer;
     });
 }
 
@@ -284,11 +285,11 @@ export function createLayer<T extends LayerOptions>(
  * @param player The player data object, which will have a data object for this layer.
  */
 export function addLayer(
-    layer: GenericLayer,
+    layer: Layer,
     player: { layers?: Record<string, Record<string, unknown>> }
 ): void {
     console.info("Adding layer", layer.id);
-    if (layers[layer.id]) {
+    if (layers[layer.id] != null) {
         console.error(
             "Attempted to add layer with same ID as existing layer",
             layer.id,
@@ -297,7 +298,7 @@ export function addLayer(
         return;
     }
 
-    setDefault(player, "layers", {});
+    player.layers ??= {};
     if (player.layers[layer.id] == null) {
         player.layers[layer.id] = {};
     }
@@ -310,7 +311,7 @@ export function addLayer(
  * Convenience method for getting a layer by its ID with correct typing.
  * @param layerID The ID of the layer to get.
  */
-export function getLayer<T extends GenericLayer>(layerID: string): T {
+export function getLayer<T extends Layer>(layerID: string): T {
     return layers[layerID] as T;
 }
 
@@ -319,11 +320,11 @@ export function getLayer<T extends GenericLayer>(layerID: string): T {
  * Note that accessing a layer/its properties does NOT require it to be enabled.
  * @param layer The layer to remove.
  */
-export function removeLayer(layer: GenericLayer): void {
+export function removeLayer(layer: Layer): void {
     console.info("Removing layer", layer.id);
     globalBus.emit("removeLayer", layer);
 
-    layers[layer.id] = undefined;
+    delete layers[layer.id];
 }
 
 /**
@@ -331,7 +332,7 @@ export function removeLayer(layer: GenericLayer): void {
  * This is useful for layers with dynamic content, to ensure persistent refs are correctly configured.
  * @param layer Layer to remove and then re-add
  */
-export function reloadLayer(layer: GenericLayer): void {
+export function reloadLayer(layer: Layer): void {
     removeLayer(layer);
 
     // Re-create layer
@@ -343,14 +344,14 @@ export function reloadLayer(layer: GenericLayer): void {
  * Returns the modal itself, which can be rendered anywhere you need, as well as a function to open the modal.
  * @param layer The layer to display in the modal.
  */
-export function setupLayerModal(layer: GenericLayer): {
+export function setupLayerModal(layer: Layer): {
     openModal: VoidFunction;
-    modal: JSXFunction;
+    modal: Ref<JSX.Element>;
 } {
     const showModal = ref(false);
     return {
         openModal: () => (showModal.value = true),
-        modal: jsx(() => (
+        modal: computed(() => (
             <Modal
                 modelValue={showModal.value}
                 onUpdate:modelValue={value => (showModal.value = value)}

@@ -7,23 +7,17 @@
         @mouseup="e => mouseUp(e)"
         @touchend.passive="e => mouseUp(e)"
     >
-        <component v-if="comp" :is="comp" />
+        <slot />
     </div>
 </template>
 
 <script setup lang="tsx">
-import { jsx } from "features/feature";
-import { VueFeature, coerceComponent, renderJSX } from "util/vue";
-import { Ref, shallowRef, unref } from "vue";
+import { Ref, unref } from "vue";
 import { NodePosition } from "./board";
-unref;
 
-const props = defineProps<{
-    element: VueFeature;
+defineProps<{
     mouseDown: (e: MouseEvent | TouchEvent) => void;
     mouseUp: (e: MouseEvent | TouchEvent) => void;
     position: Ref<NodePosition>;
 }>();
-
-const comp = shallowRef(coerceComponent(jsx(() => renderJSX(props.element))));
 </script>

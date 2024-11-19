@@ -1,5 +1,5 @@
 import { globalBus } from "game/events";
-import { convertComputable } from "util/computed";
+import { processGetter } from "util/computed";
 import { trackHover, VueFeature } from "util/vue";
 import { nextTick, Ref } from "vue";
 import { ref, watch } from "vue";
@@ -37,7 +37,7 @@ export function createDismissableNotify(
     element: VueFeature,
     shouldNotify: Ref<boolean> | (() => boolean)
 ): Ref<boolean> {
-    const processedShouldNotify = convertComputable(shouldNotify) as Ref<boolean>;
+    const processedShouldNotify = processGetter(shouldNotify) as Ref<boolean>;
     const notifying = ref(false);
     nextTick(() => {
         notifying.value = processedShouldNotify.value;

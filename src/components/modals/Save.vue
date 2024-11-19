@@ -75,7 +75,7 @@
 </template>
 
 <script setup lang="ts">
-import Tooltip from "features/tooltips/Tooltip.vue";
+import Tooltip from "wrappers/tooltips/Tooltip.vue";
 import player from "game/player";
 import { Direction } from "util/common";
 import { galaxy, syncedSaves } from "util/galaxy";

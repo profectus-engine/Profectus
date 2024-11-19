@@ -1,37 +1,18 @@
 <template>
-    <button
-        v-if="isVisible(visibility)"
-        @click="selectTab"
-        class="tabButton"
-        :style="[
-            {
-                visibility: isHidden(visibility) ? 'hidden' : undefined
-            },
-            glowColorStyle,
-            unref(style) ?? {}
-        ]"
-        :class="{
-            active,
-            ...unref(classes)
-        }"
-    >
-        <component :is="component" />
+    <button @click="selectTab" class="tabButton" :style="glowColorStyle" :class="{ active }">
+        <Component />
     </button>
 </template>
 
 <script setup lang="ts">
-import type { CoercableComponent, StyleValue } from "features/feature";
-import { isHidden, isVisible, Visibility } from "features/feature";
 import { getNotifyStyle } from "game/notifications";
-import { computeComponent } from "util/vue";
-import { computed, toRef, unref } from "vue";
+import { render } from "util/vue";
+import { computed, unref } from "vue";
+import { TabButton } from "./tabFamily";
 
 const props = defineProps<{
-    visibility: Visibility | boolean;
-    display: CoercableComponent;
-    style?: StyleValue;
-    classes?: Record<string, boolean>;
-    glowColor?: string;
+    display: TabButton["display"];
+    glowColor: TabButton["glowColor"];
     active?: boolean;
     floating?: boolean;
 }>();
@@ -40,10 +21,10 @@ const emit = defineEmits<{
     selectTab: [];
 }>();
 
-const component = computeComponent(toRef(props, "display"));
+const Component = () => render(props.display);
 
 const glowColorStyle = computed(() => {
-    const color = props.glowColor;
+    const color = unref(props.glowColor);
     if (color == null || color === "") {
         return {};
     }

@@ -1,26 +1,12 @@
-import {
-    CoercableComponent,
-    isVisible,
-    jsx,
-    OptionsFunc,
-    Replace,
-    setDefault,
-    Visibility
-} from "features/feature";
+import { isVisible, OptionsFunc, Replace, Visibility } from "features/feature";
 import { displayResource, Resource } from "features/resources/resource";
 import Decimal, { DecimalSource } from "lib/break_eternity";
-import {
-    Computable,
-    convertComputable,
-    processComputable,
-    ProcessedComputable
-} from "util/computed";
+import { processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { joinJSX, renderJSX } from "util/vue";
-import { computed, unref } from "vue";
-import { JSX } from "vue/jsx-runtime";
+import { joinJSX, render, Renderable } from "util/vue";
+import { computed, MaybeRef, MaybeRefOrGetter, unref } from "vue";
 import Formula, { calculateCost, calculateMaxAffordable } from "./formulas/formulas";
-import type { GenericFormula } from "./formulas/types";
+import type { GenericFormula, InvertibleIntegralFormula } from "./formulas/types";
 import { DefaultValue, Persistent } from "./persistence";
 
 /**
@@ -31,27 +17,27 @@ export interface Requirement {
     /**
      * The display for this specific requirement. This is used for displays multiple requirements condensed. Required if {@link visibility} can be {@link Visibility.Visible}.
      */
-    partialDisplay?: (amount?: DecimalSource) => JSX.Element;
+    partialDisplay?: (amount?: DecimalSource) => Renderable;
     /**
      * The display for this specific requirement. Required if {@link visibility} can be {@link Visibility.Visible}.
      */
-    display?: (amount?: DecimalSource) => JSX.Element;
+    display?: (amount?: DecimalSource) => Renderable;
     /**
      * Whether or not this requirement should be displayed in Vue Features. {@link displayRequirements} will respect this property.
      */
-    visibility: ProcessedComputable<Visibility.Visible | Visibility.None | boolean>;
+    visibility: MaybeRef<Visibility | boolean>;
     /**
      * Whether or not this requirement has been met.
      */
-    requirementMet: ProcessedComputable<DecimalSource | boolean>;
+    requirementMet: MaybeRef<DecimalSource | boolean>;
     /**
      * Whether or not this requirement will need to affect the game state when whatever is using this requirement gets triggered.
      */
-    requiresPay: ProcessedComputable<boolean>;
+    requiresPay: MaybeRef<boolean>;
     /**
      * Whether or not this requirement can have multiple levels of requirements that can be met at once. Requirement is assumed to not have multiple levels if this property not present.
      */
-    canMaximize?: ProcessedComputable<boolean>;
+    canMaximize?: MaybeRef<boolean>;
     /**
      * Perform any effects to the game state that should happen when the requirement gets triggered.
      * @param amount The amount of levels of requirements to pay for.
@@ -73,28 +59,28 @@ export interface CostRequirementOptions {
     /**
      * The amount of {@link resource} that must be met for this requirement. You can pass a formula, in which case maximizing will work out of the box (assuming its invertible and, for more accurate calculations, its integral is invertible). If you don't pass a formula then you can still support maximizing by passing a custom {@link pay} function.
      */
-    cost: Computable<DecimalSource> | GenericFormula;
+    cost: MaybeRefOrGetter<DecimalSource> | GenericFormula;
     /**
      * Pass-through to {@link Requirement.visibility}.
      */
-    visibility?: Computable<Visibility.Visible | Visibility.None | boolean>;
+    visibility?: MaybeRefOrGetter<Visibility.Visible | Visibility.None | boolean>;
     /**
      * Pass-through to {@link Requirement.requiresPay}. If not set to false, the default {@link pay} function will remove {@link cost} from {@link resource}.
      */
-    requiresPay?: Computable<boolean>;
+    requiresPay?: MaybeRefOrGetter<boolean>;
     /**
      * When calculating multiple levels to be handled at once, whether it should consider resources used for each level as spent. Setting this to false causes calculations to be faster with larger numbers and supports more math functions.
      * @see {Formula}
      */
-    cumulativeCost?: Computable<boolean>;
+    cumulativeCost?: MaybeRefOrGetter<boolean>;
     /**
      * Upper limit on levels that can be performed at once. Defaults to 1.
      */
-    maxBulkAmount?: Computable<DecimalSource>;
+    maxBulkAmount?: MaybeRefOrGetter<DecimalSource>;
     /**
      * When calculating requirement for multiple levels, how many should be directly summed for increase accuracy. High numbers can cause lag. Defaults to 10 if cumulative cost, 0 otherwise.
      */
-    directSum?: Computable<number>;
+    directSum?: MaybeRefOrGetter<number>;
     /**
      * Pass-through to {@link Requirement.pay}. May be required for maximizing support.
      * @see {@link cost} for restrictions on maximizing support.
@@ -105,11 +91,11 @@ export interface CostRequirementOptions {
 export type CostRequirement = Replace<
     Requirement & CostRequirementOptions,
     {
-        cost: ProcessedComputable<DecimalSource> | GenericFormula;
-        visibility: ProcessedComputable<Visibility.Visible | Visibility.None | boolean>;
-        requiresPay: ProcessedComputable<boolean>;
-        cumulativeCost: ProcessedComputable<boolean>;
-        canMaximize: ProcessedComputable<boolean>;
+        cost: MaybeRef<DecimalSource> | GenericFormula;
+        visibility: MaybeRef<Visibility.Visible | Visibility.None | boolean>;
+        requiresPay: MaybeRef<boolean>;
+        cumulativeCost: MaybeRef<boolean>;
+        canMaximize: MaybeRef<boolean>;
     }
 >;
 
@@ -119,116 +105,123 @@ export type CostRequirement = Replace<
  */
 export function createCostRequirement<T extends CostRequirementOptions>(
     optionsFunc: OptionsFunc<T>
-): CostRequirement {
+) {
     return createLazyProxy(feature => {
-        const req = optionsFunc.call(feature, feature) as T & Partial<Requirement>;
+        const options = optionsFunc.call(feature, feature);
+        const {
+            visibility,
+            cost,
+            resource,
+            requiresPay,
+            cumulativeCost,
+            maxBulkAmount,
+            directSum,
+            pay
+        } = options;
 
-        req.partialDisplay = amount => (
-            <span
-                style={
-                    unref(req.requirementMet as ProcessedComputable<boolean>)
-                        ? ""
-                        : "color: var(--danger)"
+        const requirement = {
+            resource,
+            visibility: processGetter(visibility) ?? Visibility.Visible,
+            cost: processGetter(cost),
+            requiresPay: processGetter(requiresPay) ?? true,
+            cumulativeCost: processGetter(cumulativeCost) ?? true,
+            maxBulkAmount: processGetter(maxBulkAmount) ?? 1,
+            directSum: processGetter(directSum),
+            partialDisplay: (amount?: DecimalSource) => (
+                <span
+                    style={
+                        Decimal.gt(unref(requirement.requirementMet), 0)
+                            ? ""
+                            : "color: var(--danger)"
+                    }
+                >
+                    {displayResource(
+                        resource,
+                        requirement.cost instanceof Formula
+                            ? calculateCost(
+                                  requirement.cost as InvertibleIntegralFormula,
+                                  amount ?? 1,
+                                  unref(requirement.cumulativeCost),
+                                  unref(requirement.directSum)
+                              )
+                            : unref(requirement.cost as MaybeRef<DecimalSource>)
+                    )}{" "}
+                    {resource.displayName}
+                </span>
+            ),
+            display: (amount?: DecimalSource) => (
+                <div>
+                    {unref(requirement.requiresPay as MaybeRef<boolean>) ? "Costs: " : "Requires: "}
+                    {displayResource(
+                        resource,
+                        requirement.cost instanceof Formula
+                            ? calculateCost(
+                                  requirement.cost as InvertibleIntegralFormula,
+                                  amount ?? 1,
+                                  unref(requirement.cumulativeCost),
+                                  unref(requirement.directSum)
+                              )
+                            : unref(requirement.cost as MaybeRef<DecimalSource>)
+                    )}{" "}
+                    {resource.displayName}
+                </div>
+            ),
+            canMaximize: computed(() => {
+                if (!(requirement.cost instanceof Formula)) {
+                    return false;
                 }
-            >
-                {displayResource(
-                    req.resource,
-                    req.cost instanceof Formula
-                        ? calculateCost(
-                              req.cost,
-                              amount ?? 1,
-                              unref(req.cumulativeCost) as boolean,
-                              unref(req.directSum) as number
-                          )
-                        : unref(req.cost as ProcessedComputable<DecimalSource>)
-                )}{" "}
-                {req.resource.displayName}
-            </span>
-        );
-        req.display = amount => (
-            <div>
-                {unref(req.requiresPay as ProcessedComputable<boolean>) ? "Costs: " : "Requires: "}
-                {displayResource(
-                    req.resource,
-                    req.cost instanceof Formula
-                        ? calculateCost(
-                              req.cost,
-                              amount ?? 1,
-                              unref(req.cumulativeCost) as boolean,
-                              unref(req.directSum) as number
-                          )
-                        : unref(req.cost as ProcessedComputable<DecimalSource>)
-                )}{" "}
-                {req.resource.displayName}
-            </div>
-        );
-
-        processComputable(req as T, "visibility");
-        setDefault(req, "visibility", Visibility.Visible);
-        processComputable(req as T, "cost");
-        processComputable(req as T, "requiresPay");
-        setDefault(req, "requiresPay", true);
-        processComputable(req as T, "cumulativeCost");
-        setDefault(req, "cumulativeCost", true);
-        processComputable(req as T, "maxBulkAmount");
-        setDefault(req, "maxBulkAmount", 1);
-        processComputable(req as T, "directSum");
-        setDefault(req, "pay", function (amount?: DecimalSource) {
-            const cost =
-                req.cost instanceof Formula
-                    ? calculateCost(
-                          req.cost,
-                          amount ?? 1,
-                          unref(req.cumulativeCost as ProcessedComputable<boolean>),
-                          unref(req.directSum) as number
-                      )
-                    : unref(req.cost as ProcessedComputable<DecimalSource>);
-            req.resource.value = Decimal.sub(req.resource.value, cost).max(0);
-        });
-
-        req.canMaximize = computed(() => {
-            if (!(req.cost instanceof Formula)) {
-                return false;
-            }
-            const maxBulkAmount = unref(req.maxBulkAmount as ProcessedComputable<DecimalSource>);
-            if (Decimal.lte(maxBulkAmount, 1)) {
-                return false;
-            }
-            const cumulativeCost = unref(req.cumulativeCost as ProcessedComputable<boolean>);
-            const directSum =
-                unref(req.directSum as ProcessedComputable<number>) ?? (cumulativeCost ? 10 : 0);
-            if (Decimal.lte(maxBulkAmount, directSum)) {
+                const maxBulkAmount = unref(requirement.maxBulkAmount);
+                if (Decimal.lte(maxBulkAmount, 1)) {
+                    return false;
+                }
+                const cumulativeCost = unref(requirement.cumulativeCost);
+                const directSum = unref(requirement.directSum) ?? (cumulativeCost ? 10 : 0);
+                if (Decimal.lte(maxBulkAmount, directSum)) {
+                    return true;
+                }
+                if (!requirement.cost.isInvertible()) {
+                    return false;
+                }
+                if (cumulativeCost === true && !requirement.cost.isIntegrable()) {
+                    return false;
+                }
                 return true;
-            }
-            if (!req.cost.isInvertible()) {
-                return false;
-            }
-            if (cumulativeCost === true && !req.cost.isIntegrable()) {
-                return false;
-            }
-            return true;
-        });
+            }),
+            requirementMet:
+                cost instanceof Formula
+                    ? calculateMaxAffordable(
+                          cost,
+                          resource,
+                          cumulativeCost ?? true,
+                          directSum,
+                          maxBulkAmount
+                      )
+                    : computed(
+                          (): DecimalSource =>
+                              Decimal.gte(
+                                  resource.value,
+                                  unref(requirement.cost as MaybeRef<DecimalSource>)
+                              )
+                                  ? 1
+                                  : 0
+                      ),
+            pay:
+                pay ??
+                function (amount?: DecimalSource) {
+                    const cost =
+                        requirement.cost instanceof Formula
+                            ? calculateCost(
+                                  requirement.cost,
+                                  amount ?? 1,
+                                  unref(requirement.cumulativeCost),
+                                  unref(requirement.directSum)
+                              )
+                            : unref(requirement.cost as MaybeRef<DecimalSource>);
+                    resource.value = Decimal.sub(resource.value, cost).max(0);
+                }
+        } satisfies CostRequirement;
 
-        if (req.cost instanceof Formula) {
-            req.requirementMet = calculateMaxAffordable(
-                req.cost,
-                req.resource,
-                req.cumulativeCost ?? true,
-                req.directSum,
-                req.maxBulkAmount
-            );
-        } else {
-            req.requirementMet = computed(() =>
-                Decimal.gte(
-                    req.resource.value,
-                    unref(req.cost as ProcessedComputable<DecimalSource>)
-                )
-                    ? 1
-                    : 0
-            );
-        }
-
-        return req as CostRequirement;
+        return requirement;
     });
 }
 
@@ -236,11 +229,11 @@ export function createCostRequirement<T extends CostRequirementOptions>(
  * Utility function for creating a requirement that a specified vue feature is visible
  * @param feature The feature to check the visibility of
  */
-export function createVisibilityRequirement(feature: {
-    visibility: ProcessedComputable<Visibility | boolean>;
-}): Requirement {
+export function createVisibilityRequirement(
+    visibility: MaybeRef<Visibility | boolean>
+): Requirement {
     return createLazyProxy(() => ({
-        requirementMet: computed(() => isVisible(feature.visibility)),
+        requirementMet: computed(() => isVisible(visibility)),
         visibility: Visibility.None,
         requiresPay: false
     }));
@@ -252,16 +245,20 @@ export function createVisibilityRequirement(feature: {
  * @param display How to display this requirement to the user
  */
 export function createBooleanRequirement(
-    requirement: Computable<boolean>,
-    display?: CoercableComponent
+    requirement: MaybeRefOrGetter<boolean>,
+    display?: MaybeRefOrGetter<Renderable>
 ): Requirement {
-    return createLazyProxy(() => ({
-        requirementMet: convertComputable(requirement),
-        partialDisplay: display == null ? undefined : jsx(() => renderJSX(display)),
-        display: display == null ? undefined : jsx(() => <>Req: {renderJSX(display)}</>),
-        visibility: display == null ? Visibility.None : Visibility.Visible,
-        requiresPay: false
-    }));
+    return createLazyProxy(() => {
+        const processedDisplay = processGetter(display);
+        return {
+            requirementMet: processGetter(requirement),
+            partialDisplay: processedDisplay == null ? undefined : () => render(processedDisplay),
+            display:
+                processedDisplay == null ? undefined : () => <>Req: {render(processedDisplay)}</>,
+            visibility: processedDisplay == null ? Visibility.None : Visibility.Visible,
+            requiresPay: false
+        };
+    });
 }
 
 /**
@@ -300,7 +297,7 @@ export function maxRequirementsMet(requirements: Requirements): DecimalSource {
  */
 export function displayRequirements(requirements: Requirements, amount: DecimalSource = 1) {
     if (Array.isArray(requirements)) {
-        requirements = requirements.filter(r => isVisible(r.visibility));
+        requirements = requirements.filter(r => isVisible(r.visibility ?? true));
         if (requirements.length === 1) {
             requirements = requirements[0];
         }
@@ -356,9 +353,9 @@ export function payByDivision(this: CostRequirement, amount?: DecimalSource) {
             ? calculateCost(
                   this.cost,
                   amount ?? 1,
-                  unref(this.cumulativeCost as ProcessedComputable<boolean> | undefined) ?? true
+                  unref(this.cumulativeCost as MaybeRef<boolean> | undefined) ?? true
               )
-            : unref(this.cost as ProcessedComputable<DecimalSource>);
+            : unref(this.cost as MaybeRef<DecimalSource>);
     this.resource.value = Decimal.div(this.resource.value, cost);
 }
 

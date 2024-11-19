@@ -1,13 +1,6 @@
 <template>
     <button
-        v-if="isVisible(visibility)"
-        :class="{ feature: true, tile: true, can: unref(canClick), locked: !unref(canClick) }"
-        :style="[
-            {
-                visibility: isHidden(visibility) ? 'hidden' : undefined
-            },
-            unref(style) ?? {}
-        ]"
+        :class="{ tile: true, can: unref(canClick), locked: !unref(canClick) }"
         @click="onClick"
         @mousedown="start"
         @mouseleave="stop"
@@ -16,40 +9,32 @@
         @touchend.passive="stop"
         @touchcancel.passive="stop"
     >
-        <div v-if="title"><component :is="titleComponent" /></div>
-        <component :is="component" style="white-space: pre-line" />
-        <Node :id="id" />
+        <div v-if="title"><Title /></div>
+        <Component style="white-space: pre-line" />
     </button>
 </template>
 
-<script setup lang="ts">
+<script setup lang="tsx">
 import "components/common/features.css";
-import Node from "components/Node.vue";
-import type { CoercableComponent, StyleValue } from "features/feature";
-import { isHidden, isVisible, Visibility } from "features/feature";
 import {
-    computeComponent,
-    computeOptionalComponent,
+    render,
     setupHoldToClick
 } from "util/vue";
 import { toRef, unref } from "vue";
+import { GridCell } from "./grid";
 
 const props = defineProps<{
-    visibility: Visibility | boolean;
-    onClick?: (e?: MouseEvent | TouchEvent) => void;
-    onHold?: VoidFunction;
-    display: CoercableComponent;
-    title?: CoercableComponent;
-    style?: StyleValue;
-    canClick: boolean;
-    id: string;
+    onClick: GridCell["onClick"];
+    onHold: GridCell["onHold"];
+    display: GridCell["display"];
+    title: GridCell["title"];
+    canClick: GridCell["canClick"];
 }>();
-
 
 const { start, stop } = setupHoldToClick(toRef(props, "onClick"), toRef(props, "onHold"));
 
-const titleComponent = computeOptionalComponent(toRef(props, "title"));
-const component = computeComponent(toRef(props, "display"));
+const Title = () => props.title == null ? <></> : render(props.title);
+const Component = () => render(props.display);
 </script>
 
 <style scoped>

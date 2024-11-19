@@ -13,13 +13,13 @@
 </template>
 
 <script setup lang="ts">
-import type { Link } from "features/links/links";
 import type { FeatureNode } from "game/layers";
 import { BoundsInjectionKey, NodesInjectionKey } from "game/layers";
-import { computed, inject, onMounted, ref, watch } from "vue";
+import { computed, inject, onMounted, ref, unref, watch } from "vue";
 import LinkVue from "./Link.vue";
+import { Links } from "./links";
 
-const props = defineProps<{ links?: Link[] }>();
+const props = defineProps<{ links: Links["links"] }>();
 
 const resizeListener = ref<Element | null>(null);
 
@@ -35,7 +35,8 @@ onMounted(() => (boundingRect.value = resizeListener.value?.getBoundingClientRec
 const validLinks = computed(() => {
     const n = nodes.value;
     return (
-        props.links?.filter(link => n[link.startNode.id]?.rect && n[link.endNode.id]?.rect) ?? []
+        unref(props.links)?.filter(link =>
+            n[link.startNode.id]?.rect && n[link.endNode.id]?.rect) ?? []
     );
 });
 </script>

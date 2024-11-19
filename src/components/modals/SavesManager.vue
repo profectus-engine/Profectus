@@ -136,9 +136,7 @@ let bank = ref(
         acc.push({
             // .slice(2, -4) strips the leading ./ and the trailing .txt
             label: curr.split("/").slice(-1)[0].slice(0, -4),
-            // Have to perform this unholy cast because globEager's typing doesn't appear to know
-            // adding { as: "raw" } will make the object contain strings rather than modules
-            value: bankContext[curr] as unknown as string
+            value: bankContext[curr] as string
         });
         return acc;
     }, [])
@@ -207,7 +205,7 @@ function deleteSave(id: string) {
     if (galaxy.value?.loggedIn === true) {
         galaxy.value.getSaveList().then(list => {
             const slot = Object.keys(list).find(slot => {
-                const content = list[slot as unknown as number].content;
+                const content = list[parseInt(slot)].content;
                 try {
                     if (JSON.parse(content).id === id) {
                         return true;

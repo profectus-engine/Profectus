@@ -1,9 +1,9 @@
 <template>
     <form @submit.prevent="submit">
         <div class="field">
-            <span class="field-title" v-if="titleComponent"
-                ><component :is="titleComponent"
-            /></span>
+            <span class="field-title" v-if="title">
+                <Title />
+            </span>
             <VueTextareaAutosize
                 v-if="textArea"
                 v-model="value"
@@ -25,15 +25,14 @@
     </form>
 </template>
 
-<script setup lang="ts">
+<script setup lang="tsx">
 import "components/common/fields.css";
-import type { CoercableComponent } from "features/feature";
-import { computeOptionalComponent } from "util/vue";
-import { computed, onMounted, shallowRef, toRef, unref } from "vue";
+import { render, Renderable } from "util/vue";
+import { computed, MaybeRef, onMounted, shallowRef, unref } from "vue";
 import VueTextareaAutosize from "vue-textarea-autosize";
 
 const props = defineProps<{
-    title?: CoercableComponent;
+    title?: MaybeRef<Renderable>;
     modelValue?: string;
     textArea?: boolean;
     placeholder?: string;
@@ -46,7 +45,7 @@ const emit = defineEmits<{
     (e: "cancel"): void;
 }>();
 
-const titleComponent = computeOptionalComponent(toRef(props, "title"), "span");
+const Title = () => props.title == null ? <></> : render(props.title, el => <span>{el}</span>);
 
 const field = shallowRef<HTMLElement | null>(null);
 onMounted(() => {

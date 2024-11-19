@@ -82,7 +82,7 @@ function syncSaves(
     const saves = (
         Object.keys(list)
             .map(slot => {
-                const { label, content } = list[slot as unknown as number];
+                const { label, content } = list[parseInt(slot)];
                 try {
                     return {
                         slot: parseInt(slot),

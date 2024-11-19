@@ -8,12 +8,12 @@
             v-if="unref(minimized)"
             @click="$emit('setMinimized', false)"
         >
-            <component v-if="minimizedComponent" :is="minimizedComponent" />
+            <MinimizedComponent v-if="minimizedDisplay" />
             <div v-else>{{ unref(name) }}</div>
         </button>
         <div class="layer-tab" :class="{ showGoBack }" v-else>
             <Context @update-nodes="updateNodes">
-                <component :is="component" />
+                <Component />
             </Context>
         </div>
 
@@ -25,29 +25,29 @@
 
 <script setup lang="ts">
 import projInfo from "data/projInfo.json";
-import type { CoercableComponent } from "features/feature";
-import type { FeatureNode } from "game/layers";
+import { Layer, type FeatureNode } from "game/layers";
 import player from "game/player";
-import { computeComponent, computeOptionalComponent } from "util/vue";
-import { Ref, computed, onErrorCaptured, ref, toRef, unref } from "vue";
+import { render } from "util/vue";
+import { computed, onErrorCaptured, ref, unref } from "vue";
 import Context from "./Context.vue";
 import ErrorVue from "./Error.vue";
 
 const props = defineProps<{
+    display: Layer["display"];
+    minimizedDisplay: Layer["minimizedDisplay"];
+    minimized: Layer["minimized"];
+    name: Layer["name"];
+    color: Layer["color"];
+    minimizable: Layer["minimizable"];
+    nodes: Layer["nodes"];
+    forceHideGoBack: Layer["forceHideGoBack"];
     index: number;
-    display: CoercableComponent;
-    minimizedDisplay?: CoercableComponent;
-    minimized: Ref<boolean>;
-    name: string;
-    color?: string;
-    minimizable?: boolean;
-    nodes: Ref<Record<string, FeatureNode | undefined>>;
 }>();
 
-const component = computeComponent(toRef(props, "display"));
-const minimizedComponent = computeOptionalComponent(toRef(props, "minimizedDisplay"));
+const Component = () => render(props.display);
+const MinimizedComponent = () => props.minimizedDisplay == null ? undefined : render(props.minimizedDisplay);
 const showGoBack = computed(
-    () => projInfo.allowGoBack && props.index > 0 && !unref(props.minimized)
+    () => projInfo.allowGoBack && !unref(props.forceHideGoBack) && props.index > 0 && !unref(props.minimized)
 );
 
 function goBack() {

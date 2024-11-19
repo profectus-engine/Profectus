@@ -9,9 +9,9 @@
         >
             <Nav v-if="index === 0 && !useHeader" />
             <div class="inner-tab">
-                <Layer
+                <LayerVue
                     v-if="layerKeys.includes(tab)"
-                    v-bind="gatherLayerProps(layers[tab]!)"
+                    v-bind="gatherLayerProps(layers[tab])"
                     :index="index"
                     @set-minimized="(value: boolean) => (layers[tab]!.minimized.value = value)"
                 />
@@ -23,28 +23,36 @@
 
 <script setup lang="ts">
 import projInfo from "data/projInfo.json";
-import type { GenericLayer } from "game/layers";
-import { layers } from "game/layers";
+import { type Layer, layers } from "game/layers";
 import player from "game/player";
 import { computed, toRef, unref } from "vue";
-import Layer from "./Layer.vue";
+import LayerVue from "./Layer.vue";
 import Nav from "./Nav.vue";
-import { deepUnref } from "util/vue";
 
 const tabs = toRef(player, "tabs");
 const layerKeys = computed(() => Object.keys(layers));
 const useHeader = projInfo.useHeader;
 
-function gatherLayerProps(layer: GenericLayer) {
-    const { display, name, color, minimizable, minimizedDisplay } = deepUnref(layer);
+function gatherLayerProps(layer: Layer) {
+    const {
+        display,
+        name,
+        color,
+        minimizable,
+        minimizedDisplay,
+        minimized,
+        nodes,
+        forceHideGoBack 
+     } = layer;
     return {
         display,
         name,
         color,
         minimizable,
         minimizedDisplay,
-        minimized: layer.minimized,
-        nodes: layer.nodes
+        minimized,
+        nodes,
+        forceHideGoBack
     };
 }
 </script>

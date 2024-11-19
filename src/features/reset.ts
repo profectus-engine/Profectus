@@ -1,14 +1,17 @@
 import type { OptionsFunc, Replace } from "features/feature";
-import { getUniqueID } from "features/feature";
 import { globalBus } from "game/events";
 import Formula from "game/formulas/formulas";
 import type { BaseLayer } from "game/layers";
-import { NonPersistent, Persistent, SkipPersistence } from "game/persistence";
-import { DefaultValue, persistent } from "game/persistence";
+import {
+    DefaultValue,
+    NonPersistent,
+    Persistent,
+    persistent,
+    SkipPersistence
+} from "game/persistence";
 import type { Unsubscribe } from "nanoevents";
 import Decimal from "util/bignum";
-import type { Computable, GetComputableType } from "util/computed";
-import { processComputable } from "util/computed";
+import { processGetter, type MaybeRefOrGetter, type UnwrapRef } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { isRef, unref } from "vue";
 
@@ -20,7 +23,7 @@ export const ResetType = Symbol("Reset");
  */
 export interface ResetOptions {
     /** List of things to reset. Can include objects which will be recursed over for persistent values. */
-    thingsToReset: Computable<unknown[]>;
+    thingsToReset: MaybeRefOrGetter<unknown[]>;
     /** A function that is called when the reset is performed. */
     onReset?: VoidFunction;
 }
@@ -29,8 +32,6 @@ export interface ResetOptions {
  * The properties that are added onto a processed {@link ResetOptions} to create an {@link Reset}.
  */
 export interface BaseReset {
-    /** An auto-generated ID for identifying which reset is being performed. Will not persist between refreshes or updates. */
-    id: string;
     /** Trigger the reset. */
     reset: VoidFunction;
     /** A symbol that helps identify features of the same type. */
@@ -38,57 +39,55 @@ export interface BaseReset {
 }
 
 /** An object that represents a reset mechanic, which resets progress back to its initial state. */
-export type Reset<T extends ResetOptions> = Replace<
-    T & BaseReset,
+export type Reset = Replace<
+    Replace<ResetOptions, BaseReset>,
     {
-        thingsToReset: GetComputableType<T["thingsToReset"]>;
+        thingsToReset: UnwrapRef<ResetOptions["thingsToReset"]>;
     }
 >;
-
-/** A type that matches any valid {@link Reset} object. */
-export type GenericReset = Reset<ResetOptions>;
 
 /**
  * Lazily creates a reset with the given options.
  * @param optionsFunc Reset options.
  */
-export function createReset<T extends ResetOptions>(
-    optionsFunc: OptionsFunc<T, BaseReset, GenericReset>
-): Reset<T> {
+export function createReset<T extends ResetOptions>(optionsFunc: OptionsFunc<T, BaseReset, Reset>) {
     return createLazyProxy(feature => {
-        const reset = optionsFunc.call(feature, feature);
-        reset.id = getUniqueID("reset-");
-        reset.type = ResetType;
+        const options = optionsFunc.call(feature, feature as Reset);
+        const { thingsToReset, onReset, ...props } = options;
 
-        reset.reset = function () {
-            const handleObject = (obj: unknown) => {
-                if (
-                    obj != null &&
-                    typeof obj === "object" &&
-                    !(obj instanceof Decimal) &&
-                    !(obj instanceof Formula)
-                ) {
-                    if (SkipPersistence in obj && obj[SkipPersistence] === true) {
-                        return;
+        const reset = {
+            type: ResetType,
+            ...(props as Omit<typeof props, keyof ResetOptions>),
+            onReset,
+            thingsToReset: processGetter(thingsToReset),
+            reset: function () {
+                const handleObject = (obj: unknown) => {
+                    if (
+                        obj != null &&
+                        typeof obj === "object" &&
+                        !(obj instanceof Decimal) &&
+                        !(obj instanceof Formula)
+                    ) {
+                        if (SkipPersistence in obj && obj[SkipPersistence] === true) {
+                            return;
+                        }
+                        if (DefaultValue in obj) {
+                            const persistent = obj as NonPersistent;
+                            persistent.value = persistent[DefaultValue];
+                        } else if (!(obj instanceof Decimal) && !isRef(obj)) {
+                            Object.values(obj).forEach(obj =>
+                                handleObject(obj as Record<string, unknown>)
+                            );
+                        }
                     }
-                    if (DefaultValue in obj) {
-                        const persistent = obj as NonPersistent;
-                        persistent.value = persistent[DefaultValue];
-                    } else if (!(obj instanceof Decimal) && !isRef(obj)) {
-                        Object.values(obj).forEach(obj =>
-                            handleObject(obj as Record<string, unknown>)
-                        );
-                    }
-                }
-            };
-            unref((reset as GenericReset).thingsToReset).forEach(handleObject);
-            globalBus.emit("reset", reset as GenericReset);
-            reset.onReset?.();
-        };
+                };
+                unref(reset.thingsToReset).forEach(handleObject);
+                globalBus.emit("reset", reset);
+                onReset?.();
+            }
+        } satisfies Reset;
 
-        processComputable(reset as T, "thingsToReset");
-
-        return reset as unknown as Reset<T>;
+        return reset;
     });
 }
 
@@ -98,7 +97,7 @@ const listeners: Record<string, Unsubscribe | undefined> = {};
  * @param layer The layer the reset is attached to
  * @param reset The reset mechanic to track the time since
  */
-export function trackResetTime(layer: BaseLayer, reset: GenericReset): Persistent<Decimal> {
+export function trackResetTime(layer: BaseLayer, reset: Reset): Persistent<Decimal> {
     const resetTime = persistent<Decimal>(new Decimal(0));
     globalBus.on("addLayer", layerBeingAdded => {
         if (layer.id === layerBeingAdded.id) {
@@ -123,6 +122,6 @@ globalBus.on("removeLayer", layer => {
 
 declare module "game/events" {
     interface GlobalEvents {
-        reset: (reset: GenericReset) => void;
+        reset: (reset: Reset) => void;
     }
 }

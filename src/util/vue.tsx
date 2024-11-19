@@ -4,122 +4,119 @@
 // only apply to SFCs
 import Col from "components/layout/Column.vue";
 import Row from "components/layout/Row.vue";
-import type { CoercableComponent, GenericComponent, JSXFunction } from "features/feature";
-import {
-    Component as ComponentKey,
-    GatherProps,
-    Visibility,
-    isVisible,
-    jsx
-} from "features/feature";
-import type { ProcessedComputable } from "util/computed";
-import { DoNotCache } from "util/computed";
-import type { Component, DefineComponent, Ref, ShallowRef, UnwrapRef } from "vue";
-import {
-    computed,
-    defineComponent,
-    isRef,
-    onUnmounted,
-    ref,
-    shallowRef,
-    unref,
-    watchEffect
-} from "vue";
+import { getUniqueID, Visibility } from "features/feature";
+import VueFeatureComponent from "features/VueFeature.vue";
+import { processGetter } from "util/computed";
+import type { CSSProperties, MaybeRef, MaybeRefOrGetter, Ref } from "vue";
+import { isRef, onUnmounted, ref, unref } from "vue";
 import { JSX } from "vue/jsx-runtime";
 import { camelToKebab } from "./common";
 
-export function coerceComponent(
-    component: CoercableComponent,
-    defaultWrapper = "span"
-): DefineComponent {
-    if (typeof component === "function") {
-        return defineComponent({ render: component });
-    }
-    if (typeof component === "string") {
-        if (component.length > 0) {
-            component = component.trim();
-            if (component.charAt(0) !== "<") {
-                component = `<${defaultWrapper}>${component}</${defaultWrapper}>`;
-            }
+export const VueFeature = Symbol("VueFeature");
 
-            return defineComponent({ template: component });
-        }
-        return defineComponent({ render: () => ({}) });
-    }
-    return component;
+export type Renderable = JSX.Element | string;
+
+export interface VueFeatureOptions {
+    /** Whether this feature should be visible. */
+    visibility?: MaybeRefOrGetter<Visibility | boolean>;
+    /** Dictionary of CSS classes to apply to this feature. */
+    classes?: MaybeRefOrGetter<Record<string, boolean>>;
+    /** CSS to apply to this feature. */
+    style?: MaybeRefOrGetter<CSSProperties>;
 }
 
 export interface VueFeature {
-    [ComponentKey]: GenericComponent;
-    [GatherProps]: () => Record<string, unknown>;
+    /** An auto-generated ID for identifying features that appear in the DOM. Will not persist between refreshes or updates. */
+    id: string;
+    /** Whether this feature should be visible. */
+    visibility?: MaybeRef<Visibility | boolean>;
+    /** Dictionary of CSS classes to apply to this feature. */
+    classes?: MaybeRef<Record<string, boolean>>;
+    /** CSS to apply to this feature. */
+    style?: MaybeRef<CSSProperties>;
+    /** The components to render inside the vue feature */
+    components: MaybeRef<Renderable>[];
+    /** The components to render wrapped around the vue feature */
+    wrappers: ((el: () => Renderable) => Renderable)[];
+    /** Used to identify Vue Features */
+    [VueFeature]: true;
 }
 
-export function render(object: VueFeature | CoercableComponent): JSX.Element | DefineComponent {
-    if (isCoercableComponent(object)) {
-        if (typeof object === "function") {
-            return (object as JSXFunction)();
-        }
-        return coerceComponent(object);
+export function vueFeatureMixin(
+    featureName: string,
+    options: VueFeatureOptions,
+    component?: MaybeRefOrGetter<Renderable>
+) {
+    return {
+        id: getUniqueID(featureName),
+        visibility: processGetter(options.visibility),
+        classes: processGetter(options.classes),
+        style: processGetter(options.style),
+        components: component == null ? [] : [processGetter(component)],
+        wrappers: [] as ((el: () => Renderable) => Renderable)[],
+        [VueFeature]: true
+    } satisfies VueFeature;
+}
+
+export function render(object: VueFeature, wrapper?: (el: Renderable) => Renderable): JSX.Element;
+export function render<T extends Renderable>(
+    object: MaybeRef<Renderable>,
+    wrapper?: (el: Renderable) => T
+): T;
+export function render(
+    object: VueFeature | MaybeRef<Renderable>,
+    wrapper?: (el: Renderable) => Renderable
+): Renderable;
+export function render(
+    object: VueFeature | MaybeRef<Renderable>,
+    wrapper?: (el: Renderable) => Renderable
+) {
+    if (typeof object === "object" && VueFeature in object) {
+        const { id, visibility, style, classes, components, wrappers } = object;
+        return (
+            <VueFeatureComponent
+                id={id}
+                visibility={visibility}
+                style={style}
+                classes={classes}
+                components={components}
+                wrappers={wrappers}
+            />
+        );
     }
-    const Component = object[ComponentKey];
-    return <Component {...object[GatherProps]()} />;
+
+    object = unref(object);
+    return wrapper?.(object) ?? object;
 }
 
-export function renderRow(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
-    return <Row>{objects.map(render)}</Row>;
+export function renderRow(...objects: (VueFeature | MaybeRef<Renderable>)[]): JSX.Element {
+    return <Row>{objects.map(obj => render(obj))}</Row>;
 }
 
-export function renderCol(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
-    return <Col>{objects.map(render)}</Col>;
+export function renderCol(...objects: (VueFeature | MaybeRef<Renderable>)[]): JSX.Element {
+    return <Col>{objects.map(obj => render(obj))}</Col>;
 }
 
-export function renderJSX(object: VueFeature | CoercableComponent): JSX.Element {
-    if (isCoercableComponent(object)) {
-        if (typeof object === "function") {
-            return (object as JSXFunction)();
-        }
-        if (typeof object === "string") {
-            return <>{object}</>;
-        }
-        // TODO why is object typed as never?
-        const Comp = object as DefineComponent;
-        return <Comp />;
-    }
-    const Component = object[ComponentKey];
-    return <Component {...object[GatherProps]()} />;
+export function joinJSX(
+    objects: (VueFeature | MaybeRef<Renderable>)[],
+    joiner: JSX.Element
+): JSX.Element {
+    return objects.reduce<JSX.Element>(
+        (acc, curr) => (
+            <>
+                {acc}
+                {joiner}
+                {render(curr)}
+            </>
+        ),
+        <></>
+    );
 }
 
-export function renderRowJSX(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
-    return <Row>{objects.map(renderJSX)}</Row>;
-}
-
-export function renderColJSX(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
-    return <Col>{objects.map(renderJSX)}</Col>;
-}
-
-export function joinJSX(objects: JSX.Element[], joiner: JSX.Element): JSX.Element {
-    return objects.reduce((acc, curr) => (
-        <>
-            {acc}
-            {joiner}
-            {curr}
-        </>
-    ));
-}
-
-export function isCoercableComponent(component: unknown): component is CoercableComponent {
-    if (typeof component === "string") {
-        return true;
-    } else if (typeof component === "object") {
-        if (component == null) {
-            return false;
-        }
-        return "render" in component || "component" in component;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } else if (typeof component === "function" && (component as any)[DoNotCache] === true) {
-        return true;
-    }
-    return false;
+export function isJSXElement(element: unknown): element is JSX.Element {
+    return (
+        element != null && typeof element === "object" && "type" in element && "children" in element
+    );
 }
 
 export function setupHoldToClick(
@@ -158,61 +155,6 @@ export function setupHoldToClick(
     return { start, stop, handleHolding };
 }
 
-export function getFirstFeature<
-    T extends VueFeature & { visibility: ProcessedComputable<Visibility | boolean> }
->(
-    features: T[],
-    filter: (feature: T) => boolean
-): {
-    firstFeature: Ref<T | undefined>;
-    collapsedContent: JSXFunction;
-    hasCollapsedContent: Ref<boolean>;
-} {
-    const filteredFeatures = computed(() =>
-        features.filter(feature => isVisible(feature.visibility) && filter(feature))
-    );
-    return {
-        firstFeature: computed(() => filteredFeatures.value[0]),
-        collapsedContent: jsx(() => renderCol(...filteredFeatures.value.slice(1))),
-        hasCollapsedContent: computed(() => filteredFeatures.value.length > 1)
-    };
-}
-
-export function computeComponent(
-    component: Ref<CoercableComponent>,
-    defaultWrapper = "div"
-): ShallowRef<Component | ""> {
-    const comp = shallowRef<Component | "">();
-    watchEffect(() => {
-        comp.value = coerceComponent(unref(component), defaultWrapper);
-    });
-    return comp as ShallowRef<Component | "">;
-}
-export function computeOptionalComponent(
-    component: Ref<CoercableComponent | undefined>,
-    defaultWrapper = "div"
-): ShallowRef<Component | "" | null> {
-    const comp = shallowRef<Component | "" | null>(null);
-    watchEffect(() => {
-        const currComponent = unref(component);
-        comp.value =
-            currComponent === "" || currComponent == null
-                ? null
-                : coerceComponent(currComponent, defaultWrapper);
-    });
-    return comp;
-}
-
-export function deepUnref<T extends object>(refObject: T): { [K in keyof T]: UnwrapRef<T[K]> } {
-    return (Object.keys(refObject) as (keyof T)[]).reduce(
-        (acc, curr) => {
-            acc[curr] = unref(refObject[curr]) as UnwrapRef<T[keyof T]>;
-            return acc;
-        },
-        {} as { [K in keyof T]: UnwrapRef<T[K]> }
-    );
-}
-
 export function setRefValue<T>(ref: Ref<T | Ref<T>>, value: T) {
     if (isRef(ref.value)) {
         ref.value.value = value;
@@ -232,12 +174,10 @@ export type PropTypes =
 export function trackHover(element: VueFeature): Ref<boolean> {
     const isHovered = ref(false);
 
-    const elementGatherProps = element[GatherProps].bind(element);
-    element[GatherProps] = () => ({
-        ...elementGatherProps(),
-        onPointerenter: () => (isHovered.value = true),
-        onPointerleave: () => (isHovered.value = false)
-    });
+    (element as unknown as { onPointerenter: VoidFunction }).onPointerenter = () =>
+        (isHovered.value = true);
+    (element as unknown as { onPointerleave: VoidFunction }).onPointerleave = () =>
+        (isHovered.value = true);
 
     return isHovered;
 }

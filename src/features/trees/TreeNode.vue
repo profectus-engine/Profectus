@@ -1,11 +1,14 @@
 <template>
     <div
-        v-if="isVisible(visibility)"
-        :style="{ visibility: isHidden(visibility) ? 'hidden' : undefined }"
+        :style="{
+            backgroundColor: unref(color),
+            boxShadow: `-4px -4px 4px rgba(0, 0, 0, 0.25) inset, 0 0 20px ${unref(
+                glowColor
+            )}`
+        }"
         :class="{
             treeNode: true,
-            can: unref(canClick),
-            ...unref(classes)
+            can: unref(canClick)
         }"
         @click="onClick"
         @mousedown="start"
@@ -15,50 +18,26 @@
         @touchend.passive="stop"
         @touchcancel.passive="stop"
     >
-        <div
-            :style="[
-                {
-                    backgroundColor: unref(color),
-                    boxShadow: `-4px -4px 4px rgba(0, 0, 0, 0.25) inset, 0 0 20px ${unref(
-                        glowColor
-                    )}`
-                },
-                unref(style) ?? []
-            ]"
-        >
-            <component :is="unref(comp)" />
-        </div>
-        <MarkNode :mark="unref(mark)" />
-        <Node :id="id" />
+        <Component />
     </div>
 </template>
 
 <script setup lang="tsx">
-import MarkNode from "components/MarkNode.vue";
-import Node from "components/Node.vue";
-import type { CoercableComponent, StyleValue, Visibility } from "features/feature";
-import { isHidden, isVisible } from "features/feature";
-import {
-    computeOptionalComponent,
-    setupHoldToClick
-} from "util/vue";
+import { render, setupHoldToClick } from "util/vue";
 import { toRef, unref } from "vue";
+import { TreeNode } from "./tree";
 
 const props = defineProps<{
-    visibility: Visibility | boolean;
-    canClick: boolean;
-    id: string;
-    display?: CoercableComponent;
-    style?: StyleValue;
-    classes?: Record<string, boolean>;
-    onClick?: (e?: MouseEvent | TouchEvent) => void;
-    onHold?: VoidFunction;
-    color?: string;
-    glowColor?: string;
-    mark?: boolean | string;
+    canClick: TreeNode["canClick"];
+    display: TreeNode["display"];
+    onClick: TreeNode["onClick"];
+    onHold: TreeNode["onHold"];
+    color: TreeNode["color"];
+    glowColor: TreeNode["glowColor"];
 }>();
 
-const comp = computeOptionalComponent(toRef(props, "display"));
+const Component = () => props.display == null ? <></> :
+    render(props.display, el => <div>{el}</div>);
 
 const { start, stop } = setupHoldToClick(toRef(props, "onClick"), toRef(props, "onHold"));
 </script>
@@ -67,16 +46,10 @@ const { start, stop } = setupHoldToClick(toRef(props, "onClick"), toRef(props, "
 .treeNode {
     height: 100px;
     width: 100px;
+    border: 2px solid rgba(0, 0, 0, 0.125);
     border-radius: 50%;
     padding: 0;
     margin: 0 10px 0 10px;
-}
-
-.treeNode > *:first-child {
-    width: 100%;
-    height: 100%;
-    border: 2px solid rgba(0, 0, 0, 0.125);
-    border-radius: inherit;
     font-size: 40px;
     color: rgba(0, 0, 0, 0.5);
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.25);
@@ -84,7 +57,7 @@ const { start, stop } = setupHoldToClick(toRef(props, "onClick"), toRef(props, "
     display: flex;
 }
 
-.treeNode > *:first-child > * {
+.treeNode > * {
     pointer-events: none;
 }
 </style>

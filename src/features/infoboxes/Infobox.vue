@@ -1,15 +1,10 @@
 <template>
     <div
         class="infobox"
-        v-if="isVisible(visibility)"
-        :style="[
-            {
+        :style="{
                 borderColor: unref(color),
-                visibility: isHidden(visibility) ? 'hidden' : undefined
-            },
-            unref(style) ?? {}
-        ]"
-        :class="{ collapsed: unref(collapsed), stacked, ...unref(classes) }"
+            }"
+        :class="{ collapsed: unref(collapsed), stacked }"
     >
         <button
             class="title"
@@ -17,43 +12,36 @@
             @click="collapsed.value = !unref(collapsed)"
         >
             <span class="toggle">▼</span>
-            <component :is="titleComponent" />
+            <Title />
         </button>
         <CollapseTransition>
             <div v-if="!unref(collapsed)" class="body" :style="{ backgroundColor: unref(color) }">
-                <component :is="bodyComponent" :style="unref(bodyStyle)" />
+                <Body :style="unref(bodyStyle)" />
             </div>
         </CollapseTransition>
-        <Node :id="id" />
     </div>
 </template>
 
 <script setup lang="ts">
 import CollapseTransition from "@ivanv/vue-collapse-transition/src/CollapseTransition.vue";
-import Node from "components/Node.vue";
 import themes from "data/themes";
-import type { CoercableComponent } from "features/feature";
-import { isHidden, isVisible, Visibility } from "features/feature";
 import settings from "game/settings";
-import { computeComponent } from "util/vue";
-import type { Ref, StyleValue } from "vue";
-import { computed, toRef, unref } from "vue";
+import { render } from "util/vue";
+import { computed, unref } from "vue";
+import { Infobox } from "./infobox";
 
 const props = defineProps<{
-    visibility: Visibility | boolean;
-    display: CoercableComponent;
-    title: CoercableComponent;
-    color?: string;
-    collapsed: Ref<boolean>;
-    style?: StyleValue;
-    titleStyle?: StyleValue;
-    bodyStyle?: StyleValue;
-    classes?: Record<string, boolean>;
-    id: string;
+    color: Infobox["color"];
+    titleStyle: Infobox["titleStyle"];
+    bodyStyle: Infobox["bodyStyle"];
+    collapsed: Infobox["collapsed"];
+    display: Infobox["display"];
+    title: Infobox["title"];
 }>();
 
-const titleComponent = computeComponent(toRef(props, "title"));
-const bodyComponent = computeComponent(toRef(props, "display"));
+const Title = () => render(props.title);
+const Body = () => render(props.display);
+
 const stacked = computed(() => themes[settings.theme].mergeAdjacent);
 </script>
 

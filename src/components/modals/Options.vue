@@ -20,7 +20,7 @@
             </div>
             <div v-if="isTab('appearance')">
                 <Select :title="themeTitle" :options="themes" v-model="theme" />
-                <component :is="settingFieldsComponent" />
+                <SettingFields />
                 <Toggle :title="showTPSTitle" v-model="showTPS" />
                 <Toggle :title="alignModifierUnitsTitle" v-model="alignUnits" />
             </div>
@@ -31,14 +31,13 @@
 <script setup lang="tsx">
 import projInfo from "data/projInfo.json";
 import rawThemes from "data/themes";
-import { jsx } from "features/feature";
-import Tooltip from "features/tooltips/Tooltip.vue";
 import player from "game/player";
 import settings, { settingFields } from "game/settings";
 import { camelToTitle, Direction } from "util/common";
 import { save } from "util/save";
-import { coerceComponent, render } from "util/vue";
+import { render } from "util/vue";
 import { computed, ref, toRefs } from "vue";
+import Tooltip from "wrappers/tooltips/Tooltip.vue";
 import FeedbackButton from "../fields/FeedbackButton.vue";
 import Select from "../fields/Select.vue";
 import Toggle from "../fields/Toggle.vue";
@@ -69,9 +68,7 @@ const themes = Object.keys(rawThemes).map(theme => ({
     value: theme
 }));
 
-const settingFieldsComponent = computed(() => {
-    return coerceComponent(jsx(() => (<>{settingFields.map(render)}</>)));
-});
+const SettingFields = () => settingFields.map(f => render(f));
 
 const { showTPS, theme, unthrottled, alignUnits, showHealthWarning } = toRefs(settings);
 const { autosave, offlineProd } = toRefs(player);
@@ -84,54 +81,38 @@ const isPaused = computed({
     }
 });
 
-const unthrottledTitle = jsx(() => (
-    <span class="option-title">
-        Unthrottled
-        <desc>Allow the game to run as fast as possible. Not battery friendly.</desc>
-    </span>
-));
-const offlineProdTitle = jsx(() => (
-    <span class="option-title">
-        Offline production<Tooltip display="Save-specific" direction={Direction.Right}>*</Tooltip>
-        <desc>Simulate production that occurs while the game is closed.</desc>
-    </span>
-));
-const showHealthWarningTitle = jsx(() => (
-    <span class="option-title">
-        Show videogame addiction warning
-        <desc>Show a helpful warning after playing for a long time about video game addiction and encouraging you to take a break.</desc>
-    </span>
-));
-const autosaveTitle = jsx(() => (
-    <span class="option-title">
-        Autosave<Tooltip display="Save-specific" direction={Direction.Right}>*</Tooltip>
-        <desc>Automatically save the game every second or when the game is closed.</desc>
-    </span>
-));
-const isPausedTitle = jsx(() => (
-    <span class="option-title">
-        Pause game<Tooltip display="Save-specific" direction={Direction.Right}>*</Tooltip>
-        <desc>Stop everything from moving.</desc>
-    </span>
-));
-const themeTitle = jsx(() => (
-    <span class="option-title">
-        Theme
-        <desc>How the game looks.</desc>
-    </span>
-));
-const showTPSTitle = jsx(() => (
-    <span class="option-title">
-        Show TPS
-        <desc>Show TPS meter at the bottom-left corner of the page.</desc>
-    </span>
-));
-const alignModifierUnitsTitle = jsx(() => (
-    <span class="option-title">
-        Align modifier units
-        <desc>Align numbers to the beginning of the unit in modifier view.</desc>
-    </span>
-));
+const unthrottledTitle = <span class="option-title">
+    Unthrottled
+    <desc>Allow the game to run as fast as possible. Not battery friendly.</desc>
+</span>;
+const offlineProdTitle = <span class="option-title">
+    Offline production<Tooltip display="Save-specific" direction={Direction.Right}>*</Tooltip>
+    <desc>Simulate production that occurs while the game is closed.</desc>
+</span>;
+const showHealthWarningTitle = <span class="option-title">
+    Show videogame addiction warning
+    <desc>Show a helpful warning after playing for a long time about video game addiction and encouraging you to take a break.</desc>
+</span>;
+const autosaveTitle = <span class="option-title">
+    Autosave<Tooltip display="Save-specific" direction={Direction.Right}>*</Tooltip>
+    <desc>Automatically save the game every second or when the game is closed.</desc>
+</span>;
+const isPausedTitle = <span class="option-title">
+    Pause game<Tooltip display="Save-specific" direction={Direction.Right}>*</Tooltip>
+    <desc>Stop everything from moving.</desc>
+</span>;
+const themeTitle = <span class="option-title">
+    Theme
+    <desc>How the game looks.</desc>
+</span>;
+const showTPSTitle = <span class="option-title">
+    Show TPS
+    <desc>Show TPS meter at the bottom-left corner of the page.</desc>
+</span>;
+const alignModifierUnitsTitle = <span class="option-title">
+    Align modifier units
+    <desc>Align numbers to the beginning of the unit in modifier view.</desc>
+</span>;
 </script>
 
 <style>

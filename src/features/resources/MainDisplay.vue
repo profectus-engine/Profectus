@@ -10,8 +10,8 @@
                 <ResourceVue :resource="resource" :color="color || 'white'" />
                 {{ resource.displayName
                 }}<!-- remove whitespace -->
-                <span v-if="effectComponent"
-                    >, <component :is="effectComponent" ref="effectRef"
+                <span v-if="effectDisplay"
+                    >, <Effect ref="effectRef"
                 /></span>
             </div>
         </div>
@@ -20,24 +20,23 @@
 
 <script setup lang="ts">
 import Sticky from "components/layout/Sticky.vue";
-import type { CoercableComponent } from "features/feature";
 import type { Resource } from "features/resources/resource";
 import ResourceVue from "features/resources/Resource.vue";
 import Decimal from "util/bignum";
-import { computeOptionalComponent } from "util/vue";
-import { ComponentPublicInstance, computed, ref, StyleValue, toRef } from "vue";
+import { Renderable } from "util/vue";
+import { ComponentPublicInstance, computed, MaybeRefOrGetter, ref, StyleValue, toValue } from "vue";
 
 const props = defineProps<{
     resource: Resource;
     color?: string;
     classes?: Record<string, boolean>;
     style?: StyleValue;
-    effectDisplay?: CoercableComponent;
+    effectDisplay?: MaybeRefOrGetter<Renderable>;
 }>();
 
 const effectRef = ref<ComponentPublicInstance | null>(null);
 
-const effectComponent = computeOptionalComponent(toRef(props, "effectDisplay"));
+const Effect = () => toValue(props.effectDisplay);
 
 const showPrefix = computed(() => {
     return Decimal.lt(props.resource.value, "1e1000");

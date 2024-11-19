@@ -1,15 +1,13 @@
 import Board from "./Board.vue";
 import Draggable from "./Draggable.vue";
-import { Component, GatherProps, GenericComponent, jsx } from "features/feature";
 import { globalBus } from "game/events";
 import { Persistent, persistent } from "game/persistence";
 import type { PanZoom } from "panzoom";
 import { Direction, isFunction } from "util/common";
-import type { Computable, ProcessedComputable } from "util/computed";
-import { convertComputable } from "util/computed";
-import { VueFeature } from "util/vue";
-import type { ComponentPublicInstance, Ref } from "vue";
-import { computed, nextTick, ref, unref, watchEffect } from "vue";
+import { processGetter } from "util/computed";
+import { Renderable, VueFeature } from "util/vue";
+import type { ComponentPublicInstance, MaybeRef, MaybeRefOrGetter, Ref } from "vue";
+import { computed, ref, unref, watchEffect } from "vue";
 import panZoom from "vue-panzoom";
 
 // Register panzoom so it can be used in Board.vue
@@ -19,10 +17,10 @@ globalBus.on("setupVue", app => panZoom.install(app));
 export type NodePosition = { x: number; y: number };
 
 /**
- * A type representing a computable value for a node on the board. Used for node types to return different values based on the given node and the state of the board.
+ * A type representing a MaybeRefOrGetter value for a node on the board. Used for node types to return different values based on the given node and the state of the board.
  */
-export type NodeComputable<T, R, S extends unknown[] = []> =
-    | Computable<R>
+export type NodeMaybeRefOrGetter<T, R, S extends unknown[] = []> =
+    | MaybeRefOrGetter<R>
     | ((node: T, ...args: S) => R);
 
 /**
@@ -31,11 +29,11 @@ export type NodeComputable<T, R, S extends unknown[] = []> =
  * @param node The node to get the property of
  */
 export function unwrapNodeRef<T, R, S extends unknown[]>(
-    property: NodeComputable<T, R, S>,
+    property: NodeMaybeRefOrGetter<T, R, S>,
     node: T,
     ...args: S
 ): R {
-    return isFunction<R, [T, ...S], ProcessedComputable<R>>(property)
+    return isFunction<R, [T, ...S], MaybeRef<R>>(property)
         ? property(node, ...args)
         : unref(property);
 }
@@ -45,8 +43,8 @@ export function unwrapNodeRef<T, R, S extends unknown[]>(
  * @param nodes The list of current nodes with IDs as properties
  * @returns A computed ref that will give the value of the next unique ID
  */
-export function setupUniqueIds(nodes: Computable<{ id: number }[]>) {
-    const processedNodes = convertComputable(nodes);
+export function setupUniqueIds(nodes: MaybeRefOrGetter<{ id: number }[]>) {
+    const processedNodes = processGetter(nodes);
     return computed(() => Math.max(-1, ...unref(processedNodes).map(node => node.id)) + 1);
 }
 
@@ -59,9 +57,9 @@ export interface DraggableNodeOptions<T> {
     /** Setter function to update the position of a node. */
     setPosition: (node: T, position: NodePosition) => void;
     /** A list of nodes that the currently dragged node can be dropped upon. */
-    receivingNodes?: NodeComputable<T, T[]>;
+    receivingNodes?: NodeMaybeRefOrGetter<T, T[]>;
     /** The maximum distance (in pixels, before zoom) away a node can be and still drop onto a receiving node. */
-    dropAreaRadius?: NodeComputable<T, number>;
+    dropAreaRadius?: NodeMaybeRefOrGetter<T, number>;
     /** A callback for when a node gets dropped upon a receiving node. */
     onDrop?: (acceptingNode: T, draggingNode: T) => void;
 }
@@ -261,12 +259,12 @@ export interface MakeDraggableOptions<T> {
  * @param element The vue feature to make draggable.
  * @param options The options to configure the dragging behavior.
  */
-export function makeDraggable<T extends VueFeature, S>(
-    element: T,
-    options: MakeDraggableOptions<S>
-): asserts element is T & { position: Persistent<NodePosition> } {
+export function makeDraggable<T>(
+    element: VueFeature,
+    options: MakeDraggableOptions<T>
+): asserts element is VueFeature & { position: Persistent<NodePosition> } {
     const position = persistent(options.initialPosition ?? { x: 0, y: 0 });
-    (element as T & { position: Persistent<NodePosition> }).position = position;
+    (element as VueFeature & { position: Persistent<NodePosition> }).position = position;
     const computedPosition = computed(() => {
         if (options.nodeBeingDragged.value === options.id) {
             return {
@@ -291,36 +289,25 @@ export function makeDraggable<T extends VueFeature, S>(
         options.onMouseUp?.(e);
     }
 
-    nextTick(() => {
-        const elementComponent = element[Component];
-        const elementGatherProps = element[GatherProps].bind(element);
-        element[Component] = Draggable as GenericComponent;
-        element[GatherProps] = function gatherTooltipProps(this: typeof options) {
-            return {
-                element: {
-                    [Component]: elementComponent,
-                    [GatherProps]: elementGatherProps
-                },
-                mouseDown: handleMouseDown,
-                mouseUp: handleMouseUp,
-                position: computedPosition
-            };
-        }.bind(options);
-    });
+    element.wrappers.push(el => (
+        <Draggable mouseDown={handleMouseDown} mouseUp={handleMouseUp} position={computedPosition}>
+            {el}
+        </Draggable>
+    ));
 }
 
 /** An object that configures how to setup a list of actions using {@link setupActions}. */
 export interface SetupActionsOptions<T extends NodePosition> {
     /** The node to display actions upon, or undefined when the actions should be hidden. */
-    node: Computable<T | undefined>;
+    node: MaybeRefOrGetter<T | undefined>;
     /** Whether or not to currently display the actions. */
-    shouldShowActions?: NodeComputable<T, boolean>;
+    shouldShowActions?: NodeMaybeRefOrGetter<T, boolean>;
     /** The list of actions to display. Actions are arbitrary JSX elements. */
-    actions: NodeComputable<T, ((position: NodePosition) => JSX.Element)[]>;
+    actions: NodeMaybeRefOrGetter<T, ((position: NodePosition) => Renderable)[]>;
     /** The distance from the node to place the actions. */
-    distance: NodeComputable<T, number>;
+    distance: NodeMaybeRefOrGetter<T, number>;
     /** The arc length to place between actions, in radians. */
-    arcLength?: NodeComputable<T, number>;
+    arcLength?: NodeMaybeRefOrGetter<T, number>;
 }
 
 /**
@@ -329,8 +316,8 @@ export interface SetupActionsOptions<T extends NodePosition> {
  * @returns A JSX function to render the actions.
  */
 export function setupActions<T extends NodePosition>(options: SetupActionsOptions<T>) {
-    const node = convertComputable(options.node);
-    return jsx(() => {
+    const node = processGetter(options.node) as MaybeRef<T | undefined>;
+    return computed(() => {
         const currNode = unref(node);
         if (currNode == null) {
             return "";
@@ -404,10 +391,10 @@ export function placeInAvailableSpace<T extends NodePosition>(
             direction === Direction.Right
                 ? (a, b) => a.x - b.x
                 : direction === Direction.Left
-                ? (a, b) => b.x - a.x
-                : direction === Direction.Up
-                ? (a, b) => b.y - a.y
-                : (a, b) => a.y - b.y
+                  ? (a, b) => b.x - a.x
+                  : direction === Direction.Up
+                    ? (a, b) => b.y - a.y
+                    : (a, b) => a.y - b.y
         );
 
     for (let i = 0; i < nodes.length; i++) {

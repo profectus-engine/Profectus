@@ -33,9 +33,9 @@ export type Proxied<T> =
 // Takes a function that returns an object and pretends to be that object
 // Note that the object is lazily calculated
 export function createLazyProxy<T extends object, S extends T>(
-    objectFunc: (this: S, baseObject: S) => T & S,
+    objectFunc: (this: S, baseObject: S) => T,
     baseObject: S = {} as S
-): T {
+): T & S {
     const obj: S & Partial<T> = baseObject;
     let calculated = false;
     let calculating = false;

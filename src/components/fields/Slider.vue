@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import "components/common/fields.css";
-import Tooltip from "features/tooltips/Tooltip.vue";
+import Tooltip from "wrappers/tooltips/Tooltip.vue";
 import { Direction } from "util/common";
 import { computed } from "vue";
 

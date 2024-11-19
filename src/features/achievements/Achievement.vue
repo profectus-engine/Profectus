@@ -1,85 +1,63 @@
 <template>
     <div
-        v-if="isVisible(visibility)"
-        :style="[
-            {
-                visibility: isHidden(visibility) ? 'hidden' : undefined,
-                backgroundImage: (earned && image && `url(${image})`) || ''
-            },
-            unref(style) ?? []
-        ]"
+        :style="{
+            backgroundImage: (unref(earned) && unref(image) && `url(${image})`) || ''
+        }"
         :class="{
-            feature: true,
             achievement: true,
             locked: !unref(earned),
             done: unref(earned),
             small: unref(small),
-            ...unref(classes)
         }"
     >
-        <component v-if="comp" :is="comp" />
-        <MarkNode :mark="unref(mark)" />
-        <Node :id="id" />
+        <Component />
     </div>
 </template>
 
 <script setup lang="tsx">
 import "components/common/features.css";
-import { isHidden, isVisible, jsx, Visibility } from "features/feature";
-import { displayRequirements, Requirements } from "game/requirements";
-import { coerceComponent, isCoercableComponent } from "util/vue";
-import { Component, shallowRef, StyleValue, unref, UnwrapRef, watchEffect } from "vue";
-import { GenericAchievement } from "./achievement";
+import { isJSXElement, render } from "util/vue";
+import { Component, isRef, unref } from "vue";
+import { Achievement } from "./achievement";
+import { displayRequirements } from "game/requirements";
 
 const props = defineProps<{
-    visibility: Visibility | boolean;
-    display?: UnwrapRef<GenericAchievement["display"]>;
-    earned: boolean;
-    requirements?: Requirements;
-    image?: string;
-    style?: StyleValue;
-    classes?: Record<string, boolean>;
-    mark?: boolean | string;
-    small?: boolean;
-    id: string;
+    display: Achievement["display"];
+    earned: Achievement["earned"];
+    requirements: Achievement["requirements"];
+    image: Achievement["image"];
+    small: Achievement["small"];
 }>();
 
-const comp = shallowRef<Component | string>("");
-
-watchEffect(() => {
-    const currDisplay = props.display;
-    if (currDisplay == null) {
-        comp.value = "";
-        return;
-    }
-    if (isCoercableComponent(currDisplay)) {
-        comp.value = coerceComponent(currDisplay);
-        return;
-    }
-    const Requirement = coerceComponent(currDisplay.requirement ? currDisplay.requirement :
-        jsx(() => displayRequirements(props.requirements ?? [])), "h3");
-    const EffectDisplay = coerceComponent(currDisplay.effectDisplay || "", "b");
-    const OptionsDisplay = props.earned ?
-        coerceComponent(currDisplay.optionsDisplay || "", "span") :
-        "";
-    comp.value = coerceComponent(
-        jsx(() => (
+const Component = () => {
+    if (props.display == null) {
+        return null;
+    } else if (
+        isRef(props.display) ||
+        typeof props.display === "string" ||
+        isJSXElement(props.display)
+    ) {
+        return render(props.display);
+    } else {
+        const { requirement, effectDisplay, optionsDisplay } = props.display;
+        return (
             <span>
-                <Requirement />
-                {currDisplay.effectDisplay != null ? (
+                {requirement ?
+                    render(requirement, el => <h3>{el}</h3>) :
+                    displayRequirements(props.requirements ?? [])}
+                {effectDisplay ? (
                     <div>
-                        <EffectDisplay />
+                        {render(effectDisplay, el => <b>{el}</b>)}
                     </div>
                 ) : null}
-                {currDisplay.optionsDisplay != null ? (
+                {optionsDisplay != null ? (
                     <div class="equal-spaced">
-                        <OptionsDisplay />
+                        {render(optionsDisplay)}
                     </div>
                 ) : null}
-            </span>
-        ))
-    );
-});
+            </span>);
+    }
+};
 </script>
 
 <style scoped>

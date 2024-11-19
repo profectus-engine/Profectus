@@ -1,27 +1,25 @@
 <template>
     <Col class="collapsible-container">
         <button @click="collapsed.value = !collapsed.value" class="feature collapsible-toggle">
-            <component :is="displayComponent" />
+            <Display />
         </button>
-        <component v-if="!collapsed.value" :is="contentComponent" />
+        <Content v-if="!collapsed.value" />
     </Col>
 </template>
 
 <script setup lang="ts">
-import type { CoercableComponent } from "features/feature";
-import { computeComponent } from "util/vue";
-import type { Ref } from "vue";
-import { toRef } from "vue";
+import { render, Renderable } from "util/vue";
+import type { MaybeRef, Ref } from "vue";
 import Col from "./Column.vue";
 
 const props = defineProps<{
     collapsed: Ref<boolean>;
-    display: CoercableComponent;
-    content: CoercableComponent;
+    display: MaybeRef<Renderable>;
+    content: MaybeRef<Renderable>;
 }>();
 
-const displayComponent = computeComponent(toRef(props, "display"));
-const contentComponent = computeComponent(toRef(props, "content"));
+const Display = () => render(props.display);
+const Content = () => render(props.content);
 </script>
 
 <style scoped>

@@ -1,7 +1,7 @@
 import { Resource } from "features/resources/resource";
 import { NonPersistent } from "game/persistence";
 import Decimal, { DecimalSource, format } from "util/bignum";
-import { Computable, ProcessedComputable, convertComputable } from "util/computed";
+import { MaybeRefOrGetter, MaybeRef, processGetter } from "util/computed";
 import { Ref, computed, ref, unref } from "vue";
 import * as ops from "./operations";
 import type {
@@ -60,7 +60,7 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
     protected readonly description: string | undefined;
     protected readonly internalVariables: number;
 
-    public readonly innermostVariable: ProcessedComputable<DecimalSource> | undefined;
+    public readonly innermostVariable: MaybeRef<DecimalSource> | undefined;
 
     constructor(options: FormulaOptions<T>) {
         let readonlyProperties;
@@ -93,7 +93,7 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
     private setupVariable({
         variable
     }: {
-        variable: ProcessedComputable<DecimalSource>;
+        variable: MaybeRef<DecimalSource>;
     }): InternalFormulaProperties<T> {
         return {
             inputs: [variable] as T,
@@ -207,7 +207,7 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
      * Creates a formula that evaluates to a constant value.
      * @param value The constant value for this formula.
      */
-    public static constant(value: ProcessedComputable<DecimalSource>): InvertibleIntegralFormula {
+    public static constant(value: MaybeRef<DecimalSource>): InvertibleIntegralFormula {
         return new Formula({ inputs: [value] });
     }
 
@@ -215,7 +215,7 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
      * Creates a formula that is marked as the variable for an outer formula. Typically used for inverting and integrating.
      * @param value The variable for this formula.
      */
-    public static variable(value: ProcessedComputable<DecimalSource>): InvertibleIntegralFormula {
+    public static variable(value: MaybeRef<DecimalSource>): InvertibleIntegralFormula {
         return new Formula({ variable: value });
     }
 
@@ -248,11 +248,11 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
      */
     public static step(
         value: FormulaSource,
-        start: Computable<DecimalSource>,
+        start: MaybeRefOrGetter<DecimalSource>,
         formulaModifier: (value: InvertibleIntegralFormula) => GenericFormula
     ) {
         const formula = formulaModifier(Formula.variable(0));
-        const processedStart = convertComputable(start);
+        const processedStart = processGetter(start);
         function evalStep(lhs: DecimalSource) {
             if (Decimal.lt(lhs, unref(processedStart))) {
                 return lhs;
@@ -293,7 +293,7 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
      */
     public static if(
         value: FormulaSource,
-        condition: Computable<boolean>,
+        condition: MaybeRefOrGetter<boolean>,
         formulaModifier: (value: InvertibleIntegralFormula) => GenericFormula,
         elseFormulaModifier?: (value: InvertibleIntegralFormula) => GenericFormula
     ) {
@@ -301,7 +301,7 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
         const variable = Formula.variable(lhsRef);
         const formula = formulaModifier(variable);
         const elseFormula = elseFormulaModifier?.(variable);
-        const processedCondition = convertComputable(condition);
+        const processedCondition = processGetter(condition);
         function evalStep(lhs: DecimalSource) {
             if (unref(processedCondition)) {
                 lhsRef.value = lhs;
@@ -340,7 +340,7 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
     }
     public static conditional(
         value: FormulaSource,
-        condition: Computable<boolean>,
+        condition: MaybeRefOrGetter<boolean>,
         formulaModifier: (value: InvertibleIntegralFormula) => GenericFormula,
         elseFormulaModifier?: (value: InvertibleIntegralFormula) => GenericFormula
     ) {
@@ -909,20 +909,20 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
     }
 
     public step(
-        start: Computable<DecimalSource>,
+        start: MaybeRefOrGetter<DecimalSource>,
         formulaModifier: (value: InvertibleIntegralFormula) => GenericFormula
     ) {
         return Formula.step(this, start, formulaModifier);
     }
 
     public if(
-        condition: Computable<boolean>,
+        condition: MaybeRefOrGetter<boolean>,
         formulaModifier: (value: InvertibleIntegralFormula) => GenericFormula
     ) {
         return Formula.if(this, condition, formulaModifier);
     }
     public conditional(
-        condition: Computable<boolean>,
+        condition: MaybeRefOrGetter<boolean>,
         formulaModifier: (value: InvertibleIntegralFormula) => GenericFormula
     ) {
         return Formula.if(this, condition, formulaModifier);
@@ -1443,13 +1443,13 @@ export function findNonInvertible(formula: GenericFormula): GenericFormula | nul
 export function calculateMaxAffordable(
     formula: GenericFormula,
     resource: Resource,
-    cumulativeCost: Computable<boolean> = true,
-    directSum?: Computable<number>,
-    maxBulkAmount: Computable<DecimalSource> = Decimal.dInf
+    cumulativeCost: MaybeRefOrGetter<boolean> = true,
+    directSum?: MaybeRefOrGetter<number>,
+    maxBulkAmount: MaybeRefOrGetter<DecimalSource> = Decimal.dInf
 ) {
-    const computedCumulativeCost = convertComputable(cumulativeCost);
-    const computedDirectSum = convertComputable(directSum);
-    const computedmaxBulkAmount = convertComputable(maxBulkAmount);
+    const computedCumulativeCost = processGetter(cumulativeCost);
+    const computedDirectSum = processGetter(directSum);
+    const computedmaxBulkAmount = processGetter(maxBulkAmount);
     return computed(() => {
         const maxBulkAmount = unref(computedmaxBulkAmount);
         if (Decimal.eq(maxBulkAmount, 1)) {

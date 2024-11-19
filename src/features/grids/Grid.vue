@@ -1,41 +1,26 @@
 <template>
-    <div
-        v-if="isVisible(visibility)"
-        :style="{
-            visibility: isHidden(visibility) ? 'hidden' : undefined
-        }"
-        class="table-grid"
-    >
-        <div v-for="row in unref(rows)" class="row-grid" :class="{ mergeAdjacent }" :key="row">
-            <GridCellVue
-                v-for="col in unref(cols)"
-                :key="col"
-                v-bind="gatherCellProps(unref(cells)[row * 100 + col])"
-            />
-        </div>
+    <div class="table-grid">
+        <Cells />
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="tsx">
 import "components/common/table.css";
 import themes from "data/themes";
-import { isHidden, isVisible, Visibility } from "features/feature";
-import type { GridCell } from "features/grids/grid";
+import type { Grid } from "features/grids/grid";
 import settings from "game/settings";
+import { render } from "util/vue";
 import { computed, unref } from "vue";
-import GridCellVue from "./GridCell.vue";
 
-defineProps<{
-    visibility: Visibility | boolean;
-    rows: number;
-    cols: number;
-    cells: Record<string, GridCell>;
+const props = defineProps<{
+    rows: Grid["rows"];
+    cols: Grid["cols"];
+    cells: Grid["cells"];
 }>();
 
 const mergeAdjacent = computed(() => themes[settings.theme].mergeAdjacent);
 
-function gatherCellProps(cell: GridCell) {
-    const { visibility, onClick, onHold, display, title, style, canClick, id } = cell;
-    return { visibility, onClick, onHold, display, title, style, canClick, id };
-}
+const Cells = () => new Array(unref(props.rows)).fill(0).map((_, row) => <div class={{ "row-grid": true, mergeAdjacent: mergeAdjacent.value }}>
+    {new Array(unref(props.cols)).map((_, col) => render(props.cells[row][col]))}
+    </div>);
 </script>

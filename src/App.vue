@@ -1,5 +1,7 @@
 <template>
-    <div v-if="appErrors.length > 0" class="error-container" :style="theme"><Error :errors="appErrors" /></div>
+    <div v-if="appErrors.length > 0" class="error-container" :style="theme">
+        <Error :errors="appErrors" />
+    </div>
     <template v-else>
         <div id="modal-root" :style="theme" />
         <div class="app" :style="theme" :class="{ useHeader }">
@@ -10,7 +12,7 @@
             <GameOverScreen />
             <NaNScreen />
             <CloudSaveResolver />
-            <component :is="gameComponent" />
+            <GameComponent />
         </div>
     </template>
 </template>
@@ -22,9 +24,8 @@ import AddictionWarning from "components/modals/AddictionWarning.vue";
 import CloudSaveResolver from "components/modals/CloudSaveResolver.vue";
 import GameOverScreen from "components/modals/GameOverScreen.vue";
 import NaNScreen from "components/modals/NaNScreen.vue";
-import { jsx } from "features/feature";
 import state from "game/state";
-import { coerceComponent, render } from "util/vue";
+import { render } from "util/vue";
 import type { CSSProperties } from "vue";
 import { computed, toRef, unref } from "vue";
 import Game from "./components/Game.vue";
@@ -40,9 +41,7 @@ const theme = computed(() => themes[settings.theme].variables as CSSProperties);
 const showTPS = toRef(settings, "showTPS");
 const appErrors = toRef(state, "errors");
 
-const gameComponent = computed(() => {
-    return coerceComponent(jsx(() => (<>{gameComponents.map(render)}</>)));
-});
+const GameComponent = () => gameComponents.map(c => render(c));
 </script>
 
 <style scoped>

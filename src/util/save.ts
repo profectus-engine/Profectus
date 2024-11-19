@@ -106,7 +106,7 @@ export async function loadSave(playerObj: Partial<Player>): Promise<void> {
 
     for (const layer in layers) {
         const l = layers[layer];
-        if (l) {
+        if (l != null) {
             removeLayer(l);
         }
     }

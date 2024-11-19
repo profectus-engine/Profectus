@@ -1,18 +1,18 @@
-import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
-import { Ref, ref } from "vue";
-import "../utils";
+import { createReset, Reset } from "features/reset";
 import {
+    branchedResetPropagation,
     createTree,
     createTreeNode,
     defaultResetPropagation,
-    invertedResetPropagation,
-    branchedResetPropagation
+    invertedResetPropagation
 } from "features/trees/tree";
-import { createReset, GenericReset } from "features/reset";
+import { beforeAll, beforeEach, describe, expect, test } from "vitest";
+import { Ref, ref } from "vue";
+import "../utils";
 
 describe("Reset propagation", () => {
     let shouldReset: Ref<boolean>, shouldNotReset: Ref<boolean>;
-    let goodReset: GenericReset, badReset: GenericReset;
+    let goodReset: Reset, badReset: Reset;
     beforeAll(() => {
         shouldReset = ref(false);
         shouldNotReset = ref(false);

@@ -7,7 +7,6 @@
         @click.capture="togglePinned"
     >
         <slot />
-        <component v-if="elementComp" :is="elementComp" />
         <transition name="fade">
             <div
                 v-if="isShown"
@@ -28,7 +27,7 @@
                 ]"
             >
                 <span v-if="showPin" class="material-icons pinned">push_pin</span>
-                <component v-if="comp" :is="comp" />
+                <Component />
             </div>
         </transition>
     </div>
@@ -36,43 +35,27 @@
 
 <script setup lang="tsx">
 import themes from "data/themes";
-import type { CoercableComponent } from "features/feature";
-import { jsx, StyleValue } from "features/feature";
-import type { Persistent } from "game/persistence";
 import settings from "game/settings";
 import { Direction } from "util/common";
-import type { VueFeature } from "util/vue";
-import {
-    coerceComponent,
-    computeOptionalComponent,
-    renderJSX
-} from "util/vue";
+import { render } from "util/vue";
 import type { Component } from "vue";
-import { computed, ref, shallowRef, toRef, unref } from "vue";
+import { computed, ref, unref } from "vue";
+import { Tooltip } from "./tooltip";
 
 const props = defineProps<{
-    element?: VueFeature;
-    display: CoercableComponent;
-    style?: StyleValue;
-    classes?: Record<string, boolean>;
-    direction?: Direction;
-    xoffset?: string;
-    yoffset?: string;
-    pinned?: Persistent<boolean>;
+    pinned?: Tooltip["pinned"];
+    display: Tooltip["display"];
+    style?: Tooltip["style"];
+    classes?: Tooltip["classes"];
+    direction: Tooltip["direction"];
+    xoffset?: Tooltip["xoffset"];
+    yoffset?: Tooltip["yoffset"];
 }>();
 
 const isHovered = ref(false);
-const isShown = computed(() => (props.pinned?.value === true || isHovered.value) && comp.value);
-const comp = computeOptionalComponent(toRef(props, "display"));
+const isShown = computed(() => props.pinned?.value === true || isHovered.value);
 
-const elementComp = shallowRef<Component | "" | null>(
-    coerceComponent(
-        jsx(() => {
-            const currComponent = props.element;
-            return currComponent == null ? "" : renderJSX(currComponent);
-        })
-    )
-);
+const Component = () => render(props.display);
 
 function togglePinned(e: MouseEvent) {
     const isPinned = props.pinned;

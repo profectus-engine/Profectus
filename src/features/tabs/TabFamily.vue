@@ -1,16 +1,5 @@
 <template>
-    <div
-        v-if="isVisible(visibility)"
-        class="tab-family-container"
-        :class="{ ...unref(classes), ...tabClasses }"
-        :style="[
-            {
-                visibility: isHidden(visibility) ? 'hidden' : undefined
-            },
-            unref(style) ?? [],
-            tabStyle ?? []
-        ]"
-    >
+    <div class="tab-family-container" :class="tabClasses" :style="tabStyle">
         <Sticky
             class="tab-buttons-container"
             :class="unref(buttonContainerClasses)"
@@ -23,79 +12,60 @@
                     :floating="floating"
                     :key="id"
                     :active="unref(button.tab) === unref(activeTab)"
-                    v-bind="gatherButtonProps(button)"
+                    :display="button.display"
+                    :glowColor="button.glowColor"
                 />
             </div>
         </Sticky>
-        <template v-if="unref(activeTab)">
-            <component :is="unref(component)" />
-        </template>
+        <Component v-if="unref(activeTab) != null" />
     </div>
 </template>
 
 <script setup lang="ts">
 import Sticky from "components/layout/Sticky.vue";
 import themes from "data/themes";
-import type { CoercableComponent, StyleValue } from "features/feature";
-import { isHidden, isVisible, Visibility } from "features/feature";
-import type { GenericTab } from "features/tabs/tab";
 import TabButton from "features/tabs/TabButton.vue";
-import type { GenericTabButton } from "features/tabs/tabFamily";
 import settings from "game/settings";
-import { coerceComponent, deepUnref, isCoercableComponent } from "util/vue";
-import type { Component, Ref } from "vue";
-import { computed, shallowRef, unref, watchEffect } from "vue";
+import { render } from "util/vue";
+import type { Component } from "vue";
+import { computed, unref } from "vue";
+import { TabFamily } from "./tabFamily";
+import { TabType } from "./tab";
+import { isType } from "features/feature";
 
 const props = defineProps<{
-    visibility: Visibility | boolean;
-    activeTab: GenericTab | CoercableComponent | null;
-    selected: Ref<string>;
-    tabs: Record<string, GenericTabButton>;
-    style?: StyleValue;
-    classes?: Record<string, boolean>;
-    buttonContainerStyle?: StyleValue;
-    buttonContainerClasses?: Record<string, boolean>;
+    activeTab: TabFamily["activeTab"];
+    selected: TabFamily["selected"];
+    tabs: TabFamily["tabs"];
+    buttonContainerClasses: TabFamily["buttonContainerClasses"];
+    buttonContainerStyle: TabFamily["buttonContainerStyle"];
 }>();
 
 const floating = computed(() => {
     return themes[settings.theme].floatingTabs;
 });
 
-const component = shallowRef<Component | string>("");
-
-watchEffect(() => {
-    const currActiveTab = props.activeTab;
-    if (currActiveTab == null) {
-        component.value = "";
+const Component = () => {
+    const activeTab = unref(props.activeTab);
+    if (activeTab == null) {
         return;
     }
-    if (isCoercableComponent(currActiveTab)) {
-        component.value = coerceComponent(currActiveTab);
-        return;
-    }
-    component.value = coerceComponent(unref(currActiveTab.display));
-});
+    return render(activeTab);
+};
 
 const tabClasses = computed(() => {
-    const currActiveTab = props.activeTab;
-    const tabClasses =
-        isCoercableComponent(currActiveTab) || !currActiveTab
-            ? undefined
-            : unref(currActiveTab.classes);
-    return tabClasses;
+    const activeTab = unref(props.activeTab);
+    if (isType(activeTab, TabType)) {
+        return unref(activeTab.classes);
+    }
 });
 
 const tabStyle = computed(() => {
-    const currActiveTab = props.activeTab;
-    return isCoercableComponent(currActiveTab) || !currActiveTab
-        ? undefined
-        : unref(currActiveTab.style);
+    const activeTab = unref(props.activeTab);
+    if (isType(activeTab, TabType)) {
+        return unref(activeTab.style);
+    }
 });
-
-function gatherButtonProps(button: GenericTabButton) {
-    const { display, style, classes, glowColor, visibility } = deepUnref(button);
-    return { display, style, classes, glowColor, visibility };
-}
 </script>
 
 <style scoped>

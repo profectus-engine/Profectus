@@ -1,30 +1,29 @@
 <template>
     <div class="field">
-        <span class="field-title" v-if="titleComponent"><component :is="titleComponent" /></span>
+        <span class="field-title" v-if="title"><Title /></span>
         <VueNextSelect
             :options="options"
             v-model="value"
-            @update:model-value="onUpdate"
             :min="1"
-            label-by="label"
             :placeholder="placeholder"
             :close-on-select="closeOnSelect"
+            @update:model-value="onUpdate"
+            label-by="label"
         />
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="tsx">
 import "components/common/fields.css";
-import type { CoercableComponent } from "features/feature";
-import { computeOptionalComponent } from "util/vue";
-import { ref, toRef, unref, watch } from "vue";
+import { render, Renderable } from "util/vue";
+import { MaybeRef, ref, toRef, unref, watch } from "vue";
 import VueNextSelect from "vue-next-select";
 import "vue-next-select/dist/index.css";
 
 export type SelectOption = { label: string; value: unknown };
 
 const props = defineProps<{
-    title?: CoercableComponent;
+    title?: MaybeRef<Renderable>;
     modelValue?: unknown;
     options: SelectOption[];
     placeholder?: string;
@@ -34,7 +33,7 @@ const emit = defineEmits<{
     (e: "update:modelValue", value: unknown): void;
 }>();
 
-const titleComponent = computeOptionalComponent(toRef(props, "title"), "span");
+const Title = () => props.title ? render(props.title, el => <span>{el}</span>) : <></>;
 
 const value = ref<SelectOption | null>(
     props.options.find(option => option.value === props.modelValue) ?? null

@@ -197,7 +197,7 @@ describe("Creating cost requirement", () => {
 
 test("Creating visibility requirement", () => {
     const visibility = ref<Visibility.None | Visibility.Visible | boolean>(Visibility.Visible);
-    const requirement = createVisibilityRequirement({ visibility });
+    const requirement = createVisibilityRequirement(visibility);
     expect(unref(requirement.requirementMet)).toBe(true);
     visibility.value = true;
     expect(unref(requirement.requirementMet)).toBe(true);

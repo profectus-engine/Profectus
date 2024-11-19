@@ -1,12 +1,13 @@
 <template>
-    <div v-if="mark">
-        <div v-if="mark === true" class="mark star"></div>
-        <img v-else class="mark" :src="mark" />
-    </div>
+    <div v-if="unref(mark) === true" class="mark star"></div>
+    <img v-else-if="unref(mark) !== false" class="mark" :src="unref(mark) as string" />
+    <slot />
 </template>
 
 <script setup lang="ts">
-defineProps<{ mark?: boolean | string }>();
+import { MaybeRef, unref } from 'vue';
+
+defineProps<{ mark: MaybeRef<boolean | string> }>();
 </script>
 
 <style scoped>

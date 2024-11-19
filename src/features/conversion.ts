@@ -1,18 +1,18 @@
-import type { CoercableComponent, OptionsFunc, Replace } from "features/feature";
-import { setDefault } from "features/feature";
+import type { OptionsFunc, Replace } from "features/feature";
 import type { Resource } from "features/resources/resource";
 import Formula from "game/formulas/formulas";
 import { InvertibleFormula, InvertibleIntegralFormula } from "game/formulas/types";
 import type { BaseLayer } from "game/layers";
+import { createBooleanRequirement } from "game/requirements";
 import type { DecimalSource } from "util/bignum";
 import Decimal from "util/bignum";
-import type { Computable, GetComputableTypeWithDefault, ProcessedComputable } from "util/computed";
-import { convertComputable, processComputable } from "util/computed";
+import { processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import type { Ref } from "vue";
-import { computed, unref } from "vue";
-import { GenericDecorator } from "./decorators/common";
-import { createBooleanRequirement } from "game/requirements";
+import { Renderable } from "util/vue";
+import { computed, MaybeRef, MaybeRefOrGetter, unref } from "vue";
+
+/** A symbol used to identify {@link Conversion} features. */
+export const ConversionType = Symbol("Conversion");
 
 /** An object that configures a {@link Conversion}. */
 export interface ConversionOptions {
@@ -25,24 +25,24 @@ export interface ConversionOptions {
      * How much of the output resource the conversion can currently convert for.
      * Typically this will be set for you in a conversion constructor.
      */
-    currentGain?: Computable<DecimalSource>;
+    currentGain?: MaybeRefOrGetter<DecimalSource>;
     /**
      * The absolute amount the output resource will be changed by.
      * Typically this will be set for you in a conversion constructor.
      * This will differ from {@link currentGain} in the cases where the conversion isn't just adding the converted amount to the output resource.
      */
-    actualGain?: Computable<DecimalSource>;
+    actualGain?: MaybeRefOrGetter<DecimalSource>;
     /**
      * The amount of the input resource currently being required in order to produce the {@link currentGain}.
      * That is, if it went below this value then {@link currentGain} would decrease.
      * Typically this will be set for you in a conversion constructor.
      */
-    currentAt?: Computable<DecimalSource>;
+    currentAt?: MaybeRefOrGetter<DecimalSource>;
     /**
      * The amount of the input resource required to make {@link currentGain} increase.
      * Typically this will be set for you in a conversion constructor.
      */
-    nextAt?: Computable<DecimalSource>;
+    nextAt?: MaybeRefOrGetter<DecimalSource>;
     /**
      * The input {@link features/resources/resource.Resource} for this conversion.
      */
@@ -55,7 +55,7 @@ export interface ConversionOptions {
      * Whether or not to cap the amount of the output resource gained by converting at 1.
      * Defaults to true.
      */
-    buyMax?: Computable<boolean>;
+    buyMax?: MaybeRefOrGetter<boolean>;
     /**
      * The function that performs the actual conversion from {@link baseResource} to {@link gainResource}.
      * Typically this will be set for you in a conversion constructor.
@@ -85,28 +85,15 @@ export interface BaseConversion {
 }
 
 /** An object that converts one {@link features/resources/resource.Resource} into another at a given rate. */
-export type Conversion<T extends ConversionOptions> = Replace<
-    T & BaseConversion,
+export type Conversion = Replace<
+    Replace<ConversionOptions, BaseConversion>,
     {
         formula: InvertibleFormula;
-        currentGain: GetComputableTypeWithDefault<T["currentGain"], Ref<DecimalSource>>;
-        actualGain: GetComputableTypeWithDefault<T["actualGain"], Ref<DecimalSource>>;
-        currentAt: GetComputableTypeWithDefault<T["currentAt"], Ref<DecimalSource>>;
-        nextAt: GetComputableTypeWithDefault<T["nextAt"], Ref<DecimalSource>>;
-        buyMax: GetComputableTypeWithDefault<T["buyMax"], true>;
-        spend: undefined extends T["spend"] ? (amountGained: DecimalSource) => void : T["spend"];
-    }
->;
-
-/** A type that matches any valid {@link Conversion} object. */
-export type GenericConversion = Replace<
-    Conversion<ConversionOptions>,
-    {
-        currentGain: ProcessedComputable<DecimalSource>;
-        actualGain: ProcessedComputable<DecimalSource>;
-        currentAt: ProcessedComputable<DecimalSource>;
-        nextAt: ProcessedComputable<DecimalSource>;
-        buyMax: ProcessedComputable<boolean>;
+        currentGain: MaybeRef<DecimalSource>;
+        actualGain: MaybeRef<DecimalSource>;
+        currentAt: MaybeRef<DecimalSource>;
+        nextAt: MaybeRef<DecimalSource>;
+        buyMax: MaybeRef<boolean>;
         spend: (amountGained: DecimalSource) => void;
     }
 >;
@@ -119,80 +106,78 @@ export type GenericConversion = Replace<
  * @see {@link createIndependentConversion}.
  */
 export function createConversion<T extends ConversionOptions>(
-    optionsFunc: OptionsFunc<T, BaseConversion, GenericConversion>,
-    ...decorators: GenericDecorator[]
-): Conversion<T> {
+    optionsFunc: OptionsFunc<T, BaseConversion, Conversion>
+) {
     return createLazyProxy(feature => {
-        const conversion = optionsFunc.call(feature, feature);
+        const options = optionsFunc.call(feature, feature as Conversion);
+        const {
+            baseResource,
+            gainResource,
+            formula,
+            currentGain: _currentGain,
+            actualGain,
+            currentAt,
+            nextAt,
+            convert,
+            spend,
+            buyMax,
+            onConvert,
+            ...props
+        } = options;
 
-        for (const decorator of decorators) {
-            decorator.preConstruct?.(conversion);
-        }
+        const currentGain =
+            _currentGain == null
+                ? computed((): Decimal => {
+                      let gain = Decimal.floor(conversion.formula.evaluate(baseResource.value)).max(
+                          0
+                      );
+                      if (unref(conversion.buyMax) === false) {
+                          gain = gain.min(1);
+                      }
+                      return gain;
+                  })
+                : processGetter(_currentGain);
 
-        (conversion as GenericConversion).formula = conversion.formula(
-            Formula.variable(conversion.baseResource)
-        );
-        if (conversion.currentGain == null) {
-            conversion.currentGain = computed(() => {
-                let gain = Decimal.floor(
-                    (conversion as GenericConversion).formula.evaluate(
-                        conversion.baseResource.value
-                    )
-                ).max(0);
-                if (unref(conversion.buyMax) === false) {
-                    gain = gain.min(1);
-                }
-                return gain;
-            });
-        }
-        if (conversion.actualGain == null) {
-            conversion.actualGain = conversion.currentGain;
-        }
-        if (conversion.currentAt == null) {
-            conversion.currentAt = computed(() => {
-                return (conversion as GenericConversion).formula.invert(
-                    Decimal.floor(unref((conversion as GenericConversion).currentGain))
-                );
-            });
-        }
-        if (conversion.nextAt == null) {
-            conversion.nextAt = computed(() => {
-                return (conversion as GenericConversion).formula.invert(
-                    Decimal.floor(unref((conversion as GenericConversion).currentGain)).add(1)
-                );
-            });
-        }
+        const conversion = {
+            type: ConversionType,
+            ...(props as Omit<typeof props, keyof ConversionOptions>),
+            baseResource,
+            gainResource,
+            formula: formula(Formula.variable(baseResource)),
+            currentGain,
+            actualGain: actualGain == null ? currentGain : processGetter(actualGain),
+            currentAt:
+                currentAt == null
+                    ? computed(
+                          (): DecimalSource =>
+                              conversion.formula.invert(
+                                  Decimal.floor(unref(conversion.currentGain))
+                              )
+                      )
+                    : processGetter(currentAt),
+            nextAt:
+                nextAt == null
+                    ? computed(
+                          (): DecimalSource =>
+                              conversion.formula.invert(
+                                  Decimal.floor(unref(conversion.currentGain)).add(1)
+                              )
+                      )
+                    : processGetter(nextAt),
+            convert:
+                convert ??
+                function () {
+                    const amountGained = unref(conversion.currentGain);
+                    gainResource.value = Decimal.add(gainResource.value, amountGained);
+                    conversion.spend(amountGained);
+                    onConvert?.(amountGained);
+                },
+            spend: spend ?? (() => (baseResource.value = 0)),
+            buyMax: processGetter(buyMax) ?? true,
+            onConvert
+        } satisfies Conversion;
 
-        if (conversion.convert == null) {
-            conversion.convert = function () {
-                const amountGained = unref((conversion as GenericConversion).currentGain);
-                conversion.gainResource.value = Decimal.add(
-                    conversion.gainResource.value,
-                    amountGained
-                );
-                (conversion as GenericConversion).spend(amountGained);
-                conversion.onConvert?.(amountGained);
-            };
-        }
-
-        if (conversion.spend == null) {
-            conversion.spend = function () {
-                conversion.baseResource.value = 0;
-            };
-        }
-
-        processComputable(conversion as T, "currentGain");
-        processComputable(conversion as T, "actualGain");
-        processComputable(conversion as T, "currentAt");
-        processComputable(conversion as T, "nextAt");
-        processComputable(conversion as T, "buyMax");
-        setDefault(conversion, "buyMax", true);
-
-        for (const decorator of decorators) {
-            decorator.postConstruct?.(conversion);
-        }
-
-        return conversion as unknown as Conversion<T>;
+        return conversion;
     });
 }
 
@@ -203,8 +188,8 @@ export function createConversion<T extends ConversionOptions>(
  * @param optionsFunc Conversion options.
  */
 export function createCumulativeConversion<S extends ConversionOptions>(
-    optionsFunc: OptionsFunc<S, BaseConversion, GenericConversion>
-): Conversion<S> {
+    optionsFunc: OptionsFunc<S, BaseConversion, Conversion>
+) {
     return createConversion(optionsFunc);
 }
 
@@ -214,54 +199,46 @@ export function createCumulativeConversion<S extends ConversionOptions>(
  * @param optionsFunc Converison options.
  */
 export function createIndependentConversion<S extends ConversionOptions>(
-    optionsFunc: OptionsFunc<S, BaseConversion, GenericConversion>
-): Conversion<S> {
+    optionsFunc: OptionsFunc<S, BaseConversion, Conversion>
+) {
     return createConversion(feature => {
-        const conversion: S = optionsFunc.call(feature, feature);
+        const conversion = optionsFunc.call(feature, feature);
 
-        setDefault(conversion, "buyMax", false);
+        conversion.buyMax ??= false;
 
-        if (conversion.currentGain == null) {
-            conversion.currentGain = computed(() => {
-                let gain = Decimal.floor(
-                    (conversion as unknown as GenericConversion).formula.evaluate(
-                        conversion.baseResource.value
-                    )
-                ).max(conversion.gainResource.value);
-                if (unref(conversion.buyMax as ProcessedComputable<boolean>) === false) {
-                    gain = gain.min(Decimal.add(conversion.gainResource.value, 1));
-                }
-                return gain;
-            });
-        }
-        if (conversion.actualGain == null) {
-            conversion.actualGain = computed(() => {
-                let gain = Decimal.sub(
-                    (conversion as unknown as GenericConversion).formula.evaluate(
-                        conversion.baseResource.value
-                    ),
-                    conversion.gainResource.value
-                )
-                    .floor()
-                    .max(0);
-
-                if (unref(conversion.buyMax as ProcessedComputable<boolean>) === false) {
-                    gain = gain.min(1);
-                }
-                return gain;
-            });
-        }
-        setDefault(conversion, "convert", function () {
-            const amountGained = unref((conversion as unknown as GenericConversion).actualGain);
-            conversion.gainResource.value = unref(
-                (conversion as unknown as GenericConversion).currentGain
+        conversion.currentGain ??= computed(() => {
+            let gain = Decimal.floor(feature.formula.evaluate(conversion.baseResource.value)).max(
+                conversion.gainResource.value
             );
-            (conversion as unknown as GenericConversion).spend(amountGained);
-            conversion.onConvert?.(amountGained);
+            if (unref(conversion.buyMax as MaybeRef<boolean>) === false) {
+                gain = gain.min(Decimal.add(conversion.gainResource.value, 1));
+            }
+            return gain;
         });
 
+        conversion.actualGain ??= computed(() => {
+            let gain = Decimal.sub(
+                feature.formula.evaluate(conversion.baseResource.value),
+                conversion.gainResource.value
+            )
+                .floor()
+                .max(0);
+
+            if (unref(conversion.buyMax as MaybeRef<boolean>) === false) {
+                gain = gain.min(1);
+            }
+            return gain;
+        });
+
+        conversion.convert ??= function () {
+            const amountGained = unref(feature.actualGain);
+            conversion.gainResource.value = unref(feature.currentGain);
+            feature.spend(amountGained);
+            feature.onConvert?.(amountGained);
+        };
+
         return conversion;
-    }) as Conversion<S>;
+    });
 }
 
 /**
@@ -275,12 +252,12 @@ export function createIndependentConversion<S extends ConversionOptions>(
  */
 export function setupPassiveGeneration(
     layer: BaseLayer,
-    conversion: GenericConversion,
-    rate: Computable<DecimalSource> = 1,
-    cap: Computable<DecimalSource> = Decimal.dInf
+    conversion: Conversion,
+    rate: MaybeRefOrGetter<DecimalSource> = 1,
+    cap: MaybeRefOrGetter<DecimalSource> = Decimal.dInf
 ): void {
-    const processedRate = convertComputable(rate);
-    const processedCap = convertComputable(cap);
+    const processedRate = processGetter(rate);
+    const processedCap = processGetter(cap);
     layer.on("preUpdate", diff => {
         const currRate = unref(processedRate);
         if (Decimal.neq(currRate, 0)) {
@@ -300,11 +277,11 @@ export function setupPassiveGeneration(
  * @param minGainAmount The minimum gain amount that must be met for the requirement to be met
  */
 export function createCanConvertRequirement(
-    conversion: GenericConversion,
-    minGainAmount: Computable<DecimalSource> = 1,
-    display?: CoercableComponent
+    conversion: Conversion,
+    minGainAmount: MaybeRefOrGetter<DecimalSource> = 1,
+    display?: MaybeRefOrGetter<Renderable>
 ) {
-    const computedMinGainAmount = convertComputable(minGainAmount);
+    const computedMinGainAmount = processGetter(minGainAmount);
     return createBooleanRequirement(
         () => Decimal.gte(unref(conversion.actualGain), unref(computedMinGainAmount)),
         display

@@ -1,11 +1,9 @@
 import Node from "components/Node.vue";
 import Spacer from "components/layout/Spacer.vue";
-import { jsx } from "features/feature";
 import { createResource, trackBest, trackOOMPS, trackTotal } from "features/resources/resource";
-import type { GenericTree } from "features/trees/tree";
-import { branchedResetPropagation, createTree } from "features/trees/tree";
+import { branchedResetPropagation, createTree, Tree } from "features/trees/tree";
 import { globalBus } from "game/events";
-import type { BaseLayer, GenericLayer } from "game/layers";
+import type { BaseLayer, Layer } from "game/layers";
 import { createLayer } from "game/layers";
 import type { Player } from "game/player";
 import player from "game/player";
@@ -42,12 +40,12 @@ export const main = createLayer("main", function (this: BaseLayer) {
             total.value = points.value;
         },
         resetPropagation: branchedResetPropagation
-    })) as GenericTree;
+    })) as Tree;
 
     return {
         name: "Tree",
         links: tree.links,
-        display: jsx(() => (
+        display: () => (
             <>
                 {player.devSpeed === 0 ? (
                     <div>
@@ -81,7 +79,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
                 <Spacer />
                 {render(tree)}
             </>
-        )),
+        ),
         points,
         best,
         total,
@@ -97,7 +95,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
 export const getInitialLayers = (
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     player: Partial<Player>
-): Array<GenericLayer> => [main, prestige];
+): Array<Layer> => [main, prestige];
 
 /**
  * A computed ref whose value is true whenever the game is over.
