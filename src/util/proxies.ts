@@ -5,28 +5,30 @@ import Decimal from "util/bignum";
 export const ProxyState = Symbol("ProxyState");
 export const ProxyPath = Symbol("ProxyPath");
 
-export type ProxiedWithState<T> = NonNullable<T> extends Record<PropertyKey, unknown>
-    ? NonNullable<T> extends Decimal
-        ? T
-        : {
-              [K in keyof T]: ProxiedWithState<T[K]>;
-          } & {
-              [ProxyState]: T;
-              [ProxyPath]: string[];
-          }
-    : T;
+export type ProxiedWithState<T> =
+    NonNullable<T> extends Record<PropertyKey, unknown>
+        ? NonNullable<T> extends Decimal
+            ? T
+            : {
+                  [K in keyof T]: ProxiedWithState<T[K]>;
+              } & {
+                  [ProxyState]: T;
+                  [ProxyPath]: string[];
+              }
+        : T;
 
-export type Proxied<T> = NonNullable<T> extends Record<PropertyKey, unknown>
-    ? NonNullable<T> extends Persistent<infer S>
-        ? NonPersistent<S>
-        : NonNullable<T> extends Decimal
-        ? T
-        : {
-              [K in keyof T]: Proxied<T[K]>;
-          } & {
-              [ProxyState]: T;
-          }
-    : T;
+export type Proxied<T> =
+    NonNullable<T> extends Record<PropertyKey, unknown>
+        ? NonNullable<T> extends Persistent<infer S>
+            ? NonPersistent<S>
+            : NonNullable<T> extends Decimal
+              ? T
+              : {
+                    [K in keyof T]: Proxied<T[K]>;
+                } & {
+                    [ProxyState]: T;
+                }
+        : T;
 
 // Takes a function that returns an object and pretends to be that object
 // Note that the object is lazily calculated

@@ -128,7 +128,7 @@ function getCellHandler(id: string): ProxyHandler<GenericGrid> {
             if (isFunction(prop)) {
                 return () => prop.call(receiver, id, target.getState(id));
             }
-            if (prop != undefined || typeof key === "symbol") {
+            if (prop != null || typeof key === "symbol") {
                 return prop;
             }
 
@@ -145,7 +145,7 @@ function getCellHandler(id: string): ProxyHandler<GenericGrid> {
                     cache[key] = computed(() => prop.call(receiver, id, target.getState(id)));
                 }
                 return cache[key].value;
-            } else if (prop != undefined) {
+            } else if (prop != null) {
                 return unref(prop);
             }
 
@@ -153,7 +153,7 @@ function getCellHandler(id: string): ProxyHandler<GenericGrid> {
             prop = (target as any)[`on${key}`];
             if (isFunction(prop)) {
                 return () => prop.call(receiver, id, target.getState(id));
-            } else if (prop != undefined) {
+            } else if (prop != null) {
                 return prop;
             }
 
@@ -318,7 +318,7 @@ export function createGrid<T extends GridOptions>(
             return grid.id + "-" + cell;
         };
         grid.getState = function (this: GenericGrid, cell: string | number) {
-            if (this.cellState.value[cell] != undefined) {
+            if (this.cellState.value[cell] != null) {
                 return cellState.value[cell];
             }
             return this.cells[cell].startState;

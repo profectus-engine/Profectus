@@ -8,6 +8,8 @@ jobs:
   build-and-deploy:
     if: github.repository != 'profectus-engine/Profectus' # Don't build placeholder mod on main repo
     runs-on: docker
+    container:
+      image: node:21-bullseye
     steps:
       - name: Setup RSync
         run: |

@@ -1,4 +1,4 @@
-import Modal from "components/Modal.vue";
+import Modal from "components/modals/Modal.vue";
 import type {
     CoercableComponent,
     JSXFunction,

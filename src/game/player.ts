@@ -36,12 +36,12 @@ export type LayerData<T> = {
     [P in keyof T]?: T[P] extends (infer U)[]
         ? Record<string, LayerData<U>>
         : T[P] extends Record<string, never>
-        ? never
-        : T[P] extends Ref<infer S>
-        ? S
-        : T[P] extends object
-        ? LayerData<T[P]>
-        : T[P];
+          ? never
+          : T[P] extends Ref<infer S>
+            ? S
+            : T[P] extends object
+              ? LayerData<T[P]>
+              : T[P];
 };
 
 const player = reactive<Player>({
@@ -64,7 +64,8 @@ export default window.player = player;
 
 /** Convert a player save data object into a JSON string. Unwraps refs. */
 export function stringifySave(player: Player): string {
-    return JSON.stringify(player, (key, value) => unref(value));
+    // Convert undefineds into nulls for proper parsing
+    return JSON.stringify(player, (key, value) => unref(value) ?? null);
 }
 
 declare global {

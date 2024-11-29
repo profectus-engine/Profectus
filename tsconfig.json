@@ -6,6 +6,7 @@
     "strict": true,
     "checkJs": false,
     "jsx": "preserve",
+    "jsxImportSource": "vue",
     "importHelpers": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,

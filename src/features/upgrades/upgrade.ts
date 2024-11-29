@@ -1,4 +1,3 @@
-import { isArray } from "@vue/shared";
 import { GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
@@ -151,7 +150,7 @@ export function createUpgrade<T extends UpgradeOptions>(
         };
 
         const visibilityRequirement = createVisibilityRequirement(upgrade as GenericUpgrade);
-        if (isArray(upgrade.requirements)) {
+        if (Array.isArray(upgrade.requirements)) {
             upgrade.requirements.unshift(visibilityRequirement);
         } else {
             upgrade.requirements = [visibilityRequirement, upgrade.requirements];

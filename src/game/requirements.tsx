@@ -1,4 +1,3 @@
-import { isArray } from "@vue/shared";
 import {
     CoercableComponent,
     isVisible,
@@ -19,6 +18,7 @@ import {
 import { createLazyProxy } from "util/proxies";
 import { joinJSX, renderJSX } from "util/vue";
 import { computed, unref } from "vue";
+import { JSX } from "vue/jsx-runtime";
 import Formula, { calculateCost, calculateMaxAffordable } from "./formulas/formulas";
 import type { GenericFormula } from "./formulas/types";
 import { DefaultValue, Persistent } from "./persistence";
@@ -179,7 +179,7 @@ export function createCostRequirement<T extends CostRequirementOptions>(
                     ? calculateCost(
                           req.cost,
                           amount ?? 1,
-                          unref(req.cumulativeCost) as boolean,
+                          unref(req.cumulativeCost as ProcessedComputable<boolean>),
                           unref(req.directSum) as number
                       )
                     : unref(req.cost as ProcessedComputable<DecimalSource>);
@@ -222,7 +222,9 @@ export function createCostRequirement<T extends CostRequirementOptions>(
                 Decimal.gte(
                     req.resource.value,
                     unref(req.cost as ProcessedComputable<DecimalSource>)
-                ) ? 1 : 0
+                )
+                    ? 1
+                    : 0
             );
         }
 
@@ -267,7 +269,7 @@ export function createBooleanRequirement(
  * @param requirements The 1+ requirements to check
  */
 export function requirementsMet(requirements: Requirements): boolean {
-    if (isArray(requirements)) {
+    if (Array.isArray(requirements)) {
         return requirements.every(requirementsMet);
     }
     const reqsMet = unref(requirements.requirementMet);
@@ -279,7 +281,7 @@ export function requirementsMet(requirements: Requirements): boolean {
  * @param requirements The 1+ requirements to check
  */
 export function maxRequirementsMet(requirements: Requirements): DecimalSource {
-    if (isArray(requirements)) {
+    if (Array.isArray(requirements)) {
         return requirements.map(maxRequirementsMet).reduce(Decimal.min);
     }
     const reqsMet = unref(requirements.requirementMet);
@@ -297,13 +299,13 @@ export function maxRequirementsMet(requirements: Requirements): DecimalSource {
  * @param amount The amount of levels earned to be displayed
  */
 export function displayRequirements(requirements: Requirements, amount: DecimalSource = 1) {
-    if (isArray(requirements)) {
+    if (Array.isArray(requirements)) {
         requirements = requirements.filter(r => isVisible(r.visibility));
         if (requirements.length === 1) {
             requirements = requirements[0];
         }
     }
-    if (isArray(requirements)) {
+    if (Array.isArray(requirements)) {
         requirements = requirements.filter(r => "partialDisplay" in r);
         const withCosts = requirements.filter(r => unref(r.requiresPay));
         const withoutCosts = requirements.filter(r => !unref(r.requiresPay));
@@ -341,7 +343,7 @@ export function displayRequirements(requirements: Requirements, amount: DecimalS
  * @param amount How many levels to pay for
  */
 export function payRequirements(requirements: Requirements, amount: DecimalSource = 1) {
-    if (isArray(requirements)) {
+    if (Array.isArray(requirements)) {
         requirements.filter(r => unref(r.requiresPay)).forEach(r => r.pay?.(amount));
     } else if (unref(requirements.requiresPay)) {
         requirements.pay?.(amount);

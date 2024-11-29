@@ -16,8 +16,8 @@
 <script setup lang="ts">
 import "components/common/fields.css";
 import type { CoercableComponent } from "features/feature";
-import { computeOptionalComponent, unwrapRef } from "util/vue";
-import { ref, toRef, watch } from "vue";
+import { computeOptionalComponent } from "util/vue";
+import { ref, toRef, unref, watch } from "vue";
 import VueNextSelect from "vue-next-select";
 import "vue-next-select/dist/index.css";
 
@@ -40,7 +40,7 @@ const value = ref<SelectOption | null>(
     props.options.find(option => option.value === props.modelValue) ?? null
 );
 watch(toRef(props, "modelValue"), modelValue => {
-    if (unwrapRef(value) !== modelValue) {
+    if (unref(value) !== modelValue) {
         value.value = props.options.find(option => option.value === modelValue) ?? null;
     }
 });

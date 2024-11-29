@@ -2,6 +2,7 @@ import type { Settings } from "game/settings";
 import { createNanoEvents } from "nanoevents";
 import type { App } from "vue";
 import type { GenericLayer } from "./layers";
+import state from "./state";
 
 /** All types of events able to be sent or emitted from the global event bus. */
 export interface GlobalEvents {
@@ -59,3 +60,7 @@ if ("fonts" in document) {
     // JSDom doesn't add document.fonts, and Object.defineProperty doesn't seem to work on document
     document.fonts.onloadingdone = () => globalBus.emit("fontsLoaded");
 }
+
+document.onmousemove = function () {
+    state.mouseActivity[state.mouseActivity.length - 1] = true;
+};

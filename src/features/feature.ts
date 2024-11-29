@@ -2,6 +2,7 @@ import Decimal from "util/bignum";
 import { DoNotCache, ProcessedComputable } from "util/computed";
 import type { CSSProperties, DefineComponent } from "vue";
 import { isRef, unref } from "vue";
+import { JSX } from "vue/jsx-runtime";
 
 /**
  * A symbol to use as a key for a vue component a feature can be rendered with
@@ -92,7 +93,7 @@ export function setDefault<T, K extends keyof T>(
     key: K,
     value: T[K]
 ): asserts object is Exclude<T, K> & Required<Pick<T, K>> {
-    if (object[key] === undefined && value != undefined) {
+    if (object[key] == null && value != null) {
         object[key] = value;
     }
 }
@@ -135,7 +136,7 @@ export function excludeFeatures(obj: Record<string, unknown>, ...types: symbol[]
             if (value != null && typeof value === "object") {
                 if (
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    typeof (value as Record<string, any>).type == "symbol" &&
+                    typeof (value as Record<string, any>).type === "symbol" &&
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     !types.includes((value as Record<string, any>).type)
                 ) {

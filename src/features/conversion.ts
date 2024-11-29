@@ -228,7 +228,7 @@ export function createIndependentConversion<S extends ConversionOptions>(
                         conversion.baseResource.value
                     )
                 ).max(conversion.gainResource.value);
-                if (unref(conversion.buyMax) === false) {
+                if (unref(conversion.buyMax as ProcessedComputable<boolean>) === false) {
                     gain = gain.min(Decimal.add(conversion.gainResource.value, 1));
                 }
                 return gain;
@@ -245,7 +245,7 @@ export function createIndependentConversion<S extends ConversionOptions>(
                     .floor()
                     .max(0);
 
-                if (unref(conversion.buyMax) === false) {
+                if (unref(conversion.buyMax as ProcessedComputable<boolean>) === false) {
                     gain = gain.min(1);
                 }
                 return gain;

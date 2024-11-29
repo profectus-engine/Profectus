@@ -1,5 +1,5 @@
 import { CoercableComponent, JSXFunction } from "features/feature";
-import Formula, { printFormula } from "game/formulas/formulas";
+import Formula from "game/formulas/formulas";
 import {
     createAdditiveModifier,
     createExponentialModifier,
@@ -52,7 +52,7 @@ function testModifiers<
             expect(modifier.invert(operation(10, 5))).compare_tolerance(10));
         test("getFormula returns the right formula", () => {
             const value = ref(10);
-            expect(printFormula(modifier.getFormula(Formula.variable(value)))).toBe(
+            expect(modifier.getFormula(Formula.variable(value)).stringify()).toBe(
                 `${operation.name}(x, 5.00)`
             );
         });
@@ -156,7 +156,7 @@ describe("Sequential Modifiers", () => {
             expect(modifier.invert(Decimal.add(10, 5).times(5).pow(5))).compare_tolerance(10));
         test("getFormula returns the right formula", () => {
             const value = ref(10);
-            expect(printFormula(modifier.getFormula(Formula.variable(value)))).toBe(
+            expect(modifier.getFormula(Formula.variable(value)).stringify()).toBe(
                 `pow(mul(add(x, 5.00), 5.00), 5.00)`
             );
         });

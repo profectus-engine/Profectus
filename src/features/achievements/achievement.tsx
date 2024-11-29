@@ -1,5 +1,4 @@
-import { computed } from "@vue/reactivity";
-import { isArray } from "@vue/shared";
+import { computed } from "vue";
 import Select from "components/fields/Select.vue";
 import AchievementComponent from "features/achievements/Achievement.vue";
 import { GenericDecorator } from "features/decorators/common";
@@ -208,7 +207,7 @@ export function createAchievement<T extends AchievementOptions>(
                         unref(achievement.earned) &&
                         !(
                             display != null &&
-                            typeof display == "object" &&
+                            typeof display === "object" &&
                             "optionsDisplay" in (display as Record<string, unknown>)
                         )
                     ) {
@@ -275,7 +274,7 @@ export function createAchievement<T extends AchievementOptions>(
             const requirements = [
                 createVisibilityRequirement(genericAchievement),
                 createBooleanRequirement(() => !genericAchievement.earned.value),
-                ...(isArray(achievement.requirements)
+                ...(Array.isArray(achievement.requirements)
                     ? achievement.requirements
                     : [achievement.requirements])
             ];
@@ -306,18 +305,20 @@ const msDisplayOptions = Object.values(AchievementDisplay).map(option => ({
     value: option
 }));
 
-registerSettingField(
-    jsx(() => (
-        <Select
-            title={jsx(() => (
-                <span class="option-title">
-                    Show achievements
-                    <desc>Select which achievements to display based on criterias.</desc>
-                </span>
-            ))}
-            options={msDisplayOptions}
-            onUpdate:modelValue={value => (settings.msDisplay = value as AchievementDisplay)}
-            modelValue={settings.msDisplay}
-        />
-    ))
+globalBus.on("setupVue", () =>
+    registerSettingField(
+        jsx(() => (
+            <Select
+                title={jsx(() => (
+                    <span class="option-title">
+                        Show achievements
+                        <desc>Select which achievements to display based on criterias.</desc>
+                    </span>
+                ))}
+                options={msDisplayOptions}
+                onUpdate:modelValue={value => (settings.msDisplay = value as AchievementDisplay)}
+                modelValue={settings.msDisplay}
+            />
+        ))
+    )
 );

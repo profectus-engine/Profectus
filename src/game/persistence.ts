@@ -1,4 +1,3 @@
-import { isArray } from "@vue/shared";
 import { globalBus } from "game/events";
 import type { GenericLayer } from "game/layers";
 import { addingLayers, persistentRefs } from "game/layers";
@@ -62,6 +61,8 @@ export type State =
     | number
     | boolean
     | DecimalSource
+    | null
+    | undefined
     | { [key: string]: State }
     | { [key: number]: State };
 
@@ -227,7 +228,7 @@ export function noPersist<T extends Persistent<S>, S extends State>(persistent: 
                   if (key === PersistentState) {
                       return false;
                   }
-                  if (key == SkipPersistence) {
+                  if (key === SkipPersistence) {
                       return true;
                   }
                   return Reflect.has(target, key);
@@ -279,7 +280,7 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
                     // Handle SaveDataPath
                     const newPath = [layer.id, ...path, key];
                     if (
-                        value[SaveDataPath] != undefined &&
+                        value[SaveDataPath] != null &&
                         JSON.stringify(newPath) !== JSON.stringify(value[SaveDataPath])
                     ) {
                         console.error(
@@ -339,7 +340,7 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
                     // Show warning for persistent values inside arrays
                     // TODO handle arrays better
                     if (foundPersistentInChild) {
-                        if (isArray(value) && !isArray(obj)) {
+                        if (Array.isArray(value) && !Array.isArray(obj)) {
                             console.warn(
                                 "Found array that contains persistent values when adding layer. Keep in mind changing the order of elements in the array will mess with existing player saves.",
                                 ProxyState in obj

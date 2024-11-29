@@ -1,4 +1,3 @@
-import { isArray } from "@vue/shared";
 import ClickableComponent from "features/clickables/Clickable.vue";
 import type {
     CoercableComponent,
@@ -162,7 +161,7 @@ export function createRepeatable<T extends RepeatableOptions>(
             canMaximize: true
         } as const;
         const visibilityRequirement = createVisibilityRequirement(repeatable as GenericRepeatable);
-        if (isArray(repeatable.requirements)) {
+        if (Array.isArray(repeatable.requirements)) {
             repeatable.requirements.unshift(visibilityRequirement);
             repeatable.requirements.push(limitRequirement);
         } else {

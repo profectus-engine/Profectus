@@ -1,16 +1,20 @@
+/* eslint-disable vue/multi-word-component-names */
+// ^ I have no idea why that's necessary; the rule is disabled, and this file isn't a vue component?
+// I'm _guessing_ it's related to us using DefineComponent, but I figured that eslint rule should
+// only apply to SFCs
 import Col from "components/layout/Column.vue";
 import Row from "components/layout/Row.vue";
 import type { CoercableComponent, GenericComponent, JSXFunction } from "features/feature";
 import {
     Component as ComponentKey,
     GatherProps,
+    Visibility,
     isVisible,
-    jsx,
-    Visibility
+    jsx
 } from "features/feature";
 import type { ProcessedComputable } from "util/computed";
 import { DoNotCache } from "util/computed";
-import type { Component, ComputedRef, DefineComponent, PropType, Ref, ShallowRef } from "vue";
+import type { Component, DefineComponent, Ref, ShallowRef, UnwrapRef } from "vue";
 import {
     computed,
     defineComponent,
@@ -21,6 +25,7 @@ import {
     unref,
     watchEffect
 } from "vue";
+import { JSX } from "vue/jsx-runtime";
 import { camelToKebab } from "./common";
 
 export function coerceComponent(
@@ -125,17 +130,17 @@ export function setupHoldToClick(
     stop: VoidFunction;
     handleHolding: VoidFunction;
 } {
-    const interval = ref<NodeJS.Timer | null>(null);
+    const interval = ref<NodeJS.Timeout | null>(null);
     const event = ref<MouseEvent | TouchEvent | undefined>(undefined);
 
     function start(e: MouseEvent | TouchEvent) {
-        if (!interval.value) {
+        if (interval.value == null) {
             interval.value = setInterval(handleHolding, 250);
         }
         event.value = e;
     }
     function stop() {
-        if (interval.value) {
+        if (interval.value != null) {
             clearInterval(interval.value);
             interval.value = null;
         }
@@ -174,36 +179,38 @@ export function getFirstFeature<
 }
 
 export function computeComponent(
-    component: Ref<ProcessedComputable<CoercableComponent>>,
+    component: Ref<CoercableComponent>,
     defaultWrapper = "div"
 ): ShallowRef<Component | ""> {
     const comp = shallowRef<Component | "">();
     watchEffect(() => {
-        comp.value = coerceComponent(unwrapRef(component), defaultWrapper);
+        comp.value = coerceComponent(unref(component), defaultWrapper);
     });
     return comp as ShallowRef<Component | "">;
 }
 export function computeOptionalComponent(
-    component: Ref<ProcessedComputable<CoercableComponent | undefined> | undefined>,
+    component: Ref<CoercableComponent | undefined>,
     defaultWrapper = "div"
 ): ShallowRef<Component | "" | null> {
     const comp = shallowRef<Component | "" | null>(null);
     watchEffect(() => {
-        const currComponent = unwrapRef(component);
+        const currComponent = unref(component);
         comp.value =
-            currComponent == "" || currComponent == null
+            currComponent === "" || currComponent == null
                 ? null
                 : coerceComponent(currComponent, defaultWrapper);
     });
     return comp;
 }
 
-export function wrapRef<T>(ref: Ref<ProcessedComputable<T>>): ComputedRef<T> {
-    return computed(() => unwrapRef(ref));
-}
-
-export function unwrapRef<T>(ref: Ref<ProcessedComputable<T>>): T {
-    return unref<T>(unref(ref));
+export function deepUnref<T extends object>(refObject: T): { [K in keyof T]: UnwrapRef<T[K]> } {
+    return (Object.keys(refObject) as (keyof T)[]).reduce(
+        (acc, curr) => {
+            acc[curr] = unref(refObject[curr]) as UnwrapRef<T[keyof T]>;
+            return acc;
+        },
+        {} as { [K in keyof T]: UnwrapRef<T[K]> }
+    );
 }
 
 export function setRefValue<T>(ref: Ref<T | Ref<T>>, value: T) {
@@ -221,14 +228,6 @@ export type PropTypes =
     | typeof Function
     | typeof Object
     | typeof Array;
-// TODO Unfortunately, the typescript engine gives up on typing completely when you use this method,
-// Even though it has the same typing as when doing it manually
-export function processedPropType<T>(...types: PropTypes[]): PropType<ProcessedComputable<T>> {
-    if (!types.includes(Object)) {
-        types.push(Object);
-    }
-    return types as PropType<ProcessedComputable<T>>;
-}
 
 export function trackHover(element: VueFeature): Ref<boolean> {
     const isHovered = ref(false);
@@ -244,8 +243,11 @@ export function trackHover(element: VueFeature): Ref<boolean> {
 }
 
 export function kebabifyObject(object: Record<string, unknown>) {
-    return Object.keys(object).reduce((acc, curr) => {
-        acc[camelToKebab(curr)] = object[curr];
-        return acc;
-    }, {} as Record<string, unknown>);
+    return Object.keys(object).reduce(
+        (acc, curr) => {
+            acc[camelToKebab(curr)] = object[curr];
+            return acc;
+        },
+        {} as Record<string, unknown>
+    );
 }

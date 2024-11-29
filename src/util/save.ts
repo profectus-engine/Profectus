@@ -1,10 +1,13 @@
+import { LoadablePlayerData } from "components/modals/SavesManager.vue";
+import { fixOldSave, getInitialLayers } from "data/projEntry";
 import projInfo from "data/projInfo.json";
 import { globalBus } from "game/events";
+import { addLayer, layers, removeLayer } from "game/layers";
 import type { Player } from "game/player";
 import player, { stringifySave } from "game/player";
 import settings, { loadSettings } from "game/settings";
 import LZString from "lz-string";
-import { ref } from "vue";
+import { ref, shallowReactive } from "vue";
 
 export function setupInitialStore(player: Partial<Player> = {}): Player {
     return Object.assign(
@@ -42,17 +45,9 @@ export async function load(): Promise<void> {
             await loadSave(newSave());
             return;
         }
-        if (save[0] === "{") {
-            // plaintext. No processing needed
-        } else if (save[0] === "e") {
-            // Assumed to be base64, which starts with e
-            save = decodeURIComponent(escape(atob(save)));
-        } else if (save[0] === "ᯡ") {
-            // Assumed to be lz, which starts with ᯡ
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            save = LZString.decompressFromUTF16(save)!;
-        } else {
-            throw `Unable to determine save encoding`;
+        save = decodeSave(save);
+        if (save == null) {
+            throw "Unable to determine save encoding";
         }
         const player = JSON.parse(save);
         if (player.modID !== projInfo.id) {
@@ -65,6 +60,23 @@ export async function load(): Promise<void> {
         console.error("Failed to load save. Falling back to new save.\n", e);
         await loadSave(newSave());
     }
+}
+
+export function decodeSave(save: string) {
+    if (save[0] === "{") {
+        // plaintext. No processing needed
+    } else if (save[0] === "e") {
+        // Assumed to be base64, which starts with e
+        save = decodeURIComponent(escape(atob(save)));
+    } else if (save[0] === "ᯡ") {
+        // Assumed to be lz, which starts with ᯡ
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        save = LZString.decompressFromUTF16(save)!;
+    } else {
+        console.warn("Unable to determine preset encoding", save);
+        return null;
+    }
+    return save;
 }
 
 export function newSave(): Player {
@@ -91,8 +103,6 @@ export const loadingSave = ref(false);
 export async function loadSave(playerObj: Partial<Player>): Promise<void> {
     console.info("Loading save", playerObj);
     loadingSave.value = true;
-    const { layers, removeLayer, addLayer } = await import("game/layers");
-    const { fixOldSave, getInitialLayers } = await import("data/projEntry");
 
     for (const layer in layers) {
         const l = layers[layer];
@@ -109,7 +119,7 @@ export async function loadSave(playerObj: Partial<Player>): Promise<void> {
         playerObj.time &&
         playerObj.devSpeed !== 0
     ) {
-        if (playerObj.offlineTime == undefined) playerObj.offlineTime = 0;
+        if (playerObj.offlineTime == null) playerObj.offlineTime = 0;
         playerObj.offlineTime += Math.min(
             playerObj.offlineTime + (Date.now() - playerObj.time) / 1000,
             projInfo.offlineLimit * 3600
@@ -125,6 +135,40 @@ export async function loadSave(playerObj: Partial<Player>): Promise<void> {
     settings.active = player.id;
 
     globalBus.emit("onLoad");
+}
+
+const cachedSaves = shallowReactive<Record<string, LoadablePlayerData | undefined>>({});
+export function getCachedSave(id: string) {
+    if (cachedSaves[id] == null) {
+        let save = localStorage.getItem(id);
+        if (save == null) {
+            cachedSaves[id] = { error: `Save doesn't exist in localStorage`, id };
+        } else if (save === "dW5kZWZpbmVk") {
+            cachedSaves[id] = { error: `Save is undefined`, id };
+        } else {
+            try {
+                save = decodeSave(save);
+                if (save == null) {
+                    console.warn("Unable to determine preset encoding", save);
+                    cachedSaves[id] = { error: "Unable to determine preset encoding", id };
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    return cachedSaves[id]!;
+                }
+                cachedSaves[id] = { ...JSON.parse(save), id };
+            } catch (error) {
+                cachedSaves[id] = { error, id };
+                console.warn(`Failed to load info about save with id ${id}:\n${error}\n${save}`);
+            }
+        }
+    }
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return cachedSaves[id]!;
+}
+export function clearCachedSaves() {
+    Object.keys(cachedSaves).forEach(key => delete cachedSaves[key]);
+}
+export function clearCachedSave(id: string) {
+    cachedSaves[id] = undefined;
 }
 
 setInterval(() => {

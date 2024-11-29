@@ -5,9 +5,8 @@
 <script setup lang="ts">
 import type { CoercableComponent } from "features/feature";
 import { computeComponent } from "util/vue";
-import { toRefs } from "vue";
+import { toRef } from "vue";
 
-const _props = defineProps<{ display: CoercableComponent }>();
-const { display } = toRefs(_props);
-const component = computeComponent(display);
+const props = defineProps<{ display: CoercableComponent }>();
+const component = computeComponent(toRef(props, "display"));
 </script>

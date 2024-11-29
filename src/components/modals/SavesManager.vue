@@ -4,6 +4,9 @@
             <h2>Saves Manager</h2>
         </template>
         <template #body="{ shown }">
+            <div v-if="showNotSyncedWarning" style="color: var(--danger)">
+                Not all saves are synced! You may need to delete stale saves.
+            </div>
             <Draggable
                 :list="settings.saves"
                 handle=".handle"
@@ -57,18 +60,28 @@
 </template>
 
 <script setup lang="ts">
-import Modal from "components/Modal.vue";
 import projInfo from "data/projInfo.json";
 import type { Player } from "game/player";
 import player, { stringifySave } from "game/player";
 import settings from "game/settings";
 import LZString from "lz-string";
-import { getUniqueID, loadSave, newSave, save } from "util/save";
+import { galaxy, syncedSaves } from "util/galaxy";
+import {
+    clearCachedSave,
+    clearCachedSaves,
+    decodeSave,
+    getCachedSave,
+    getUniqueID,
+    loadSave,
+    newSave,
+    save
+} from "util/save";
 import type { ComponentPublicInstance } from "vue";
-import { computed, nextTick, ref, shallowReactive, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import Draggable from "vuedraggable";
-import Select from "./fields/Select.vue";
-import Text from "./fields/Text.vue";
+import Select from "../fields/Select.vue";
+import Text from "../fields/Text.vue";
+import Modal from "./Modal.vue";
 import Save from "./Save.vue";
 
 export type LoadablePlayerData = Omit<Partial<Player>, "id"> & { id: string; error?: unknown };
@@ -90,16 +103,8 @@ watch(saveToImport, importedSave => {
     if (importedSave) {
         nextTick(() => {
             try {
-                if (importedSave[0] === "{") {
-                    // plaintext. No processing needed
-                } else if (importedSave[0] === "e") {
-                    // Assumed to be base64, which starts with e
-                    importedSave = decodeURIComponent(escape(atob(importedSave)));
-                } else if (importedSave[0] === "ᯡ") {
-                    // Assumed to be lz, which starts with ᯡ
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    importedSave = LZString.decompressFromUTF16(importedSave)!;
-                } else {
+                importedSave = decodeSave(importedSave) ?? "";
+                if (importedSave === "") {
                     console.warn("Unable to determine preset encoding", importedSave);
                     importingFailed.value = true;
                     return;
@@ -125,7 +130,7 @@ watch(saveToImport, importedSave => {
     }
 });
 
-let bankContext = import.meta.globEager("./../../saves/*.txt", { as: "raw" });
+let bankContext = import.meta.glob("./../../../saves/*.txt", { query: "?raw", eager: true });
 let bank = ref(
     Object.keys(bankContext).reduce((acc: Array<{ label: string; value: string }>, curr) => {
         acc.push({
@@ -139,48 +144,10 @@ let bank = ref(
     }, [])
 );
 
-const cachedSaves = shallowReactive<Record<string, LoadablePlayerData | undefined>>({});
-function getCachedSave(id: string) {
-    if (cachedSaves[id] == null) {
-        let save = localStorage.getItem(id);
-        if (save == null) {
-            cachedSaves[id] = { error: `Save doesn't exist in localStorage`, id };
-        } else if (save === "dW5kZWZpbmVk") {
-            cachedSaves[id] = { error: `Save is undefined`, id };
-        } else {
-            try {
-                if (save[0] === "{") {
-                    // plaintext. No processing needed
-                } else if (save[0] === "e") {
-                    // Assumed to be base64, which starts with e
-                    save = decodeURIComponent(escape(atob(save)));
-                } else if (save[0] === "ᯡ") {
-                    // Assumed to be lz, which starts with ᯡ
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    save = LZString.decompressFromUTF16(save)!;
-                } else {
-                    console.warn("Unable to determine preset encoding", save);
-                    importingFailed.value = true;
-                    cachedSaves[id] = { error: "Unable to determine preset encoding", id };
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    return cachedSaves[id]!;
-                }
-                cachedSaves[id] = { ...JSON.parse(save), id };
-            } catch (error) {
-                cachedSaves[id] = { error, id };
-                console.warn(
-                    `SavesManager: Failed to load info about save with id ${id}:\n${error}\n${save}`
-                );
-            }
-        }
-    }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return cachedSaves[id]!;
-}
 // Wipe cache whenever the modal is opened
 watch(isOpen, isOpen => {
     if (isOpen) {
-        Object.keys(cachedSaves).forEach(key => delete cachedSaves[key]);
+        clearCachedSaves();
     }
 });
 
@@ -189,6 +156,10 @@ const saves = computed(() =>
         acc[curr] = getCachedSave(curr);
         return acc;
     }, {})
+);
+
+const showNotSyncedWarning = computed(
+    () => galaxy.value?.loggedIn === true && settings.saves.length < syncedSaves.value.length
 );
 
 function exportSave(id: string) {
@@ -233,20 +204,37 @@ function duplicateSave(id: string) {
 }
 
 function deleteSave(id: string) {
+    if (galaxy.value?.loggedIn === true) {
+        galaxy.value.getSaveList().then(list => {
+            const slot = Object.keys(list).find(slot => {
+                const content = list[slot as unknown as number].content;
+                try {
+                    if (JSON.parse(content).id === id) {
+                        return true;
+                    }
+                } catch (e) {
+                    return false;
+                }
+            });
+            if (slot != null) {
+                galaxy.value?.save(parseInt(slot), "", "").catch(console.error);
+            }
+        });
+    }
     settings.saves = settings.saves.filter((save: string) => save !== id);
     localStorage.removeItem(id);
-    cachedSaves[id] = undefined;
+    clearCachedSave(id);
 }
 
 function openSave(id: string) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     saves.value[player.id]!.time = player.time;
     save();
-    cachedSaves[player.id] = undefined;
+    clearCachedSave(player.id);
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     loadSave(saves.value[id]!);
     // Delete cached version in case of opening it again
-    cachedSaves[id] = undefined;
+    clearCachedSave(id);
 }
 
 function newFromPreset(preset: string) {
@@ -256,16 +244,8 @@ function newFromPreset(preset: string) {
         selectedPreset.value = null;
     });
 
-    if (preset[0] === "{") {
-        // plaintext. No processing needed
-    } else if (preset[0] === "e") {
-        // Assumed to be base64, which starts with e
-        preset = decodeURIComponent(escape(atob(preset)));
-    } else if (preset[0] === "ᯡ") {
-        // Assumed to be lz, which starts with ᯡ
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        preset = LZString.decompressFromUTF16(preset)!;
-    } else {
+    preset = decodeSave(preset) ?? "";
+    if (preset === "") {
         console.warn("Unable to determine preset encoding", preset);
         return;
     }
@@ -287,7 +267,7 @@ function editSave(id: string, newName: string) {
             save();
         } else {
             save(currSave as Player);
-            cachedSaves[id] = undefined;
+            clearCachedSave(id);
         }
     }
 }

@@ -14,6 +14,7 @@
                 <Toggle :title="unthrottledTitle" v-model="unthrottled" />
                 <Toggle v-if="projInfo.enablePausing" :title="isPausedTitle" v-model="isPaused" />
                 <Toggle :title="offlineProdTitle" v-model="offlineProd" />
+                <Toggle :title="showHealthWarningTitle" v-model="showHealthWarning" v-if="!projInfo.disableHealthWarning" />
                 <Toggle :title="autosaveTitle" v-model="autosave" />
                 <FeedbackButton v-if="!autosave" class="button save-button" @click="save()">Manually save</FeedbackButton>
             </div>
@@ -28,20 +29,20 @@
 </template>
 
 <script setup lang="tsx">
-import Modal from "components/Modal.vue";
 import projInfo from "data/projInfo.json";
-import { save } from "util/save";
 import rawThemes from "data/themes";
 import { jsx } from "features/feature";
 import Tooltip from "features/tooltips/Tooltip.vue";
 import player from "game/player";
 import settings, { settingFields } from "game/settings";
 import { camelToTitle, Direction } from "util/common";
+import { save } from "util/save";
 import { coerceComponent, render } from "util/vue";
 import { computed, ref, toRefs } from "vue";
-import Select from "./fields/Select.vue";
-import Toggle from "./fields/Toggle.vue";
-import FeedbackButton from "./fields/FeedbackButton.vue";
+import FeedbackButton from "../fields/FeedbackButton.vue";
+import Select from "../fields/Select.vue";
+import Toggle from "../fields/Toggle.vue";
+import Modal from "./Modal.vue";
 
 const isOpen = ref(false);
 const currentTab = ref("behaviour");
@@ -72,7 +73,7 @@ const settingFieldsComponent = computed(() => {
     return coerceComponent(jsx(() => (<>{settingFields.map(render)}</>)));
 });
 
-const { showTPS, theme, unthrottled, alignUnits } = toRefs(settings);
+const { showTPS, theme, unthrottled, alignUnits, showHealthWarning } = toRefs(settings);
 const { autosave, offlineProd } = toRefs(player);
 const isPaused = computed({
     get() {
@@ -91,8 +92,14 @@ const unthrottledTitle = jsx(() => (
 ));
 const offlineProdTitle = jsx(() => (
     <span class="option-title">
-        Offline Production<Tooltip display="Save-specific" direction={Direction.Right}>*</Tooltip>
+        Offline production<Tooltip display="Save-specific" direction={Direction.Right}>*</Tooltip>
         <desc>Simulate production that occurs while the game is closed.</desc>
+    </span>
+));
+const showHealthWarningTitle = jsx(() => (
+    <span class="option-title">
+        Show videogame addiction warning
+        <desc>Show a helpful warning after playing for a long time about video game addiction and encouraging you to take a break.</desc>
     </span>
 ));
 const autosaveTitle = jsx(() => (

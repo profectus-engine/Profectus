@@ -6,8 +6,10 @@
             <Nav v-if="useHeader" />
             <Game />
             <TPS v-if="unref(showTPS)" />
+            <AddictionWarning />
             <GameOverScreen />
             <NaNScreen />
+            <CloudSaveResolver />
             <component :is="gameComponent" />
         </div>
     </template>
@@ -16,14 +18,16 @@
 <script setup lang="tsx">
 import "@fontsource/roboto-mono";
 import Error from "components/Error.vue";
+import AddictionWarning from "components/modals/AddictionWarning.vue";
+import CloudSaveResolver from "components/modals/CloudSaveResolver.vue";
+import GameOverScreen from "components/modals/GameOverScreen.vue";
+import NaNScreen from "components/modals/NaNScreen.vue";
 import { jsx } from "features/feature";
 import state from "game/state";
 import { coerceComponent, render } from "util/vue";
-import { CSSProperties, watch } from "vue";
+import type { CSSProperties } from "vue";
 import { computed, toRef, unref } from "vue";
 import Game from "./components/Game.vue";
-import GameOverScreen from "./components/GameOverScreen.vue";
-import NaNScreen from "./components/NaNScreen.vue";
 import Nav from "./components/Nav.vue";
 import TPS from "./components/TPS.vue";
 import projInfo from "./data/projInfo.json";

@@ -23,80 +23,48 @@
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import projInfo from "data/projInfo.json";
 import type { CoercableComponent } from "features/feature";
 import type { FeatureNode } from "game/layers";
 import player from "game/player";
-import { computeComponent, computeOptionalComponent, processedPropType, unwrapRef } from "util/vue";
-import { PropType, Ref, computed, defineComponent, onErrorCaptured, ref, toRefs, unref } from "vue";
+import { computeComponent, computeOptionalComponent } from "util/vue";
+import { Ref, computed, onErrorCaptured, ref, toRef, unref } from "vue";
 import Context from "./Context.vue";
 import ErrorVue from "./Error.vue";
 
-export default defineComponent({
-    components: { Context, ErrorVue },
-    props: {
-        index: {
-            type: Number,
-            required: true
-        },
-        display: {
-            type: processedPropType<CoercableComponent>(Object, String, Function),
-            required: true
-        },
-        minimizedDisplay: processedPropType<CoercableComponent>(Object, String, Function),
-        minimized: {
-            type: Object as PropType<Ref<boolean>>,
-            required: true
-        },
-        name: {
-            type: processedPropType<string>(String),
-            required: true
-        },
-        color: processedPropType<string>(String),
-        minimizable: processedPropType<boolean>(Boolean),
-        nodes: {
-            type: Object as PropType<Ref<Record<string, FeatureNode | undefined>>>,
-            required: true
-        }
-    },
-    emits: ["setMinimized"],
-    setup(props) {
-        const { display, index, minimized, minimizedDisplay } = toRefs(props);
+const props = defineProps<{
+    index: number;
+    display: CoercableComponent;
+    minimizedDisplay?: CoercableComponent;
+    minimized: Ref<boolean>;
+    name: string;
+    color?: string;
+    minimizable?: boolean;
+    nodes: Ref<Record<string, FeatureNode | undefined>>;
+}>();
 
-        const component = computeComponent(display);
-        const minimizedComponent = computeOptionalComponent(minimizedDisplay);
-        const showGoBack = computed(
-            () => projInfo.allowGoBack && index.value > 0 && !unwrapRef(minimized)
-        );
+const component = computeComponent(toRef(props, "display"));
+const minimizedComponent = computeOptionalComponent(toRef(props, "minimizedDisplay"));
+const showGoBack = computed(
+    () => projInfo.allowGoBack && props.index > 0 && !unref(props.minimized)
+);
 
-        function goBack() {
-            player.tabs.splice(unref(props.index), Infinity);
-        }
+function goBack() {
+    player.tabs.splice(unref(props.index), Infinity);
+}
 
-        function updateNodes(nodes: Record<string, FeatureNode | undefined>) {
-            props.nodes.value = nodes;
-        }
+function updateNodes(nodes: Record<string, FeatureNode | undefined>) {
+    props.nodes.value = nodes;
+}
 
-        const errors = ref<Error[]>([]);
-        onErrorCaptured((err, instance, info) => {
-            console.warn(`Error caught in "${props.name}" layer`, err, instance, info);
-            errors.value.push(
-                err instanceof Error ? (err as Error) : new Error(JSON.stringify(err))
-            );
-            return false;
-        });
-
-        return {
-            component,
-            minimizedComponent,
-            showGoBack,
-            updateNodes,
-            unref,
-            goBack,
-            errors
-        };
-    }
+const errors = ref<Error[]>([]);
+onErrorCaptured((err, instance, info) => {
+    console.warn(`Error caught in "${props.name}" layer`, err, instance, info);
+    errors.value.push(
+        err instanceof Error ? (err as Error) : new Error(JSON.stringify(err))
+    );
+    return false;
 });
 </script>
 

@@ -6,6 +6,8 @@ import type { Persistent } from "./persistence";
 export interface Transient {
     /** A list of the duration, in ms, of the last 10 game ticks. Used for calculating TPS. */
     lastTenTicks: number[];
+    /** A list of bools represnting which of the last few hours had mouse activity. */
+    mouseActivity: boolean[];
     /** Whether or not a NaN value has been detected and undealt with. */
     hasNaN: boolean;
     /** The location within the player save data object of the NaN value. */
@@ -25,6 +27,7 @@ declare global {
 /** The global transient state object. */
 export default window.state = shallowReactive<Transient>({
     lastTenTicks: [],
+    mouseActivity: [false],
     hasNaN: false,
     NaNPath: [],
     errors: reactive([])

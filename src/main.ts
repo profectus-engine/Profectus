@@ -3,11 +3,14 @@ import App from "App.vue";
 import projInfo from "data/projInfo.json";
 import "game/notifications";
 import state from "game/state";
+import "util/galaxy";
 import { load } from "util/save";
 import { useRegisterSW } from "virtual:pwa-register/vue";
 import type { App as VueApp } from "vue";
 import { createApp, nextTick } from "vue";
 import { useToast } from "vue-toastification";
+import { globalBus } from "./game/events";
+import { startGameLoop } from "./game/gameLoop";
 
 declare global {
     /**
@@ -16,11 +19,6 @@ declare global {
     interface Window {
         vue: VueApp;
         projInfo: typeof projInfo;
-    }
-
-    /** Fix for typedoc treating import functions as taking AssertOptions instead of GlobOptions. */
-    interface AssertOptions {
-        as: string;
     }
 }
 
@@ -60,8 +58,6 @@ requestAnimationFrame(async () => {
         "padding: 4px;"
     );
     await load();
-    const { globalBus } = await import("./game/events");
-    const { startGameLoop } = await import("./game/gameLoop");
 
     // Create Vue
     const vue = (window.vue = createApp(App));
@@ -74,33 +70,13 @@ requestAnimationFrame(async () => {
     // Setup PWA update prompt
     nextTick(() => {
         const toast = useToast();
-        const { updateServiceWorker } = useRegisterSW({
-            onNeedRefresh() {
-                toast.info("New content available, click here to update.", {
-                    timeout: false,
-                    closeOnClick: false,
-                    draggable: false,
-                    icon: {
-                        iconClass: "material-icons",
-                        iconChildren: "refresh",
-                        iconTag: "i"
-                    },
-                    rtl: false,
-                    onClick() {
-                        updateServiceWorker();
-                    }
-                });
-            },
+        useRegisterSW({
+            immediate: true,
             onOfflineReady() {
                 toast.info("App ready to work offline");
             },
             onRegisterError: console.warn,
-            onRegistered(r) {
-                if (r) {
-                    // https://stackoverflow.com/questions/65500916/typeerror-failed-to-execute-update-on-serviceworkerregistration-illegal-in
-                    setInterval(() => r.update(), 60 * 60 * 1000);
-                }
-            }
+            onRegistered: console.info
         });
     });
 

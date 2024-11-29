@@ -1,18 +1,14 @@
+import { hasWon } from "data/projEntry";
 import projInfo from "data/projInfo.json";
 import { globalBus } from "game/events";
 import settings from "game/settings";
 import Decimal from "util/bignum";
 import { loadingSave } from "util/save";
-import type { Ref } from "vue";
 import { watch } from "vue";
 import player from "./player";
 import state from "./state";
 
-let intervalID: NodeJS.Timer | null = null;
-
-// Not imported immediately due to dependency cycles
-// This gets set during startGameLoop(), and will only be used in the update function
-let hasWon: null | Ref<boolean> = null;
+let intervalID: NodeJS.Timeout | null = null;
 
 function update() {
     const now = Date.now();
@@ -43,7 +39,7 @@ function update() {
     loadingSave.value = false;
 
     // Add offline time if any
-    if (player.offlineTime != undefined) {
+    if (player.offlineTime != null) {
         if (Decimal.gt(player.offlineTime, projInfo.offlineLimit * 3600)) {
             player.offlineTime = projInfo.offlineLimit * 3600;
         }
@@ -63,7 +59,7 @@ function update() {
     diff = Math.min(diff, projInfo.maxTickLength);
 
     // Apply dev speed
-    if (player.devSpeed != undefined) {
+    if (player.devSpeed != null) {
         diff *= player.devSpeed;
     }
 
@@ -95,15 +91,22 @@ function update() {
 
 /** Starts the game loop for the project, which updates the game in ticks. */
 export async function startGameLoop() {
-    hasWon = (await import("data/projEntry")).hasWon;
-    watch(hasWon, hasWon => {
-        if (hasWon) {
-            globalBus.emit("gameWon");
-        }
-    });
     if (settings.unthrottled) {
         requestAnimationFrame(update);
     } else {
         intervalID = setInterval(update, 50);
     }
 }
+
+watch(hasWon, hasWon => {
+    if (hasWon) {
+        globalBus.emit("gameWon");
+    }
+});
+
+setInterval(
+    () => {
+        state.mouseActivity = [...state.mouseActivity.slice(-7), false];
+    },
+    1000 * 60 * 60
+);

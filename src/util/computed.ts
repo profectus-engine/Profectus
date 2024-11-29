@@ -10,10 +10,10 @@ export type ProcessedComputable<T> = T | Ref<T>;
 export type GetComputableType<T> = T extends { [DoNotCache]: true }
     ? T
     : T extends () => infer S
-    ? Ref<S>
-    : undefined extends T
-    ? undefined
-    : T;
+      ? Ref<S>
+      : undefined extends T
+        ? undefined
+        : T;
 export type GetComputableTypeWithDefault<T, S> = undefined extends T
     ? S
     : GetComputableType<NonNullable<T>>;

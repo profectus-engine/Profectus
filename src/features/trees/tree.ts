@@ -1,4 +1,4 @@
-import { Decorator, GenericDecorator } from "features/decorators/common";
+import { GenericDecorator } from "features/decorators/common";
 import type {
     CoercableComponent,
     GenericComponent,
@@ -141,7 +141,9 @@ export function createTreeNode<T extends TreeNodeOptions>(
         if (treeNode.onClick) {
             const onClick = treeNode.onClick.bind(treeNode);
             treeNode.onClick = function (e) {
-                if (unref(treeNode.canClick) !== false) {
+                if (
+                    unref(treeNode.canClick as ProcessedComputable<boolean | undefined>) !== false
+                ) {
                     onClick(e);
                 }
             };
@@ -149,7 +151,9 @@ export function createTreeNode<T extends TreeNodeOptions>(
         if (treeNode.onHold) {
             const onHold = treeNode.onHold.bind(treeNode);
             treeNode.onHold = function () {
-                if (unref(treeNode.canClick) !== false) {
+                if (
+                    unref(treeNode.canClick as ProcessedComputable<boolean | undefined>) !== false
+                ) {
                     onHold();
                 }
             };
@@ -342,15 +346,15 @@ export const branchedResetPropagation = function (
     if (links == null) return;
     const reset: GenericTreeNode[] = [];
     let current = [resettingNode];
-    while (current.length != 0) {
+    while (current.length !== 0) {
         const next: GenericTreeNode[] = [];
         for (const node of current) {
             for (const link of links.filter(link => link.startNode === node)) {
-                if ([...reset, ...current].includes(link.endNode)) continue
+                if ([...reset, ...current].includes(link.endNode)) continue;
                 next.push(link.endNode);
                 link.endNode.reset?.reset();
             }
-        };
+        }
         reset.push(...current);
         current = next;
     }

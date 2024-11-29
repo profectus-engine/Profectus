@@ -4,6 +4,7 @@
             name="modal"
             @before-enter="isAnimating = true"
             @after-leave="isAnimating = false"
+            appear
         >
             <div
                 class="modal-mask"
@@ -12,7 +13,7 @@
                 v-bind="$attrs"
             >
                 <div class="modal-wrapper">
-                    <div class="modal-container">
+                    <div class="modal-container" :width="width">
                         <div class="modal-header">
                             <slot name="header" :shown="isOpen"> default header </slot>
                         </div>
@@ -40,20 +41,24 @@
 
 <script setup lang="ts">
 import type { FeatureNode } from "game/layers";
-import { computed, ref, toRefs, unref } from "vue";
-import Context from "./Context.vue";
+import { computed, ref } from "vue";
+import Context from "../Context.vue";
 
-const _props = defineProps<{
+const props = defineProps<{
     modelValue: boolean;
+    preventClosing?: boolean;
+    width?: string;
 }>();
-const props = toRefs(_props);
+
 const emit = defineEmits<{
     (e: "update:modelValue", value: boolean): void;
 }>();
 
-const isOpen = computed(() => unref(props.modelValue) || isAnimating.value);
+const isOpen = computed(() => props.modelValue || isAnimating.value);
 function close() {
-    emit("update:modelValue", false);
+    if (props.preventClosing !== true) {
+        emit("update:modelValue", false);
+    }
 }
 
 const isAnimating = ref(false);

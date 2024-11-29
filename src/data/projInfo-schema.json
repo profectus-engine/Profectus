@@ -88,6 +88,10 @@
             "type": "string",
             "enum": ["base64", "lz", "plain"],
             "description": "The encoding to use when exporting to the clipboard. Plain-text is fast to generate but is easiest for the player to manipulate and cheat with. Base 64 is slightly slower and the string will be longer but will offer a small barrier to people trying to cheat. LZ-String is the slowest method, but produces the smallest strings and still offers a small barrier to those trying to cheat. Some sharing platforms like pastebin may automatically delete base64 encoded text, and some sites might not support all the characters used in lz-string exports."
+        },
+        "disableHealthWarning": {
+            "type": "boolean",
+            "description": "Whether or not to disable the health warning that appears to the player after excessive playtime (activity during 6 of the last 8 hours). If left enabled, the player will still be able to individually turn off the health warning in settings or by clicking \"Do not show again\" in the warning itself."
         }
     }
 }

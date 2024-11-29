@@ -34,7 +34,7 @@
     </div>
 </template>
 
-<script lang="tsx">
+<script setup lang="tsx">
 import themes from "data/themes";
 import type { CoercableComponent } from "features/feature";
 import { jsx, StyleValue } from "features/feature";
@@ -45,66 +45,45 @@ import type { VueFeature } from "util/vue";
 import {
     coerceComponent,
     computeOptionalComponent,
-    processedPropType,
-    renderJSX,
-    unwrapRef
+    renderJSX
 } from "util/vue";
-import type { Component, PropType } from "vue";
-import { computed, defineComponent, ref, shallowRef, toRefs, unref } from "vue";
+import type { Component } from "vue";
+import { computed, ref, shallowRef, toRef, unref } from "vue";
 
-export default defineComponent({
-    props: {
-        element: Object as PropType<VueFeature>,
-        display: {
-            type: processedPropType<CoercableComponent>(Object, String, Function),
-            required: true
-        },
-        style: processedPropType<StyleValue>(Object, String, Array),
-        classes: processedPropType<Record<string, boolean>>(Object),
-        direction: processedPropType<Direction>(String),
-        xoffset: processedPropType<string>(String),
-        yoffset: processedPropType<string>(String),
-        pinned: Object as PropType<Persistent<boolean>>
-    },
-    setup(props) {
-        const { element, display, pinned } = toRefs(props);
+const props = defineProps<{
+    element?: VueFeature;
+    display: CoercableComponent;
+    style?: StyleValue;
+    classes?: Record<string, boolean>;
+    direction?: Direction;
+    xoffset?: string;
+    yoffset?: string;
+    pinned?: Persistent<boolean>;
+}>();
 
-        const isHovered = ref(false);
-        const isShown = computed(() => (unwrapRef(pinned) || isHovered.value) && comp.value);
-        const comp = computeOptionalComponent(display);
+const isHovered = ref(false);
+const isShown = computed(() => (props.pinned?.value === true || isHovered.value) && comp.value);
+const comp = computeOptionalComponent(toRef(props, "display"));
 
-        const elementComp = shallowRef<Component | "" | null>(
-            coerceComponent(
-                jsx(() => {
-                    const currComponent = unwrapRef(element);
-                    return currComponent == null ? "" : renderJSX(currComponent);
-                })
-            )
-        );
+const elementComp = shallowRef<Component | "" | null>(
+    coerceComponent(
+        jsx(() => {
+            const currComponent = props.element;
+            return currComponent == null ? "" : renderJSX(currComponent);
+        })
+    )
+);
 
-        function togglePinned(e: MouseEvent) {
-            const isPinned = pinned as unknown as Persistent<boolean> | undefined; // Vue typing :/
-            if (e.shiftKey && isPinned) {
-                isPinned.value = !isPinned.value;
-                e.stopPropagation();
-                e.preventDefault();
-            }
-        }
-
-        const showPin = computed(() => unwrapRef(pinned) && themes[settings.theme].showPin);
-
-        return {
-            Direction,
-            isHovered,
-            isShown,
-            comp,
-            elementComp,
-            unref,
-            togglePinned,
-            showPin
-        };
+function togglePinned(e: MouseEvent) {
+    const isPinned = props.pinned;
+    if (e.shiftKey && isPinned != null) {
+        isPinned.value = !isPinned.value;
+        e.stopPropagation();
+        e.preventDefault();
     }
-});
+}
+
+const showPin = computed(() => props.pinned?.value === true && themes[settings.theme].showPin);
 </script>
 
 <style scoped>

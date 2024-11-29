@@ -14,47 +14,46 @@
 import type { Link } from "features/links/links";
 import type { FeatureNode } from "game/layers";
 import { kebabifyObject } from "util/vue";
-import { computed, toRefs } from "vue";
+import { computed } from "vue";
 
-const _props = defineProps<{
+const props = defineProps<{
     link: Link;
     startNode: FeatureNode;
     endNode: FeatureNode;
     boundingRect: DOMRect | undefined;
 }>();
-const props = toRefs(_props);
 
 const startPosition = computed(() => {
-    const rect = props.startNode.value.rect;
-    const boundingRect = props.boundingRect.value;
+    const rect = props.startNode.rect;
+    const boundingRect = props.boundingRect;
     const position = boundingRect
         ? {
               x: rect.x + rect.width / 2 - boundingRect.x,
               y: rect.y + rect.height / 2 - boundingRect.y
           }
         : { x: 0, y: 0 };
-    if (props.link.value.offsetStart) {
-        position.x += props.link.value.offsetStart.x;
-        position.y += props.link.value.offsetStart.y;
+    if (props.link.offsetStart) {
+        position.x += props.link.offsetStart.x;
+        position.y += props.link.offsetStart.y;
     }
     return position;
 });
 
 const endPosition = computed(() => {
-    const rect = props.endNode.value.rect;
-    const boundingRect = props.boundingRect.value;
+    const rect = props.endNode.rect;
+    const boundingRect = props.boundingRect;
     const position = boundingRect
         ? {
               x: rect.x + rect.width / 2 - boundingRect.x,
               y: rect.y + rect.height / 2 - boundingRect.y
           }
         : { x: 0, y: 0 };
-    if (props.link.value.offsetEnd) {
-        position.x += props.link.value.offsetEnd.x;
-        position.y += props.link.value.offsetEnd.y;
+    if (props.link.offsetEnd) {
+        position.x += props.link.offsetEnd.x;
+        position.y += props.link.offsetEnd.y;
     }
     return position;
 });
 
-const linkProps = computed(() => kebabifyObject(_props.link as unknown as Record<string, unknown>));
+const linkProps = computed(() => kebabifyObject(props.link as unknown as Record<string, unknown>));
 </script>

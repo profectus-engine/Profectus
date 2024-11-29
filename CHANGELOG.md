@@ -6,6 +6,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2] - 2024-04-01
+### Added
+- Export save button in error boundaries
+- isRendered utility function
+- Automatic galaxy.click cloud saves support 
+- Support for null and undefined in persistent refs
+### Changes
+- round, floor, ceil, trunc, and add now invert as no-ops
+- "The Paper Pilot Community" renamed to "Profectus & Friends"
+- Updated CI etc. to work with Forgejo
+- Improved modifier typing
+- Rename `printFormula` to `Formula.stringify`
+### Fixed
+- Hotkeys not working correctly with most combinations of modifiers
+- Reset button using `currentAt` when not gaining
+- Formulas not using modifiers that are disabled initially
+- branchedResetPropagation logic being incorrect
+- Fixed default elementsd in the main layer not updating Context when being added or removed
+- Board links props not working in camelCase
+- Board links absorbing pointer events
+- Thrown errors not appearing in console
+- Disabled elements would eat mouse events
+- Fixed cost requirement without formula counting as being able to afford infinite purchases rather than just one
+- Pinnable tooltips causing innocuous console error
+- Bars with direction as "Left" wouldn't appear correctly
+### Documentation
+- Clarified expected progress values for board nodes
+- Added CONTRIBUTING.md and enforce eslint on all PRs
+### Tests
+- Update formula test cases
+- Tree reset propagation
+
+Contributors: thepaperpilot, escapee, nif
+
 ## [0.6.1] - 2023-05-17
 ### Added
 - Error boundaries around each layer, and errors now display on the page when in development
