@@ -6,15 +6,7 @@
             :style="unref(buttonContainerStyle)"
         >
             <div class="tab-buttons" :class="{ floating }">
-                <TabButton
-                    v-for="(button, id) in unref(tabs)"
-                    @selectTab="selected.value = id"
-                    :floating="floating"
-                    :key="id"
-                    :active="unref(button.tab) === unref(activeTab)"
-                    :display="button.display"
-                    :glowColor="button.glowColor"
-                />
+                <TabButtons />
             </div>
         </Sticky>
         <Component v-if="unref(activeTab) != null" />
@@ -23,27 +15,21 @@
 
 <script setup lang="ts">
 import Sticky from "components/layout/Sticky.vue";
-import themes from "data/themes";
-import TabButton from "features/tabs/TabButton.vue";
-import settings from "game/settings";
+import { isType } from "features/feature";
 import { render } from "util/vue";
 import type { Component } from "vue";
 import { computed, unref } from "vue";
-import { TabFamily } from "./tabFamily";
 import { TabType } from "./tab";
-import { isType } from "features/feature";
+import { TabFamily } from "./tabFamily";
+import themes from "data/themes";
+import settings from "game/settings";
 
 const props = defineProps<{
     activeTab: TabFamily["activeTab"];
-    selected: TabFamily["selected"];
     tabs: TabFamily["tabs"];
     buttonContainerClasses: TabFamily["buttonContainerClasses"];
     buttonContainerStyle: TabFamily["buttonContainerStyle"];
 }>();
-
-const floating = computed(() => {
-    return themes[settings.theme].floatingTabs;
-});
 
 const Component = () => {
     const activeTab = unref(props.activeTab);
@@ -52,6 +38,12 @@ const Component = () => {
     }
     return render(activeTab);
 };
+
+const floating = computed(() => {
+    return themes[settings.theme].floatingTabs;
+});
+
+const TabButtons = () => Object.values(props.tabs).map(tab => render(tab));
 
 const tabClasses = computed(() => {
     const activeTab = unref(props.activeTab);
@@ -134,6 +126,10 @@ const tabStyle = computed(() => {
     display: flex;
     flex-flow: wrap;
     z-index: 4;
+}
+
+.tab-buttons > * {
+    margin: 0;
 }
 
 .layer-tab

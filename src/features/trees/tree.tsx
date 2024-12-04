@@ -1,13 +1,13 @@
-import type { OptionsFunc, Replace } from "features/feature";
 import { Link } from "features/links/links";
 import type { Reset } from "features/reset";
 import type { Resource } from "features/resources/resource";
 import { displayResource } from "features/resources/resource";
 import Tree from "features/trees/Tree.vue";
 import TreeNode from "features/trees/TreeNode.vue";
+import { noPersist } from "game/persistence";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatWhole } from "util/bignum";
-import { ProcessedRefOrGetter, processGetter } from "util/computed";
+import { processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { Renderable, VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
 import type { MaybeRef, MaybeRefOrGetter, Ref } from "vue";
@@ -41,31 +41,32 @@ export interface TreeNodeOptions extends VueFeatureOptions {
 /**
  * The properties that are added onto a processed {@link TreeNodeOptions} to create an {@link TreeNode}.
  */
-export interface BaseTreeNode extends VueFeature {
+export interface TreeNode extends VueFeature {
+    /** Whether or not this tree node can be clicked. */
+    canClick?: MaybeRef<boolean>;
+    /** The background color for this node. */
+    color?: MaybeRef<string>;
+    /** The label to display on this tree node. */
+    display?: MaybeRef<Renderable>;
+    /** The color of the glow effect shown to notify the user there's something to do with this node. */
+    glowColor?: MaybeRef<string>;
+    /** A reset object attached to this node, used for propagating resets through the tree. */
+    reset?: Reset;
+    /** A function that is called when the tree node is clicked. */
+    onClick?: (e?: MouseEvent | TouchEvent) => void;
+    /** A function that is called when the tree node is held down. */
+    onHold?: VoidFunction;
     /** A symbol that helps identify features of the same type. */
     type: typeof TreeNodeType;
 }
-
-/** An object that represents a node on a tree. */
-export type TreeNode = Replace<
-    TreeNodeOptions & BaseTreeNode,
-    {
-        canClick: MaybeRef<boolean>;
-        color: ProcessedRefOrGetter<TreeNodeOptions["color"]>;
-        display: ProcessedRefOrGetter<TreeNodeOptions["display"]>;
-        glowColor: ProcessedRefOrGetter<TreeNodeOptions["glowColor"]>;
-    }
->;
 
 /**
  * Lazily creates a tree node with the given options.
  * @param optionsFunc Tree Node options.
  */
-export function createTreeNode<T extends TreeNodeOptions>(
-    optionsFunc?: OptionsFunc<T, BaseTreeNode, TreeNode>
-) {
-    return createLazyProxy(feature => {
-        const options = optionsFunc?.call(feature, feature as TreeNode) ?? ({} as T);
+export function createTreeNode<T extends TreeNodeOptions>(optionsFunc?: () => T) {
+    return createLazyProxy(() => {
+        const options = optionsFunc?.() ?? ({} as T);
         const { canClick, color, display, glowColor, onClick, onHold, ...props } = options;
 
         const treeNode = {
@@ -131,9 +132,21 @@ export interface TreeOptions extends VueFeatureOptions {
     onReset?: (node: TreeNode) => void;
 }
 
-export interface BaseTree extends VueFeature {
+export interface Tree extends VueFeature {
+    /** The nodes within the tree, in a 2D array. */
+    nodes: MaybeRef<TreeNode[][]>;
+    /** Nodes to show on the left side of the tree. */
+    leftSideNodes?: MaybeRef<TreeNode[]>;
+    /** Nodes to show on the right side of the tree. */
+    rightSideNodes?: MaybeRef<TreeNode[]>;
+    /** The branches between nodes within this tree. */
+    branches?: MaybeRef<TreeBranch[]>;
+    /** How to propagate resets through the tree. */
+    resetPropagation?: ResetPropagation;
+    /** A function that is called when a node within the tree is reset. */
+    onReset?: (node: TreeNode) => void;
     /** The link objects for each of the branches of the tree.  */
-    links: Ref<Link[]>;
+    links: MaybeRef<Link[]>;
     /** Cause a reset on this node and propagate it through the tree according to {@link TreeOptions.resetPropagation}. */
     reset: (node: TreeNode) => void;
     /** A flag that is true while the reset is still propagating through the tree. */
@@ -144,34 +157,28 @@ export interface BaseTree extends VueFeature {
     type: typeof TreeType;
 }
 
-/** An object that represents a feature that is a tree of nodes with branches between them. Contains support for reset mechanics that can propagate through the tree. */
-export type Tree = Replace<
-    TreeOptions & BaseTree,
-    {
-        nodes: ProcessedRefOrGetter<TreeOptions["nodes"]>;
-        leftSideNodes: ProcessedRefOrGetter<TreeOptions["leftSideNodes"]>;
-        rightSideNodes: ProcessedRefOrGetter<TreeOptions["rightSideNodes"]>;
-        branches: ProcessedRefOrGetter<TreeOptions["branches"]>;
-    }
->;
-
 /**
  * Lazily creates a tree with the given options.
  * @param optionsFunc Tree options.
  */
-export function createTree<T extends TreeOptions>(optionsFunc: OptionsFunc<T, BaseTree, Tree>) {
-    return createLazyProxy(feature => {
-        const options = optionsFunc.call(feature, feature as Tree);
+export function createTree<T extends TreeOptions>(optionsFunc: () => T) {
+    return createLazyProxy(() => {
+        const options = optionsFunc();
         const {
-            branches,
+            branches: _branches,
             nodes,
             leftSideNodes,
             rightSideNodes,
-            reset,
             resetPropagation,
             onReset,
+            style: _style,
             ...props
         } = options;
+
+        const style = processGetter(_style);
+        options.style = () => ({ position: "static", ...(unref(style) ?? {}) });
+
+        const branches = _branches == null ? undefined : processGetter(_branches);
 
         const tree = {
             type: TreeType,
@@ -184,25 +191,23 @@ export function createTree<T extends TreeOptions>(optionsFunc: OptionsFunc<T, Ba
                     branches={tree.branches}
                 />
             )),
-            branches: processGetter(branches),
+            branches,
             isResetting: ref(false),
             resettingNode: shallowRef<TreeNode | null>(null),
             nodes: processGetter(nodes),
             leftSideNodes: processGetter(leftSideNodes),
             rightSideNodes: processGetter(rightSideNodes),
-            links: processGetter(branches) ?? [],
+            links: branches == null ? [] : noPersist(branches),
             resetPropagation,
             onReset,
-            reset:
-                reset ??
-                function (node: TreeNode) {
-                    tree.isResetting.value = true;
-                    tree.resettingNode.value = node;
-                    tree.resetPropagation?.(tree, node);
-                    tree.onReset?.(node);
-                    tree.isResetting.value = false;
-                    tree.resettingNode.value = null;
-                }
+            reset: function (node: TreeNode) {
+                tree.isResetting.value = true;
+                tree.resettingNode.value = node;
+                tree.resetPropagation?.(tree, node);
+                tree.onReset?.(node);
+                tree.isResetting.value = false;
+                tree.resettingNode.value = null;
+            }
         } satisfies Tree;
 
         return tree;

@@ -24,7 +24,6 @@ const resizeObserver = new ResizeObserver(updateBounds);
 const resizeListener = shallowRef<HTMLElement | null>(null);
 
 onMounted(() => {
-    // ResizeListener exists because ResizeObserver's don't work when told to observe an SVG element
     const resListener = resizeListener.value;
     if (resListener != null) {
         resizeObserver.observe(resListener);

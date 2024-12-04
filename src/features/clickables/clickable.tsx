@@ -1,5 +1,4 @@
 import Clickable from "features/clickables/Clickable.vue";
-import type { OptionsFunc, Replace } from "features/feature";
 import type { BaseLayer } from "game/layers";
 import type { Unsubscribe } from "nanoevents";
 import { processGetter } from "util/computed";
@@ -31,32 +30,27 @@ export interface ClickableOptions extends VueFeatureOptions {
     onHold?: VoidFunction;
 }
 
-/**
- * The properties that are added onto a processed {@link ClickableOptions} to create an {@link Clickable}.
- */
-export interface BaseClickable extends VueFeature {
+/** An object that represents a feature that can be clicked or held down. */
+export interface Clickable extends VueFeature {
+    /** A function that is called when the clickable is clicked. */
+    onClick?: (e?: MouseEvent | TouchEvent) => void;
+    /** A function that is called when the clickable is held down. */
+    onHold?: VoidFunction;
+    /** Whether or not the clickable may be clicked. */
+    canClick: MaybeRef<boolean>;
+    /** The display to use for this clickable. */
+    display?: MaybeRef<Renderable>;
     /** A symbol that helps identify features of the same type. */
     type: typeof ClickableType;
 }
-
-/** An object that represents a feature that can be clicked or held down. */
-export type Clickable = Replace<
-    Replace<ClickableOptions, BaseClickable>,
-    {
-        canClick: MaybeRef<boolean>;
-        display?: MaybeRef<Renderable>;
-    }
->;
 
 /**
  * Lazily creates a clickable with the given options.
  * @param optionsFunc Clickable options.
  */
-export function createClickable<T extends ClickableOptions>(
-    optionsFunc?: OptionsFunc<T, BaseClickable, Clickable>
-) {
-    return createLazyProxy(feature => {
-        const options = optionsFunc?.call(feature, feature as Clickable) ?? ({} as T);
+export function createClickable<T extends ClickableOptions>(optionsFunc?: () => T) {
+    return createLazyProxy(() => {
+        const options = optionsFunc?.() ?? ({} as T);
         const { canClick, display: _display, onClick: onClick, onHold: onHold, ...props } = options;
 
         let display: MaybeRef<Renderable> | undefined = undefined;

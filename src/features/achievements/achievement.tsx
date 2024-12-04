@@ -1,5 +1,5 @@
 import Select from "components/fields/Select.vue";
-import { OptionsFunc, Replace, Visibility } from "features/feature";
+import { Visibility } from "features/feature";
 import { globalBus } from "game/events";
 import "game/notifications";
 import type { Persistent } from "game/persistence";
@@ -14,7 +14,7 @@ import {
 } from "game/requirements";
 import settings, { registerSettingField } from "game/settings";
 import { camelToTitle } from "util/common";
-import { ProcessedRefOrGetter, processGetter } from "util/computed";
+import { processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import {
     isJSXElement,
@@ -46,7 +46,7 @@ export enum AchievementDisplay {
  * An object that configures an {@link Achievement}.
  */
 export interface AchievementOptions extends VueFeatureOptions {
-    /** The requirement(s) to earn this achievement. Can be left null if using {@link BaseAchievement.complete}. */
+    /** The requirement(s) to earn this achievement. Can be left null if using {@link Achievement.complete}. */
     requirements?: Requirements;
     /** The display to use for this achievement. */
     display?:
@@ -69,10 +69,26 @@ export interface AchievementOptions extends VueFeatureOptions {
     onComplete?: VoidFunction;
 }
 
-/**
- * The properties that are added onto a processed {@link AchievementOptions} to create an {@link Achievement}.
- */
-export interface BaseAchievement extends VueFeature {
+/** An object that represents a feature with requirements that is passively earned upon meeting certain requirements. */
+export interface Achievement extends VueFeature {
+    /** The requirement(s) to earn this achievement. */
+    requirements?: Requirements;
+    /** A function that is called when the achievement is completed. */
+    onComplete?: VoidFunction;
+    /** The display to use for this achievement. */
+    display?:
+        | MaybeRef<Renderable>
+        | {
+              requirement?: MaybeRef<Renderable>;
+              effectDisplay?: MaybeRef<Renderable>;
+              optionsDisplay?: MaybeRef<Renderable>;
+          };
+    /** Toggles a smaller design for the feature. */
+    small?: MaybeRef<boolean>;
+    /** An image to display as the background for this achievement. */
+    image?: MaybeRef<string>;
+    /** Whether or not to display a notification popup when this achievement is earned. */
+    showPopups: MaybeRef<boolean>;
     /** Whether or not this achievement has been earned. */
     earned: Persistent<boolean>;
     /** A function to complete this achievement. */
@@ -81,32 +97,14 @@ export interface BaseAchievement extends VueFeature {
     type: typeof AchievementType;
 }
 
-/** An object that represents a feature with requirements that is passively earned upon meeting certain requirements. */
-export type Achievement = Replace<
-    Replace<AchievementOptions, BaseAchievement>,
-    {
-        display?:
-            | MaybeRef<Renderable>
-            | {
-                  requirement?: MaybeRef<Renderable>;
-                  effectDisplay?: MaybeRef<Renderable>;
-                  optionsDisplay?: MaybeRef<Renderable>;
-              };
-        image: ProcessedRefOrGetter<AchievementOptions["image"]>;
-        showPopups: MaybeRef<boolean>;
-    }
->;
-
 /**
  * Lazily creates an achievement with the given options.
  * @param optionsFunc Achievement options.
  */
-export function createAchievement<T extends AchievementOptions>(
-    optionsFunc?: OptionsFunc<T, BaseAchievement, Achievement>
-) {
+export function createAchievement<T extends AchievementOptions>(optionsFunc?: () => T) {
     const earned = persistent<boolean>(false, false);
-    return createLazyProxy(feature => {
-        const options = optionsFunc?.call(feature, feature as Achievement) ?? ({} as T);
+    return createLazyProxy(() => {
+        const options = optionsFunc?.() ?? ({} as T);
         const { requirements, display, small, image, showPopups, onComplete, ...props } = options;
 
         const vueFeature = vueFeatureMixin("achievement", options, () => (
@@ -195,7 +193,7 @@ export function createAchievement<T extends AchievementOptions>(
                     toast.info(
                         <div>
                             <h3>Achievement earned!</h3>
-                            <div>{Display}</div>
+                            <div>{Display()}</div>
                         </div>
                     );
                 }

@@ -9,7 +9,7 @@
 import "components/common/table.css";
 import Links from "features/links/Links.vue";
 import type { Tree } from "features/trees/tree";
-import { joinJSX, render } from "util/vue";
+import { render } from "util/vue";
 import { unref } from "vue";
 
 const props = defineProps<{

@@ -1,14 +1,13 @@
 import Modal from "components/modals/Modal.vue";
-import type { OptionsFunc, Replace } from "features/feature";
 import { globalBus } from "game/events";
 import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
 import player from "game/player";
 import type { Emitter } from "nanoevents";
 import { createNanoEvents } from "nanoevents";
-import { ProcessedRefOrGetter, processGetter } from "util/computed";
+import { processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { Renderable } from "util/vue";
+import { render, Renderable } from "util/vue";
 import {
     computed,
     type CSSProperties,
@@ -163,20 +162,45 @@ export interface BaseLayer {
 }
 
 /** An unit of game content. Displayed to the user as a tab or modal. */
-export type Layer = Replace<
-    Replace<LayerOptions, BaseLayer>,
-    {
-        color?: ProcessedRefOrGetter<LayerOptions["color"]>;
-        display: ProcessedRefOrGetter<LayerOptions["display"]>;
-        classes?: ProcessedRefOrGetter<LayerOptions["classes"]>;
-        style?: ProcessedRefOrGetter<LayerOptions["style"]>;
-        name: MaybeRef<string>;
-        minWidth: MaybeRef<string | number>;
-        minimizable: MaybeRef<boolean>;
-        minimizedDisplay?: ProcessedRefOrGetter<LayerOptions["minimizedDisplay"]>;
-        forceHideGoBack?: ProcessedRefOrGetter<LayerOptions["forceHideGoBack"]>;
-    }
->;
+export interface Layer extends BaseLayer {
+    /** The color of the layer, used to theme the entire layer's display. */
+    color?: MaybeRef<string>;
+    /**
+     * The layout of this layer's features.
+     * When the layer is open in {@link game/player.PlayerData.tabs}, this is the content that is displayed.
+     */
+    display: MaybeRef<Renderable>;
+    /** An object of classes that should be applied to the display. */
+    classes?: MaybeRef<Record<string, boolean>>;
+    /** Styles that should be applied to the display. */
+    style?: MaybeRef<CSSProperties>;
+    /**
+     * The name of the layer, used on minimized tabs.
+     * Defaults to {@link BaseLayer.id}.
+     */
+    name?: MaybeRef<string>;
+    /**
+     * Whether or not the layer can be minimized.
+     * Defaults to true.
+     */
+    minimizable?: MaybeRef<boolean>;
+    /**
+     * The layout of this layer's features.
+     * When the layer is open in {@link game/player.PlayerData.tabs}, but the tab is {@link Layer.minimized} this is the content that is displayed.
+     */
+    minimizedDisplay?: MaybeRef<Renderable>;
+    /**
+     * Whether or not to force the go back button to be hidden.
+     * If true, go back will be hidden regardless of {@link data/projInfo.allowGoBack}.
+     */
+    forceHideGoBack?: MaybeRef<boolean>;
+    /**
+     * A CSS min-width value that is applied to the layer.
+     * Can be a number, in which case the unit is assumed to be px.
+     * Defaults to 600px.
+     */
+    minWidth?: MaybeRef<number | string>;
+}
 
 /**
  * When creating layers, this object a map of layer ID to a set of any created persistent refs in order to check they're all included in the final layer object.
@@ -193,7 +217,7 @@ export const addingLayers: string[] = [];
  */
 export function createLayer<T extends LayerOptions>(
     id: string,
-    optionsFunc: OptionsFunc<T, BaseLayer>
+    optionsFunc: (layer: BaseLayer) => T & ThisType<Layer & Omit<T, keyof Layer>>
 ) {
     return createLazyProxy(() => {
         const emitter = createNanoEvents<LayerEvents>();
@@ -208,7 +232,7 @@ export function createLayer<T extends LayerOptions>(
             minimized: persistent(false, false)
         } satisfies BaseLayer;
 
-        const options = optionsFunc.call(baseLayer, baseLayer);
+        const options = optionsFunc(baseLayer);
         const {
             color,
             display,
@@ -357,7 +381,7 @@ export function setupLayerModal(layer: Layer): {
                 onUpdate:modelValue={value => (showModal.value = value)}
                 v-slots={{
                     header: () => <h2>{unref(layer.name)}</h2>,
-                    body: unref(layer.display)
+                    body: () => render(layer.display)
                 }}
             />
         ))

@@ -1,11 +1,10 @@
-import type { OptionsFunc, Replace } from "features/feature";
 import { isVisible } from "features/feature";
 import { Tab } from "features/tabs/tab";
 import TabButton from "features/tabs/TabButton.vue";
 import TabFamily from "features/tabs/TabFamily.vue";
 import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
-import { ProcessedRefOrGetter, processGetter } from "util/computed";
+import { processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { Renderable, VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
 import type { CSSProperties, MaybeRef, MaybeRefOrGetter, Ref } from "vue";
@@ -29,25 +28,19 @@ export interface TabButtonOptions extends VueFeatureOptions {
 }
 
 /**
- * The properties that are added onto a processed {@link TabButtonOptions} to create an {@link TabButton}.
- */
-export interface BaseTabButton extends VueFeature {
-    /** A symbol that helps identify features of the same type. */
-    type: typeof TabButtonType;
-}
-
-/**
  * An object that represents a button that can be clicked to change tabs in a tabbed interface.
  * @see {@link TabFamily}
  */
-export type TabButton = Replace<
-    Replace<TabButtonOptions, BaseTabButton>,
-    {
-        tab: Tab | MaybeRef<Renderable>;
-        display: ProcessedRefOrGetter<TabButtonOptions["display"]>;
-        glowColor: ProcessedRefOrGetter<TabButtonOptions["glowColor"]>;
-    }
->;
+export interface TabButton extends VueFeature {
+    /** The tab to display when this button is clicked. */
+    tab: Tab | MaybeRef<Renderable>;
+    /** The label on this button. */
+    display: MaybeRef<Renderable>;
+    /** The color of the glow effect to display when this button is active. */
+    glowColor?: MaybeRef<string>;
+    /** A symbol that helps identify features of the same type. */
+    type: typeof TabButtonType;
+}
 
 /**
  * An object that configures a {@link TabFamily}.
@@ -60,11 +53,16 @@ export interface TabFamilyOptions extends VueFeatureOptions {
 }
 
 /**
- * The properties that are added onto a processed {@link TabFamilyOptions} to create an {@link TabFamily}.
+ * An object that represents a tabbed interface.
+ * @see {@link TabFamily}
  */
-export interface BaseTabFamily extends VueFeature {
+export interface TabFamily extends VueFeature {
+    /** A dictionary of CSS classes to apply to the list of buttons for changing tabs. */
+    buttonContainerClasses?: MaybeRef<Record<string, boolean>>;
+    /** CSS to apply to the list of buttons for changing tabs. */
+    buttonContainerStyle?: MaybeRef<CSSProperties>;
     /** All the tabs within this family. */
-    tabs: Record<string, TabButtonOptions>;
+    tabs: Record<string, TabButton>;
     /** The currently active tab, if any. */
     activeTab: Ref<Tab | MaybeRef<Renderable> | null>;
     /** The name of the tab that is currently active. */
@@ -74,31 +72,20 @@ export interface BaseTabFamily extends VueFeature {
 }
 
 /**
- * An object that represents a tabbed interface.
- * @see {@link TabFamily}
- */
-export type TabFamily = Replace<
-    Replace<TabFamilyOptions, BaseTabFamily>,
-    {
-        tabs: Record<string, TabButton>;
-    }
->;
-
-/**
  * Lazily creates a tab family with the given options.
  * @param optionsFunc Tab family options.
  */
 export function createTabFamily<T extends TabFamilyOptions>(
     tabs: Record<string, () => TabButtonOptions>,
-    optionsFunc?: OptionsFunc<T, BaseTabFamily, TabFamily>
+    optionsFunc?: () => T
 ) {
     if (Object.keys(tabs).length === 0) {
         console.error("Cannot create tab family with 0 tabs");
     }
 
     const selected = persistent(Object.keys(tabs)[0], false);
-    return createLazyProxy(feature => {
-        const options = optionsFunc?.call(feature, feature as TabFamily) ?? ({} as T);
+    return createLazyProxy(() => {
+        const options = optionsFunc?.() ?? ({} as T);
         const { buttonContainerClasses, buttonContainerStyle, ...props } = options;
 
         const tabFamily = {
@@ -107,7 +94,6 @@ export function createTabFamily<T extends TabFamilyOptions>(
             ...vueFeatureMixin("tabFamily", options, () => (
                 <TabFamily
                     activeTab={tabFamily.activeTab}
-                    selected={tabFamily.selected}
                     tabs={tabFamily.tabs}
                     buttonContainerClasses={tabFamily.buttonContainerClasses}
                     buttonContainerStyle={tabFamily.buttonContainerStyle}
@@ -120,7 +106,13 @@ export function createTabFamily<T extends TabFamilyOptions>(
                 const tabButton = {
                     type: TabButtonType,
                     ...(props as Omit<typeof props, keyof VueFeature | keyof TabButtonOptions>),
-                    ...vueFeatureMixin("tabButton", options),
+                    ...vueFeatureMixin("tabButton", options, () =>
+                        <TabButton
+                            display={tabButton.display}
+                            glowColor={tabButton.glowColor}
+                            active={unref(tabButton.tab) === unref(tabFamily.activeTab)}
+                            onSelectTab={() => tabFamily.selected.value = tab}
+                        />),
                     tab: processGetter(buttonTab),
                     glowColor: processGetter(glowColor),
                     display: processGetter(display)

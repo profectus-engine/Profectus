@@ -2,18 +2,6 @@ import Decimal from "util/bignum";
 import { Renderable, renderCol, VueFeature } from "util/vue";
 import { computed, isRef, MaybeRef, Ref, unref } from "vue";
 
-/** Utility type that is S, with any properties from T that aren't already present in S */
-export type Replace<T, S> = S & Omit<T, keyof S>;
-
-/**
- * Utility function for a function that returns an object of a given type,
- * with "this" bound to what the type will eventually be processed into.
- * Intended for making lazily evaluated objects.
- */
-export type OptionsFunc<T, R = unknown, S = R> = (obj: S) => OptionsObject<T, R, S>;
-
-export type OptionsObject<T, R = unknown, S = R> = T & Partial<R> & ThisType<T & S>;
-
 let id = 0;
 /**
  * Gets a unique ID to give to each feature, used for any sort of system that needs to identify
@@ -54,11 +42,11 @@ export function isType<T extends symbol>(object: unknown, type: T): object is { 
  * @param obj The object to traverse
  * @param types The feature types that will be searched for
  */
-export function findFeatures(obj: Record<string, unknown>, ...types: symbol[]): unknown[] {
+export function findFeatures(obj: object, ...types: symbol[]): unknown[] {
     const objects: unknown[] = [];
-    const handleObject = (obj: Record<string, unknown>) => {
+    const handleObject = (obj: object) => {
         Object.keys(obj).forEach(key => {
-            const value = obj[key];
+            const value: unknown = obj[key as keyof typeof obj];
             if (value != null && typeof value === "object") {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 if (types.includes((value as Record<string, any>).type)) {

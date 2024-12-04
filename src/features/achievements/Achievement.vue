@@ -1,5 +1,5 @@
 <template>
-    <div
+    <button
         :style="{
             backgroundImage: (unref(earned) && unref(image) && `url(${image})`) || ''
         }"
@@ -11,7 +11,7 @@
         }"
     >
         <Component />
-    </div>
+    </button>
 </template>
 
 <script setup lang="tsx">

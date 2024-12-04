@@ -1,14 +1,15 @@
-import Board from "./Board.vue";
-import Draggable from "./Draggable.vue";
 import { globalBus } from "game/events";
-import { Persistent, persistent } from "game/persistence";
+import { DefaultValue, Persistent, persistent } from "game/persistence";
 import type { PanZoom } from "panzoom";
 import { Direction, isFunction } from "util/common";
 import { processGetter } from "util/computed";
+import { createLazyProxy, runAfterEvaluation } from "util/proxies";
 import { Renderable, VueFeature } from "util/vue";
-import type { ComponentPublicInstance, MaybeRef, MaybeRefOrGetter, Ref } from "vue";
+import type { ComponentPublicInstance, ComputedRef, MaybeRef, MaybeRefOrGetter, Ref } from "vue";
 import { computed, ref, unref, watchEffect } from "vue";
 import panZoom from "vue-panzoom";
+import Board from "./Board.vue";
+import Draggable from "./Draggable.vue";
 
 // Register panzoom so it can be used in Board.vue
 globalBus.on("setupVue", app => panZoom.install(app));
@@ -254,46 +255,85 @@ export interface MakeDraggableOptions<T> {
     initialPosition?: NodePosition;
 }
 
+/** Contains all the data tied to making a vue feature draggable */
+export interface Draggable<T> extends MakeDraggableOptions<T> {
+    /** The current position of the node on the board. */
+    position: Persistent<NodePosition>;
+    /** The current position, plus the current offset from being dragged. */
+    computedPosition: ComputedRef<NodePosition>;
+}
+
 /**
  * Makes a vue feature draggable on a Board.
  * @param element The vue feature to make draggable.
  * @param options The options to configure the dragging behavior.
  */
-export function makeDraggable<T>(
+export function makeDraggable<T, S extends MakeDraggableOptions<T>>(
     element: VueFeature,
-    options: MakeDraggableOptions<T>
-): asserts element is VueFeature & { position: Persistent<NodePosition> } {
-    const position = persistent(options.initialPosition ?? { x: 0, y: 0 });
-    (element as VueFeature & { position: Persistent<NodePosition> }).position = position;
-    const computedPosition = computed(() => {
-        if (options.nodeBeingDragged.value === options.id) {
-            return {
-                x: position.value.x + options.dragDelta.value.x,
-                y: position.value.y + options.dragDelta.value.y
-            };
-        }
-        return position.value;
+    optionsFunc: () => S
+): asserts element is VueFeature & { draggable: Draggable<T> } {
+    const position = persistent<NodePosition>({ x: 0, y: 0 });
+    const draggable = createLazyProxy(() => {
+        const options = optionsFunc();
+        const { id, nodeBeingDragged, hasDragged, dragDelta, startDrag, endDrag, onMouseDown, onMouseUp, initialPosition, ...props } = options;
+
+        position[DefaultValue] = initialPosition ?? position[DefaultValue];
+
+        const draggable = {
+            ...(props as Omit<typeof props, keyof VueFeature | keyof MakeDraggableOptions<S>>),
+            id,
+            nodeBeingDragged,
+            hasDragged,
+            dragDelta,
+            startDrag,
+            endDrag,
+            onMouseDown(e: MouseEvent | TouchEvent) {
+                if (onMouseDown?.(e) === false) {
+                    return;
+                }
+
+                if (nodeBeingDragged.value == null) {
+                    startDrag(e, id);
+                }
+            },
+            onMouseUp(e: MouseEvent | TouchEvent) {
+                // The element we're mapping may have their own click listeners, so we need to stop
+                // the propagation regardless, and can't rely on them passing through to the board.
+                endDrag();
+                if (!hasDragged.value) {
+                    onMouseUp?.(e);
+                }
+                e.stopPropagation();
+            },
+            initialPosition,
+            position,
+            computedPosition: computed(() => {
+                if (nodeBeingDragged.value === id) {
+                    return {
+                        x: position.value.x + dragDelta.value.x,
+                        y: position.value.y + dragDelta.value.y
+                    };
+                }
+                return position.value;
+            })
+        } satisfies Draggable<T>;
+
+        return draggable;
     });
 
-    function handleMouseDown(e: MouseEvent | TouchEvent) {
-        if (options.onMouseDown?.(e) === false) {
-            return;
-        }
-
-        if (options.nodeBeingDragged.value == null) {
-            options.startDrag(e, options.id);
-        }
-    }
-
-    function handleMouseUp(e: MouseEvent | TouchEvent) {
-        options.onMouseUp?.(e);
-    }
-
-    element.wrappers.push(el => (
-        <Draggable mouseDown={handleMouseDown} mouseUp={handleMouseUp} position={computedPosition}>
-            {el}
-        </Draggable>
-    ));
+    runAfterEvaluation(element, el => {
+        draggable.id; // Ensure draggable gets evaluated
+        (el as VueFeature & { draggable: Draggable<T> }).draggable = draggable;        
+        element.wrappers.push(el => (
+            <Draggable
+                mouseDown={draggable.onMouseDown}
+                mouseUp={draggable.onMouseUp}
+                position={draggable.computedPosition}
+            >
+                {el}
+            </Draggable>
+        ));
+    });
 }
 
 /** An object that configures how to setup a list of actions using {@link setupActions}. */

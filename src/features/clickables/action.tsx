@@ -1,13 +1,13 @@
 import ClickableVue from "features/clickables/Clickable.vue";
-import { findFeatures, OptionsFunc, Replace } from "features/feature";
+import { findFeatures } from "features/feature";
 import { globalBus } from "game/events";
 import { persistent } from "game/persistence";
 import Decimal, { DecimalSource } from "lib/break_eternity";
 import { Unsubscribe } from "nanoevents";
 import { Direction } from "util/common";
-import { ProcessedRefOrGetter, processGetter } from "util/computed";
+import { processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { render, VueFeature, vueFeatureMixin } from "util/vue";
+import { render, Renderable, VueFeature, vueFeatureMixin } from "util/vue";
 import { computed, MaybeRef, MaybeRefOrGetter, Ref, ref, unref } from "vue";
 import { JSX } from "vue/jsx-runtime";
 import { Bar, BarOptions, createBar } from "../bars/bar";
@@ -30,10 +30,18 @@ export interface ActionOptions extends Omit<ClickableOptions, "onClick" | "onHol
     barOptions?: Partial<BarOptions>;
 }
 
-/**
- * The properties that are added onto a processed {@link ActionOptions} to create an {@link Action}.
- */
-export interface BaseAction extends VueFeature {
+/** An object that represents a feature that can be clicked upon, and then has a cooldown before it can be clicked again. */
+export interface Action extends VueFeature {
+    /** The cooldown during which the action cannot be performed again, in seconds. */
+    duration: MaybeRef<DecimalSource>;
+    /** Whether or not the action should perform automatically when the cooldown is finished. */
+    autoStart: MaybeRef<boolean>;
+    /** Whether or not the action may be performed. */
+    canClick: MaybeRef<boolean>;
+    /** The display to use for this action. */
+    display?: MaybeRef<Renderable>;
+    /** A function that is called when the action is clicked. */
+    onClick: (amount: DecimalSource) => void;
     /** Whether or not the player is holding down the action. Actions will be considered clicked as soon as the cooldown completes when being held down. */
     isHolding: Ref<boolean>;
     /** The current amount of progress through the cooldown. */
@@ -46,28 +54,14 @@ export interface BaseAction extends VueFeature {
     type: typeof ActionType;
 }
 
-/** An object that represents a feature that can be clicked upon, and then has a cooldown before it can be clicked again. */
-export type Action = Replace<
-    Replace<ActionOptions, BaseAction>,
-    {
-        duration: ProcessedRefOrGetter<ActionOptions["duration"]>;
-        autoStart: MaybeRef<boolean>;
-        canClick: MaybeRef<boolean>;
-        display: ProcessedRefOrGetter<ActionOptions["display"]>;
-        onClick: VoidFunction;
-    }
->;
-
 /**
  * Lazily creates an action with the given options.
  * @param optionsFunc Action options.
  */
-export function createAction<T extends ActionOptions>(
-    optionsFunc?: OptionsFunc<T, BaseAction, Action>
-) {
+export function createAction<T extends ActionOptions>(optionsFunc?: () => T) {
     const progress = persistent<DecimalSource>(0);
-    return createLazyProxy(feature => {
-        const options = optionsFunc?.call(feature, feature as Action) ?? ({} as T);
+    return createLazyProxy(() => {
+        const options = optionsFunc?.() ?? ({} as T);
         const { style, duration, canClick, autoStart, display, barOptions, onClick, ...props } =
             options;
 
@@ -169,7 +163,7 @@ export function createAction<T extends ActionOptions>(
                     }
                 }
             }
-        } satisfies Action satisfies Replace<Clickable, { type: typeof ActionType }>;
+        } satisfies Action satisfies Omit<Clickable, "type"> & { type: typeof ActionType };
 
         return action;
     });

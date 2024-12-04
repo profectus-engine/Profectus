@@ -1,18 +1,12 @@
 import Hotkey from "components/Hotkey.vue";
 import { hasWon } from "data/projEntry";
-import type { OptionsFunc, Replace } from "features/feature";
 import { findFeatures } from "features/feature";
 import { globalBus } from "game/events";
 import player from "game/player";
 import { registerInfoComponent } from "game/settings";
-import {
-    processGetter,
-    type MaybeRefOrGetter,
-    type UnwrapRef,
-    type MaybeRef
-} from "util/computed";
+import { processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { shallowReactive, unref } from "vue";
+import { MaybeRef, MaybeRefOrGetter, shallowReactive, unref } from "vue";
 
 /** A dictionary of all hotkeys. */
 export const hotkeys: Record<string, Hotkey | undefined> = shallowReactive({});
@@ -33,22 +27,19 @@ export interface HotkeyOptions {
     onPress: (e?: MouseEvent | TouchEvent) => void;
 }
 
-/**
- * The properties that are added onto a processed {@link HotkeyOptions} to create an {@link Hotkey}.
- */
-export interface BaseHotkey {
+/** An object that represents a hotkey shortcut that performs an action upon a key sequence being pressed. */
+export interface Hotkey {
+    /** Whether or not this hotkey is currently enabled. */
+    enabled: MaybeRef<boolean>;
+    /** The key tied to this hotkey */
+    key: string;
+    /** The description of this hotkey, to display in the settings. */
+    description: MaybeRef<string>;
+    /** What to do upon pressing the key. */
+    onPress: (e?: MouseEvent | TouchEvent) => void;
     /** A symbol that helps identify features of the same type. */
     type: typeof HotkeyType;
 }
-
-/** An object that represents a hotkey shortcut that performs an action upon a key sequence being pressed. */
-export type Hotkey = Replace<
-    Replace<HotkeyOptions, BaseHotkey>,
-    {
-        enabled: MaybeRef<boolean>;
-        description: UnwrapRef<HotkeyOptions["description"]>;
-    }
->;
 
 const uppercaseNumbers = [")", "!", "@", "#", "$", "%", "^", "&", "*", "("];
 
@@ -56,11 +47,9 @@ const uppercaseNumbers = [")", "!", "@", "#", "$", "%", "^", "&", "*", "("];
  * Lazily creates a hotkey with the given options.
  * @param optionsFunc Hotkey options.
  */
-export function createHotkey<T extends HotkeyOptions>(
-    optionsFunc: OptionsFunc<T, BaseHotkey, Hotkey>
-) {
-    return createLazyProxy(feature => {
-        const options = optionsFunc.call(feature, feature as Hotkey);
+export function createHotkey<T extends HotkeyOptions>(optionsFunc: () => T) {
+    return createLazyProxy(() => {
+        const options = optionsFunc();
         const { enabled, description, key, onPress, ...props } = options;
 
         const hotkey = {
@@ -119,7 +108,7 @@ document.onkeydown = function (e) {
         keysToCheck.push("ctrl+" + e.key);
     }
     const hotkey = hotkeys[keysToCheck.find(key => key in hotkeys) ?? ""];
-    if (hotkey != null && unref(hotkey.enabled)) {
+    if (hotkey != null && unref(hotkey.enabled) !== false) {
         e.preventDefault();
         hotkey.onPress();
     }

@@ -5,8 +5,7 @@ import { branchedResetPropagation, createTree, Tree } from "features/trees/tree"
 import { globalBus } from "game/events";
 import type { BaseLayer, Layer } from "game/layers";
 import { createLayer } from "game/layers";
-import type { Player } from "game/player";
-import player from "game/player";
+import player, { Player } from "game/player";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatTime } from "util/bignum";
 import { render } from "util/vue";
@@ -31,17 +30,21 @@ export const main = createLayer("main", function (this: BaseLayer) {
     });
     const oomps = trackOOMPS(points, pointGain);
 
+    // Note: Casting as generic tree to avoid recursive type definitions
     const tree = createTree(() => ({
         nodes: [[prestige.treeNode]],
         branches: [],
         onReset() {
-            points.value = toRaw(this.resettingNode.value) === toRaw(prestige.treeNode) ? 0 : 10;
+            points.value = toRaw(tree.resettingNode.value) === toRaw(prestige.treeNode) ? 0 : 10;
             best.value = points.value;
             total.value = points.value;
         },
         resetPropagation: branchedResetPropagation
     })) as Tree;
 
+    // Note: layers don't _need_ a reference to everything,
+    //  but I'd recommend it over trying to remember what does and doesn't need to be included.
+    // Officially all you need are anything with persistency or that you want to access elsewhere
     return {
         name: "Tree",
         links: tree.links,

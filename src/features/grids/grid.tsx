@@ -1,16 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { OptionsFunc, Replace } from "features/feature";
-import { Visibility } from "features/feature";
-import Grid from "features/grids/Grid.vue";
+import { getUniqueID, Visibility } from "features/feature";
 import type { Persistent, State } from "game/persistence";
 import { persistent } from "game/persistence";
 import { isFunction } from "util/common";
-import { ProcessedRefOrGetter, processGetter } from "util/computed";
+import { processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { Renderable, VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
+import { isJSXElement, render, Renderable, VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
 import type { CSSProperties, MaybeRef, MaybeRefOrGetter, Ref } from "vue";
-import { computed, unref } from "vue";
-import GridCell from "./GridCell.vue";
+import { computed, isRef, unref } from "vue";
+import Column from "components/layout/Column.vue";
+import Row from "components/layout/Row.vue";
+import Clickable from "features/clickables/Clickable.vue";
 
 /** A symbol used to identify {@link Grid} features. */
 export const GridType = Symbol("Grid");
@@ -38,8 +38,6 @@ export interface GridCell extends VueFeature {
     startState: State;
     /** The persistent state of this cell. */
     state: State;
-    /** A header to appear at the top of the display. */
-    title?: MaybeRef<Renderable>;
     /** The main text that appears in the display. */
     display: MaybeRef<Renderable>;
     /** A function that is called when the cell is clicked. */
@@ -56,30 +54,49 @@ export interface GridOptions extends VueFeatureOptions {
     rows: MaybeRefOrGetter<number>;
     /** The number of columns in the grid. */
     cols: MaybeRefOrGetter<number>;
-    /** A MaybeRefOrGetter to determine the visibility of a cell. */
+    /** A getter for the visibility of a cell. */
     getVisibility?: CellMaybeRefOrGetter<Visibility | boolean>;
-    /** A MaybeRefOrGetter to determine if a cell can be clicked. */
+    /** A getter for if a cell can be clicked. */
     getCanClick?: CellMaybeRefOrGetter<boolean>;
-    /** A MaybeRefOrGetter to get the initial persistent state of a cell. */
+    /** A getter for the initial persistent state of a cell. */
     getStartState: MaybeRefOrGetter<State> | ((row: number, col: number) => State);
-    /** A MaybeRefOrGetter to get the CSS styles for a cell. */
+    /** A getter for the CSS styles for a cell. */
     getStyle?: CellMaybeRefOrGetter<CSSProperties>;
-    /** A MaybeRefOrGetter to get the CSS classes for a cell. */
+    /** A getter for the CSS classes for a cell. */
     getClasses?: CellMaybeRefOrGetter<Record<string, boolean>>;
-    /** A MaybeRefOrGetter to get the title component for a cell. */
-    getTitle?: CellMaybeRefOrGetter<MaybeRefOrGetter<Renderable>>;
-    /** A MaybeRefOrGetter to get the display component for a cell. */
-    getDisplay: CellMaybeRefOrGetter<MaybeRefOrGetter<Renderable>>;
+    /** A getter for the display component for a cell. */
+    getDisplay: CellMaybeRefOrGetter<Renderable> | {
+        getTitle?: CellMaybeRefOrGetter<Renderable>;
+        getDescription: CellMaybeRefOrGetter<Renderable>
+    };
     /** A function that is called when a cell is clicked. */
     onClick?: (row: number, col: number, state: State, e?: MouseEvent | TouchEvent) => void;
     /** A function that is called when a cell is held down. */
     onHold?: (row: number, col: number, state: State) => void;
 }
 
-/**
- * The properties that are added onto a processed {@link BoardOptions} to create a {@link Board}.
- */
-export interface BaseGrid extends VueFeature {
+/** An object that represents a feature that is a grid of cells that all behave according to the same rules. */
+export interface Grid extends VueFeature {
+    /** A function that is called when a cell is clicked. */
+    onClick?: (row: number, col: number, state: State, e?: MouseEvent | TouchEvent) => void;
+    /** A function that is called when a cell is held down. */
+    onHold?: (row: number, col: number, state: State) => void;
+    /** A getter for determine the visibility of a cell. */
+    getVisibility?: ProcessedCellRefOrGetter<Visibility | boolean>;
+    /** A getter for determine if a cell can be clicked. */
+    getCanClick?: ProcessedCellRefOrGetter<boolean>;
+    /** The number of rows in the grid. */
+    rows: MaybeRef<number>;
+    /** The number of columns in the grid. */
+    cols: MaybeRef<number>;
+    /** A getter for the initial persistent state of a cell. */
+    getStartState: MaybeRef<State> | ((row: number, col: number) => State);
+    /** A getter for the CSS styles for a cell. */
+    getStyle?: ProcessedCellRefOrGetter<CSSProperties>;
+    /** A getter for the CSS classes for a cell. */
+    getClasses?: ProcessedCellRefOrGetter<Record<string, boolean>>;
+    /** A getter for the display component for a cell. */
+    getDisplay: ProcessedCellRefOrGetter<Renderable>;
     /** Get the auto-generated ID for identifying a specific cell of this grid that appears in the DOM. Will not persist between refreshes or updates. */
     getID: (row: number, col: number, state: State) => string;
     /** Get the persistent state of the given cell. */
@@ -94,39 +111,18 @@ export interface BaseGrid extends VueFeature {
     type: typeof GridType;
 }
 
-/** An object that represents a feature that is a grid of cells that all behave according to the same rules. */
-export type Grid = Replace<
-    Replace<GridOptions, BaseGrid>,
-    {
-        getVisibility: ProcessedCellRefOrGetter<Visibility | boolean>;
-        getCanClick: ProcessedCellRefOrGetter<boolean>;
-        rows: ProcessedRefOrGetter<GridOptions["rows"]>;
-        cols: ProcessedRefOrGetter<GridOptions["cols"]>;
-        getStartState: MaybeRef<State> | ((row: number, col: number) => State);
-        getStyle: ProcessedCellRefOrGetter<GridOptions["getStyle"]>;
-        getClasses: ProcessedCellRefOrGetter<GridOptions["getClasses"]>;
-        getTitle: ProcessedCellRefOrGetter<GridOptions["getTitle"]>;
-        getDisplay: ProcessedCellRefOrGetter<GridOptions["getDisplay"]>;
-    }
->;
-
 function getCellRowHandler(grid: Grid, row: number) {
     return new Proxy({} as GridCell[], {
         get(target, key) {
-            if (key === "isProxy") {
-                return true;
-            }
-
-            if (typeof key !== "string") {
-                return;
-            }
-
             if (key === "length") {
                 return unref(grid.cols);
             }
+            if (typeof key !== "number" && typeof key !== "string") {
+                return;
+            }
 
-            const keyNum = parseInt(key);
-            if (!Number.isFinite(keyNum) || keyNum >= unref(grid.cols)) {
+            const keyNum = typeof key === "number" ? key : parseInt(key);
+            if (Number.isFinite(keyNum) && keyNum < unref(grid.cols)) {
                 if (keyNum in target) {
                     return target[keyNum];
                 }
@@ -144,20 +140,20 @@ function getCellRowHandler(grid: Grid, row: number) {
             if (key === "length") {
                 return true;
             }
-            if (typeof key !== "string") {
+            if (typeof key !== "number" && typeof key !== "string") {
                 return false;
             }
-            const keyNum = parseInt(key);
+            const keyNum = typeof key === "number" ? key : parseInt(key);
             if (!Number.isFinite(keyNum) || keyNum >= unref(grid.cols)) {
                 return false;
             }
             return true;
         },
         getOwnPropertyDescriptor(target, key) {
-            if (typeof key !== "string") {
+            if (typeof key !== "number" && typeof key !== "string") {
                 return;
             }
-            const keyNum = parseInt(key);
+            const keyNum = typeof key === "number" ? key : parseInt(key);
             if (key !== "length" && (!Number.isFinite(keyNum) || keyNum >= unref(grid.cols))) {
                 return;
             }
@@ -200,8 +196,6 @@ function getCellHandler(grid: Grid, row: number, col: number): GridCell {
         // The typing in this function is absolutely atrocious in order to support custom properties
         get(target, key, receiver) {
             switch (key) {
-                case "isProxy":
-                    return true;
                 case "wrappers":
                     return [];
                 case VueFeature:
@@ -219,32 +213,28 @@ function getCellHandler(grid: Grid, row: number, col: number): GridCell {
                 case "state": {
                     return grid.getState(row, col);
                 }
+                case "id":
+                    return target.id = target.id ?? getUniqueID("gridcell");
                 case "components":
                     return [
                         computed(() => (
-                            <GridCell
+                            <Clickable
                                 onClick={receiver.onClick}
                                 onHold={receiver.onHold}
                                 display={receiver.display}
-                                title={receiver.title}
                                 canClick={receiver.canClick}
                             />
                         ))
                     ];
             }
-
-            let prop = (grid as any)[key];
-
-            if (isFunction(prop)) {
-                return () => prop.call(receiver, row, col, grid.getState(row, col));
-            }
-            if (prop != null || typeof key === "symbol") {
-                return prop;
+            
+            if (typeof key === "symbol") {
+                return (grid as any)[key];
             }
 
             key = key.slice(0, 1).toUpperCase() + key.slice(1);
 
-            prop = (grid as any)[`get${key}`];
+            let prop = (grid as any)[`get${key}`];
             if (isFunction(prop)) {
                 if (!(key in cache)) {
                     cache[key] = computed(() =>
@@ -263,14 +253,24 @@ function getCellHandler(grid: Grid, row: number, col: number): GridCell {
                 return prop;
             }
 
+            // Revert key change
+            key = key.slice(0, 1).toLowerCase() + key.slice(1);
+            prop = (grid as any)[key];
+
+            if (isFunction(prop)) {
+                return () => prop.call(receiver, row, col, grid.getState(row, col));
+            }
+
             return (grid as any)[key];
         },
         set(target, key, value) {
+            console.log("!!?", key, value)
             if (typeof key !== "string") {
                 return false;
             }
             key = `set${key.slice(0, 1).toUpperCase() + key.slice(1)}`;
-            if (key in grid && isFunction((grid as any)[key]) && (grid as any)[key].length < 3) {
+            console.log(key, grid[key])
+            if (key in grid && isFunction((grid as any)[key]) && (grid as any)[key].length <= 3) {
                 (grid as any)[key].call(grid, row, col, value);
                 return true;
             } else {
@@ -297,6 +297,12 @@ function getCellHandler(grid: Grid, row: number, col: number): GridCell {
 }
 
 function convertCellMaybeRefOrGetter<T>(
+    value: NonNullable<CellMaybeRefOrGetter<T>>
+): ProcessedCellRefOrGetter<T>;
+function convertCellMaybeRefOrGetter<T>(
+    value: CellMaybeRefOrGetter<T> | undefined
+): ProcessedCellRefOrGetter<T> | undefined;
+function convertCellMaybeRefOrGetter<T>(
     value: CellMaybeRefOrGetter<T>
 ): ProcessedCellRefOrGetter<T> {
     if (typeof value === "function" && value.length > 0) {
@@ -309,10 +315,10 @@ function convertCellMaybeRefOrGetter<T>(
  * Lazily creates a grid with the given options.
  * @param optionsFunc Grid options.
  */
-export function createGrid<T extends GridOptions>(optionsFunc: OptionsFunc<T, BaseGrid, Grid>) {
+export function createGrid<T extends GridOptions>(optionsFunc: () => T) {
     const cellState = persistent<Record<number, Record<number, State>>>({}, false);
-    return createLazyProxy(feature => {
-        const options = optionsFunc.call(feature, feature as Grid);
+    return createLazyProxy(() => {
+        const options = optionsFunc();
         const {
             rows,
             cols,
@@ -321,40 +327,57 @@ export function createGrid<T extends GridOptions>(optionsFunc: OptionsFunc<T, Ba
             getStartState,
             getStyle,
             getClasses,
-            getTitle,
-            getDisplay,
+            getDisplay: _getDisplay,
             onClick,
             onHold,
             ...props
         } = options;
 
+        let getDisplay;
+        if (typeof _getDisplay === "object" && !isRef(_getDisplay) && !isJSXElement(_getDisplay)) {
+            const { getTitle, getDescription } = _getDisplay;
+            const getProcessedTitle = convertCellMaybeRefOrGetter(getTitle);
+            const getProcessedDescription = convertCellMaybeRefOrGetter(getDescription);
+            getDisplay = function(row: number, col: number, state: State) {
+                const title = typeof getProcessedTitle === "function" ? getProcessedTitle(row, col, state) : unref(getProcessedTitle);
+                const description = typeof getProcessedDescription === "function" ? getProcessedDescription(row, col, state) : unref(getProcessedDescription);
+                return <>
+                    {title}
+                    {description}
+                </>;
+            }
+        } else {
+            getDisplay = convertCellMaybeRefOrGetter(_getDisplay);
+        }
+
         const grid = {
             type: GridType,
             ...(props as Omit<typeof props, keyof VueFeature | keyof GridOptions>),
             ...vueFeatureMixin("grid", options, () => (
-                <Grid rows={grid.rows} cols={grid.cols} cells={grid.cells} />
-            )),
+                <Column>
+                    {new Array(unref(grid.rows)).fill(0).map((_, row) => (
+                        <Row>
+                            {new Array(unref(grid.cols)).fill(0).map((_, col) =>
+                                render(grid.cells[row][col]))}
+                        </Row>))}
+                </Column>)),
             cellState,
-            cells: new Proxy({} as Record<number, GridCell[]>, {
+            cells: new Proxy({} as GridCell[][], {
                 get(target, key: PropertyKey) {
-                    if (key === "isProxy") {
-                        return true;
-                    }
-
                     if (key === "length") {
                         return unref(grid.rows);
                     }
 
-                    if (typeof key !== "string") {
+                    if (typeof key !== "number" && typeof key !== "string") {
                         return;
                     }
 
-                    const keyNum = parseInt(key);
-                    if (!Number.isFinite(keyNum) || keyNum >= unref(grid.rows)) {
-                        if (keyNum in target) {
-                            return target[keyNum];
+                    const keyNum = typeof key === "number" ? key : parseInt(key);
+                    if (Number.isFinite(keyNum) && keyNum < unref(grid.rows)) {
+                        if (!(keyNum in target)) {
+                            target[keyNum] = getCellRowHandler(grid, keyNum);
                         }
-                        return (target[keyNum] = getCellRowHandler(grid, keyNum));
+                        return target[keyNum];
                     }
                 },
                 set(target, key, value) {
@@ -368,20 +391,20 @@ export function createGrid<T extends GridOptions>(optionsFunc: OptionsFunc<T, Ba
                     if (key === "length") {
                         return true;
                     }
-                    if (typeof key !== "string") {
+                    if (typeof key !== "number" && typeof key !== "string") {
                         return false;
                     }
-                    const keyNum = parseInt(key);
+                    const keyNum = typeof key === "number" ? key : parseInt(key);
                     if (!Number.isFinite(keyNum) || keyNum >= unref(grid.rows)) {
                         return false;
                     }
                     return true;
                 },
                 getOwnPropertyDescriptor(target, key) {
-                    if (typeof key !== "string") {
+                    if (typeof key !== "number" && typeof key !== "string") {
                         return;
                     }
-                    const keyNum = parseInt(key);
+                    const keyNum = typeof key === "number" ? key : parseInt(key);
                     if (
                         key !== "length" &&
                         (!Number.isFinite(keyNum) || keyNum >= unref(grid.rows))
@@ -399,15 +422,16 @@ export function createGrid<T extends GridOptions>(optionsFunc: OptionsFunc<T, Ba
             cols: processGetter(cols),
             getVisibility: convertCellMaybeRefOrGetter(getVisibility ?? true),
             getCanClick: convertCellMaybeRefOrGetter(getCanClick ?? true),
-            getStartState: processGetter(getStartState),
+            getStartState: typeof getStartState === "function" && getStartState.length > 0 ?
+                getStartState : processGetter(getStartState),
             getStyle: convertCellMaybeRefOrGetter(getStyle),
             getClasses: convertCellMaybeRefOrGetter(getClasses),
-            getTitle: convertCellMaybeRefOrGetter(getTitle),
-            getDisplay: convertCellMaybeRefOrGetter(getDisplay),
+            getDisplay,
             getID: function (row: number, col: number): string {
                 return grid.id + "-" + row + "-" + col;
             },
             getState: function (row: number, col: number): State {
+                cellState.value[row] ??= {};
                 if (cellState.value[row][col] != null) {
                     return cellState.value[row][col];
                 }
@@ -421,7 +445,7 @@ export function createGrid<T extends GridOptions>(optionsFunc: OptionsFunc<T, Ba
                 onClick == null
                     ? undefined
                     : function (row, col, state, e) {
-                          if (grid.cells[row][col].canClick) {
+                          if (grid.cells[row][col].canClick !== false) {
                               onClick.call(grid, row, col, state, e);
                           }
                       },
@@ -429,7 +453,7 @@ export function createGrid<T extends GridOptions>(optionsFunc: OptionsFunc<T, Ba
                 onHold == null
                     ? undefined
                     : function (row, col, state) {
-                          if (grid.cells[row][col].canClick) {
+                          if (grid.cells[row][col].canClick !== false) {
                               onHold.call(grid, row, col, state);
                           }
                       }

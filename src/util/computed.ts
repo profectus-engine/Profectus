@@ -1,12 +1,6 @@
 import { isFunction } from "util/common";
-import type { ComputedRef, MaybeRef, Ref, UnwrapRef } from "vue";
+import type { ComputedRef } from "vue";
 import { computed } from "vue";
-
-export type ProcessedRefOrGetter<T> = T extends () => infer S
-    ? Ref<S>
-    : T extends undefined
-      ? undefined
-      : MaybeRef<NonNullable<UnwrapRef<T>>>;
 
 export function processGetter<T>(obj: T): T extends () => infer S ? ComputedRef<S> : T {
     if (isFunction(obj)) {

@@ -1,8 +1,7 @@
-import type { OptionsFunc, Replace } from "features/feature";
-import { ProcessedRefOrGetter, processGetter } from "util/computed";
+import { processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { render, Renderable, VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
-import { MaybeRefOrGetter } from "vue";
+import { MaybeRef, MaybeRefOrGetter } from "vue";
 import { JSX } from "vue/jsx-runtime";
 
 /** A symbol used to identify {@link Tab} features. */
@@ -17,31 +16,23 @@ export interface TabOptions extends VueFeatureOptions {
 }
 
 /**
- * The properties that are added onto a processed {@link TabOptions} to create an {@link Tab}.
+ * An object representing a tab of content in a tabbed interface.
+ * @see {@link TabFamily}
  */
-export interface BaseTab extends VueFeature {
+export interface Tab extends VueFeature {
+    /** The display to use for this tab. */
+    display: MaybeRef<Renderable>;
     /** A symbol that helps identify features of the same type. */
     type: typeof TabType;
 }
 
 /**
- * An object representing a tab of content in a tabbed interface.
- * @see {@link TabFamily}
- */
-export type Tab = Replace<
-    Replace<TabOptions, BaseTab>,
-    {
-        display: ProcessedRefOrGetter<TabOptions["display"]>;
-    }
->;
-
-/**
  * Lazily creates a tab with the given options.
  * @param optionsFunc Tab options.
  */
-export function createTab<T extends TabOptions>(optionsFunc: OptionsFunc<T, BaseTab, Tab>) {
-    return createLazyProxy(feature => {
-        const options = optionsFunc?.call(feature, feature as Tab) ?? ({} as T);
+export function createTab<T extends TabOptions>(optionsFunc: () => T) {
+    return createLazyProxy(() => {
+        const options = optionsFunc?.() ?? ({} as T);
         const { display, ...props } = options;
 
         const tab = {

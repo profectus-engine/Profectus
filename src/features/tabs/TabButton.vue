@@ -9,12 +9,13 @@ import { getNotifyStyle } from "game/notifications";
 import { render } from "util/vue";
 import { computed, unref } from "vue";
 import { TabButton } from "./tabFamily";
+import themes from "data/themes";
+import settings from "game/settings";
 
 const props = defineProps<{
     display: TabButton["display"];
     glowColor: TabButton["glowColor"];
     active?: boolean;
-    floating?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -28,10 +29,14 @@ const glowColorStyle = computed(() => {
     if (color == null || color === "") {
         return {};
     }
-    if (props.floating) {
+    if (floating.value) {
         return getNotifyStyle(color);
     }
     return { boxShadow: `0px 9px 5px -6px ${color}` };
+});
+
+const floating = computed(() => {
+    return themes[settings.theme].floatingTabs;
 });
 
 function selectTab() {

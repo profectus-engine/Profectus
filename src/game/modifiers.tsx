@@ -1,5 +1,4 @@
 import "components/common/modifiers.css";
-import type { OptionsFunc } from "features/feature";
 import settings from "game/settings";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { formatSmall } from "util/bignum";
@@ -59,13 +58,10 @@ export interface AdditiveModifierOptions {
  * @param optionsFunc Additive modifier options.
  */
 export function createAdditiveModifier<T extends AdditiveModifierOptions, S = OperationModifier<T>>(
-    optionsFunc: OptionsFunc<T>
+    optionsFunc: () => T
 ) {
-    return createLazyProxy(feature => {
-        const { addend, description, enabled, smallerIsBetter } = optionsFunc.call(
-            feature,
-            feature
-        );
+    return createLazyProxy(() => {
+        const { addend, description, enabled, smallerIsBetter } = optionsFunc();
 
         const processedAddend = processGetter(addend);
         const processedDescription = processGetter(description);
@@ -123,12 +119,9 @@ export interface MultiplicativeModifierOptions {
 export function createMultiplicativeModifier<
     T extends MultiplicativeModifierOptions,
     S = OperationModifier<T>
->(optionsFunc: OptionsFunc<T>) {
-    return createLazyProxy(feature => {
-        const { multiplier, description, enabled, smallerIsBetter } = optionsFunc.call(
-            feature,
-            feature
-        );
+>(optionsFunc: () => T) {
+    return createLazyProxy(() => {
+        const { multiplier, description, enabled, smallerIsBetter } = optionsFunc();
 
         const processedMultiplier = processGetter(multiplier);
         const processedDescription = processGetter(description);
@@ -187,10 +180,10 @@ export interface ExponentialModifierOptions {
 export function createExponentialModifier<
     T extends ExponentialModifierOptions,
     S = OperationModifier<T>
->(optionsFunc: OptionsFunc<T>) {
-    return createLazyProxy(feature => {
+>(optionsFunc: () => T) {
+    return createLazyProxy(() => {
         const { exponent, description, enabled, supportLowNumbers, smallerIsBetter } =
-            optionsFunc.call(feature, feature);
+            optionsFunc();
 
         const processedExponent = processGetter(exponent);
         const processedDescription = processGetter(description);

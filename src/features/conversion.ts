@@ -1,4 +1,3 @@
-import type { OptionsFunc, Replace } from "features/feature";
 import type { Resource } from "features/resources/resource";
 import Formula from "game/formulas/formulas";
 import { InvertibleFormula, InvertibleIntegralFormula } from "game/formulas/types";
@@ -77,26 +76,63 @@ export interface ConversionOptions {
 /**
  * The properties that are added onto a processed {@link ConversionOptions} to create a {@link Conversion}.
  */
-export interface BaseConversion {
+export interface Conversion {
     /**
-     * The function that performs the actual conversion.
+     * The formula used to determine how much {@link gainResource} should be earned by this converting.
+     */
+    formula: InvertibleFormula;
+    /**
+     * How much of the output resource the conversion can currently convert for.
+     * Typically this will be set for you in a conversion constructor.
+     */
+    currentGain: MaybeRef<DecimalSource>;
+    /**
+     * The absolute amount the output resource will be changed by.
+     * Typically this will be set for you in a conversion constructor.
+     * This will differ from {@link currentGain} in the cases where the conversion isn't just adding the converted amount to the output resource.
+     */
+    actualGain: MaybeRef<DecimalSource>;
+    /**
+     * The amount of the input resource currently being required in order to produce the {@link currentGain}.
+     * That is, if it went below this value then {@link currentGain} would decrease.
+     * Typically this will be set for you in a conversion constructor.
+     */
+    currentAt: MaybeRef<DecimalSource>;
+    /**
+     * The amount of the input resource required to make {@link currentGain} increase.
+     * Typically this will be set for you in a conversion constructor.
+     */
+    nextAt: MaybeRef<DecimalSource>;
+    /**
+     * The input {@link features/resources/resource.Resource} for this conversion.
+     */
+    baseResource: Resource;
+    /**
+     * The output {@link features/resources/resource.Resource} for this conversion. i.e. the resource being generated.
+     */
+    gainResource: Resource;
+    /**
+     * Whether or not to cap the amount of the output resource gained by converting at 1.
+     * Defaults to true.
+     */
+    buyMax: MaybeRef<boolean>;
+    /**
+     * The function that performs the actual conversion from {@link baseResource} to {@link gainResource}.
+     * Typically this will be set for you in a conversion constructor.
      */
     convert: VoidFunction;
+    /**
+     * The function that spends the {@link baseResource} as part of the conversion.
+     * Defaults to setting the {@link baseResource} amount to 0.
+     */
+    spend: (amountGained: DecimalSource) => void;
+    /**
+     * A callback that happens after a conversion has been completed.
+     * Receives the amount gained via conversion.
+     * This will not be called whenever using currentGain without calling convert (e.g. passive generation)
+     */
+    onConvert?: (amountGained: DecimalSource) => void;
 }
-
-/** An object that converts one {@link features/resources/resource.Resource} into another at a given rate. */
-export type Conversion = Replace<
-    Replace<ConversionOptions, BaseConversion>,
-    {
-        formula: InvertibleFormula;
-        currentGain: MaybeRef<DecimalSource>;
-        actualGain: MaybeRef<DecimalSource>;
-        currentAt: MaybeRef<DecimalSource>;
-        nextAt: MaybeRef<DecimalSource>;
-        buyMax: MaybeRef<boolean>;
-        spend: (amountGained: DecimalSource) => void;
-    }
->;
 
 /**
  * Lazily creates a conversion with the given options.
@@ -105,11 +141,9 @@ export type Conversion = Replace<
  * @see {@link createCumulativeConversion}.
  * @see {@link createIndependentConversion}.
  */
-export function createConversion<T extends ConversionOptions>(
-    optionsFunc: OptionsFunc<T, BaseConversion, Conversion>
-) {
-    return createLazyProxy(feature => {
-        const options = optionsFunc.call(feature, feature as Conversion);
+export function createConversion<T extends ConversionOptions>(optionsFunc: () => T) {
+    return createLazyProxy(() => {
+        const options = optionsFunc();
         const {
             baseResource,
             gainResource,
@@ -187,9 +221,7 @@ export function createConversion<T extends ConversionOptions>(
  * This is equivalent to just calling createConversion directly.
  * @param optionsFunc Conversion options.
  */
-export function createCumulativeConversion<S extends ConversionOptions>(
-    optionsFunc: OptionsFunc<S, BaseConversion, Conversion>
-) {
+export function createCumulativeConversion<T extends ConversionOptions>(optionsFunc: () => T) {
     return createConversion(optionsFunc);
 }
 
@@ -198,47 +230,46 @@ export function createCumulativeConversion<S extends ConversionOptions>(
  * This is similar to the behavior of "static" layers in The Modding Tree.
  * @param optionsFunc Converison options.
  */
-export function createIndependentConversion<S extends ConversionOptions>(
-    optionsFunc: OptionsFunc<S, BaseConversion, Conversion>
-) {
-    return createConversion(feature => {
-        const conversion = optionsFunc.call(feature, feature);
+export function createIndependentConversion<T extends ConversionOptions>(optionsFunc: () => T) {
+    const conversion = createConversion(() => {
+        const options = optionsFunc();
 
-        conversion.buyMax ??= false;
+        options.buyMax ??= false;
 
-        conversion.currentGain ??= computed(() => {
-            let gain = Decimal.floor(feature.formula.evaluate(conversion.baseResource.value)).max(
-                conversion.gainResource.value
+        options.currentGain ??= computed(() => {
+            let gain = Decimal.floor(conversion.formula.evaluate(options.baseResource.value)).max(
+                options.gainResource.value
             );
-            if (unref(conversion.buyMax as MaybeRef<boolean>) === false) {
-                gain = gain.min(Decimal.add(conversion.gainResource.value, 1));
+            if (unref(options.buyMax as MaybeRef<boolean>) === false) {
+                gain = gain.min(Decimal.add(options.gainResource.value, 1));
             }
             return gain;
         });
 
-        conversion.actualGain ??= computed(() => {
+        options.actualGain ??= computed(() => {
             let gain = Decimal.sub(
-                feature.formula.evaluate(conversion.baseResource.value),
-                conversion.gainResource.value
+                conversion.formula.evaluate(options.baseResource.value),
+                options.gainResource.value
             )
                 .floor()
                 .max(0);
 
-            if (unref(conversion.buyMax as MaybeRef<boolean>) === false) {
+            if (unref(options.buyMax as MaybeRef<boolean>) === false) {
                 gain = gain.min(1);
             }
             return gain;
         });
 
-        conversion.convert ??= function () {
-            const amountGained = unref(feature.actualGain);
-            conversion.gainResource.value = unref(feature.currentGain);
-            feature.spend(amountGained);
-            feature.onConvert?.(amountGained);
+        options.convert ??= function () {
+            const amountGained = unref(conversion.actualGain);
+            options.gainResource.value = unref(conversion.currentGain);
+            conversion.spend(amountGained);
+            conversion.onConvert?.(amountGained);
         };
 
-        return conversion;
+        return options;
     });
+    return conversion;
 }
 
 /**

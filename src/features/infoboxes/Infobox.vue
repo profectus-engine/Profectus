@@ -15,8 +15,8 @@
             <Title />
         </button>
         <CollapseTransition>
-            <div v-if="!unref(collapsed)" class="body" :style="{ backgroundColor: unref(color) }">
-                <Body :style="unref(bodyStyle)" />
+            <div v-if="!unref(collapsed)" class="body" :style="unref(bodyStyle)">
+                <Body />
             </div>
         </CollapseTransition>
     </div>
@@ -79,6 +79,8 @@ const stacked = computed(() => themes[settings.theme].mergeAdjacent);
     width: auto;
     text-align: left;
     padding-left: 30px;
+    border-radius: 0;
+    margin: 00;
 }
 
 .infobox:not(.stacked) .title {
@@ -117,21 +119,15 @@ const stacked = computed(() => themes[settings.theme].mergeAdjacent);
 
 .body {
     transition-duration: 0.5s;
-    border-radius: 5px;
-    border-top-left-radius: 0;
-}
-
-.infobox:not(.stacked) .body {
-    padding: 4px;
-}
-
-.body > * {
     padding: 8px;
     width: 100%;
     display: block;
     box-sizing: border-box;
-    border-radius: 5px;
-    border-top-left-radius: 0;
     background-color: var(--background);
+    border-radius: 0 0 var(--feature-margin) var(--feature-margin);
+}
+
+.infobox:not(.stacked) .body {
+    padding: 4px;
 }
 </style>

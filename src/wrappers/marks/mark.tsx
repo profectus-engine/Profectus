@@ -1,6 +1,6 @@
 import { type OptionsFunc } from "features/feature";
 import { processGetter } from "util/computed";
-import { createLazyProxy } from "util/proxies";
+import { createLazyProxy, runAfterEvaluation } from "util/proxies";
 import type { VueFeature } from "util/vue";
 import { MaybeRef, MaybeRefOrGetter, unref } from "vue";
 import MarkNode from "./MarkNode.vue";
@@ -25,10 +25,10 @@ export interface Mark {
  */
 export function addMark<T extends MarkOptions>(
     element: VueFeature,
-    optionsFunc: OptionsFunc<T, Mark, Mark>
-) {
-    const mark = createLazyProxy(feature => {
-        const options = optionsFunc.call(feature, feature as Mark);
+    optionsFunc: OptionsFunc<T, Mark>
+): asserts element is VueFeature & { mark: Mark } {
+    const mark = createLazyProxy(() => {
+        const options = optionsFunc();
         const { mark, ...props } = options;
 
         return {
@@ -37,9 +37,11 @@ export function addMark<T extends MarkOptions>(
         } satisfies Mark;
     });
 
-    element.wrappers.push(el =>
-        Boolean(unref(mark.mark)) ? <MarkNode mark={mark.mark}>{el}</MarkNode> : <>{el}</>
-    );
-
-    return mark;
+    runAfterEvaluation(element, el => {
+        mark.mark; // Ensure mark gets evaluated
+        (element as VueFeature & { mark: Mark }).mark = mark;
+        el.wrappers.push(el =>
+            Boolean(unref(mark.mark)) ? <MarkNode mark={mark.mark}>{el}</MarkNode> : <>{el}</>
+        );
+    });
 }

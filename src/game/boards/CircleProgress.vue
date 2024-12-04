@@ -12,7 +12,7 @@
 <script setup lang="ts">
 import type { SVGAttributes } from "vue";
 
-interface CircleProgressProps extends SVGAttributes {
+interface CircleProgressProps extends /* @vue-ignore */ SVGAttributes {
     r: number;
     progress: number;
     stroke: string;

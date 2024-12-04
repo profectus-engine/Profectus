@@ -2,10 +2,11 @@
     <div
         class="board-node"
         :style="`transform: translate(calc(${unref(position).x}px - 50%), ${unref(position).y}px);`"
-        @mousedown="e => mouseDown(e)"
-        @touchstart.passive="e => mouseDown(e)"
-        @mouseup="e => mouseUp(e)"
-        @touchend.passive="e => mouseUp(e)"
+        @click.capture.stop="() => {}"
+        @mousedown="mouseDown"
+        @touchstart.passive="mouseDown"
+        @mouseup.capture="mouseUp"
+        @touchend.passive="mouseUp"
     >
         <slot />
     </div>

@@ -1,8 +1,7 @@
 import Bar from "features/bars/Bar.vue";
-import type { OptionsFunc, Replace } from "features/feature";
 import type { DecimalSource } from "util/bignum";
 import { Direction } from "util/common";
-import { ProcessedRefOrGetter, processGetter } from "util/computed";
+import { processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { Renderable, VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
 import { CSSProperties, MaybeRef, MaybeRefOrGetter } from "vue";
@@ -34,37 +33,37 @@ export interface BarOptions extends VueFeatureOptions {
     display?: MaybeRefOrGetter<Renderable>;
 }
 
-/**
- * The properties that are added onto a processed {@link BarOptions} to create a {@link Bar}.
- */
-export interface BaseBar extends VueFeature {
+/** An object that represents a feature that displays some sort of progress or completion or resource with a cap. */
+export interface Bar extends VueFeature {
+    /** The width of the bar. */
+    width: MaybeRef<number>;
+    /** The height of the bar. */
+    height: MaybeRef<number>;
+    /** The direction in which the bar progresses. */
+    direction: MaybeRef<Direction>;
+    /** CSS to apply to the bar's border. */
+    borderStyle?: MaybeRef<CSSProperties>;
+    /** CSS to apply to the bar's base. */
+    baseStyle?: MaybeRef<CSSProperties>;
+    /** CSS to apply to the bar's text. */
+    textStyle?: MaybeRef<CSSProperties>;
+    /** CSS to apply to the bar's fill. */
+    fillStyle?: MaybeRef<CSSProperties>;
+    /** The progress value of the bar, from 0 to 1. */
+    progress: MaybeRef<DecimalSource>;
+    /** The display to use for this bar. */
+    display?: MaybeRef<Renderable>;
     /** A symbol that helps identify features of the same type. */
     type: typeof BarType;
 }
-
-/** An object that represents a feature that displays some sort of progress or completion or resource with a cap. */
-export type Bar = Replace<
-    Replace<BarOptions, BaseBar>,
-    {
-        width: ProcessedRefOrGetter<BarOptions["width"]>;
-        height: ProcessedRefOrGetter<BarOptions["height"]>;
-        direction: ProcessedRefOrGetter<BarOptions["direction"]>;
-        borderStyle: ProcessedRefOrGetter<BarOptions["borderStyle"]>;
-        baseStyle: ProcessedRefOrGetter<BarOptions["baseStyle"]>;
-        textStyle: ProcessedRefOrGetter<BarOptions["textStyle"]>;
-        fillStyle: ProcessedRefOrGetter<BarOptions["fillStyle"]>;
-        progress: ProcessedRefOrGetter<BarOptions["progress"]>;
-        display?: MaybeRef<Renderable>;
-    }
->;
 
 /**
  * Lazily creates a bar with the given options.
  * @param optionsFunc Bar options.
  */
-export function createBar<T extends BarOptions>(optionsFunc: OptionsFunc<T, BaseBar, Bar>) {
-    return createLazyProxy(feature => {
-        const options = optionsFunc?.call(feature, feature as Bar);
+export function createBar<T extends BarOptions>(optionsFunc: () => T) {
+    return createLazyProxy(() => {
+        const options = optionsFunc?.();
         const {
             width,
             height,

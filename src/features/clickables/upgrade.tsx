@@ -1,4 +1,3 @@
-import type { OptionsFunc, Replace } from "features/feature";
 import { findFeatures } from "features/feature";
 import { Layer } from "game/layers";
 import type { Persistent } from "game/persistence";
@@ -17,6 +16,7 @@ import { Renderable, VueFeature, VueFeatureOptions, render, vueFeatureMixin } fr
 import type { MaybeRef, MaybeRefOrGetter, Ref } from "vue";
 import { computed, unref } from "vue";
 import Clickable from "./Clickable.vue";
+import { ClickableOptions } from "./clickable";
 
 /** A symbol used to identify {@link Upgrade} features. */
 export const UpgradeType = Symbol("Upgrade");
@@ -24,7 +24,7 @@ export const UpgradeType = Symbol("Upgrade");
 /**
  * An object that configures a {@link Upgrade}.
  */
-export interface UpgradeOptions extends VueFeatureOptions {
+export interface UpgradeOptions extends VueFeatureOptions, ClickableOptions {
     /** The display to use for this upgrade. */
     display?:
         | MaybeRefOrGetter<Renderable>
@@ -42,48 +42,33 @@ export interface UpgradeOptions extends VueFeatureOptions {
     onPurchase?: VoidFunction;
 }
 
-/**
- * The properties that are added onto a processed {@link UpgradeOptions} to create an {@link Upgrade}.
- */
-export interface BaseUpgrade extends VueFeature {
+/** An object that represents a feature that can be purchased a single time. */
+export interface Upgrade extends VueFeature {
+    /** The requirements to purchase this upgrade. */
+    requirements: Requirements;
+    /** The display to use for this upgrade. */
+    display?: MaybeRef<Renderable>;
     /** Whether or not this upgrade has been purchased. */
     bought: Persistent<boolean>;
     /** Whether or not the upgrade can currently be purchased. */
     canPurchase: Ref<boolean>;
+    /** A function that is called when the upgrade is purchased. */
+    onPurchase?: VoidFunction;
     /** Purchase the upgrade */
     purchase: VoidFunction;
     /** A symbol that helps identify features of the same type. */
     type: typeof UpgradeType;
 }
 
-/** An object that represents a feature that can be purchased a single time. */
-export type Upgrade = Replace<
-    Replace<UpgradeOptions, BaseUpgrade>,
-    {
-        display?:
-            | MaybeRef<Renderable>
-            | {
-                  /** A header to appear at the top of the display. */
-                  title?: MaybeRef<Renderable>;
-                  /** The main text that appears in the display. */
-                  description: MaybeRef<Renderable>;
-                  /** A description of the current effect of the achievement. Useful when the effect changes dynamically. */
-                  effectDisplay?: MaybeRef<Renderable>;
-              };
-    }
->;
-
 /**
  * Lazily creates an upgrade with the given options.
  * @param optionsFunc Upgrade options.
  */
-export function createUpgrade<T extends UpgradeOptions>(
-    optionsFunc: OptionsFunc<T, BaseUpgrade, Upgrade>
-) {
+export function createUpgrade<T extends UpgradeOptions>(optionsFunc: () => T) {
     const bought = persistent<boolean>(false, false);
-    return createLazyProxy(feature => {
-        const options = optionsFunc.call(feature, feature as Upgrade);
-        const { requirements: _requirements, display: _display, ...props } = options;
+    return createLazyProxy(() => {
+        const options = optionsFunc();
+        const { requirements: _requirements, display: _display, onHold, ...props } = options;
 
         if (options.classes == null) {
             options.classes = computed(() => ({ bought: unref(upgrade.bought) }));
@@ -97,6 +82,7 @@ export function createUpgrade<T extends UpgradeOptions>(
         const vueFeature = vueFeatureMixin("upgrade", options, () => (
             <Clickable
                 onClick={upgrade.purchase}
+                onHold={upgrade.onHold}
                 canClick={upgrade.canPurchase}
                 display={upgrade.display}
             />
@@ -150,6 +136,7 @@ export function createUpgrade<T extends UpgradeOptions>(
             canPurchase: computed(() => !bought.value && requirementsMet(requirements)),
             requirements,
             display,
+            onHold,
             purchase() {
                 if (!unref(upgrade.canPurchase)) {
                     return;

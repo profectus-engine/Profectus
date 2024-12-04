@@ -1,5 +1,4 @@
 import Clickable from "features/clickables/Clickable.vue";
-import type { OptionsFunc, Replace } from "features/feature";
 import { Visibility } from "features/feature";
 import { DefaultValue, Persistent, persistent } from "game/persistence";
 import {
@@ -23,7 +22,7 @@ import { ClickableOptions } from "./clickable";
 export const RepeatableType = Symbol("Repeatable");
 
 /** An object that configures a {@link Repeatable}. */
-export interface RepeatableOptions extends Omit<ClickableOptions, "display" | "canClick"> {
+export interface RepeatableOptions extends ClickableOptions {
     /** The requirement(s) to increase this repeatable. */
     requirements: Requirements;
     /** The maximum amount obtainable for this repeatable. */
@@ -37,7 +36,7 @@ export interface RepeatableOptions extends Omit<ClickableOptions, "display" | "c
               /** A header to appear at the top of the display. */
               title?: MaybeRefOrGetter<Renderable>;
               /** The main text that appears in the display. */
-              description?: MaybeRefOrGetter<Renderable>;
+              description: MaybeRefOrGetter<Renderable>;
               /** A description of the current effect of this repeatable, based off its amount. */
               effectDisplay?: MaybeRefOrGetter<Renderable>;
               /** Whether or not to show the current amount of this repeatable at the bottom of the display. */
@@ -45,10 +44,20 @@ export interface RepeatableOptions extends Omit<ClickableOptions, "display" | "c
           };
 }
 
-/**
- * The properties that are added onto a processed {@link RepeatableOptions} to create a {@link Repeatable}.
- */
-export interface BaseRepeatable extends VueFeature {
+/** An object that represents a feature with multiple "levels" with scaling requirements. */
+export interface Repeatable extends VueFeature {
+    /** The requirement(s) to increase this repeatable. */
+    requirements: Requirements;
+    /** The maximum amount obtainable for this repeatable. */
+    limit: MaybeRef<DecimalSource>;
+    /** The initial amount this repeatable has on a new save / after reset. */
+    initialAmount?: DecimalSource;
+    /** The display to use for this repeatable. */
+    display?: MaybeRef<Renderable>;
+    /** Whether or not the repeatable may be clicked. */
+    canClick: Ref<boolean>;
+    /** A function that is called when the repeatable is clicked. */
+    onClick: (event?: MouseEvent | TouchEvent) => void;
     /** The current amount this repeatable has. */
     amount: Persistent<DecimalSource>;
     /** Whether or not this repeatable's amount is at it's limit. */
@@ -59,27 +68,14 @@ export interface BaseRepeatable extends VueFeature {
     type: typeof RepeatableType;
 }
 
-/** An object that represents a feature with multiple "levels" with scaling requirements. */
-export type Repeatable = Replace<
-    Replace<RepeatableOptions, BaseRepeatable>,
-    {
-        limit: MaybeRef<DecimalSource>;
-        display?: MaybeRef<Renderable>;
-        canClick: Ref<boolean>;
-        onClick: (event?: MouseEvent | TouchEvent) => void;
-    }
->;
-
 /**
  * Lazily creates a repeatable with the given options.
  * @param optionsFunc Repeatable options.
  */
-export function createRepeatable<T extends RepeatableOptions>(
-    optionsFunc: OptionsFunc<T, BaseRepeatable, Repeatable>
-) {
+export function createRepeatable<T extends RepeatableOptions>(optionsFunc: () => T) {
     const amount = persistent<DecimalSource>(0);
-    return createLazyProxy(feature => {
-        const options = optionsFunc.call(feature, feature as Repeatable);
+    return createLazyProxy(() => {
+        const options = optionsFunc();
         const {
             requirements: _requirements,
             display: _display,
@@ -130,8 +126,7 @@ export function createRepeatable<T extends RepeatableOptions>(
             const showAmount = processGetter(_display.showAmount);
 
             const Title = title == null ? null : () => render(title, el => <h3>{el}</h3>);
-            const Description =
-                description == null ? null : () => render(description, el => <>{el}</>);
+            const Description = () => render(description, el => <>{el}</>);
             const EffectDisplay =
                 effectDisplay == null ? null : () => render(effectDisplay, el => <>{el}</>);
 
@@ -142,7 +137,7 @@ export function createRepeatable<T extends RepeatableOptions>(
                             <Title />
                         </div>
                     )}
-                    {Description == null ? null : <Description />}
+                    <Description />
                     {showAmount === false ? null : (
                         <div>
                             <br />
@@ -181,6 +176,7 @@ export function createRepeatable<T extends RepeatableOptions>(
             ...vueFeature,
             amount,
             requirements,
+            initialAmount,
             limit: processGetter(limit) ?? Decimal.dInf,
             classes: computed(() => {
                 const currClasses = unref(vueFeature.classes) || {};

@@ -1,5 +1,4 @@
 import Toggle from "components/fields/Toggle.vue";
-import type { OptionsFunc, Replace } from "features/feature";
 import { isVisible } from "features/feature";
 import type { Reset } from "features/reset";
 import { globalBus } from "game/events";
@@ -54,10 +53,37 @@ export interface ChallengeOptions extends VueFeatureOptions {
     onEnter?: VoidFunction;
 }
 
-/**
- * The properties that are added onto a processed {@link ChallengeOptions} to create a {@link Challenge}.
- */
-export interface BaseChallenge extends VueFeature {
+/** An object that represents a feature that can be entered and exited, and have one or more completions with scaling requirements. */
+export interface Challenge extends VueFeature {
+    /** The reset function for this challenge. */
+    reset?: Reset;
+    /** The requirement(s) to complete this challenge. */
+    requirements: Requirements;
+    /** A function that is called when the challenge is completed. */
+    onComplete?: VoidFunction;
+    /** A function that is called when the challenge is exited. */
+    onExit?: VoidFunction;
+    /** A function that is called when the challenge is entered. */
+    onEnter?: VoidFunction;
+    /** Whether this challenge can be started. */
+    canStart?: MaybeRef<boolean>;
+    /** The maximum number of times the challenge can be completed. */
+    completionLimit?: MaybeRef<DecimalSource>;
+    /** The display to use for this challenge. */
+    display?:
+        | MaybeRef<Renderable>
+        | {
+              /** A header to appear at the top of the display. */
+              title?: MaybeRef<Renderable>;
+              /** The main text that appears in the display. */
+              description: MaybeRef<Renderable>;
+              /** A description of the current goal for this challenge. If unspecified then the requirements will be displayed automatically based on {@link requirements}.  */
+              goal?: MaybeRef<Renderable>;
+              /** A description of what will change upon completing this challenge. */
+              reward?: MaybeRef<Renderable>;
+              /** A description of the current effect of this challenge. */
+              effectDisplay?: MaybeRef<Renderable>;
+          };
     /** The current amount of times this challenge can be completed. */
     canComplete: Ref<DecimalSource>;
     /** The current number of times this challenge has been completed. */
@@ -79,35 +105,15 @@ export interface BaseChallenge extends VueFeature {
     type: typeof ChallengeType;
 }
 
-/** An object that represents a feature that can be entered and exited, and have one or more completions with scaling requirements. */
-export type Challenge = Replace<
-    Replace<ChallengeOptions, BaseChallenge>,
-    {
-        canStart: MaybeRef<boolean>;
-        completionLimit: MaybeRef<DecimalSource>;
-        display?:
-            | MaybeRef<Renderable>
-            | {
-                  title?: MaybeRef<Renderable>;
-                  description: MaybeRef<Renderable>;
-                  goal?: MaybeRef<Renderable>;
-                  reward?: MaybeRef<Renderable>;
-                  effectDisplay?: MaybeRef<Renderable>;
-              };
-    }
->;
-
 /**
  * Lazily creates a challenge with the given options.
  * @param optionsFunc Challenge options.
  */
-export function createChallenge<T extends ChallengeOptions>(
-    optionsFunc: OptionsFunc<T, BaseChallenge, Challenge>
-) {
+export function createChallenge<T extends ChallengeOptions>(optionsFunc: () => T) {
     const completions = persistent<DecimalSource>(0);
     const active = persistent<boolean>(false, false);
-    return createLazyProxy(feature => {
-        const options = optionsFunc.call(feature, feature as Challenge);
+    return createLazyProxy(() => {
+        const options = optionsFunc();
         const {
             requirements,
             canStart,

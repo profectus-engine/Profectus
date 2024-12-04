@@ -258,7 +258,7 @@ globalBus.on("addLayer", (layer: Layer, saveData: Record<string, unknown>) => {
         Object.keys(obj).forEach(key => {
             let value = obj[key];
             if (value != null && typeof value === "object") {
-                if ((value as Record<PropertyKey, unknown>)[SkipPersistence] === true) {
+                if (SkipPersistence in value && value[SkipPersistence] === true) {
                     return;
                 }
                 if (ProxyState in value) {
@@ -364,7 +364,7 @@ globalBus.on("addLayer", (layer: Layer, saveData: Record<string, unknown>) => {
             return;
         }
         console.error(
-            `Created persistent ref in ${layer.id} without registering it to the layer!`,
+            `Created persistent ref in "${layer.id}" without registering it to the layer!`,
             "Make sure to include everything persistent in the returned object.\n\nCreated at:\n" +
                 persistent[StackTrace]
         );

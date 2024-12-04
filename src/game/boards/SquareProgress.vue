@@ -14,7 +14,7 @@
 <script setup lang="ts">
 import type { SVGAttributes } from "vue";
 
-interface SquareProgressProps extends SVGAttributes {
+interface SquareProgressProps extends /* @vue-ignore */ SVGAttributes {
     size: number;
     progress: number;
     stroke: string;

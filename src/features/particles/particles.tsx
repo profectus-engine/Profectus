@@ -1,8 +1,6 @@
 import { Application } from "@pixi/app";
 import type { EmitterConfigV3 } from "@pixi/particle-emitter";
 import { Emitter, upgradeConfig } from "@pixi/particle-emitter";
-import type { OptionsFunc, Replace } from "features/feature";
-import { ProcessedRefOrGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
 import { Ref, shallowRef } from "vue";
@@ -22,9 +20,14 @@ export interface ParticlesOptions extends VueFeatureOptions {
 }
 
 /**
- * The properties that are added onto a processed {@link ParticlesOptions} to create an {@link Particles}.
+ * An object that represents a feature that display particle effects on the screen.
+ * The config should typically be gotten by designing the effect using the [online particle effect editor](https://pixijs.io/pixi-particles-editor/) and passing it into the {@link upgradeConfig} from @pixi/particle-emitter.
  */
-export interface BaseParticles extends VueFeature {
+export interface Particles extends VueFeature {
+    /** A function that is called when the particles canvas is resized. */
+    onContainerResized?: (boundingRect: DOMRect) => void;
+    /** A function that is called whenever the particles element is reloaded during development. For restarting particle effects. */
+    onHotReload?: VoidFunction;
     /** The Pixi.JS Application powering this particles canvas. */
     app: Ref<null | Application>;
     /**
@@ -38,26 +41,12 @@ export interface BaseParticles extends VueFeature {
 }
 
 /**
- * An object that represents a feature that display particle effects on the screen.
- * The config should typically be gotten by designing the effect using the [online particle effect editor](https://pixijs.io/pixi-particles-editor/) and passing it into the {@link upgradeConfig} from @pixi/particle-emitter.
- */
-export type Particles = Replace<
-    Replace<ParticlesOptions, BaseParticles>,
-    {
-        classes: ProcessedRefOrGetter<ParticlesOptions["classes"]>;
-        style: ProcessedRefOrGetter<ParticlesOptions["style"]>;
-    }
->;
-
-/**
  * Lazily creates particles with the given options.
  * @param optionsFunc Particles options.
  */
-export function createParticles<T extends ParticlesOptions>(
-    optionsFunc?: OptionsFunc<T, BaseParticles, Particles>
-) {
-    return createLazyProxy(feature => {
-        const options = optionsFunc?.call(feature, feature as Particles) ?? ({} as T);
+export function createParticles<T extends ParticlesOptions>(optionsFunc?: () => T) {
+    return createLazyProxy(() => {
+        const options = optionsFunc?.() ?? ({} as T);
         const { onContainerResized, onHotReload, ...props } = options;
 
         let emittersToAdd: {

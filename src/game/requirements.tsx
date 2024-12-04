@@ -1,4 +1,4 @@
-import { isVisible, OptionsFunc, Replace, Visibility } from "features/feature";
+import { isVisible, Visibility } from "features/feature";
 import { displayResource, Resource } from "features/resources/resource";
 import Decimal, { DecimalSource } from "lib/break_eternity";
 import { processGetter } from "util/computed";
@@ -65,7 +65,7 @@ export interface CostRequirementOptions {
      */
     visibility?: MaybeRefOrGetter<Visibility.Visible | Visibility.None | boolean>;
     /**
-     * Pass-through to {@link Requirement.requiresPay}. If not set to false, the default {@link pay} function will remove {@link cost} from {@link resource}.
+     * Pass-through to {@link Requirement["requiresPay"]}. If not set to false, the default {@link pay} function will remove {@link cost} from {@link resource}.
      */
     requiresPay?: MaybeRefOrGetter<boolean>;
     /**
@@ -88,26 +88,42 @@ export interface CostRequirementOptions {
     pay?: (amount?: DecimalSource) => void;
 }
 
-export type CostRequirement = Replace<
-    Requirement & CostRequirementOptions,
-    {
-        cost: MaybeRef<DecimalSource> | GenericFormula;
-        visibility: MaybeRef<Visibility.Visible | Visibility.None | boolean>;
-        requiresPay: MaybeRef<boolean>;
-        cumulativeCost: MaybeRef<boolean>;
-        canMaximize: MaybeRef<boolean>;
-    }
->;
+export interface CostRequirement extends Requirement {
+    /**
+     * The resource that will be checked for meeting the {@link cost}.
+     */
+    resource: Resource;
+    /**
+     * The amount of {@link resource} that must be met for this requirement. You can pass a formula, in which case maximizing will work out of the box (assuming its invertible and, for more accurate calculations, its integral is invertible). If you don't pass a formula then you can still support maximizing by passing a custom {@link pay} function.
+     */
+    cost: MaybeRef<DecimalSource> | GenericFormula;
+    /**
+     * When calculating multiple levels to be handled at once, whether it should consider resources used for each level as spent. Setting this to false causes calculations to be faster with larger numbers and supports more math functions.
+     * @see {Formula}
+     */
+    cumulativeCost: MaybeRef<boolean>;
+    /**
+     * Upper limit on levels that can be performed at once. Defaults to 1.
+     */
+    maxBulkAmount?: MaybeRef<DecimalSource>;
+    /**
+     * When calculating requirement for multiple levels, how many should be directly summed for increase accuracy. High numbers can cause lag. Defaults to 10 if cumulative cost, 0 otherwise.
+     */
+    directSum?: MaybeRef<number>;
+    /**
+     * Pass-through to {@link Requirement.pay}. May be required for maximizing support.
+     * @see {@link cost} for restrictions on maximizing support.
+     */
+    pay?: (amount?: DecimalSource) => void;
+}
 
 /**
  * Lazily creates a requirement with the given options, that is based on meeting an amount of a resource.
  * @param optionsFunc Cost requirement options.
  */
-export function createCostRequirement<T extends CostRequirementOptions>(
-    optionsFunc: OptionsFunc<T>
-) {
+export function createCostRequirement<T extends CostRequirementOptions>(optionsFunc: () => T) {
     return createLazyProxy(feature => {
-        const options = optionsFunc.call(feature, feature);
+        const options = optionsFunc.call(feature);
         const {
             visibility,
             cost,

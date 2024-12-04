@@ -3,7 +3,7 @@ import { Achievement } from "features/achievements/achievement";
 import type { Clickable, ClickableOptions } from "features/clickables/clickable";
 import { createClickable } from "features/clickables/clickable";
 import { Conversion } from "features/conversion";
-import { getFirstFeature, type OptionsFunc, type Replace } from "features/feature";
+import { getFirstFeature } from "features/feature";
 import { displayResource, Resource } from "features/resources/resource";
 import type { Tree, TreeNode, TreeNodeOptions } from "features/trees/tree";
 import { createTreeNode } from "features/trees/tree";
@@ -21,6 +21,7 @@ import { processGetter } from "util/computed";
 import { render, Renderable, renderCol } from "util/vue";
 import type { ComputedRef, MaybeRef, MaybeRefOrGetter } from "vue";
 import { computed, ref, unref } from "vue";
+import { JSX } from "vue/jsx-runtime";
 import "./common.css";
 
 /** An object that configures a {@link ResetButton} */
@@ -61,24 +62,37 @@ export interface ResetButtonOptions extends ClickableOptions {
  * It will show how much can be converted currently, and can show when that amount will go up, as well as handle only being clickable when a sufficient amount of currency can be gained.
  * Assumes this button is associated with a specific node on a tree, and triggers that tree's reset propagation.
  */
-export type ResetButton = Replace<
-    Clickable,
-    {
-        resetDescription: MaybeRef<string>;
-        showNextAt: MaybeRef<boolean>;
-        minimumGain: MaybeRef<DecimalSource>;
-    }
->;
+export interface ResetButton extends Clickable {
+    /** The conversion the button uses to calculate how much resources will be gained on click */
+    conversion: Conversion;
+    /** The tree this reset button is apart of */
+    tree: Tree;
+    /** The specific tree node associated with this reset button */
+    treeNode: TreeNode;
+    /**
+     * Text to display on low conversion amounts, describing what "resetting" is in this context.
+     * Defaults to "Reset for ".
+     */
+    resetDescription?: MaybeRef<string>;
+    /** Whether or not to show how much currency would be required to make the gain amount increase. */
+    showNextAt?: MaybeRef<boolean>;
+    /**
+     * When {@link canClick} is left to its default, minimumGain is used to only enable the reset button when a sufficient amount of currency to gain is available.
+     */
+    minimumGain?: MaybeRef<DecimalSource>;
+    /** A persistent ref to track how much time has passed since the last time this tree node was reset. */
+    resetTime?: Persistent<DecimalSource>;
+}
 
 /**
  * Lazily creates a reset button with the given options.
  * @param optionsFunc A function that returns the options object for this reset button.
  */
 export function createResetButton<T extends ClickableOptions & ResetButtonOptions>(
-    optionsFunc: OptionsFunc<T>
+    optionsFunc: () => T
 ) {
-    const resetButton = createClickable(feature => {
-        const options = optionsFunc.call(feature, feature);
+    const resetButton = createClickable(() => {
+        const options = optionsFunc();
         const {
             conversion,
             tree,
@@ -113,41 +127,43 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
                 ),
             display:
                 processGetter(display) ??
-                computed(() => (
-                    <span>
-                        {unref(resetButton.resetDescription)}
-                        <b>
-                            {displayResource(
-                                conversion.gainResource,
-                                Decimal.max(
-                                    unref(conversion.actualGain),
-                                    unref(resetButton.minimumGain)
-                                )
-                            )}
-                        </b>{" "}
-                        {conversion.gainResource.displayName}
-                        {unref(resetButton.showNextAt as MaybeRef<boolean>) != null ? (
-                            <div>
-                                <br />
-                                {unref<boolean>(conversion.buyMax) ? "Next:" : "Req:"}{" "}
+                computed(
+                    (): JSX.Element => (
+                        <span>
+                            {unref(resetButton.resetDescription)}
+                            <b>
                                 {displayResource(
-                                    conversion.baseResource,
-                                    !unref<boolean>(conversion.buyMax) &&
-                                        Decimal.gte(unref(conversion.actualGain), 1)
-                                        ? unref(conversion.currentAt)
-                                        : unref(conversion.nextAt)
-                                )}{" "}
-                                {conversion.baseResource.displayName}
-                            </div>
-                        ) : null}
-                    </span>
-                )),
-            onClick: function (e) {
+                                    conversion.gainResource,
+                                    Decimal.max(
+                                        unref(conversion.actualGain),
+                                        unref(resetButton.minimumGain)
+                                    )
+                                )}
+                            </b>{" "}
+                            {conversion.gainResource.displayName}
+                            {unref(resetButton.showNextAt) != null ? (
+                                <div>
+                                    <br />
+                                    {unref(conversion.buyMax) ? "Next:" : "Req:"}{" "}
+                                    {displayResource(
+                                        conversion.baseResource,
+                                        !unref<boolean>(conversion.buyMax) &&
+                                            Decimal.gte(unref(conversion.actualGain), 1)
+                                            ? unref(conversion.currentAt)
+                                            : unref(conversion.nextAt)
+                                    )}{" "}
+                                    {conversion.baseResource.displayName}
+                                </div>
+                            ) : null}
+                        </span>
+                    )
+                ),
+            onClick: function (e?: MouseEvent | TouchEvent) {
                 if (unref(resetButton.canClick) === false) {
                     return;
                 }
                 conversion.convert();
-                tree.reset(resetButton.treeNode);
+                tree.reset(treeNode);
                 if (resetTime) {
                     resetTime.value = resetTime[DefaultValue];
                 }
@@ -173,21 +189,23 @@ export interface LayerTreeNodeOptions extends TreeNodeOptions {
 }
 
 /** A tree node that is associated with a given layer, and which opens the layer when clicked. */
-export type LayerTreeNode = Replace<
-    TreeNode,
-    {
-        layerID: string;
-        append: MaybeRef<boolean>;
-    }
->;
+export interface LayerTreeNode extends TreeNode {
+    /** The ID of the layer this tree node is associated with */
+    layerID: string;
+    /** Whether or not to append the layer to the tabs list.
+     * If set to false, then the tree node will instead always remove all tabs to its right and then add the layer tab.
+     * Defaults to true.
+     */
+    append?: MaybeRef<boolean>;
+}
 
 /**
  * Lazily creates a tree node that's associated with a specific layer, with the given options.
  * @param optionsFunc A function that returns the options object for this tree node.
  */
-export function createLayerTreeNode<T extends LayerTreeNodeOptions>(optionsFunc: OptionsFunc<T>) {
-    const layerTreeNode = createTreeNode(feature => {
-        const options = optionsFunc.call(feature, feature);
+export function createLayerTreeNode<T extends LayerTreeNodeOptions>(optionsFunc: () => T) {
+    const layerTreeNode = createTreeNode(() => {
+        const options = optionsFunc();
         const { display, append, layerID, ...props } = options;
 
         return {

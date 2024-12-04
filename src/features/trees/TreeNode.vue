@@ -1,5 +1,5 @@
 <template>
-    <div
+    <button
         :style="{
             backgroundColor: unref(color),
             boxShadow: `-4px -4px 4px rgba(0, 0, 0, 0.25) inset, 0 0 20px ${unref(
@@ -19,7 +19,7 @@
         @touchcancel.passive="stop"
     >
         <Component />
-    </div>
+    </button>
 </template>
 
 <script setup lang="tsx">
@@ -53,7 +53,6 @@ const { start, stop } = setupHoldToClick(toRef(props, "onClick"), toRef(props, "
     font-size: 40px;
     color: rgba(0, 0, 0, 0.5);
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.25);
-    box-shadow: -4px -4px 4px rgba(0, 0, 0, 0.25) inset, 0px 0px 20px var(--background);
     display: flex;
 }
 

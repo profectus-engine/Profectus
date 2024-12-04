@@ -3,16 +3,12 @@
         <div
             class="main-display-container"
             :class="classes ?? {}"
-            :style="[{ height: `${(effectRef?.$el.clientHeight ?? 0) + 50}px` }, style ?? {}]"
-        >
-            <div class="main-display">
+            :style="[{ height: `${(displayRef?.clientHeight ?? 0) + 20}px` }, style ?? {}]">
+            <div class="main-display" ref="displayRef">
                 <span v-if="showPrefix">You have </span>
                 <ResourceVue :resource="resource" :color="color || 'white'" />
-                {{ resource.displayName
-                }}<!-- remove whitespace -->
-                <span v-if="effectDisplay"
-                    >, <Effect ref="effectRef"
-                /></span>
+                {{ resource.displayName }}<!-- remove whitespace -->
+                <span v-if="effectDisplay">, <Effect /></span>
             </div>
         </div>
     </Sticky>
@@ -24,7 +20,7 @@ import type { Resource } from "features/resources/resource";
 import ResourceVue from "features/resources/Resource.vue";
 import Decimal from "util/bignum";
 import { Renderable } from "util/vue";
-import { ComponentPublicInstance, computed, MaybeRefOrGetter, ref, StyleValue, toValue } from "vue";
+import { computed, MaybeRefOrGetter, ref, StyleValue, toValue } from "vue";
 
 const props = defineProps<{
     resource: Resource;
@@ -34,7 +30,7 @@ const props = defineProps<{
     effectDisplay?: MaybeRefOrGetter<Renderable>;
 }>();
 
-const effectRef = ref<ComponentPublicInstance | null>(null);
+const displayRef = ref<Element | null>(null);
 
 const Effect = () => toValue(props.effectDisplay);
 

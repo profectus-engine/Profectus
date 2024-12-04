@@ -1,4 +1,3 @@
-import type { OptionsFunc, Replace } from "features/feature";
 import { globalBus } from "game/events";
 import Formula from "game/formulas/formulas";
 import type { BaseLayer } from "game/layers";
@@ -11,9 +10,9 @@ import {
 } from "game/persistence";
 import type { Unsubscribe } from "nanoevents";
 import Decimal from "util/bignum";
-import { processGetter, type MaybeRefOrGetter, type UnwrapRef } from "util/computed";
+import { processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { isRef, unref } from "vue";
+import { isRef, MaybeRef, MaybeRefOrGetter, unref } from "vue";
 
 /** A symbol used to identify {@link Reset} features. */
 export const ResetType = Symbol("Reset");
@@ -28,31 +27,25 @@ export interface ResetOptions {
     onReset?: VoidFunction;
 }
 
-/**
- * The properties that are added onto a processed {@link ResetOptions} to create an {@link Reset}.
- */
-export interface BaseReset {
+/** An object that represents a reset mechanic, which resets progress back to its initial state. */
+export interface Reset {
+    /** List of things to reset. Can include objects which will be recursed over for persistent values. */
+    thingsToReset: MaybeRef<unknown[]>;
+    /** A function that is called when the reset is performed. */
+    onReset?: VoidFunction;
     /** Trigger the reset. */
     reset: VoidFunction;
     /** A symbol that helps identify features of the same type. */
     type: typeof ResetType;
 }
 
-/** An object that represents a reset mechanic, which resets progress back to its initial state. */
-export type Reset = Replace<
-    Replace<ResetOptions, BaseReset>,
-    {
-        thingsToReset: UnwrapRef<ResetOptions["thingsToReset"]>;
-    }
->;
-
 /**
  * Lazily creates a reset with the given options.
  * @param optionsFunc Reset options.
  */
-export function createReset<T extends ResetOptions>(optionsFunc: OptionsFunc<T, BaseReset, Reset>) {
-    return createLazyProxy(feature => {
-        const options = optionsFunc.call(feature, feature as Reset);
+export function createReset<T extends ResetOptions>(optionsFunc: () => T) {
+    return createLazyProxy(() => {
+        const options = optionsFunc();
         const { thingsToReset, onReset, ...props } = options;
 
         const reset = {

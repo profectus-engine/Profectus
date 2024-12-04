@@ -1,8 +1,8 @@
 import { Resource } from "features/resources/resource";
 import { NonPersistent } from "game/persistence";
 import Decimal, { DecimalSource, format } from "util/bignum";
-import { MaybeRefOrGetter, MaybeRef, processGetter } from "util/computed";
-import { Ref, computed, ref, unref } from "vue";
+import { processGetter } from "util/computed";
+import { MaybeRef, MaybeRefOrGetter, Ref, computed, ref, unref } from "vue";
 import * as ops from "./operations";
 import type {
     EvaluateFunction,
