@@ -5,20 +5,14 @@
 import { main } from "data/projEntry";
 import { createCumulativeConversion } from "features/conversion";
 import { createHotkey } from "features/hotkey";
-import { bonusAmountMixin } from "mixins/bonusDecorator";
-import { createRepeatable } from "features/clickables/repeatable";
 import { createReset } from "features/reset";
 import MainDisplay from "features/resources/MainDisplay.vue";
 import { createResource } from "features/resources/resource";
-import { addTooltip } from "wrappers/tooltips/tooltip";
 import { createResourceTooltip } from "features/trees/tree";
-import { createUpgrade } from "features/clickables/upgrade";
 import { BaseLayer, createLayer } from "game/layers";
-import { noPersist, persistent } from "game/persistence";
-import { createCostRequirement } from "game/requirements";
 import type { DecimalSource } from "util/bignum";
-import { render, renderCol, renderRow } from "util/vue";
-import { computed } from "vue";
+import { render } from "util/vue";
+import { addTooltip } from "wrappers/tooltips/tooltip";
 import { createLayerTreeNode, createResetButton } from "../common";
 
 const id = "p";

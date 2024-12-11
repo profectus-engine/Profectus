@@ -67,10 +67,14 @@ export function createClickable<T extends ClickableOptions>(optionsFunc?: () => 
                 <span>
                     {_display.title != null ? (
                         <div>
-                            {render(_display.title, el => <h3>{el}</h3>)}
+                            {render(_display.title, el => (
+                                <h3>{el}</h3>
+                            ))}
                         </div>
                     ) : null}
-                    {render(_display.description, el => <div>{el}</div>)}
+                    {render(_display.description, el => (
+                        <div>{el}</div>
+                    ))}
                 </span>
             );
         } else if (_display != null) {

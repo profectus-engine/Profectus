@@ -89,15 +89,11 @@ export function render(
     return wrapper?.(object) ?? object;
 }
 
-export function renderRow(
-    ...objects: (VueFeature | MaybeGetter<Renderable>)[]
-): JSX.Element {
+export function renderRow(...objects: (VueFeature | MaybeGetter<Renderable>)[]): JSX.Element {
     return <Row>{objects.map(obj => render(obj))}</Row>;
 }
 
-export function renderCol(
-    ...objects: (VueFeature | MaybeGetter<Renderable>)[]
-): JSX.Element {
+export function renderCol(...objects: (VueFeature | MaybeGetter<Renderable>)[]): JSX.Element {
     return <Col>{objects.map(obj => render(obj))}</Col>;
 }
 
