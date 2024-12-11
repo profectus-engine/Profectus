@@ -29,35 +29,7 @@ const props = defineProps<{
     small: Achievement["small"];
 }>();
 
-const Component = () => {
-    if (props.display == null) {
-        return null;
-    } else if (
-        isRef(props.display) ||
-        typeof props.display === "string" ||
-        isJSXElement(props.display)
-    ) {
-        return render(props.display);
-    } else {
-        const { requirement, effectDisplay, optionsDisplay } = props.display;
-        return (
-            <span>
-                {requirement ?
-                    render(requirement, el => <h3>{el}</h3>) :
-                    displayRequirements(props.requirements ?? [])}
-                {effectDisplay ? (
-                    <div>
-                        {render(effectDisplay, el => <b>{el}</b>)}
-                    </div>
-                ) : null}
-                {optionsDisplay != null ? (
-                    <div class="equal-spaced">
-                        {render(optionsDisplay)}
-                    </div>
-                ) : null}
-            </span>);
-    }
-};
+const Component = () => props.display == null ? <></> : render(props.display);
 </script>
 
 <style scoped>

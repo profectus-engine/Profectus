@@ -11,11 +11,11 @@ import {
 } from "game/requirements";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { formatWhole } from "util/bignum";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { isJSXElement, render, Renderable, VueFeature, vueFeatureMixin } from "util/vue";
 import type { MaybeRef, MaybeRefOrGetter, Ref } from "vue";
-import { computed, isRef, unref } from "vue";
+import { computed, unref } from "vue";
 import { ClickableOptions } from "./clickable";
 
 /** A symbol used to identify {@link Repeatable} features. */
@@ -31,14 +31,15 @@ export interface RepeatableOptions extends ClickableOptions {
     initialAmount?: DecimalSource;
     /** The display to use for this repeatable. */
     display?:
-        | MaybeRefOrGetter<Renderable>
+        | Renderable
+        | (() => Renderable)
         | {
               /** A header to appear at the top of the display. */
-              title?: MaybeRefOrGetter<Renderable>;
+              title?: MaybeGetter<Renderable>;
               /** The main text that appears in the display. */
-              description: MaybeRefOrGetter<Renderable>;
+              description: MaybeGetter<Renderable>;
               /** A description of the current effect of this repeatable, based off its amount. */
-              effectDisplay?: MaybeRefOrGetter<Renderable>;
+              effectDisplay?: MaybeGetter<Renderable>;
               /** Whether or not to show the current amount of this repeatable at the bottom of the display. */
               showAmount?: boolean;
           };
@@ -53,7 +54,7 @@ export interface Repeatable extends VueFeature {
     /** The initial amount this repeatable has on a new save / after reset. */
     initialAmount?: DecimalSource;
     /** The display to use for this repeatable. */
-    display?: MaybeRef<Renderable>;
+    display?: MaybeGetter<Renderable>;
     /** Whether or not the repeatable may be clicked. */
     canClick: Ref<boolean>;
     /** A function that is called when the repeatable is clicked. */
@@ -119,25 +120,19 @@ export function createRepeatable<T extends RepeatableOptions>(optionsFunc: () =>
         }
 
         let display;
-        if (typeof _display === "object" && !isRef(_display) && !isJSXElement(_display)) {
-            const title = processGetter(_display.title);
-            const description = processGetter(_display.description);
-            const effectDisplay = processGetter(_display.effectDisplay);
-            const showAmount = processGetter(_display.showAmount);
+        if (typeof _display === "object" && !isJSXElement(_display)) {
+            const { title, description, effectDisplay, showAmount } = _display;
 
-            const Title = title == null ? null : () => render(title, el => <h3>{el}</h3>);
-            const Description = () => render(description, el => <>{el}</>);
-            const EffectDisplay =
-                effectDisplay == null ? null : () => render(effectDisplay, el => <>{el}</>);
-
-            display = computed(() => (
+            display = () => (
                 <span>
-                    {Title == null ? null : (
+                    {title == null ? null : (
                         <div>
-                            <Title />
+                            {render(title, el => (
+                                <h3>{el}</h3>
+                            ))}
                         </div>
                     )}
-                    <Description />
+                    {render(description)}
                     {showAmount === false ? null : (
                         <div>
                             <br />
@@ -147,10 +142,10 @@ export function createRepeatable<T extends RepeatableOptions>(optionsFunc: () =>
                             ) : undefined}
                         </div>
                     )}
-                    {EffectDisplay == null ? null : (
+                    {effectDisplay == null ? null : (
                         <div>
                             <br />
-                            Currently: <EffectDisplay />
+                            Currently: {render(effectDisplay)}
                         </div>
                     )}
                     {unref(repeatable.maxed) ? null : (
@@ -160,12 +155,9 @@ export function createRepeatable<T extends RepeatableOptions>(optionsFunc: () =>
                         </div>
                     )}
                 </span>
-            ));
+            );
         } else if (_display != null) {
-            const processedDisplay = processGetter(_display);
-            display = computed(() => render(processedDisplay));
-        } else {
-            display = undefined;
+            display = _display;
         }
 
         amount[DefaultValue] = initialAmount ?? 0;

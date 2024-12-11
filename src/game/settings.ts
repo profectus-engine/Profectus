@@ -2,10 +2,10 @@ import projInfo from "data/projInfo.json";
 import { Themes } from "data/themes";
 import { globalBus } from "game/events";
 import LZString from "lz-string";
-import { processGetter } from "util/computed";
+import { MaybeGetter } from "util/computed";
 import { decodeSave, hardReset } from "util/save";
 import { Renderable } from "util/vue";
-import { MaybeRef, MaybeRefOrGetter, reactive, watch } from "vue";
+import { reactive, watch } from "vue";
 
 /** The player's settings object. */
 export interface Settings {
@@ -101,22 +101,22 @@ export function loadSettings(): void {
 }
 
 /** A list of fields to append to the settings modal. */
-export const settingFields: MaybeRef<Renderable>[] = reactive([]);
+export const settingFields: MaybeGetter<Renderable>[] = reactive([]);
 /** Register a field to be displayed in the settings modal. */
-export function registerSettingField(component: MaybeRefOrGetter<Renderable>) {
-    settingFields.push(processGetter(component));
+export function registerSettingField(component: MaybeGetter<Renderable>) {
+    settingFields.push(component);
 }
 
 /** A list of components to show in the info modal. */
-export const infoComponents: MaybeRef<Renderable>[] = reactive([]);
+export const infoComponents: MaybeGetter<Renderable>[] = reactive([]);
 /** Register a component to be displayed in the info modal. */
-export function registerInfoComponent(component: MaybeRefOrGetter<Renderable>) {
-    infoComponents.push(processGetter(component));
+export function registerInfoComponent(component: MaybeGetter<Renderable>) {
+    infoComponents.push(component);
 }
 
 /** A list of components to add to the root of the page. */
-export const gameComponents: MaybeRef<Renderable>[] = reactive([]);
+export const gameComponents: MaybeGetter<Renderable>[] = reactive([]);
 /** Register a component to be displayed at the root of the page. */
-export function registerGameComponent(component: MaybeRefOrGetter<Renderable>) {
-    gameComponents.push(processGetter(component));
+export function registerGameComponent(component: MaybeGetter<Renderable>) {
+    gameComponents.push(component);
 }

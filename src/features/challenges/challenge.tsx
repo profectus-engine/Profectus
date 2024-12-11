@@ -4,13 +4,20 @@ import type { Reset } from "features/reset";
 import { globalBus } from "game/events";
 import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
-import { Requirements, maxRequirementsMet } from "game/requirements";
+import { Requirements, displayRequirements, maxRequirementsMet } from "game/requirements";
 import settings, { registerSettingField } from "game/settings";
 import type { DecimalSource } from "util/bignum";
 import Decimal from "util/bignum";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { Renderable, VueFeature, VueFeatureOptions, vueFeatureMixin } from "util/vue";
+import {
+    Renderable,
+    VueFeature,
+    VueFeatureOptions,
+    isJSXElement,
+    render,
+    vueFeatureMixin
+} from "util/vue";
 import type { MaybeRef, MaybeRefOrGetter, Ref, WatchStopHandle } from "vue";
 import { computed, unref, watch } from "vue";
 import Challenge from "./Challenge.vue";
@@ -32,18 +39,19 @@ export interface ChallengeOptions extends VueFeatureOptions {
     completionLimit?: MaybeRefOrGetter<DecimalSource>;
     /** The display to use for this challenge. */
     display?:
-        | MaybeRefOrGetter<Renderable>
+        | Renderable
+        | (() => Renderable)
         | {
               /** A header to appear at the top of the display. */
-              title?: MaybeRefOrGetter<Renderable>;
+              title?: MaybeGetter<Renderable>;
               /** The main text that appears in the display. */
-              description: MaybeRefOrGetter<Renderable>;
+              description: MaybeGetter<Renderable>;
               /** A description of the current goal for this challenge. If unspecified then the requirements will be displayed automatically based on {@link requirements}.  */
-              goal?: MaybeRefOrGetter<Renderable>;
+              goal?: MaybeGetter<Renderable>;
               /** A description of what will change upon completing this challenge. */
-              reward?: MaybeRefOrGetter<Renderable>;
+              reward?: MaybeGetter<Renderable>;
               /** A description of the current effect of this challenge. */
-              effectDisplay?: MaybeRefOrGetter<Renderable>;
+              effectDisplay?: MaybeGetter<Renderable>;
           };
     /** A function that is called when the challenge is completed. */
     onComplete?: VoidFunction;
@@ -70,20 +78,7 @@ export interface Challenge extends VueFeature {
     /** The maximum number of times the challenge can be completed. */
     completionLimit?: MaybeRef<DecimalSource>;
     /** The display to use for this challenge. */
-    display?:
-        | MaybeRef<Renderable>
-        | {
-              /** A header to appear at the top of the display. */
-              title?: MaybeRef<Renderable>;
-              /** The main text that appears in the display. */
-              description: MaybeRef<Renderable>;
-              /** A description of the current goal for this challenge. If unspecified then the requirements will be displayed automatically based on {@link requirements}.  */
-              goal?: MaybeRef<Renderable>;
-              /** A description of what will change upon completing this challenge. */
-              reward?: MaybeRef<Renderable>;
-              /** A description of the current effect of this challenge. */
-              effectDisplay?: MaybeRef<Renderable>;
-          };
+    display?: MaybeGetter<Renderable>;
     /** The current amount of times this challenge can be completed. */
     canComplete: Ref<DecimalSource>;
     /** The current number of times this challenge has been completed. */
@@ -118,7 +113,7 @@ export function createChallenge<T extends ChallengeOptions>(optionsFunc: () => T
             requirements,
             canStart,
             completionLimit,
-            display,
+            display: _display,
             reset,
             onComplete,
             onEnter,
@@ -139,6 +134,41 @@ export function createChallenge<T extends ChallengeOptions>(optionsFunc: () => T
             />
         ));
 
+        let display: MaybeGetter<Renderable> | undefined = undefined;
+        if (typeof _display === "object" && !isJSXElement(_display)) {
+            const { title, description, goal, reward, effectDisplay } = _display;
+            display = () => (
+                <span>
+                    {title != null ? (
+                        <div>
+                            {render(title, el => (
+                                <h3>{el}</h3>
+                            ))}
+                        </div>
+                    ) : null}
+                    {render(description, el => (
+                        <div>{el}</div>
+                    ))}
+                    <div>
+                        <br />
+                        Goal:{" "}
+                        {goal == null
+                            ? displayRequirements(challenge.requirements)
+                            : render(goal, el => <h3>{el}</h3>)}
+                    </div>
+                    {reward != null ? (
+                        <div>
+                            <br />
+                            Reward: {render(reward)}
+                        </div>
+                    ) : null}
+                    {effectDisplay != null ? <div>Currently: {render(effectDisplay)}</div> : null}
+                </span>
+            );
+        } else if (_display != null) {
+            display = _display;
+        }
+
         const challenge = {
             type: ChallengeType,
             ...(props as Omit<typeof props, keyof VueFeature | keyof ChallengeOptions>),
@@ -157,18 +187,7 @@ export function createChallenge<T extends ChallengeOptions>(optionsFunc: () => T
             onComplete,
             onEnter,
             onExit,
-            display:
-                display == null
-                    ? undefined
-                    : typeof display === "object" && "description" in display
-                      ? {
-                            title: processGetter(display.title),
-                            description: processGetter(display.description),
-                            goal: processGetter(display.goal),
-                            reward: processGetter(display.reward),
-                            effectDisplay: processGetter(display.effectDisplay)
-                        }
-                      : processGetter(display),
+            display,
             toggle: function () {
                 if (active.value) {
                     if (

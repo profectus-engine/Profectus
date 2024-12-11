@@ -6,9 +6,9 @@ import Col from "components/layout/Column.vue";
 import Row from "components/layout/Row.vue";
 import { getUniqueID, Visibility } from "features/feature";
 import VueFeatureComponent from "features/VueFeature.vue";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import type { CSSProperties, MaybeRef, MaybeRefOrGetter, Ref } from "vue";
-import { isRef, onUnmounted, ref, unref } from "vue";
+import { isRef, onUnmounted, ref, toValue } from "vue";
 import { JSX } from "vue/jsx-runtime";
 import { camelToKebab } from "./common";
 
@@ -35,7 +35,7 @@ export interface VueFeature {
     /** CSS to apply to this feature. */
     style?: MaybeRef<CSSProperties>;
     /** The components to render inside the vue feature */
-    components: MaybeRef<Renderable>[];
+    components: MaybeGetter<Renderable>[];
     /** The components to render wrapped around the vue feature */
     wrappers: ((el: () => Renderable) => Renderable)[];
     /** Used to identify Vue Features */
@@ -45,14 +45,14 @@ export interface VueFeature {
 export function vueFeatureMixin(
     featureName: string,
     options: VueFeatureOptions,
-    component?: MaybeRefOrGetter<Renderable>
+    component?: MaybeGetter<Renderable>
 ) {
     return {
         id: getUniqueID(featureName),
         visibility: processGetter(options.visibility),
         classes: processGetter(options.classes),
         style: processGetter(options.style),
-        components: component == null ? [] : [processGetter(component)],
+        components: component == null ? [] : [component],
         wrappers: [] as ((el: () => Renderable) => Renderable)[],
         [VueFeature]: true
     } satisfies VueFeature;
@@ -60,15 +60,15 @@ export function vueFeatureMixin(
 
 export function render(object: VueFeature, wrapper?: (el: Renderable) => Renderable): JSX.Element;
 export function render<T extends Renderable>(
-    object: MaybeRef<Renderable>,
+    object: MaybeGetter<Renderable>,
     wrapper?: (el: Renderable) => T
 ): T;
 export function render(
-    object: VueFeature | MaybeRef<Renderable>,
+    object: VueFeature | MaybeGetter<Renderable>,
     wrapper?: (el: Renderable) => Renderable
 ): Renderable;
 export function render(
-    object: VueFeature | MaybeRef<Renderable>,
+    object: VueFeature | MaybeGetter<Renderable>,
     wrapper?: (el: Renderable) => Renderable
 ) {
     if (typeof object === "object" && VueFeature in object) {
@@ -85,20 +85,24 @@ export function render(
         );
     }
 
-    object = unref(object);
+    object = toValue(object);
     return wrapper?.(object) ?? object;
 }
 
-export function renderRow(...objects: (VueFeature | MaybeRef<Renderable>)[]): JSX.Element {
+export function renderRow(
+    ...objects: (VueFeature | MaybeGetter<Renderable>)[]
+): JSX.Element {
     return <Row>{objects.map(obj => render(obj))}</Row>;
 }
 
-export function renderCol(...objects: (VueFeature | MaybeRef<Renderable>)[]): JSX.Element {
+export function renderCol(
+    ...objects: (VueFeature | MaybeGetter<Renderable>)[]
+): JSX.Element {
     return <Col>{objects.map(obj => render(obj))}</Col>;
 }
 
 export function joinJSX(
-    objects: (VueFeature | MaybeRef<Renderable>)[],
+    objects: (VueFeature | MaybeGetter<Renderable>)[],
     joiner: JSX.Element
 ): JSX.Element {
     return objects.reduce<JSX.Element>(

@@ -7,11 +7,12 @@
 
 <script setup lang="tsx">
 import "components/common/fields.css";
+import { MaybeGetter } from "util/computed";
 import { render, Renderable } from "util/vue";
-import { computed, MaybeRef } from "vue";
+import { computed } from "vue";
 
 const props = defineProps<{
-    title?: MaybeRef<Renderable>;
+    title?: MaybeGetter<Renderable>;
     modelValue?: boolean;
 }>();
 const emit = defineEmits<{

@@ -3,7 +3,7 @@ import settings from "game/settings";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { formatSmall } from "util/bignum";
 import type { RequiredKeys, WithRequired } from "util/common";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { render, Renderable } from "util/vue";
 import { computed, MaybeRef, MaybeRefOrGetter, unref } from "vue";
@@ -32,7 +32,7 @@ export interface Modifier {
      * A description of this modifier.
      * @see {@link createModifierSection}.
      */
-    description?: MaybeRef<Renderable>;
+    description?: MaybeGetter<Renderable>;
 }
 
 /** Utility type that represents the output of all modifiers that represent a single operation. */
@@ -46,7 +46,7 @@ export interface AdditiveModifierOptions {
     /** The amount to add to the input value. */
     addend: MaybeRefOrGetter<DecimalSource>;
     /** Description of what this modifier is doing. */
-    description?: MaybeRefOrGetter<Renderable>;
+    description?: MaybeGetter<Renderable>;
     /** A MaybeRefOrGetter that will be processed and passed directly into the returned modifier. */
     enabled?: MaybeRefOrGetter<boolean>;
     /** Determines if numbers larger or smaller than 0 should be displayed as red. */
@@ -64,7 +64,6 @@ export function createAdditiveModifier<T extends AdditiveModifierOptions, S = Op
         const { addend, description, enabled, smallerIsBetter } = optionsFunc();
 
         const processedAddend = processGetter(addend);
-        const processedDescription = processGetter(description);
         const processedEnabled = enabled == null ? undefined : processGetter(enabled);
         return {
             apply: (gain: DecimalSource) => Decimal.add(gain, unref(processedAddend)),
@@ -72,13 +71,11 @@ export function createAdditiveModifier<T extends AdditiveModifierOptions, S = Op
             getFormula: (gain: FormulaSource) => Formula.add(gain, processedAddend),
             enabled: processedEnabled,
             description:
-                processedDescription == null
+                description == null
                     ? undefined
-                    : computed(() => (
+                    : () => (
                           <div class="modifier-container">
-                              <span class="modifier-description">
-                                  {render(processedDescription)}
-                              </span>
+                              <span class="modifier-description">{render(description)}</span>
                               <span
                                   class="modifier-amount"
                                   style={
@@ -95,7 +92,7 @@ export function createAdditiveModifier<T extends AdditiveModifierOptions, S = Op
                                   {formatSmall(unref(processedAddend))}
                               </span>
                           </div>
-                      ))
+                      )
         };
     }) as S;
 }
@@ -105,7 +102,7 @@ export interface MultiplicativeModifierOptions {
     /** The amount to multiply the input value by. */
     multiplier: MaybeRefOrGetter<DecimalSource>;
     /** Description of what this modifier is doing. */
-    description?: MaybeRefOrGetter<Renderable> | undefined;
+    description?: MaybeGetter<Renderable> | undefined;
     /** A MaybeRefOrGetter that will be processed and passed directly into the returned modifier. */
     enabled?: MaybeRefOrGetter<boolean> | undefined;
     /** Determines if numbers larger or smaller than 1 should be displayed as red. */
@@ -124,7 +121,6 @@ export function createMultiplicativeModifier<
         const { multiplier, description, enabled, smallerIsBetter } = optionsFunc();
 
         const processedMultiplier = processGetter(multiplier);
-        const processedDescription = processGetter(description);
         const processedEnabled = enabled == null ? undefined : processGetter(enabled);
         return {
             apply: (gain: DecimalSource) => Decimal.times(gain, unref(processedMultiplier)),
@@ -132,13 +128,11 @@ export function createMultiplicativeModifier<
             getFormula: (gain: FormulaSource) => Formula.times(gain, processedMultiplier),
             enabled: processedEnabled,
             description:
-                processedDescription == null
+                description == null
                     ? undefined
-                    : computed(() => (
+                    : () => (
                           <div class="modifier-container">
-                              <span class="modifier-description">
-                                  {render(processedDescription)}
-                              </span>
+                              <span class="modifier-description">{render(description)}</span>
                               <span
                                   class="modifier-amount"
                                   style={
@@ -154,7 +148,7 @@ export function createMultiplicativeModifier<
                                   ×{formatSmall(unref(processedMultiplier))}
                               </span>
                           </div>
-                      ))
+                      )
         };
     }) as S;
 }
@@ -164,7 +158,7 @@ export interface ExponentialModifierOptions {
     /** The amount to raise the input value to the power of. */
     exponent: MaybeRefOrGetter<DecimalSource>;
     /** Description of what this modifier is doing. */
-    description?: MaybeRefOrGetter<Renderable> | undefined;
+    description?: MaybeGetter<Renderable> | undefined;
     /** A MaybeRefOrGetter that will be processed and passed directly into the returned modifier. */
     enabled?: MaybeRefOrGetter<boolean> | undefined;
     /** Add 1 before calculating, then remove it afterwards. This prevents low numbers from becoming lower. */
@@ -186,7 +180,6 @@ export function createExponentialModifier<
             optionsFunc();
 
         const processedExponent = processGetter(exponent);
-        const processedDescription = processGetter(description);
         const processedEnabled = enabled == null ? undefined : processGetter(enabled);
         return {
             apply: (gain: DecimalSource) => {
@@ -217,12 +210,12 @@ export function createExponentialModifier<
                     : Formula.pow(gain, processedExponent),
             enabled: processedEnabled,
             description:
-                processedDescription == null
+                description == null
                     ? undefined
-                    : computed(() => (
+                    : () => (
                           <div class="modifier-container">
                               <span class="modifier-description">
-                                  {render(processedDescription)}
+                                  {render(description)}
                                   {supportLowNumbers ? " (+1 effective)" : null}
                               </span>
                               <span
@@ -240,7 +233,7 @@ export function createExponentialModifier<
                                   ^{formatSmall(unref(processedExponent))}
                               </span>
                           </div>
-                      ))
+                      )
         };
     }) as S;
 }
@@ -286,14 +279,13 @@ export function createSequentialModifier<
                 ? computed(() => modifiers.filter(m => unref(m.enabled) !== false).length > 0)
                 : undefined,
             description: modifiers.some(m => m.description != null)
-                ? computed(() =>
+                ? () =>
                       (
                           modifiers
                               .filter(m => unref(m.enabled) !== false)
                               .map(m => unref(m.description))
-                              .filter(d => d) as MaybeRef<Renderable>[]
+                              .filter(d => d) as MaybeGetter<Renderable>[]
                       ).map(m => render(m))
-                  )
                 : undefined
         };
     }) as S;
@@ -312,7 +304,7 @@ export interface ModifierSectionOptions {
     /** The unit of the value being modified, if any. */
     unit?: string;
     /** The label to use for the base value. Defaults to "Base". */
-    baseText?: MaybeRefOrGetter<Renderable>;
+    baseText?: MaybeGetter<Renderable>;
     /** Determines if numbers larger or smaller than the base should be displayed as red. */
     smallerIsBetter?: boolean;
 }
@@ -332,7 +324,6 @@ export function createModifierSection({
     smallerIsBetter
 }: ModifierSectionOptions) {
     const total = modifier.apply(base ?? 1);
-    const processedBaseText = processGetter(baseText);
     return (
         <div style={{ "--unit": settings.alignUnits && unit != null ? "'" + unit + "'" : "" }}>
             <h3>
@@ -341,7 +332,7 @@ export function createModifierSection({
             </h3>
             <br />
             <div class="modifier-container">
-                <span class="modifier-description">{render(processedBaseText ?? "Base")}</span>
+                <span class="modifier-description">{render(baseText ?? "Base")}</span>
                 <span class="modifier-amount">
                     {formatSmall(base ?? 1)}
                     {unit}

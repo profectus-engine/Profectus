@@ -3,8 +3,9 @@ import type { EmitterConfigV3 } from "@pixi/particle-emitter";
 import { Emitter, upgradeConfig } from "@pixi/particle-emitter";
 import { createLazyProxy } from "util/proxies";
 import { VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
-import { Ref, shallowRef } from "vue";
+import { Ref, shallowRef, unref } from "vue";
 import Particles from "./Particles.vue";
+import { processGetter } from "util/computed";
 
 /** A symbol used to identify {@link Particles} features. */
 export const ParticlesType = Symbol("Particles");
@@ -47,7 +48,10 @@ export interface Particles extends VueFeature {
 export function createParticles<T extends ParticlesOptions>(optionsFunc?: () => T) {
     return createLazyProxy(() => {
         const options = optionsFunc?.() ?? ({} as T);
-        const { onContainerResized, onHotReload, ...props } = options;
+        const { onContainerResized, onHotReload, style: _style, ...props } = options;
+
+        const style = processGetter(_style);
+        options.style = () => ({ position: "static", ...(unref(style) ?? {}) });
 
         let emittersToAdd: {
             resolve: (value: Emitter | PromiseLike<Emitter>) => void;
@@ -57,6 +61,7 @@ export function createParticles<T extends ParticlesOptions>(optionsFunc?: () => 
         function onInit(app: Application) {
             emittersToAdd.forEach(({ resolve, config }) => resolve(new Emitter(app.stage, config)));
             emittersToAdd = [];
+            particles.app.value = app;
         }
 
         const particles = {

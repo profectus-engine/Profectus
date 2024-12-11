@@ -19,15 +19,16 @@ import Sticky from "components/layout/Sticky.vue";
 import type { Resource } from "features/resources/resource";
 import ResourceVue from "features/resources/Resource.vue";
 import Decimal from "util/bignum";
+import { MaybeGetter } from "util/computed";
 import { Renderable } from "util/vue";
-import { computed, MaybeRefOrGetter, ref, StyleValue, toValue } from "vue";
+import { computed, ref, StyleValue, toValue } from "vue";
 
 const props = defineProps<{
     resource: Resource;
     color?: string;
     classes?: Record<string, boolean>;
     style?: StyleValue;
-    effectDisplay?: MaybeRefOrGetter<Renderable>;
+    effectDisplay?: MaybeGetter<Renderable>;
 }>();
 
 const displayRef = ref<Element | null>(null);

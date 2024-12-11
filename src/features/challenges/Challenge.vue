@@ -22,7 +22,6 @@
 <script setup lang="tsx">
 import "components/common/features.css";
 import { getHighNotifyStyle, getNotifyStyle } from "game/notifications";
-import { displayRequirements } from "game/requirements";
 import { render } from "util/vue";
 import type { Component } from "vue";
 import { computed, unref } from "vue";
@@ -61,34 +60,7 @@ const notifyStyle = computed(() => {
     return {};
 });
 
-const Component = () => {
-    if (props.display == null) {
-        return null;
-    }
-    if (typeof props.display === "object" && "description" in props.display) {
-        const { title, description, goal, reward, effectDisplay } = props.display;
-        return <span>
-            {title != null ? (<div>{render(title, el => <h3>{el}</h3>)}</div>) : null}
-            {render(description, el => <div>{el}</div>)}
-            <div>
-                <br />
-                Goal: {goal == null ? displayRequirements(props.requirements) : render(goal, el => <h3>{el}</h3>)}
-            </div>
-            {reward != null ? (
-                <div>
-                    <br />
-                    Reward: {render(reward)}
-                </div>
-            ) : null}
-            {effectDisplay != null ? (
-                <div>
-                    Currently: {render(effectDisplay)}
-                </div>
-            ) : null}
-        </span>;
-    }
-    return render(props.display);
-}
+const Component = () => props.display == null ? <></> : render(props.display);
 </script>
 
 <style scoped>

@@ -1,9 +1,16 @@
 import Clickable from "features/clickables/Clickable.vue";
 import type { BaseLayer } from "game/layers";
 import type { Unsubscribe } from "nanoevents";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { render, Renderable, VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
+import {
+    isJSXElement,
+    render,
+    Renderable,
+    VueFeature,
+    vueFeatureMixin,
+    VueFeatureOptions
+} from "util/vue";
 import { computed, MaybeRef, MaybeRefOrGetter, unref } from "vue";
 
 /** A symbol used to identify {@link Clickable} features. */
@@ -17,12 +24,13 @@ export interface ClickableOptions extends VueFeatureOptions {
     canClick?: MaybeRefOrGetter<boolean>;
     /** The display to use for this clickable. */
     display?:
-        | MaybeRefOrGetter<Renderable>
+        | Renderable
+        | (() => Renderable)
         | {
               /** A header to appear at the top of the display. */
-              title?: MaybeRefOrGetter<Renderable>;
+              title?: MaybeGetter<Renderable>;
               /** The main text that appears in the display. */
-              description: MaybeRefOrGetter<Renderable>;
+              description: MaybeGetter<Renderable>;
           };
     /** A function that is called when the clickable is clicked. */
     onClick?: (e?: MouseEvent | TouchEvent) => void;
@@ -39,7 +47,7 @@ export interface Clickable extends VueFeature {
     /** Whether or not the clickable may be clicked. */
     canClick: MaybeRef<boolean>;
     /** The display to use for this clickable. */
-    display?: MaybeRef<Renderable>;
+    display?: MaybeGetter<Renderable>;
     /** A symbol that helps identify features of the same type. */
     type: typeof ClickableType;
 }
@@ -53,26 +61,20 @@ export function createClickable<T extends ClickableOptions>(optionsFunc?: () => 
         const options = optionsFunc?.() ?? ({} as T);
         const { canClick, display: _display, onClick: onClick, onHold: onHold, ...props } = options;
 
-        let display: MaybeRef<Renderable> | undefined = undefined;
-        if (typeof _display === "object" && "description" in _display) {
-            const title = processGetter(_display.title);
-            const description = processGetter(_display.description);
-
-            const Title = () => (title == null ? <></> : render(title, el => <h3>{el}</h3>));
-            const Description = () => render(description, el => <div>{el}</div>);
-
-            display = computed(() => (
+        let display: MaybeGetter<Renderable> | undefined = undefined;
+        if (typeof _display === "object" && !isJSXElement(_display)) {
+            display = () => (
                 <span>
-                    {title != null ? (
+                    {_display.title != null ? (
                         <div>
-                            <Title />
+                            {render(_display.title, el => <h3>{el}</h3>)}
                         </div>
                     ) : null}
-                    <Description />
+                    {render(_display.description, el => <div>{el}</div>)}
                 </span>
-            ));
+            );
         } else if (_display != null) {
-            display = processGetter(_display);
+            display = _display;
         }
 
         const clickable = {

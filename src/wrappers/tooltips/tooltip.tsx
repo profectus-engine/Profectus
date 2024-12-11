@@ -1,7 +1,7 @@
-import { isVisible, type OptionsFunc } from "features/feature";
+import { isVisible } from "features/feature";
 import { deletePersistent, persistent } from "game/persistence";
 import { Direction } from "util/common";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy, runAfterEvaluation } from "util/proxies";
 import { Renderable, vueFeatureMixin, type VueFeature, type VueFeatureOptions } from "util/vue";
 import { MaybeRef, MaybeRefOrGetter, type Ref } from "vue";
@@ -21,7 +21,7 @@ export interface TooltipOptions extends VueFeatureOptions {
     /** Whether or not this tooltip can be pinned, meaning it'll stay visible even when not hovered. */
     pinnable?: boolean;
     /** The text to display inside the tooltip. */
-    display: MaybeRefOrGetter<Renderable>;
+    display: MaybeGetter<Renderable>;
     /** The direction in which to display the tooltip */
     direction?: MaybeRefOrGetter<Direction>;
     /** The x offset of the tooltip, in px. */
@@ -35,7 +35,7 @@ export interface Tooltip extends VueFeature {
     /** Whether or not this tooltip can be pinned, meaning it'll stay visible even when not hovered. */
     pinnable?: boolean;
     /** The text to display inside the tooltip. */
-    display: MaybeRef<Renderable>;
+    display: MaybeGetter<Renderable>;
     /** The direction in which to display the tooltip */
     direction?: MaybeRef<Direction>;
     /** The x offset of the tooltip, in px. */
@@ -51,9 +51,9 @@ export interface Tooltip extends VueFeature {
  * @param element The renderable feature to display the tooltip on.
  * @param options Tooltip options.
  */
-export function addTooltip<T extends TooltipOptions>(
+export function addTooltip(
     element: VueFeature,
-    optionsFunc: OptionsFunc<T, Tooltip>
+    optionsFunc: () => TooltipOptions
 ): asserts element is VueFeature & { tooltip: Tooltip } {
     const pinned = persistent<boolean>(false, false);
     const tooltip = createLazyProxy(() => {
@@ -69,7 +69,7 @@ export function addTooltip<T extends TooltipOptions>(
             ...vueFeatureMixin("tooltip", options),
             pinnable: pinnable ?? true,
             pinned: pinnable === false ? undefined : pinned,
-            display: processGetter(display),
+            display,
             direction: processGetter(direction ?? Direction.Up),
             xoffset: processGetter(xoffset),
             yoffset: processGetter(yoffset)

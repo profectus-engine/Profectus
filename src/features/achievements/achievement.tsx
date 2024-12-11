@@ -14,7 +14,7 @@ import {
 } from "game/requirements";
 import settings, { registerSettingField } from "game/settings";
 import { camelToTitle } from "util/common";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import {
     isJSXElement,
@@ -24,7 +24,7 @@ import {
     vueFeatureMixin,
     VueFeatureOptions
 } from "util/vue";
-import { computed, isRef, MaybeRef, MaybeRefOrGetter, unref, watchEffect } from "vue";
+import { computed, MaybeRef, MaybeRefOrGetter, unref, watchEffect } from "vue";
 import { useToast } from "vue-toastification";
 import Achievement from "./Achievement.vue";
 
@@ -50,14 +50,15 @@ export interface AchievementOptions extends VueFeatureOptions {
     requirements?: Requirements;
     /** The display to use for this achievement. */
     display?:
-        | MaybeRefOrGetter<Renderable>
+        | Renderable
+        | (() => Renderable)
         | {
               /** Description of the requirement(s) for this achievement. If unspecified then the requirements will be displayed automatically based on {@link requirements}. */
-              requirement?: MaybeRefOrGetter<Renderable>;
+              requirement?: MaybeGetter<Renderable>;
               /** Description of what will change (if anything) for achieving this. */
-              effectDisplay?: MaybeRefOrGetter<Renderable>;
+              effectDisplay?: MaybeGetter<Renderable>;
               /** Any additional things to display on this achievement, such as a toggle for it's effect. */
-              optionsDisplay?: MaybeRefOrGetter<Renderable>;
+              optionsDisplay?: MaybeGetter<Renderable>;
           };
     /** Toggles a smaller design for the feature. */
     small?: MaybeRefOrGetter<boolean>;
@@ -76,13 +77,7 @@ export interface Achievement extends VueFeature {
     /** A function that is called when the achievement is completed. */
     onComplete?: VoidFunction;
     /** The display to use for this achievement. */
-    display?:
-        | MaybeRef<Renderable>
-        | {
-              requirement?: MaybeRef<Renderable>;
-              effectDisplay?: MaybeRef<Renderable>;
-              optionsDisplay?: MaybeRef<Renderable>;
-          };
+    display?: MaybeGetter<Renderable>;
     /** Toggles a smaller design for the feature. */
     small?: MaybeRef<boolean>;
     /** An image to display as the background for this achievement. */
@@ -105,7 +100,15 @@ export function createAchievement<T extends AchievementOptions>(optionsFunc?: ()
     const earned = persistent<boolean>(false, false);
     return createLazyProxy(() => {
         const options = optionsFunc?.() ?? ({} as T);
-        const { requirements, display, small, image, showPopups, onComplete, ...props } = options;
+        const {
+            requirements,
+            display: _display,
+            small,
+            image,
+            showPopups,
+            onComplete,
+            ...props
+        } = options;
 
         const vueFeature = vueFeatureMixin("achievement", options, () => (
             <Achievement
@@ -117,12 +120,35 @@ export function createAchievement<T extends AchievementOptions>(optionsFunc?: ()
             />
         ));
 
+        let display: MaybeGetter<Renderable> | undefined = undefined;
+        if (typeof _display === "object" && !isJSXElement(_display)) {
+            const { requirement, effectDisplay, optionsDisplay } = _display;
+            display = () => (
+                <span>
+                    {requirement == null
+                        ? displayRequirements(requirements ?? [])
+                        : render(requirement, el => <h3>{el}</h3>)}
+                    {effectDisplay == null ? null : (
+                        <div>
+                            {render(effectDisplay, el => (
+                                <b>{el}</b>
+                            ))}
+                        </div>
+                    )}
+                    {optionsDisplay != null ? (
+                        <div class="equal-spaced">{render(optionsDisplay)}</div>
+                    ) : null}
+                </span>
+            );
+        } else if (_display != null) {
+            display = _display;
+        }
+
         const achievement = {
             type: AchievementType,
             ...(props as Omit<typeof props, keyof VueFeature | keyof AchievementOptions>),
             ...vueFeature,
             visibility: computed(() => {
-                const display = unref((achievement as Achievement).display);
                 switch (settings.msDisplay) {
                     default:
                     case AchievementDisplay.All:
@@ -131,9 +157,9 @@ export function createAchievement<T extends AchievementOptions>(optionsFunc?: ()
                         if (
                             unref(earned) &&
                             !(
-                                display != null &&
-                                typeof display === "object" &&
-                                "optionsDisplay" in display
+                                _display != null &&
+                                typeof _display === "object" &&
+                                !isJSXElement(_display)
                             )
                         ) {
                             return Visibility.None;
@@ -153,19 +179,7 @@ export function createAchievement<T extends AchievementOptions>(optionsFunc?: ()
             small: processGetter(small),
             image: processGetter(image),
             showPopups: processGetter(showPopups) ?? true,
-            display:
-                display == null
-                    ? undefined
-                    : isRef(display) ||
-                        typeof display === "string" ||
-                        typeof display === "function" ||
-                        isJSXElement(display)
-                      ? processGetter(display)
-                      : {
-                            requirement: processGetter(display.requirement),
-                            effectDisplay: processGetter(display.effectDisplay),
-                            optionsDisplay: processGetter(display.optionsDisplay)
-                        },
+            display,
             requirements:
                 requirements == null
                     ? undefined
@@ -181,19 +195,18 @@ export function createAchievement<T extends AchievementOptions>(optionsFunc?: ()
                 earned.value = true;
                 achievement.onComplete?.();
                 if (achievement.display != null && unref(achievement.showPopups) === true) {
-                    const display = achievement.display;
-                    let Display;
-                    if (isRef(display) || typeof display === "string" || isJSXElement(display)) {
-                        Display = () => render(display);
-                    } else if (display.requirement != null) {
-                        Display = () => render(display.requirement!);
-                    } else {
-                        Display = () => displayRequirements(achievement.requirements ?? []);
+                    let display = achievement.display;
+                    if (typeof _display === "object" && !isJSXElement(_display)) {
+                        if (_display.requirement != null) {
+                            display = _display.requirement;
+                        } else {
+                            display = displayRequirements(requirements ?? []);
+                        }
                     }
                     toast.info(
                         <div>
                             <h3>Achievement earned!</h3>
-                            <div>{Display()}</div>
+                            <div>{render(display)}</div>
                         </div>
                     );
                 }

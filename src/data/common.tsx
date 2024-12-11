@@ -17,7 +17,7 @@ import settings from "game/settings";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatSmall, formatTime } from "util/bignum";
 import { WithRequired } from "util/common";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { render, Renderable, renderCol } from "util/vue";
 import type { ComputedRef, MaybeRef, MaybeRefOrGetter } from "vue";
 import { computed, ref, unref } from "vue";
@@ -43,7 +43,7 @@ export interface ResetButtonOptions extends ClickableOptions {
      * The content to display on the button.
      * By default, this includes the reset description, and amount of currency to be gained.
      */
-    display?: MaybeRefOrGetter<Renderable>;
+    display?: MaybeGetter<Renderable>;
     /**
      * Whether or not this button can currently be clicked.
      * Defaults to checking the current gain amount is greater than {@link minimumGain}
@@ -126,38 +126,36 @@ export function createResetButton<T extends ClickableOptions & ResetButtonOption
                     Decimal.gte(unref(conversion.actualGain), unref(resetButton.minimumGain))
                 ),
             display:
-                processGetter(display) ??
-                computed(
-                    (): JSX.Element => (
-                        <span>
-                            {unref(resetButton.resetDescription)}
-                            <b>
+                display ??
+                ((): JSX.Element => (
+                    <span>
+                        {unref(resetButton.resetDescription)}
+                        <b>
+                            {displayResource(
+                                conversion.gainResource,
+                                Decimal.max(
+                                    unref(conversion.actualGain),
+                                    unref(resetButton.minimumGain)
+                                )
+                            )}
+                        </b>{" "}
+                        {conversion.gainResource.displayName}
+                        {unref(resetButton.showNextAt) != null ? (
+                            <div>
+                                <br />
+                                {unref(conversion.buyMax) ? "Next:" : "Req:"}{" "}
                                 {displayResource(
-                                    conversion.gainResource,
-                                    Decimal.max(
-                                        unref(conversion.actualGain),
-                                        unref(resetButton.minimumGain)
-                                    )
-                                )}
-                            </b>{" "}
-                            {conversion.gainResource.displayName}
-                            {unref(resetButton.showNextAt) != null ? (
-                                <div>
-                                    <br />
-                                    {unref(conversion.buyMax) ? "Next:" : "Req:"}{" "}
-                                    {displayResource(
-                                        conversion.baseResource,
-                                        !unref<boolean>(conversion.buyMax) &&
-                                            Decimal.gte(unref(conversion.actualGain), 1)
-                                            ? unref(conversion.currentAt)
-                                            : unref(conversion.nextAt)
-                                    )}{" "}
-                                    {conversion.baseResource.displayName}
-                                </div>
-                            ) : null}
-                        </span>
-                    )
-                ),
+                                    conversion.baseResource,
+                                    !unref<boolean>(conversion.buyMax) &&
+                                        Decimal.gte(unref(conversion.actualGain), 1)
+                                        ? unref(conversion.currentAt)
+                                        : unref(conversion.nextAt)
+                                )}{" "}
+                                {conversion.baseResource.displayName}
+                            </div>
+                        ) : null}
+                    </span>
+                )),
             onClick: function (e?: MouseEvent | TouchEvent) {
                 if (unref(resetButton.canClick) === false) {
                     return;
@@ -211,7 +209,7 @@ export function createLayerTreeNode<T extends LayerTreeNodeOptions>(optionsFunc:
         return {
             ...(props as Omit<typeof props, keyof LayerTreeNodeOptions>),
             layerID,
-            display: processGetter(display) ?? layerID,
+            display: display ?? layerID,
             append: processGetter(append) ?? true,
             onClick() {
                 if (unref<boolean>(layerTreeNode.append)) {
@@ -244,7 +242,7 @@ export interface Section {
     /** The unit of measurement for the base. **/
     unit?: string;
     /** The label to call the base amount. Defaults to "Base". **/
-    baseText?: MaybeRefOrGetter<Renderable>;
+    baseText?: MaybeGetter<Renderable>;
     /** Whether or not this section should be currently visible to the player. **/
     visible?: MaybeRefOrGetter<boolean>;
     /** Determines if numbers larger or smaller than the base should be displayed as red. */
@@ -258,12 +256,12 @@ export interface Section {
  */
 export function createCollapsibleModifierSections(
     sectionsFunc: () => Section[]
-): [MaybeRef<Renderable>, Persistent<Record<number, boolean>>] {
+): [() => Renderable, Persistent<Record<number, boolean>>] {
     const sections: Section[] = [];
     const processed:
         | {
               base: MaybeRef<DecimalSource | undefined>[];
-              baseText: (MaybeRef<Renderable> | undefined)[];
+              baseText: (MaybeGetter<Renderable> | undefined)[];
               visible: MaybeRef<boolean | undefined>[];
               title: MaybeRef<string | undefined>[];
               subtitle: MaybeRef<string | undefined>[];
@@ -274,7 +272,7 @@ export function createCollapsibleModifierSections(
         if (!calculated) {
             sections.push(...sectionsFunc());
             processed.base = sections.map(s => processGetter(s.base));
-            processed.baseText = sections.map(s => processGetter(s.baseText));
+            processed.baseText = sections.map(s => s.baseText);
             processed.visible = sections.map(s => processGetter(s.visible));
             processed.title = sections.map(s => processGetter(s.title));
             processed.subtitle = sections.map(s => processGetter(s.subtitle));
@@ -284,7 +282,7 @@ export function createCollapsibleModifierSections(
     }
 
     const collapsed = persistent<Record<number, boolean>>({}, false);
-    const jsxFunc = computed(() => {
+    const jsxFunc = () => {
         const sections = calculateSections();
 
         let firstVisibleSection = true;
@@ -364,7 +362,7 @@ export function createCollapsibleModifierSections(
             );
         });
         return <>{sectionJSX}</>;
-    });
+    };
     return [jsxFunc, collapsed];
 }
 

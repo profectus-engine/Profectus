@@ -41,6 +41,7 @@ onMounted(() => {
 });
 onBeforeUnmount(() => {
     app.value?.destroy();
+    app.value = null;
 });
 
 let isDirty = true;

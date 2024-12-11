@@ -10,9 +10,16 @@ import {
     requirementsMet
 } from "game/requirements";
 import { isFunction } from "util/common";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { Renderable, VueFeature, VueFeatureOptions, render, vueFeatureMixin } from "util/vue";
+import {
+    Renderable,
+    VueFeature,
+    VueFeatureOptions,
+    isJSXElement,
+    render,
+    vueFeatureMixin
+} from "util/vue";
 import type { MaybeRef, MaybeRefOrGetter, Ref } from "vue";
 import { computed, unref } from "vue";
 import Clickable from "./Clickable.vue";
@@ -27,14 +34,15 @@ export const UpgradeType = Symbol("Upgrade");
 export interface UpgradeOptions extends VueFeatureOptions, ClickableOptions {
     /** The display to use for this upgrade. */
     display?:
-        | MaybeRefOrGetter<Renderable>
+        | Renderable
+        | (() => Renderable)
         | {
               /** A header to appear at the top of the display. */
-              title?: MaybeRefOrGetter<Renderable>;
+              title?: MaybeGetter<Renderable>;
               /** The main text that appears in the display. */
-              description: MaybeRefOrGetter<Renderable>;
+              description: MaybeGetter<Renderable>;
               /** A description of the current effect of the achievement. Useful when the effect changes dynamically. */
-              effectDisplay?: MaybeRefOrGetter<Renderable>;
+              effectDisplay?: MaybeGetter<Renderable>;
           };
     /** The requirements to purchase this upgrade. */
     requirements: Requirements;
@@ -47,7 +55,7 @@ export interface Upgrade extends VueFeature {
     /** The requirements to purchase this upgrade. */
     requirements: Requirements;
     /** The display to use for this upgrade. */
-    display?: MaybeRef<Renderable>;
+    display?: MaybeGetter<Renderable>;
     /** Whether or not this upgrade has been purchased. */
     bought: Persistent<boolean>;
     /** Whether or not the upgrade can currently be purchased. */
@@ -92,30 +100,23 @@ export function createUpgrade<T extends UpgradeOptions>(optionsFunc: () => T) {
             requirements.push(createVisibilityRequirement(vueFeature.visibility));
         }
 
-        let display: MaybeRef<Renderable> | undefined = undefined;
-        if (typeof _display === "object" && "description" in _display) {
-            const title = processGetter(_display.title);
-            const description = processGetter(_display.description);
-            const effectDisplay = processGetter(_display.effectDisplay);
+        let display;
+        if (typeof _display === "object" && !isJSXElement(_display)) {
+            const { title, description, effectDisplay } = _display;
 
-            const Title = () => (title == null ? <></> : render(title, el => <h3>{el}</h3>));
-            const Description = () => render(description, el => <div>{el}</div>);
-            const EffectDisplay = () =>
-                effectDisplay == null ? <></> : render(effectDisplay, el => <>{el}</>);
-
-            display = computed(() => (
+            display = () => (
                 <span>
                     {title != null ? (
                         <div>
-                            <Title />
+                            {render(title, el => (
+                                <h3>{el}</h3>
+                            ))}
                         </div>
                     ) : null}
-                    <Description />
-                    {effectDisplay != null ? (
-                        <div>
-                            Currently: <EffectDisplay />
-                        </div>
-                    ) : null}
+                    {render(description, el => (
+                        <div>{el}</div>
+                    ))}
+                    {effectDisplay != null ? <div>Currently: {render(effectDisplay)}</div> : null}
                     {bought.value ? null : (
                         <>
                             <br />
@@ -123,9 +124,9 @@ export function createUpgrade<T extends UpgradeOptions>(optionsFunc: () => T) {
                         </>
                     )}
                 </span>
-            ));
+            );
         } else if (_display != null) {
-            display = processGetter(_display);
+            display = _display;
         }
 
         const upgrade = {

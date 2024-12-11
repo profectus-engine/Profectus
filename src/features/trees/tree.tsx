@@ -7,11 +7,11 @@ import TreeNode from "features/trees/TreeNode.vue";
 import { noPersist } from "game/persistence";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatWhole } from "util/bignum";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { Renderable, VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
 import type { MaybeRef, MaybeRefOrGetter, Ref } from "vue";
-import { computed, ref, shallowRef, unref } from "vue";
+import { ref, shallowRef, unref } from "vue";
 
 /** A symbol used to identify {@link TreeNode} features. */
 export const TreeNodeType = Symbol("TreeNode");
@@ -27,7 +27,7 @@ export interface TreeNodeOptions extends VueFeatureOptions {
     /** The background color for this node. */
     color?: MaybeRefOrGetter<string>;
     /** The label to display on this tree node. */
-    display?: MaybeRefOrGetter<Renderable>;
+    display?: MaybeGetter<Renderable>;
     /** The color of the glow effect shown to notify the user there's something to do with this node. */
     glowColor?: MaybeRefOrGetter<string>;
     /** A reset object attached to this node, used for propagating resets through the tree. */
@@ -47,7 +47,7 @@ export interface TreeNode extends VueFeature {
     /** The background color for this node. */
     color?: MaybeRef<string>;
     /** The label to display on this tree node. */
-    display?: MaybeRef<Renderable>;
+    display?: MaybeGetter<Renderable>;
     /** The color of the glow effect shown to notify the user there's something to do with this node. */
     glowColor?: MaybeRef<string>;
     /** A reset object attached to this node, used for propagating resets through the tree. */
@@ -84,7 +84,7 @@ export function createTreeNode<T extends TreeNodeOptions>(optionsFunc?: () => T)
             )),
             canClick: processGetter(canClick) ?? true,
             color: processGetter(color),
-            display: processGetter(display),
+            display,
             glowColor: processGetter(glowColor),
             onClick:
                 onClick == null
@@ -265,9 +265,9 @@ export function createResourceTooltip(
     resource: Resource,
     requiredResource: Resource | null = null,
     requirement: MaybeRefOrGetter<DecimalSource> = 0
-): Ref<string> {
+): () => string {
     const req = processGetter(requirement);
-    return computed(() => {
+    return () => {
         if (requiredResource == null || Decimal.gte(resource.value, unref(req))) {
             return displayResource(resource) + " " + resource.displayName;
         }
@@ -280,5 +280,5 @@ export function createResourceTooltip(
                 ? formatWhole(requiredResource.value)
                 : format(requiredResource.value, requiredResource.precision)
         })`;
-    });
+    };
 }

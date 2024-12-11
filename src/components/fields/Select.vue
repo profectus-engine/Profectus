@@ -15,15 +15,16 @@
 
 <script setup lang="tsx">
 import "components/common/fields.css";
+import { MaybeGetter } from "util/computed";
 import { render, Renderable } from "util/vue";
-import { MaybeRef, ref, toRef, unref, watch } from "vue";
+import { ref, toRef, unref, watch } from "vue";
 import VueNextSelect from "vue-next-select";
 import "vue-next-select/dist/index.css";
 
 export type SelectOption = { label: string; value: unknown };
 
 const props = defineProps<{
-    title?: MaybeRef<Renderable>;
+    title?: MaybeGetter<Renderable>;
     modelValue?: unknown;
     options: SelectOption[];
     placeholder?: string;

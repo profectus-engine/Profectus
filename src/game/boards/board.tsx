@@ -275,7 +275,18 @@ export function makeDraggable<T, S extends MakeDraggableOptions<T>>(
     const position = persistent<NodePosition>({ x: 0, y: 0 });
     const draggable = createLazyProxy(() => {
         const options = optionsFunc();
-        const { id, nodeBeingDragged, hasDragged, dragDelta, startDrag, endDrag, onMouseDown, onMouseUp, initialPosition, ...props } = options;
+        const {
+            id,
+            nodeBeingDragged,
+            hasDragged,
+            dragDelta,
+            startDrag,
+            endDrag,
+            onMouseDown,
+            onMouseUp,
+            initialPosition,
+            ...props
+        } = options;
 
         position[DefaultValue] = initialPosition ?? position[DefaultValue];
 
@@ -323,7 +334,7 @@ export function makeDraggable<T, S extends MakeDraggableOptions<T>>(
 
     runAfterEvaluation(element, el => {
         draggable.id; // Ensure draggable gets evaluated
-        (el as VueFeature & { draggable: Draggable<T> }).draggable = draggable;        
+        (el as VueFeature & { draggable: Draggable<T> }).draggable = draggable;
         element.wrappers.push(el => (
             <Draggable
                 mouseDown={draggable.onMouseDown}

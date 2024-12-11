@@ -27,12 +27,13 @@
 
 <script setup lang="tsx">
 import "components/common/fields.css";
+import { MaybeGetter } from "util/computed";
 import { render, Renderable } from "util/vue";
-import { computed, MaybeRef, onMounted, shallowRef, unref } from "vue";
+import { computed, onMounted, shallowRef, unref } from "vue";
 import VueTextareaAutosize from "vue-textarea-autosize";
 
 const props = defineProps<{
-    title?: MaybeRef<Renderable>;
+    title?: MaybeGetter<Renderable>;
     modelValue?: string;
     textArea?: boolean;
     placeholder?: string;

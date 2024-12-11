@@ -1,8 +1,6 @@
-import { processGetter } from "util/computed";
+import { MaybeGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { render, Renderable, VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
-import { MaybeRef, MaybeRefOrGetter } from "vue";
-import { JSX } from "vue/jsx-runtime";
+import { Renderable, VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
 
 /** A symbol used to identify {@link Tab} features. */
 export const TabType = Symbol("Tab");
@@ -12,7 +10,7 @@ export const TabType = Symbol("Tab");
  */
 export interface TabOptions extends VueFeatureOptions {
     /** The display to use for this tab. */
-    display: MaybeRefOrGetter<Renderable>;
+    display: MaybeGetter<Renderable>;
 }
 
 /**
@@ -21,7 +19,7 @@ export interface TabOptions extends VueFeatureOptions {
  */
 export interface Tab extends VueFeature {
     /** The display to use for this tab. */
-    display: MaybeRef<Renderable>;
+    display: MaybeGetter<Renderable>;
     /** A symbol that helps identify features of the same type. */
     type: typeof TabType;
 }
@@ -38,8 +36,8 @@ export function createTab<T extends TabOptions>(optionsFunc: () => T) {
         const tab = {
             type: TabType,
             ...(props as Omit<typeof props, keyof VueFeature | keyof TabOptions>),
-            ...vueFeatureMixin("tab", options, (): JSX.Element => render(tab.display)),
-            display: processGetter(display)
+            ...vueFeatureMixin("tab", options, display),
+            display
         } satisfies Tab;
 
         return tab;

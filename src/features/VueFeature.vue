@@ -18,12 +18,13 @@ import "components/common/features.css";
 import Node from "components/Node.vue";
 import type { Visibility } from "features/feature";
 import { isHidden, isVisible } from "features/feature";
+import { MaybeGetter } from "util/computed";
 import { render, Renderable } from "util/vue";
 import { MaybeRef, unref, type CSSProperties } from "vue";
 
 const props = withDefaults(defineProps<{
     id: string;
-    components: MaybeRef<Renderable>[];
+    components: MaybeGetter<Renderable>[];
     wrappers: ((el: () => Renderable) => Renderable)[];
     visibility?: MaybeRef<Visibility | boolean>;
     style?: MaybeRef<CSSProperties>;

@@ -1,7 +1,7 @@
 import Bar from "features/bars/Bar.vue";
 import type { DecimalSource } from "util/bignum";
 import { Direction } from "util/common";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { Renderable, VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
 import { CSSProperties, MaybeRef, MaybeRefOrGetter } from "vue";
@@ -30,7 +30,7 @@ export interface BarOptions extends VueFeatureOptions {
     /** The progress value of the bar, from 0 to 1. */
     progress: MaybeRefOrGetter<DecimalSource>;
     /** The display to use for this bar. */
-    display?: MaybeRefOrGetter<Renderable>;
+    display?: MaybeGetter<Renderable>;
 }
 
 /** An object that represents a feature that displays some sort of progress or completion or resource with a cap. */
@@ -52,7 +52,7 @@ export interface Bar extends VueFeature {
     /** The progress value of the bar, from 0 to 1. */
     progress: MaybeRef<DecimalSource>;
     /** The display to use for this bar. */
-    display?: MaybeRef<Renderable>;
+    display?: MaybeGetter<Renderable>;
     /** A symbol that helps identify features of the same type. */
     type: typeof BarType;
 }
@@ -101,7 +101,7 @@ export function createBar<T extends BarOptions>(optionsFunc: () => T) {
             textStyle: processGetter(textStyle),
             fillStyle: processGetter(fillStyle),
             progress: processGetter(progress),
-            display: processGetter(display)
+            display
         } satisfies Bar;
 
         return bar;

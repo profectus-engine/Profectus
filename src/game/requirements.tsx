@@ -1,9 +1,9 @@
 import { isVisible, Visibility } from "features/feature";
 import { displayResource, Resource } from "features/resources/resource";
 import Decimal, { DecimalSource } from "lib/break_eternity";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { joinJSX, render, Renderable } from "util/vue";
+import { joinJSX, Renderable } from "util/vue";
 import { computed, MaybeRef, MaybeRefOrGetter, unref } from "vue";
 import Formula, { calculateCost, calculateMaxAffordable } from "./formulas/formulas";
 import type { GenericFormula, InvertibleIntegralFormula } from "./formulas/types";
@@ -262,16 +262,16 @@ export function createVisibilityRequirement(
  */
 export function createBooleanRequirement(
     requirement: MaybeRefOrGetter<boolean>,
-    display?: MaybeRefOrGetter<Renderable>
+    display?: MaybeGetter<Renderable>
 ): Requirement {
     return createLazyProxy(() => {
-        const processedDisplay = processGetter(display);
+        const partialDisplay =
+            display == null ? undefined : typeof display === "function" ? display : () => display;
         return {
             requirementMet: processGetter(requirement),
-            partialDisplay: processedDisplay == null ? undefined : () => render(processedDisplay),
-            display:
-                processedDisplay == null ? undefined : () => <>Req: {render(processedDisplay)}</>,
-            visibility: processedDisplay == null ? Visibility.None : Visibility.Visible,
+            partialDisplay,
+            display: display == null ? undefined : () => <>Req: {partialDisplay}</>,
+            visibility: display == null ? Visibility.None : Visibility.Visible,
             requiresPay: false
         };
     });

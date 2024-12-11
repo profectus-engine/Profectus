@@ -1,4 +1,3 @@
-import { type OptionsFunc } from "features/feature";
 import { processGetter } from "util/computed";
 import { createLazyProxy, runAfterEvaluation } from "util/proxies";
 import type { VueFeature } from "util/vue";
@@ -23,9 +22,9 @@ export interface Mark {
  * @param element The renderable feature to display the tooltip on.
  * @param options Mark options.
  */
-export function addMark<T extends MarkOptions>(
+export function addMark(
     element: VueFeature,
-    optionsFunc: OptionsFunc<T, Mark>
+    optionsFunc: () => MarkOptions
 ): asserts element is VueFeature & { mark: Mark } {
     const mark = createLazyProxy(() => {
         const options = optionsFunc();

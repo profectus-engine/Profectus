@@ -1,7 +1,7 @@
 import Infobox from "features/infoboxes/Infobox.vue";
 import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { Renderable, VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
 import { CSSProperties, MaybeRef, MaybeRefOrGetter } from "vue";
@@ -20,9 +20,9 @@ export interface InfoboxOptions extends VueFeatureOptions {
     /** CSS to apply to the body of the infobox. */
     bodyStyle?: MaybeRefOrGetter<CSSProperties>;
     /** A header to appear at the top of the display. */
-    title: MaybeRefOrGetter<Renderable>;
+    title: MaybeGetter<Renderable>;
     /** The main text that appears in the display. */
-    display: MaybeRefOrGetter<Renderable>;
+    display: MaybeGetter<Renderable>;
 }
 
 /** An object that represents a feature that displays information in a collapsible way. */
@@ -34,9 +34,9 @@ export interface Infobox extends VueFeature {
     /** CSS to apply to the body of the infobox. */
     bodyStyle?: MaybeRef<CSSProperties>;
     /** A header to appear at the top of the display. */
-    title: MaybeRef<Renderable>;
+    title: MaybeGetter<Renderable>;
     /** The main text that appears in the display. */
-    display: MaybeRef<Renderable>;
+    display: MaybeGetter<Renderable>;
     /** Whether or not this infobox is collapsed. */
     collapsed: Persistent<boolean>;
     /** A symbol that helps identify features of the same type. */
@@ -70,8 +70,8 @@ export function createInfobox<T extends InfoboxOptions>(optionsFunc: () => T) {
             color: processGetter(color) ?? "--layer-color",
             titleStyle: processGetter(titleStyle),
             bodyStyle: processGetter(bodyStyle),
-            title: processGetter(title),
-            display: processGetter(display)
+            title,
+            display
         } satisfies Infobox;
 
         return infobox;

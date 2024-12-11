@@ -47,9 +47,12 @@ export function findFeatures(obj: object, ...types: symbol[]): unknown[] {
     const handleObject = (obj: object) => {
         Object.keys(obj).forEach(key => {
             const value: unknown = obj[key as keyof typeof obj];
-            if (value != null && typeof value === "object") {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (types.includes((value as Record<string, any>).type)) {
+            if (
+                value != null &&
+                typeof value === "object" &&
+                (value as Record<string, unknown>).__v_isVNode !== true
+            ) {
+                if (types.includes((value as Record<string, unknown>).type as symbol)) {
                     objects.push(value);
                 } else if (!(value instanceof Decimal) && !isRef(value)) {
                     handleObject(value as Record<string, unknown>);
@@ -66,7 +69,7 @@ export function getFirstFeature<T extends VueFeature>(
     filter: (feature: T) => boolean
 ): {
     firstFeature: Ref<T | undefined>;
-    collapsedContent: MaybeRef<Renderable>;
+    collapsedContent: () => Renderable;
     hasCollapsedContent: Ref<boolean>;
 } {
     const filteredFeatures = computed(() =>
@@ -74,7 +77,7 @@ export function getFirstFeature<T extends VueFeature>(
     );
     return {
         firstFeature: computed(() => filteredFeatures.value[0]),
-        collapsedContent: computed(() => renderCol(...filteredFeatures.value.slice(1))),
+        collapsedContent: () => renderCol(...filteredFeatures.value.slice(1)),
         hasCollapsedContent: computed(() => filteredFeatures.value.length > 1)
     };
 }
@@ -90,13 +93,13 @@ export function excludeFeatures(obj: Record<string, unknown>, ...types: symbol[]
     const handleObject = (obj: Record<string, unknown>) => {
         Object.keys(obj).forEach(key => {
             const value = obj[key];
-            if (value != null && typeof value === "object") {
-                if (
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    typeof (value as Record<string, any>).type === "symbol" &&
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    !types.includes((value as Record<string, any>).type)
-                ) {
+            if (
+                value != null &&
+                typeof value === "object" &&
+                (value as Record<string, unknown>).__v_isVNode !== true
+            ) {
+                const type = (value as Record<string, unknown>).type;
+                if (typeof type === "symbol" && !types.includes(type)) {
                     objects.push(value);
                 } else if (!(value instanceof Decimal) && !isRef(value)) {
                     handleObject(value as Record<string, unknown>);

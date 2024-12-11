@@ -5,7 +5,7 @@ import type { BaseLayer } from "game/layers";
 import { createBooleanRequirement } from "game/requirements";
 import type { DecimalSource } from "util/bignum";
 import Decimal from "util/bignum";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { Renderable } from "util/vue";
 import { computed, MaybeRef, MaybeRefOrGetter, unref } from "vue";
@@ -310,7 +310,7 @@ export function setupPassiveGeneration(
 export function createCanConvertRequirement(
     conversion: Conversion,
     minGainAmount: MaybeRefOrGetter<DecimalSource> = 1,
-    display?: MaybeRefOrGetter<Renderable>
+    display?: MaybeGetter<Renderable>
 ) {
     const computedMinGainAmount = processGetter(minGainAmount);
     return createBooleanRequirement(

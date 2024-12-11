@@ -4,7 +4,7 @@ import TabButton from "features/tabs/TabButton.vue";
 import TabFamily from "features/tabs/TabFamily.vue";
 import type { Persistent } from "game/persistence";
 import { persistent } from "game/persistence";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { Renderable, VueFeature, vueFeatureMixin, VueFeatureOptions } from "util/vue";
 import type { CSSProperties, MaybeRef, MaybeRefOrGetter, Ref } from "vue";
@@ -20,9 +20,9 @@ export const TabFamilyType = Symbol("TabFamily");
  */
 export interface TabButtonOptions extends VueFeatureOptions {
     /** The tab to display when this button is clicked. */
-    tab: Tab | MaybeRefOrGetter<Renderable>;
+    tab: Tab | MaybeGetter<Renderable>;
     /** The label on this button. */
-    display: MaybeRefOrGetter<Renderable>;
+    display: MaybeGetter<Renderable>;
     /** The color of the glow effect to display when this button is active. */
     glowColor?: MaybeRefOrGetter<string>;
 }
@@ -33,9 +33,9 @@ export interface TabButtonOptions extends VueFeatureOptions {
  */
 export interface TabButton extends VueFeature {
     /** The tab to display when this button is clicked. */
-    tab: Tab | MaybeRef<Renderable>;
+    tab: Tab | MaybeGetter<Renderable>;
     /** The label on this button. */
-    display: MaybeRef<Renderable>;
+    display: MaybeGetter<Renderable>;
     /** The color of the glow effect to display when this button is active. */
     glowColor?: MaybeRef<string>;
     /** A symbol that helps identify features of the same type. */
@@ -64,7 +64,7 @@ export interface TabFamily extends VueFeature {
     /** All the tabs within this family. */
     tabs: Record<string, TabButton>;
     /** The currently active tab, if any. */
-    activeTab: Ref<Tab | MaybeRef<Renderable> | null>;
+    activeTab: Ref<Tab | MaybeGetter<Renderable> | null>;
     /** The name of the tab that is currently active. */
     selected: Persistent<string>;
     /** A symbol that helps identify features of the same type. */
@@ -106,16 +106,17 @@ export function createTabFamily<T extends TabFamilyOptions>(
                 const tabButton = {
                     type: TabButtonType,
                     ...(props as Omit<typeof props, keyof VueFeature | keyof TabButtonOptions>),
-                    ...vueFeatureMixin("tabButton", options, () =>
+                    ...vueFeatureMixin("tabButton", options, () => (
                         <TabButton
                             display={tabButton.display}
                             glowColor={tabButton.glowColor}
                             active={unref(tabButton.tab) === unref(tabFamily.activeTab)}
-                            onSelectTab={() => tabFamily.selected.value = tab}
-                        />),
-                    tab: processGetter(buttonTab),
+                            onSelectTab={() => (tabFamily.selected.value = tab)}
+                        />
+                    )),
+                    tab: buttonTab,
                     glowColor: processGetter(glowColor),
-                    display: processGetter(display)
+                    display
                 } satisfies TabButton;
 
                 parsedTabs[tab] = tabButton;
@@ -124,7 +125,7 @@ export function createTabFamily<T extends TabFamilyOptions>(
             buttonContainerClasses: processGetter(buttonContainerClasses),
             buttonContainerStyle: processGetter(buttonContainerStyle),
             selected,
-            activeTab: computed((): Tab | MaybeRef<Renderable> | null => {
+            activeTab: computed((): Tab | MaybeGetter<Renderable> | null => {
                 if (
                     selected.value in tabFamily.tabs &&
                     isVisible(tabFamily.tabs[selected.value].visibility ?? true)

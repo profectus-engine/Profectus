@@ -5,9 +5,9 @@ import { persistent } from "game/persistence";
 import player from "game/player";
 import type { Emitter } from "nanoevents";
 import { createNanoEvents } from "nanoevents";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { render, Renderable } from "util/vue";
+import { Renderable } from "util/vue";
 import {
     computed,
     type CSSProperties,
@@ -108,7 +108,7 @@ export interface LayerOptions {
      * The layout of this layer's features.
      * When the layer is open in {@link game/player.PlayerData.tabs}, this is the content that is displayed.
      */
-    display: MaybeRefOrGetter<Renderable>;
+    display: MaybeGetter<Renderable>;
     /** An object of classes that should be applied to the display. */
     classes?: MaybeRefOrGetter<Record<string, boolean>>;
     /** Styles that should be applied to the display. */
@@ -127,7 +127,7 @@ export interface LayerOptions {
      * The layout of this layer's features.
      * When the layer is open in {@link game/player.PlayerData.tabs}, but the tab is {@link Layer.minimized} this is the content that is displayed.
      */
-    minimizedDisplay?: MaybeRefOrGetter<Renderable>;
+    minimizedDisplay?: MaybeGetter<Renderable>;
     /**
      * Whether or not to force the go back button to be hidden.
      * If true, go back will be hidden regardless of {@link data/projInfo.allowGoBack}.
@@ -169,7 +169,7 @@ export interface Layer extends BaseLayer {
      * The layout of this layer's features.
      * When the layer is open in {@link game/player.PlayerData.tabs}, this is the content that is displayed.
      */
-    display: MaybeRef<Renderable>;
+    display: MaybeGetter<Renderable>;
     /** An object of classes that should be applied to the display. */
     classes?: MaybeRef<Record<string, boolean>>;
     /** Styles that should be applied to the display. */
@@ -188,7 +188,7 @@ export interface Layer extends BaseLayer {
      * The layout of this layer's features.
      * When the layer is open in {@link game/player.PlayerData.tabs}, but the tab is {@link Layer.minimized} this is the content that is displayed.
      */
-    minimizedDisplay?: MaybeRef<Renderable>;
+    minimizedDisplay?: MaybeGetter<Renderable>;
     /**
      * Whether or not to force the go back button to be hidden.
      * If true, go back will be hidden regardless of {@link data/projInfo.allowGoBack}.
@@ -261,7 +261,7 @@ export function createLayer<T extends LayerOptions>(
             ...baseLayer,
             ...(props as Omit<typeof props, keyof LayerOptions>),
             color: processGetter(color),
-            display: processGetter(display),
+            display,
             classes: processGetter(classes),
             style: computed((): CSSProperties => {
                 let width = unref(layer.minWidth);
@@ -293,7 +293,7 @@ export function createLayer<T extends LayerOptions>(
             forceHideGoBack: processGetter(forceHideGoBack),
             minWidth: processGetter(minWidth) ?? 600,
             minimizable: processGetter(minimizable) ?? true,
-            minimizedDisplay: processGetter(minimizedDisplay)
+            minimizedDisplay
         } satisfies Layer;
 
         return layer;
@@ -370,21 +370,21 @@ export function reloadLayer(layer: Layer): void {
  */
 export function setupLayerModal(layer: Layer): {
     openModal: VoidFunction;
-    modal: Ref<JSX.Element>;
+    modal: () => JSX.Element;
 } {
     const showModal = ref(false);
     return {
         openModal: () => (showModal.value = true),
-        modal: computed(() => (
+        modal: () => (
             <Modal
                 modelValue={showModal.value}
                 onUpdate:modelValue={value => (showModal.value = value)}
                 v-slots={{
                     header: () => <h2>{unref(layer.name)}</h2>,
-                    body: () => render(layer.display)
+                    body: typeof layer.display ? layer.display : () => layer.display
                 }}
             />
-        ))
+        )
     };
 }
 

@@ -8,14 +8,15 @@
 </template>
 
 <script setup lang="ts">
+import { MaybeGetter } from "util/computed";
 import { render, Renderable } from "util/vue";
-import type { MaybeRef, Ref } from "vue";
+import type { Ref } from "vue";
 import Col from "./Column.vue";
 
 const props = defineProps<{
     collapsed: Ref<boolean>;
-    display: MaybeRef<Renderable>;
-    content: MaybeRef<Renderable>;
+    display: MaybeGetter<Renderable>;
+    content: MaybeGetter<Renderable>;
 }>();
 
 const Display = () => render(props.display);

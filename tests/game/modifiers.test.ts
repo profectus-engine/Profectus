@@ -9,15 +9,16 @@ import {
 } from "game/modifiers";
 import Decimal, { DecimalSource } from "util/bignum";
 import { WithRequired } from "util/common";
+import { MaybeGetter } from "util/computed";
+import { render, Renderable } from "util/vue";
 import { beforeAll, describe, expect, test } from "vitest";
 import { MaybeRefOrGetter, Ref, ref, unref } from "vue";
 import "../utils";
-import { render, Renderable } from "util/vue";
 
 export type ModifierConstructorOptions = {
     [S in "addend" | "multiplier" | "exponent"]: MaybeRefOrGetter<DecimalSource>;
 } & {
-    description?: MaybeRefOrGetter<Renderable>;
+    description?: MaybeGetter<Renderable>;
     enabled?: MaybeRefOrGetter<boolean>;
     smallerIsBetter?: boolean;
 };

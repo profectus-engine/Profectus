@@ -5,11 +5,10 @@ import { persistent } from "game/persistence";
 import Decimal, { DecimalSource } from "lib/break_eternity";
 import { Unsubscribe } from "nanoevents";
 import { Direction } from "util/common";
-import { processGetter } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { render, Renderable, VueFeature, vueFeatureMixin } from "util/vue";
+import { isJSXElement, render, Renderable, VueFeature, vueFeatureMixin } from "util/vue";
 import { computed, MaybeRef, MaybeRefOrGetter, Ref, ref, unref } from "vue";
-import { JSX } from "vue/jsx-runtime";
 import { Bar, BarOptions, createBar } from "../bars/bar";
 import { type Clickable, ClickableOptions } from "./clickable";
 
@@ -39,7 +38,7 @@ export interface Action extends VueFeature {
     /** Whether or not the action may be performed. */
     canClick: MaybeRef<boolean>;
     /** The display to use for this action. */
-    display?: MaybeRef<Renderable>;
+    display?: MaybeGetter<Renderable>;
     /** A function that is called when the action is clicked. */
     onClick: (amount: DecimalSource) => void;
     /** Whether or not the player is holding down the action. Actions will be considered clicked as soon as the cooldown completes when being held down. */
@@ -62,8 +61,16 @@ export function createAction<T extends ActionOptions>(optionsFunc?: () => T) {
     const progress = persistent<DecimalSource>(0);
     return createLazyProxy(() => {
         const options = optionsFunc?.() ?? ({} as T);
-        const { style, duration, canClick, autoStart, display, barOptions, onClick, ...props } =
-            options;
+        const {
+            style,
+            duration,
+            canClick,
+            autoStart,
+            display: _display,
+            barOptions,
+            onClick,
+            ...props
+        } = options;
 
         const processedCanClick = processGetter(canClick) ?? true;
         const processedStyle = processGetter(style);
@@ -78,29 +85,24 @@ export function createAction<T extends ActionOptions>(optionsFunc?: () => T) {
             ...(barOptions as Omit<typeof barOptions, keyof VueFeature>)
         }));
 
-        let Component: () => JSX.Element;
-        if (typeof display === "object" && "description" in display) {
-            const title = processGetter(display.title);
-            const description = processGetter(display.description);
-
-            const Title = () => (title == null ? <></> : render(title, el => <h3>{el}</h3>));
-            const Description = () => render(description, el => <div>{el}</div>);
-
-            Component = () => {
-                return (
-                    <span>
-                        {title != null ? (
-                            <div>
-                                <Title />
-                            </div>
-                        ) : null}
-                        <Description />
-                    </span>
-                );
-            };
-        } else if (display != null) {
-            const processedDisplay = processGetter(display);
-            Component = () => render(processedDisplay);
+        let display: MaybeGetter<Renderable>;
+        if (typeof _display === "object" && !isJSXElement(_display)) {
+            display = () => (
+                <span>
+                    {_display.title != null ? (
+                        <div>
+                            {render(_display.title, el => (
+                                <h3>{el}</h3>
+                            ))}
+                        </div>
+                    ) : null}
+                    {render(_display.description, el => (
+                        <div>{el}</div>
+                    ))}
+                </span>
+            );
+        } else if (_display != null) {
+            display = _display;
         }
 
         const action = {
@@ -135,14 +137,14 @@ export function createAction<T extends ActionOptions>(optionsFunc?: () => T) {
                     unref(processedCanClick) && Decimal.gte(progress.value, unref(action.duration))
             ),
             autoStart: processGetter(autoStart) ?? false,
-            display: computed(() => (
+            display: () => (
                 <>
                     <div style="flex-grow: 1" />
-                    {display == null ? null : <Component />}
+                    {display == null ? null : render(display)}
                     <div style="flex-grow: 1" />
                     {render(progressBar)}
                 </>
-            )),
+            ),
             progressBar,
             onClick: function () {
                 if (unref(action.canClick) === false) {
