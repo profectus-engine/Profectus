@@ -39,8 +39,7 @@ export interface ChallengeOptions extends VueFeatureOptions {
     completionLimit?: MaybeRefOrGetter<DecimalSource>;
     /** The display to use for this challenge. */
     display?:
-        | Renderable
-        | (() => Renderable)
+        | MaybeGetter<Renderable>
         | {
               /** A header to appear at the top of the display. */
               title?: MaybeGetter<Renderable>;

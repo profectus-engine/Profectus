@@ -24,8 +24,7 @@ export interface ClickableOptions extends VueFeatureOptions {
     canClick?: MaybeRefOrGetter<boolean>;
     /** The display to use for this clickable. */
     display?:
-        | Renderable
-        | (() => Renderable)
+        | MaybeGetter<Renderable>
         | {
               /** A header to appear at the top of the display. */
               title?: MaybeGetter<Renderable>;

@@ -31,8 +31,7 @@ export interface RepeatableOptions extends ClickableOptions {
     initialAmount?: DecimalSource;
     /** The display to use for this repeatable. */
     display?:
-        | Renderable
-        | (() => Renderable)
+        | MaybeGetter<Renderable>
         | {
               /** A header to appear at the top of the display. */
               title?: MaybeGetter<Renderable>;

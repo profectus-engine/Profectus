@@ -50,8 +50,7 @@ export interface AchievementOptions extends VueFeatureOptions {
     requirements?: Requirements;
     /** The display to use for this achievement. */
     display?:
-        | Renderable
-        | (() => Renderable)
+        | MaybeGetter<Renderable>
         | {
               /** Description of the requirement(s) for this achievement. If unspecified then the requirements will be displayed automatically based on {@link requirements}. */
               requirement?: MaybeGetter<Renderable>;

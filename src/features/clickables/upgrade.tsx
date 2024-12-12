@@ -34,8 +34,7 @@ export const UpgradeType = Symbol("Upgrade");
 export interface UpgradeOptions extends VueFeatureOptions, ClickableOptions {
     /** The display to use for this upgrade. */
     display?:
-        | Renderable
-        | (() => Renderable)
+        | MaybeGetter<Renderable>
         | {
               /** A header to appear at the top of the display. */
               title?: MaybeGetter<Renderable>;

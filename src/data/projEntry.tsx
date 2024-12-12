@@ -3,7 +3,7 @@ import Spacer from "components/layout/Spacer.vue";
 import { createResource, trackBest, trackOOMPS, trackTotal } from "features/resources/resource";
 import { branchedResetPropagation, createTree, Tree } from "features/trees/tree";
 import { globalBus } from "game/events";
-import type { BaseLayer, Layer } from "game/layers";
+import type { Layer } from "game/layers";
 import { createLayer } from "game/layers";
 import player, { Player } from "game/player";
 import type { DecimalSource } from "util/bignum";
@@ -15,7 +15,7 @@ import prestige from "./layers/prestige";
 /**
  * @hidden
  */
-export const main = createLayer("main", function (this: BaseLayer) {
+export const main = createLayer("main", layer => {
     const points = createResource<DecimalSource>(10);
     const best = trackBest(points);
     const total = trackTotal(points);
@@ -25,7 +25,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
         let gain = new Decimal(1);
         return gain;
     });
-    globalBus.on("update", diff => {
+    layer.on("update", diff => {
         points.value = Decimal.add(points.value, Decimal.times(pointGain.value, diff));
     });
     const oomps = trackOOMPS(points, pointGain);
