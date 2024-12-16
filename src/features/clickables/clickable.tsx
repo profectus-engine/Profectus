@@ -108,7 +108,7 @@ export function createClickable<T extends ClickableOptions>(optionsFunc?: () => 
                               onHold.call(clickable);
                           }
                       }
-        } satisfies Clickable & { onClick: T["onClick"] };
+        } satisfies Clickable;
 
         return clickable;
     });
