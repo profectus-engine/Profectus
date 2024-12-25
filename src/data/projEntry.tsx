@@ -2,7 +2,6 @@ import Node from "components/Node.vue";
 import Spacer from "components/layout/Spacer.vue";
 import { createResource, trackBest, trackOOMPS, trackTotal } from "features/resources/resource";
 import { branchedResetPropagation, createTree, Tree } from "features/trees/tree";
-import { globalBus } from "game/events";
 import type { Layer } from "game/layers";
 import { createLayer } from "game/layers";
 import player, { Player } from "game/player";
