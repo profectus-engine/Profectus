@@ -1,0 +1,1 @@
+let l=()=>({emit(s,...h){for(let e=this.events[s]||[],t=0,i=e.length;t<i;t++)e[t](...h)},events:{},on(s,h){var e;return((e=this.events)[s]||(e[s]=[])).push(h),()=>{var t;this.events[s]=(t=this.events[s])==null?void 0:t.filter(i=>h!==i)}}});export{l as c};
