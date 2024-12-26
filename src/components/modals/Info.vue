@@ -53,7 +53,7 @@
                 </div>
                 <br />
                 <div>Time Played: {{ timePlayed }}</div>
-                <Info />
+                <InfoComponents />
             </div>
         </template>
     </Modal>
@@ -77,7 +77,7 @@ const isOpen = ref(false);
 
 const timePlayed = computed(() => formatTime(player.timePlayed));
 
-const Info = () => infoComponents.map(f => render(f));
+const InfoComponents = () => infoComponents.map(f => render(f));
 
 defineExpose({
     open() {

@@ -16,10 +16,9 @@
 
 <script setup lang="tsx">
 import "components/common/features.css";
-import { isJSXElement, render } from "util/vue";
-import { Component, isRef, unref } from "vue";
+import { render } from "util/vue";
+import { Component, unref } from "vue";
 import { Achievement } from "./achievement";
-import { displayRequirements } from "game/requirements";
 
 const props = defineProps<{
     display: Achievement["display"];
