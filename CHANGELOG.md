@@ -6,6 +6,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2024-12-31
+### Additions
+- Added modal to take a mental health break (can be disabled via projInfo.json)
+
+### Changes
+- **BREAKING** Replaced Board feature with generic Board system
+- **BREAKING** Rewrote how features are written, simplifying them greatly
+- **BREAKING** Replaced decorators with mixins and wrappers
+- **BREAKING** Moved modals to `src/components/modals`
+- **BREAKING** Updated a very large amount of dependencies, making any necessary adjustments
+- **BREAKING** Removed Grid component
+
+### Fixes
+- Hotkey descriptions were not being wrapped in `unref`
+- Links wouldn't check if the end node existed when determining valid links
+
+Contributors: thepaperpilot
+
 ## [0.6.2] - 2024-04-01
 ### Added
 - Export save button in error boundaries
