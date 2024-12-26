@@ -4,6 +4,7 @@ import { createResource, trackBest, trackOOMPS, trackTotal } from "features/reso
 import { branchedResetPropagation, createTree, Tree } from "features/trees/tree";
 import type { Layer } from "game/layers";
 import { createLayer } from "game/layers";
+import { noPersist } from "game/persistence";
 import player, { Player } from "game/player";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatTime } from "util/bignum";
@@ -31,7 +32,7 @@ export const main = createLayer("main", layer => {
 
     // Note: Casting as generic tree to avoid recursive type definitions
     const tree = createTree(() => ({
-        nodes: [[prestige.treeNode]],
+        nodes: noPersist([[prestige.treeNode]]),
         branches: [],
         onReset() {
             points.value = toRaw(tree.resettingNode.value) === toRaw(prestige.treeNode) ? 0 : 10;
