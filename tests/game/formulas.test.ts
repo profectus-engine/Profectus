@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { createResource, Resource } from "features/resources/resource";
 import Formula, {
     calculateCost,

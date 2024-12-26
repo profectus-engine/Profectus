@@ -1,9 +1,10 @@
 import projInfo from "data/projInfo.json";
 import { Themes } from "data/themes";
-import type { CoercableComponent } from "features/feature";
 import { globalBus } from "game/events";
 import LZString from "lz-string";
+import { MaybeGetter } from "util/computed";
 import { decodeSave, hardReset } from "util/save";
+import { Renderable } from "util/vue";
 import { reactive, watch } from "vue";
 
 /** The player's settings object. */
@@ -100,22 +101,22 @@ export function loadSettings(): void {
 }
 
 /** A list of fields to append to the settings modal. */
-export const settingFields: CoercableComponent[] = reactive([]);
+export const settingFields: MaybeGetter<Renderable>[] = reactive([]);
 /** Register a field to be displayed in the settings modal. */
-export function registerSettingField(component: CoercableComponent) {
+export function registerSettingField(component: MaybeGetter<Renderable>) {
     settingFields.push(component);
 }
 
 /** A list of components to show in the info modal. */
-export const infoComponents: CoercableComponent[] = reactive([]);
+export const infoComponents: MaybeGetter<Renderable>[] = reactive([]);
 /** Register a component to be displayed in the info modal. */
-export function registerInfoComponent(component: CoercableComponent) {
+export function registerInfoComponent(component: MaybeGetter<Renderable>) {
     infoComponents.push(component);
 }
 
 /** A list of components to add to the root of the page. */
-export const gameComponents: CoercableComponent[] = reactive([]);
+export const gameComponents: MaybeGetter<Renderable>[] = reactive([]);
 /** Register a component to be displayed at the root of the page. */
-export function registerGameComponent(component: CoercableComponent) {
+export function registerGameComponent(component: MaybeGetter<Renderable>) {
     gameComponents.push(component);
 }

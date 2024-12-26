@@ -15,13 +15,13 @@ const emit = defineEmits<{
 }>();
 
 const activated = ref(false);
-const activatedTimeout = ref<NodeJS.Timer | null>(null);
+const activatedTimeout = ref<NodeJS.Timeout | null>(null);
 
 function click() {
     emit("click");
 
     // Give feedback to user
-    if (activatedTimeout.value) {
+    if (activatedTimeout.value != null) {
         clearTimeout(activatedTimeout.value);
     }
     activated.value = false;

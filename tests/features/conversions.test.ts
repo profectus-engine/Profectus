@@ -1,12 +1,12 @@
 import {
+    Conversion,
     createCumulativeConversion,
     createIndependentConversion,
-    GenericConversion,
     setupPassiveGeneration
 } from "features/conversion";
 import { createResource, Resource } from "features/resources/resource";
 import { InvertibleIntegralFormula } from "game/formulas/types";
-import { createLayer, GenericLayer } from "game/layers";
+import { createLayer, Layer } from "game/layers";
 import Decimal from "util/bignum";
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { ref, unref } from "vue";
@@ -27,7 +27,7 @@ describe("Creating conversion", () => {
 
     describe("Cumulative conversion", () => {
         describe("Calculates currentGain correctly", () => {
-            let conversion: GenericConversion;
+            let conversion: Conversion;
             beforeEach(() => {
                 conversion = createCumulativeConversion(() => ({
                     baseResource,
@@ -53,7 +53,7 @@ describe("Creating conversion", () => {
             });
         });
         describe("Calculates actualGain correctly", () => {
-            let conversion: GenericConversion;
+            let conversion: Conversion;
             beforeEach(() => {
                 conversion = createCumulativeConversion(() => ({
                     baseResource,
@@ -79,7 +79,7 @@ describe("Creating conversion", () => {
             });
         });
         describe("Calculates currentAt correctly", () => {
-            let conversion: GenericConversion;
+            let conversion: Conversion;
             beforeEach(() => {
                 conversion = createCumulativeConversion(() => ({
                     baseResource,
@@ -109,7 +109,7 @@ describe("Creating conversion", () => {
             });
         });
         describe("Calculates nextAt correctly", () => {
-            let conversion: GenericConversion;
+            let conversion: Conversion;
             beforeEach(() => {
                 conversion = createCumulativeConversion(() => ({
                     baseResource,
@@ -188,7 +188,7 @@ describe("Creating conversion", () => {
 
     describe("Independent conversion", () => {
         describe("Calculates currentGain correctly", () => {
-            let conversion: GenericConversion;
+            let conversion: Conversion;
             beforeEach(() => {
                 conversion = createIndependentConversion(() => ({
                     baseResource,
@@ -215,7 +215,7 @@ describe("Creating conversion", () => {
             });
         });
         describe("Calculates actualGain correctly", () => {
-            let conversion: GenericConversion;
+            let conversion: Conversion;
             beforeEach(() => {
                 conversion = createIndependentConversion(() => ({
                     baseResource,
@@ -242,7 +242,7 @@ describe("Creating conversion", () => {
             });
         });
         describe("Calculates currentAt correctly", () => {
-            let conversion: GenericConversion;
+            let conversion: Conversion;
             beforeEach(() => {
                 conversion = createIndependentConversion(() => ({
                     baseResource,
@@ -273,7 +273,7 @@ describe("Creating conversion", () => {
             });
         });
         describe("Calculates nextAt correctly", () => {
-            let conversion: GenericConversion;
+            let conversion: Conversion;
             beforeEach(() => {
                 conversion = createIndependentConversion(() => ({
                     baseResource,
@@ -354,7 +354,7 @@ describe("Creating conversion", () => {
     });
     describe("Custom conversion", () => {
         describe("Custom cumulative", () => {
-            let conversion: GenericConversion;
+            let conversion: Conversion;
             const convert = vi.fn();
             const spend = vi.fn();
             const onConvert = vi.fn();
@@ -415,7 +415,7 @@ describe("Creating conversion", () => {
             });
         });
         describe("Custom independent", () => {
-            let conversion: GenericConversion;
+            let conversion: Conversion;
             const convert = vi.fn();
             const spend = vi.fn();
             const onConvert = vi.fn();
@@ -482,8 +482,8 @@ describe("Passive generation", () => {
     let baseResource: Resource;
     let gainResource: Resource;
     let formula: (x: InvertibleIntegralFormula) => InvertibleIntegralFormula;
-    let conversion: GenericConversion;
-    let layer: GenericLayer;
+    let conversion: Conversion;
+    let layer: Layer;
     beforeEach(() => {
         baseResource = createResource(ref(10));
         gainResource = createResource(ref(1));

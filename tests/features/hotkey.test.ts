@@ -1,5 +1,5 @@
 import { createHotkey, hotkeys } from "features/hotkey";
-import { afterEach, describe, expect, onTestFailed, test } from "vitest";
+import { afterEach, describe, expect, test } from "vitest";
 import { Ref, ref } from "vue";
 import "../utils";
 

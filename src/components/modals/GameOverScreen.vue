@@ -18,10 +18,16 @@
                     updates!
                 </div>
                 <br />
-                <div>
+                <div v-if="discordLink && discordName">
                     <a :href="discordLink" class="game-over-modal-discord-link">
                         <span class="material-icons game-over-modal-discord">discord</span>
                         {{ discordName }}
+                    </a>
+                </div>
+                <div v-else>
+                    <a href="https://discord.gg/yJ4fjnjU54" class="game-over-modal-discord-link">
+                        <span class="material-icons game-over-modal-discord">discord</span>
+                        Profectus & Friends
                     </a>
                 </div>
                 <Toggle title="Autosave" v-model="autosave" />

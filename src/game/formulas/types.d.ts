@@ -1,10 +1,10 @@
 import { InternalFormula } from "game/formulas/formulas";
 import { DecimalSource } from "util/bignum";
-import { ProcessedComputable } from "util/computed";
+import { MaybeRef } from "util/computed";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type GenericFormula = InternalFormula<any>;
-type FormulaSource = ProcessedComputable<DecimalSource> | GenericFormula;
+type FormulaSource = MaybeRef<DecimalSource> | GenericFormula;
 type InvertibleFormula = GenericFormula & {
     invert: NonNullable<GenericFormula["invert"]>;
 };
@@ -38,7 +38,7 @@ type SubstitutionFunction<T> = (
 ) => GenericFormula;
 
 type VariableFormulaOptions = {
-    variable: ProcessedComputable<DecimalSource>;
+    variable: MaybeRef<DecimalSource>;
     description?: string;
 };
 type ConstantFormulaOptions = {
@@ -67,7 +67,7 @@ type InternalFormulaProperties<T extends [FormulaSource] | FormulaSource[]> = {
     internalIntegrate?: IntegrateFunction<T>;
     internalIntegrateInner?: IntegrateFunction<T>;
     applySubstitution?: SubstitutionFunction<T>;
-    innermostVariable?: ProcessedComputable<DecimalSource>;
+    innermostVariable?: MaybeRef<DecimalSource>;
     description?: string;
 };
 

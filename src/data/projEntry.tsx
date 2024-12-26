@@ -1,14 +1,11 @@
 import Node from "components/Node.vue";
 import Spacer from "components/layout/Spacer.vue";
-import { jsx } from "features/feature";
 import { createResource, trackBest, trackOOMPS, trackTotal } from "features/resources/resource";
-import type { GenericTree } from "features/trees/tree";
-import { branchedResetPropagation, createTree } from "features/trees/tree";
-import { globalBus } from "game/events";
-import type { BaseLayer, GenericLayer } from "game/layers";
+import { branchedResetPropagation, createTree, Tree } from "features/trees/tree";
+import type { Layer } from "game/layers";
 import { createLayer } from "game/layers";
-import type { Player } from "game/player";
-import player from "game/player";
+import { noPersist } from "game/persistence";
+import player, { Player } from "game/player";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatTime } from "util/bignum";
 import { render } from "util/vue";
@@ -18,7 +15,7 @@ import prestige from "./layers/prestige";
 /**
  * @hidden
  */
-export const main = createLayer("main", function (this: BaseLayer) {
+export const main = createLayer("main", layer => {
     const points = createResource<DecimalSource>(10);
     const best = trackBest(points);
     const total = trackTotal(points);
@@ -28,26 +25,30 @@ export const main = createLayer("main", function (this: BaseLayer) {
         let gain = new Decimal(1);
         return gain;
     });
-    globalBus.on("update", diff => {
+    layer.on("update", diff => {
         points.value = Decimal.add(points.value, Decimal.times(pointGain.value, diff));
     });
     const oomps = trackOOMPS(points, pointGain);
 
+    // Note: Casting as generic tree to avoid recursive type definitions
     const tree = createTree(() => ({
-        nodes: [[prestige.treeNode]],
+        nodes: noPersist([[prestige.treeNode]]),
         branches: [],
         onReset() {
-            points.value = toRaw(this.resettingNode.value) === toRaw(prestige.treeNode) ? 0 : 10;
+            points.value = toRaw(tree.resettingNode.value) === toRaw(prestige.treeNode) ? 0 : 10;
             best.value = points.value;
             total.value = points.value;
         },
         resetPropagation: branchedResetPropagation
-    })) as GenericTree;
+    })) as Tree;
 
+    // Note: layers don't _need_ a reference to everything,
+    //  but I'd recommend it over trying to remember what does and doesn't need to be included.
+    // Officially all you need are anything with persistency or that you want to access elsewhere
     return {
         name: "Tree",
         links: tree.links,
-        display: jsx(() => (
+        display: () => (
             <>
                 {player.devSpeed === 0 ? (
                     <div>
@@ -81,7 +82,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
                 <Spacer />
                 {render(tree)}
             </>
-        )),
+        ),
         points,
         best,
         total,
@@ -97,7 +98,7 @@ export const main = createLayer("main", function (this: BaseLayer) {
 export const getInitialLayers = (
     /* eslint-disable-next-line @typescript-eslint/no-unused-vars */
     player: Partial<Player>
-): Array<GenericLayer> => [main, prestige];
+): Array<Layer> => [main, prestige];
 
 /**
  * A computed ref whose value is true whenever the game is over.

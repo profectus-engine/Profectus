@@ -97,7 +97,7 @@
 <script setup lang="ts">
 import Changelog from "data/Changelog.vue";
 import projInfo from "data/projInfo.json";
-import Tooltip from "features/tooltips/Tooltip.vue";
+import Tooltip from "wrappers/tooltips/Tooltip.vue";
 import settings from "game/settings";
 import { Direction } from "util/common";
 import { galaxy, syncedSaves } from "util/galaxy";

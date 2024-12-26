@@ -1,15 +1,14 @@
-import { isArray } from "@vue/shared";
 import { globalBus } from "game/events";
-import type { GenericLayer } from "game/layers";
+import type { Layer } from "game/layers";
 import { addingLayers, persistentRefs } from "game/layers";
 import type { DecimalSource } from "util/bignum";
 import Decimal from "util/bignum";
 import { ProxyState } from "util/proxies";
 import type { Ref, WritableComputedRef } from "vue";
 import { computed, isReactive, isRef, ref } from "vue";
+import Formula from "./formulas/formulas";
 import player from "./player";
 import state from "./state";
-import Formula from "./formulas/formulas";
 
 /**
  * A symbol used in {@link Persistent} objects.
@@ -252,14 +251,14 @@ export function deletePersistent(persistent: Persistent) {
     persistent[Deleted] = true;
 }
 
-globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>) => {
+globalBus.on("addLayer", (layer: Layer, saveData: Record<string, unknown>) => {
     const features: { type: typeof Symbol }[] = [];
     const handleObject = (obj: Record<string, unknown>, path: string[] = []): boolean => {
         let foundPersistent = false;
         Object.keys(obj).forEach(key => {
             let value = obj[key];
             if (value != null && typeof value === "object") {
-                if ((value as Record<PropertyKey, unknown>)[SkipPersistence] === true) {
+                if (SkipPersistence in value && value[SkipPersistence] === true) {
                     return;
                 }
                 if (ProxyState in value) {
@@ -341,7 +340,7 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
                     // Show warning for persistent values inside arrays
                     // TODO handle arrays better
                     if (foundPersistentInChild) {
-                        if (isArray(value) && !isArray(obj)) {
+                        if (Array.isArray(value) && !Array.isArray(obj)) {
                             console.warn(
                                 "Found array that contains persistent values when adding layer. Keep in mind changing the order of elements in the array will mess with existing player saves.",
                                 ProxyState in obj
@@ -365,7 +364,7 @@ globalBus.on("addLayer", (layer: GenericLayer, saveData: Record<string, unknown>
             return;
         }
         console.error(
-            `Created persistent ref in ${layer.id} without registering it to the layer!`,
+            `Created persistent ref in "${layer.id}" without registering it to the layer!`,
             "Make sure to include everything persistent in the returned object.\n\nCreated at:\n" +
                 persistent[StackTrace]
         );

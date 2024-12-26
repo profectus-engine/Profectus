@@ -8,9 +8,8 @@ export type OptionalKeys<T> = {
 export type OmitOptional<T> = Pick<T, RequiredKeys<T>>;
 export type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
 
-export type ArrayElements<T extends ReadonlyArray<unknown>> = T extends ReadonlyArray<infer S>
-    ? S
-    : never;
+export type ArrayElements<T extends ReadonlyArray<unknown>> =
+    T extends ReadonlyArray<infer S> ? S : never;
 
 // Reference:
 // https://stackoverflow.com/questions/7225407/convert-camelcasetext-to-sentence-case-text
@@ -36,5 +35,6 @@ export enum Direction {
     Down = "Down",
     Left = "Left",
     Right = "Right",
+    // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
     Default = "Up"
 }

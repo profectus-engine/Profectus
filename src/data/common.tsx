@@ -1,64 +1,58 @@
 import Collapsible from "components/layout/Collapsible.vue";
-import { GenericAchievement } from "features/achievements/achievement";
-import type { Clickable, ClickableOptions, GenericClickable } from "features/clickables/clickable";
+import { Achievement } from "features/achievements/achievement";
+import type { Clickable, ClickableOptions } from "features/clickables/clickable";
 import { createClickable } from "features/clickables/clickable";
-import type { GenericConversion } from "features/conversion";
-import type { CoercableComponent, JSXFunction, OptionsFunc, Replace } from "features/feature";
-import { jsx, setDefault } from "features/feature";
-import { Resource, displayResource } from "features/resources/resource";
-import type { GenericTree, GenericTreeNode, TreeNode, TreeNodeOptions } from "features/trees/tree";
+import { Conversion } from "features/conversion";
+import { getFirstFeature } from "features/feature";
+import { displayResource, Resource } from "features/resources/resource";
+import type { Tree, TreeNode, TreeNodeOptions } from "features/trees/tree";
 import { createTreeNode } from "features/trees/tree";
 import type { GenericFormula } from "game/formulas/types";
 import { BaseLayer } from "game/layers";
-import type { Modifier } from "game/modifiers";
+import { Modifier } from "game/modifiers";
 import type { Persistent } from "game/persistence";
 import { DefaultValue, persistent } from "game/persistence";
 import player from "game/player";
 import settings from "game/settings";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatSmall, formatTime } from "util/bignum";
-import { WithRequired, camelToTitle } from "util/common";
-import type {
-    Computable,
-    GetComputableType,
-    GetComputableTypeWithDefault,
-    ProcessedComputable
-} from "util/computed";
-import { convertComputable, processComputable } from "util/computed";
-import { getFirstFeature, renderColJSX, renderJSX } from "util/vue";
-import type { ComputedRef, Ref } from "vue";
-import { computed, unref } from "vue";
+import { WithRequired } from "util/common";
+import { MaybeGetter, processGetter } from "util/computed";
+import { render, Renderable, renderCol } from "util/vue";
+import type { ComputedRef, MaybeRef, MaybeRefOrGetter } from "vue";
+import { computed, ref, unref } from "vue";
+import { JSX } from "vue/jsx-runtime";
 import "./common.css";
 
 /** An object that configures a {@link ResetButton} */
 export interface ResetButtonOptions extends ClickableOptions {
     /** The conversion the button uses to calculate how much resources will be gained on click */
-    conversion: GenericConversion;
+    conversion: Conversion;
     /** The tree this reset button is apart of */
-    tree: GenericTree;
+    tree: Tree;
     /** The specific tree node associated with this reset button */
-    treeNode: GenericTreeNode;
+    treeNode: TreeNode;
     /**
      * Text to display on low conversion amounts, describing what "resetting" is in this context.
      * Defaults to "Reset for ".
      */
-    resetDescription?: Computable<string>;
+    resetDescription?: MaybeRefOrGetter<string>;
     /** Whether or not to show how much currency would be required to make the gain amount increase. */
-    showNextAt?: Computable<boolean>;
+    showNextAt?: MaybeRefOrGetter<boolean>;
     /**
      * The content to display on the button.
      * By default, this includes the reset description, and amount of currency to be gained.
      */
-    display?: Computable<CoercableComponent>;
+    display?: MaybeGetter<Renderable>;
     /**
      * Whether or not this button can currently be clicked.
      * Defaults to checking the current gain amount is greater than {@link minimumGain}
      */
-    canClick?: Computable<boolean>;
+    canClick?: MaybeRefOrGetter<boolean>;
     /**
      * When {@link canClick} is left to its default, minimumGain is used to only enable the reset button when a sufficient amount of currency to gain is available.
      */
-    minimumGain?: Computable<DecimalSource>;
+    minimumGain?: MaybeRefOrGetter<DecimalSource>;
     /** A persistent ref to track how much time has passed since the last time this tree node was reset. */
     resetTime?: Persistent<DecimalSource>;
 }
@@ -68,108 +62,115 @@ export interface ResetButtonOptions extends ClickableOptions {
  * It will show how much can be converted currently, and can show when that amount will go up, as well as handle only being clickable when a sufficient amount of currency can be gained.
  * Assumes this button is associated with a specific node on a tree, and triggers that tree's reset propagation.
  */
-export type ResetButton<T extends ResetButtonOptions> = Replace<
-    Clickable<T>,
-    {
-        resetDescription: GetComputableTypeWithDefault<T["resetDescription"], Ref<string>>;
-        showNextAt: GetComputableTypeWithDefault<T["showNextAt"], true>;
-        display: GetComputableTypeWithDefault<T["display"], Ref<JSX.Element>>;
-        canClick: GetComputableTypeWithDefault<T["canClick"], Ref<boolean>>;
-        minimumGain: GetComputableTypeWithDefault<T["minimumGain"], 1>;
-        onClick: (event?: MouseEvent | TouchEvent) => void;
-    }
->;
-
-/** A type that matches any valid {@link ResetButton} object. */
-export type GenericResetButton = Replace<
-    GenericClickable & ResetButton<ResetButtonOptions>,
-    {
-        resetDescription: ProcessedComputable<string>;
-        showNextAt: ProcessedComputable<boolean>;
-        display: ProcessedComputable<CoercableComponent>;
-        canClick: ProcessedComputable<boolean>;
-        minimumGain: ProcessedComputable<DecimalSource>;
-    }
->;
+export interface ResetButton extends Clickable {
+    /** The conversion the button uses to calculate how much resources will be gained on click */
+    conversion: Conversion;
+    /** The tree this reset button is apart of */
+    tree: Tree;
+    /** The specific tree node associated with this reset button */
+    treeNode: TreeNode;
+    /**
+     * Text to display on low conversion amounts, describing what "resetting" is in this context.
+     * Defaults to "Reset for ".
+     */
+    resetDescription?: MaybeRef<string>;
+    /** Whether or not to show how much currency would be required to make the gain amount increase. */
+    showNextAt?: MaybeRef<boolean>;
+    /**
+     * When {@link canClick} is left to its default, minimumGain is used to only enable the reset button when a sufficient amount of currency to gain is available.
+     */
+    minimumGain?: MaybeRef<DecimalSource>;
+    /** A persistent ref to track how much time has passed since the last time this tree node was reset. */
+    resetTime?: Persistent<DecimalSource>;
+}
 
 /**
  * Lazily creates a reset button with the given options.
  * @param optionsFunc A function that returns the options object for this reset button.
  */
 export function createResetButton<T extends ClickableOptions & ResetButtonOptions>(
-    optionsFunc: OptionsFunc<T>
-): ResetButton<T> {
-    return createClickable(feature => {
-        const resetButton = optionsFunc.call(feature, feature);
+    optionsFunc: () => T
+) {
+    const resetButton = createClickable(() => {
+        const options = optionsFunc();
+        const {
+            conversion,
+            tree,
+            treeNode,
+            resetTime,
+            resetDescription,
+            showNextAt,
+            minimumGain,
+            display,
+            canClick,
+            onClick,
+            ...props
+        } = options;
 
-        processComputable(resetButton as T, "showNextAt");
-        setDefault(resetButton, "showNextAt", true);
-        setDefault(resetButton, "minimumGain", 1);
-
-        if (resetButton.resetDescription == null) {
-            resetButton.resetDescription = computed(() =>
-                Decimal.lt(resetButton.conversion.gainResource.value, 1e3) ? "Reset for " : ""
-            );
-        } else {
-            processComputable(resetButton as T, "resetDescription");
-        }
-
-        if (resetButton.display == null) {
-            resetButton.display = jsx(() => (
-                <span>
-                    {unref(resetButton.resetDescription as ProcessedComputable<string>)}
-                    <b>
-                        {displayResource(
-                            resetButton.conversion.gainResource,
-                            Decimal.max(
-                                unref(resetButton.conversion.actualGain),
-                                unref(resetButton.minimumGain as ProcessedComputable<DecimalSource>)
-                            )
-                        )}
-                    </b>{" "}
-                    {resetButton.conversion.gainResource.displayName}
-                    {unref(resetButton.showNextAt) != null ? (
-                        <div>
-                            <br />
-                            {unref(resetButton.conversion.buyMax) ? "Next:" : "Req:"}{" "}
+        return {
+            ...(props as Omit<typeof props, keyof ResetButtonOptions>),
+            conversion,
+            tree,
+            treeNode,
+            resetTime,
+            resetDescription:
+                processGetter(resetDescription) ??
+                computed((): string =>
+                    Decimal.lt(conversion.gainResource.value, 1e3) ? "Reset for " : ""
+                ),
+            showNextAt: processGetter(showNextAt) ?? true,
+            minimumGain: processGetter(minimumGain) ?? 1,
+            canClick:
+                processGetter(canClick) ??
+                computed((): boolean =>
+                    Decimal.gte(unref(conversion.actualGain), unref(resetButton.minimumGain))
+                ),
+            display:
+                display ??
+                ((): JSX.Element => (
+                    <span>
+                        {unref(resetButton.resetDescription)}
+                        <b>
                             {displayResource(
-                                resetButton.conversion.baseResource,
-                                !unref(resetButton.conversion.buyMax) &&
-                                    Decimal.gte(unref(resetButton.conversion.actualGain), 1)
-                                    ? unref(resetButton.conversion.currentAt)
-                                    : unref(resetButton.conversion.nextAt)
-                            )}{" "}
-                            {resetButton.conversion.baseResource.displayName}
-                        </div>
-                    ) : null}
-                </span>
-            ));
-        }
-
-        if (resetButton.canClick == null) {
-            resetButton.canClick = computed(() =>
-                Decimal.gte(
-                    unref(resetButton.conversion.actualGain),
-                    unref(resetButton.minimumGain as ProcessedComputable<DecimalSource>)
-                )
-            );
-        }
-
-        const onClick = resetButton.onClick;
-        resetButton.onClick = function (event?: MouseEvent | TouchEvent) {
-            if (unref(resetButton.canClick) === false) {
-                return;
+                                conversion.gainResource,
+                                Decimal.max(
+                                    unref(conversion.actualGain),
+                                    unref(resetButton.minimumGain)
+                                )
+                            )}
+                        </b>{" "}
+                        {conversion.gainResource.displayName}
+                        {unref(resetButton.showNextAt) != null ? (
+                            <div>
+                                <br />
+                                {unref(conversion.buyMax) ? "Next:" : "Req:"}{" "}
+                                {displayResource(
+                                    conversion.baseResource,
+                                    !unref<boolean>(conversion.buyMax) &&
+                                        Decimal.gte(unref(conversion.actualGain), 1)
+                                        ? unref(conversion.currentAt)
+                                        : unref(conversion.nextAt)
+                                )}{" "}
+                                {conversion.baseResource.displayName}
+                            </div>
+                        ) : null}
+                    </span>
+                )),
+            onClick: function (e?: MouseEvent | TouchEvent) {
+                if (unref(resetButton.canClick) === false) {
+                    return;
+                }
+                conversion.convert();
+                tree.reset(treeNode);
+                if (resetTime) {
+                    resetTime.value = resetTime[DefaultValue];
+                }
+                onClick?.call(resetButton, e);
             }
-            resetButton.conversion.convert();
-            resetButton.tree.reset(resetButton.treeNode);
-            if (resetButton.resetTime) {
-                resetButton.resetTime.value = resetButton.resetTime[DefaultValue];
-            }
-            onClick?.(event);
         };
+    }) satisfies ResetButton;
 
-        return resetButton;
-    }) as unknown as ResetButton<T>;
+    return resetButton;
 }
 
 /** An object that configures a {@link LayerTreeNode} */
@@ -177,75 +178,73 @@ export interface LayerTreeNodeOptions extends TreeNodeOptions {
     /** The ID of the layer this tree node is associated with */
     layerID: string;
     /** The color to display this tree node as */
-    color: Computable<string>; // marking as required
+    color: MaybeRefOrGetter<string>; // marking as required
     /** Whether or not to append the layer to the tabs list.
      * If set to false, then the tree node will instead always remove all tabs to its right and then add the layer tab.
      * Defaults to true.
      */
-    append?: Computable<boolean>;
+    append?: MaybeRefOrGetter<boolean>;
 }
+
 /** A tree node that is associated with a given layer, and which opens the layer when clicked. */
-export type LayerTreeNode<T extends LayerTreeNodeOptions> = Replace<
-    TreeNode<T>,
-    {
-        display: GetComputableTypeWithDefault<T["display"], T["layerID"]>;
-        append: GetComputableType<T["append"]>;
-    }
->;
-/** A type that matches any valid {@link LayerTreeNode} object. */
-export type GenericLayerTreeNode = Replace<
-    LayerTreeNode<LayerTreeNodeOptions>,
-    {
-        display: ProcessedComputable<CoercableComponent>;
-        append?: ProcessedComputable<boolean>;
-    }
->;
+export interface LayerTreeNode extends TreeNode {
+    /** The ID of the layer this tree node is associated with */
+    layerID: string;
+    /** Whether or not to append the layer to the tabs list.
+     * If set to false, then the tree node will instead always remove all tabs to its right and then add the layer tab.
+     * Defaults to true.
+     */
+    append?: MaybeRef<boolean>;
+}
 
 /**
  * Lazily creates a tree node that's associated with a specific layer, with the given options.
  * @param optionsFunc A function that returns the options object for this tree node.
  */
-export function createLayerTreeNode<T extends LayerTreeNodeOptions>(
-    optionsFunc: OptionsFunc<T>
-): LayerTreeNode<T> {
-    return createTreeNode(feature => {
-        const options = optionsFunc.call(feature, feature);
-        setDefault(options, "display", camelToTitle(options.layerID));
-        processComputable(options as T, "append");
+export function createLayerTreeNode<T extends LayerTreeNodeOptions>(optionsFunc: () => T) {
+    const layerTreeNode = createTreeNode(() => {
+        const options = optionsFunc();
+        const { display, append, layerID, ...props } = options;
+
         return {
-            ...options,
-            onClick: unref((options as unknown as GenericLayerTreeNode).append)
-                ? function () {
-                      if (player.tabs.includes(options.layerID)) {
-                          const index = player.tabs.lastIndexOf(options.layerID);
-                          player.tabs.splice(index, 1);
-                      } else {
-                          player.tabs.push(options.layerID);
-                      }
-                  }
-                : function () {
-                      player.tabs.splice(1, 1, options.layerID);
-                  }
+            ...(props as Omit<typeof props, keyof LayerTreeNodeOptions>),
+            layerID,
+            display: display ?? layerID,
+            append: processGetter(append) ?? true,
+            onClick() {
+                if (unref<boolean>(layerTreeNode.append)) {
+                    if (player.tabs.includes(layerID)) {
+                        const index = player.tabs.lastIndexOf(layerID);
+                        player.tabs.splice(index, 1);
+                    } else {
+                        player.tabs.push(layerID);
+                    }
+                } else {
+                    player.tabs.splice(1, 1, layerID);
+                }
+            }
         };
-    }) as unknown as LayerTreeNode<T>;
+    }) satisfies LayerTreeNode;
+
+    return layerTreeNode;
 }
 
 /** An option object for a modifier display as a single section. **/
 export interface Section {
     /** The header for this modifier. **/
-    title: Computable<string>;
+    title: MaybeRefOrGetter<string>;
     /** A subtitle for this modifier, e.g. to explain the context for the modifier. **/
-    subtitle?: Computable<string>;
+    subtitle?: MaybeRefOrGetter<string>;
     /** The modifier to be displaying in this section. **/
     modifier: WithRequired<Modifier, "description">;
     /** The base value being modified. **/
-    base?: Computable<DecimalSource>;
+    base?: MaybeRefOrGetter<DecimalSource>;
     /** The unit of measurement for the base. **/
     unit?: string;
     /** The label to call the base amount. Defaults to "Base". **/
-    baseText?: Computable<CoercableComponent>;
+    baseText?: MaybeGetter<Renderable>;
     /** Whether or not this section should be currently visible to the player. **/
-    visible?: Computable<boolean>;
+    visible?: MaybeRefOrGetter<boolean>;
     /** Determines if numbers larger or smaller than the base should be displayed as red. */
     smallerIsBetter?: boolean;
 }
@@ -257,33 +256,33 @@ export interface Section {
  */
 export function createCollapsibleModifierSections(
     sectionsFunc: () => Section[]
-): [JSXFunction, Persistent<Record<number, boolean>>] {
+): [() => Renderable, Persistent<Record<number, boolean>>] {
     const sections: Section[] = [];
     const processed:
         | {
-              base: ProcessedComputable<DecimalSource | undefined>[];
-              baseText: ProcessedComputable<CoercableComponent | undefined>[];
-              visible: ProcessedComputable<boolean | undefined>[];
-              title: ProcessedComputable<string | undefined>[];
-              subtitle: ProcessedComputable<string | undefined>[];
+              base: MaybeRef<DecimalSource | undefined>[];
+              baseText: (MaybeGetter<Renderable> | undefined)[];
+              visible: MaybeRef<boolean | undefined>[];
+              title: MaybeRef<string | undefined>[];
+              subtitle: MaybeRef<string | undefined>[];
           }
         | Record<string, never> = {};
     let calculated = false;
     function calculateSections() {
         if (!calculated) {
             sections.push(...sectionsFunc());
-            processed.base = sections.map(s => convertComputable(s.base));
-            processed.baseText = sections.map(s => convertComputable(s.baseText));
-            processed.visible = sections.map(s => convertComputable(s.visible));
-            processed.title = sections.map(s => convertComputable(s.title));
-            processed.subtitle = sections.map(s => convertComputable(s.subtitle));
+            processed.base = sections.map(s => processGetter(s.base));
+            processed.baseText = sections.map(s => s.baseText);
+            processed.visible = sections.map(s => processGetter(s.visible));
+            processed.title = sections.map(s => processGetter(s.title));
+            processed.subtitle = sections.map(s => processGetter(s.subtitle));
             calculated = true;
         }
         return sections;
     }
 
     const collapsed = persistent<Record<number, boolean>>({}, false);
-    const jsxFunc = jsx(() => {
+    const jsxFunc = () => {
         const sections = calculateSections();
 
         let firstVisibleSection = true;
@@ -310,16 +309,14 @@ export function createCollapsibleModifierSections(
                 <>
                     <div class="modifier-container">
                         <span class="modifier-description">
-                            {renderJSX(unref(processed.baseText[i]) ?? "Base")}
+                            {render(unref(processed.baseText[i]) ?? "Base")}
                         </span>
                         <span class="modifier-amount">
                             {format(unref(processed.base[i]) ?? 1)}
                             {s.unit}
                         </span>
                     </div>
-                    {s.modifier.description == null
-                        ? null
-                        : renderJSX(unref(s.modifier.description))}
+                    {s.modifier.description == null ? null : render(unref(s.modifier.description))}
                 </>
             );
 
@@ -365,7 +362,7 @@ export function createCollapsibleModifierSections(
             );
         });
         return <>{sectionJSX}</>;
-    });
+    };
     return [jsxFunc, collapsed];
 }
 
@@ -382,7 +379,7 @@ export function colorText(textToColor: string, color = "var(--accent2)"): JSX.El
  * Creates a collapsible display of a list of achievements
  * @param achievements A dictionary of the achievements to display, inserted in the order from easiest to hardest
  */
-export function createCollapsibleAchievements(achievements: Record<string, GenericAchievement>) {
+export function createCollapsibleAchievements(achievements: Record<string, Achievement>) {
     // Achievements are typically defined from easiest to hardest, and we want to show hardest first
     const orderedAchievements = Object.values(achievements).reverse();
     const collapseAchievements = persistent<boolean>(true, false);
@@ -393,25 +390,23 @@ export function createCollapsibleAchievements(achievements: Record<string, Gener
         orderedAchievements,
         m => m.earned.value
     );
-    const display = jsx(() => {
+    const display = computed(() => {
         const achievementsToDisplay = [...lockedAchievements.value];
         if (firstFeature.value) {
             achievementsToDisplay.push(firstFeature.value);
         }
-        return renderColJSX(
+        return renderCol(
             ...achievementsToDisplay,
-            jsx(() => (
-                <Collapsible
-                    collapsed={collapseAchievements}
-                    content={collapsedContent}
-                    display={
-                        collapseAchievements.value
-                            ? "Show other completed achievements"
-                            : "Hide other completed achievements"
-                    }
-                    v-show={unref(hasCollapsedContent)}
-                />
-            ))
+            <Collapsible
+                collapsed={collapseAchievements}
+                content={collapsedContent}
+                display={
+                    collapseAchievements.value
+                        ? "Show other completed achievements"
+                        : "Hide other completed achievements"
+                }
+                v-show={unref(hasCollapsedContent)}
+            />
         );
     });
     return {
@@ -428,11 +423,11 @@ export function createCollapsibleAchievements(achievements: Record<string, Gener
  */
 export function estimateTime(
     resource: Resource,
-    rate: Computable<DecimalSource>,
-    target: Computable<DecimalSource>
+    rate: MaybeRefOrGetter<DecimalSource>,
+    target: MaybeRefOrGetter<DecimalSource>
 ) {
-    const processedRate = convertComputable(rate);
-    const processedTarget = convertComputable(target);
+    const processedRate = processGetter(rate);
+    const processedTarget = processGetter(target);
     return computed(() => {
         const currRate = unref(processedRate);
         const currTarget = unref(processedTarget);
@@ -454,15 +449,15 @@ export function estimateTime(
  */
 export function createFormulaPreview(
     formula: GenericFormula,
-    showPreview: Computable<boolean>,
-    previewAmount: Computable<DecimalSource> = 1
+    showPreview: MaybeRefOrGetter<boolean>,
+    previewAmount: MaybeRefOrGetter<DecimalSource> = 1
 ) {
-    const processedShowPreview = convertComputable(showPreview);
-    const processedPreviewAmount = convertComputable(previewAmount);
+    const processedShowPreview = processGetter(showPreview);
+    const processedPreviewAmount = processGetter(previewAmount);
     if (!formula.hasVariable()) {
         console.error("Cannot create formula preview if the formula does not have a variable");
     }
-    return jsx(() => {
+    return computed(() => {
         if (unref(processedShowPreview)) {
             const curr = formatSmall(formula.evaluate());
             const preview = formatSmall(
@@ -504,4 +499,22 @@ export function isRendered(layer: BaseLayer, feature: { id: string }): ComputedR
 export function isRendered(layer: BaseLayer, idOrFeature: string | { id: string }) {
     const id = typeof idOrFeature === "string" ? idOrFeature : idOrFeature.id;
     return computed(() => id in layer.nodes.value);
+}
+
+/**
+ * Utility function for setting up a system where one of many things can be selected.
+ * It's recommended to use an ID or index rather than the object itself, so that you can wrap the ref in a persistent without breaking anything.
+ * @returns The ref containing the selection, as well as a select and deselect function
+ */
+export function setupSelectable<T>() {
+    const selected = ref<T>();
+    return {
+        select: function (node: T) {
+            selected.value = node;
+        },
+        deselect: function () {
+            selected.value = undefined;
+        },
+        selected
+    };
 }

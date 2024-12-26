@@ -12,5 +12,10 @@ import themes from "data/themes";
 import settings from "game/settings";
 import { computed } from "vue";
 
-const mergeAdjacent = computed(() => themes[settings.theme].mergeAdjacent);
+const props = defineProps<{
+    dontMerge?: boolean
+}>();
+
+const mergeAdjacent = computed(() =>
+    themes[settings.theme].mergeAdjacent && props.dontMerge !== true);
 </script>

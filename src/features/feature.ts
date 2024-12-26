@@ -1,50 +1,6 @@
 import Decimal from "util/bignum";
-import { DoNotCache, ProcessedComputable } from "util/computed";
-import type { CSSProperties, DefineComponent } from "vue";
-import { isRef, unref } from "vue";
-
-/**
- * A symbol to use as a key for a vue component a feature can be rendered with
- * @see {@link util/vue.VueFeature}
- */
-export const Component = Symbol("Component");
-/**
- * A symbol to use as a key for a prop gathering function that a feature can use to send to its component
- * @see {@link util/vue.VueFeature}
- */
-export const GatherProps = Symbol("GatherProps");
-
-/**
- * A type referring to a function that returns JSX and is marked that it shouldn't be wrapped in a ComputedRef
- * @see {@link jsx}
- */
-export type JSXFunction = (() => JSX.Element) & { [DoNotCache]: true };
-/**
- * Any value that can be coerced into (or is) a vue component
- */
-export type CoercableComponent = string | DefineComponent | JSXFunction;
-/**
- * Any value that can be passed into an HTML element's style attribute.
- * Note that Profectus uses its own StyleValue and CSSProperties that are extended,
- * in order to have additional properties added to them, such as variable CSS variables.
- */
-export type StyleValue = string | CSSProperties | Array<string | CSSProperties>;
-
-/** A type that refers to any vue component */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type GenericComponent = DefineComponent<any, any, any>;
-
-/** Utility type that is S, with any properties from T that aren't already present in S */
-export type Replace<T, S> = S & Omit<T, keyof S>;
-
-/**
- * Utility function for a function that returns an object of a given type,
- * with "this" bound to what the type will eventually be processed into.
- * Intended for making lazily evaluated objects.
- */
-export type OptionsFunc<T, R = unknown, S = R> = (obj: R) => OptionsObject<T, R, S>;
-
-export type OptionsObject<T, R = unknown, S = R> = T & Partial<R> & ThisType<T & S>;
+import { Renderable, renderCol, VueFeature } from "util/vue";
+import { computed, isRef, MaybeRef, Ref, unref } from "vue";
 
 let id = 0;
 /**
@@ -67,34 +23,18 @@ export enum Visibility {
     None
 }
 
-export function isVisible(visibility: ProcessedComputable<Visibility | boolean>) {
+export function isVisible(visibility: MaybeRef<Visibility | boolean>) {
     const currVisibility = unref(visibility);
     return currVisibility !== Visibility.None && currVisibility !== false;
 }
 
-export function isHidden(visibility: ProcessedComputable<Visibility | boolean>) {
+export function isHidden(visibility: MaybeRef<Visibility | boolean>) {
     const currVisibility = unref(visibility);
     return currVisibility === Visibility.Hidden;
 }
 
-/**
- * Takes a function and marks it as JSX so it won't get auto-wrapped into a ComputedRef.
- * The function may also return empty string as empty JSX tags cause issues.
- */
-export function jsx(func: () => JSX.Element | ""): JSXFunction {
-    (func as Partial<JSXFunction>)[DoNotCache] = true;
-    return func as JSXFunction;
-}
-
-/** Utility function to set a property on an object if and only if it doesn't already exist */
-export function setDefault<T, K extends keyof T>(
-    object: T,
-    key: K,
-    value: T[K]
-): asserts object is Exclude<T, K> & Required<Pick<T, K>> {
-    if (object[key] == null && value != null) {
-        object[key] = value;
-    }
+export function isType<T extends symbol>(object: unknown, type: T): object is { type: T } {
+    return object != null && typeof object === "object" && "type" in object && object.type === type;
 }
 
 /**
@@ -102,14 +42,17 @@ export function setDefault<T, K extends keyof T>(
  * @param obj The object to traverse
  * @param types The feature types that will be searched for
  */
-export function findFeatures(obj: Record<string, unknown>, ...types: symbol[]): unknown[] {
+export function findFeatures(obj: object, ...types: symbol[]): unknown[] {
     const objects: unknown[] = [];
-    const handleObject = (obj: Record<string, unknown>) => {
+    const handleObject = (obj: object) => {
         Object.keys(obj).forEach(key => {
-            const value = obj[key];
-            if (value != null && typeof value === "object") {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                if (types.includes((value as Record<string, any>).type)) {
+            const value: unknown = obj[key as keyof typeof obj];
+            if (
+                value != null &&
+                typeof value === "object" &&
+                (value as Record<string, unknown>).__v_isVNode !== true
+            ) {
+                if (types.includes((value as Record<string, unknown>).type as symbol)) {
                     objects.push(value);
                 } else if (!(value instanceof Decimal) && !isRef(value)) {
                     handleObject(value as Record<string, unknown>);
@@ -119,6 +62,24 @@ export function findFeatures(obj: Record<string, unknown>, ...types: symbol[]): 
     };
     handleObject(obj);
     return objects;
+}
+
+export function getFirstFeature<T extends VueFeature>(
+    features: T[],
+    filter: (feature: T) => boolean
+): {
+    firstFeature: Ref<T | undefined>;
+    collapsedContent: () => Renderable;
+    hasCollapsedContent: Ref<boolean>;
+} {
+    const filteredFeatures = computed(() =>
+        features.filter(feature => isVisible(feature.visibility ?? true) && filter(feature))
+    );
+    return {
+        firstFeature: computed(() => filteredFeatures.value[0]),
+        collapsedContent: () => renderCol(...filteredFeatures.value.slice(1)),
+        hasCollapsedContent: computed(() => filteredFeatures.value.length > 1)
+    };
 }
 
 /**
@@ -132,13 +93,13 @@ export function excludeFeatures(obj: Record<string, unknown>, ...types: symbol[]
     const handleObject = (obj: Record<string, unknown>) => {
         Object.keys(obj).forEach(key => {
             const value = obj[key];
-            if (value != null && typeof value === "object") {
-                if (
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    typeof (value as Record<string, any>).type === "symbol" &&
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    !types.includes((value as Record<string, any>).type)
-                ) {
+            if (
+                value != null &&
+                typeof value === "object" &&
+                (value as Record<string, unknown>).__v_isVNode !== true
+            ) {
+                const type = (value as Record<string, unknown>).type;
+                if (typeof type === "symbol" && !types.includes(type)) {
                     objects.push(value);
                 } else if (!(value instanceof Decimal) && !isRef(value)) {
                     handleObject(value as Record<string, unknown>);

@@ -1,120 +1,122 @@
+/* eslint-disable vue/multi-word-component-names */
+// ^ I have no idea why that's necessary; the rule is disabled, and this file isn't a vue component?
+// I'm _guessing_ it's related to us using DefineComponent, but I figured that eslint rule should
+// only apply to SFCs
 import Col from "components/layout/Column.vue";
 import Row from "components/layout/Row.vue";
-import type { CoercableComponent, GenericComponent, JSXFunction } from "features/feature";
-import {
-    Component as ComponentKey,
-    GatherProps,
-    isVisible,
-    jsx,
-    Visibility
-} from "features/feature";
-import type { ProcessedComputable } from "util/computed";
-import { DoNotCache } from "util/computed";
-import type { Component, ComputedRef, DefineComponent, PropType, Ref, ShallowRef } from "vue";
-import {
-    computed,
-    defineComponent,
-    isRef,
-    onUnmounted,
-    ref,
-    shallowRef,
-    unref,
-    watchEffect
-} from "vue";
+import { getUniqueID, Visibility } from "features/feature";
+import VueFeatureComponent from "features/VueFeature.vue";
+import { MaybeGetter, processGetter } from "util/computed";
+import type { CSSProperties, MaybeRef, MaybeRefOrGetter, Ref } from "vue";
+import { isRef, onUnmounted, ref, toValue } from "vue";
+import { JSX } from "vue/jsx-runtime";
 import { camelToKebab } from "./common";
 
-export function coerceComponent(
-    component: CoercableComponent,
-    defaultWrapper = "span"
-): DefineComponent {
-    if (typeof component === "function") {
-        return defineComponent({ render: component });
-    }
-    if (typeof component === "string") {
-        if (component.length > 0) {
-            component = component.trim();
-            if (component.charAt(0) !== "<") {
-                component = `<${defaultWrapper}>${component}</${defaultWrapper}>`;
-            }
+export const VueFeature = Symbol("VueFeature");
 
-            return defineComponent({ template: component });
-        }
-        return defineComponent({ render: () => ({}) });
-    }
-    return component;
+export type Renderable = JSX.Element | string;
+
+export interface VueFeatureOptions {
+    /** Whether this feature should be visible. */
+    visibility?: MaybeRefOrGetter<Visibility | boolean>;
+    /** Dictionary of CSS classes to apply to this feature. */
+    classes?: MaybeRefOrGetter<Record<string, boolean>>;
+    /** CSS to apply to this feature. */
+    style?: MaybeRefOrGetter<CSSProperties>;
 }
 
 export interface VueFeature {
-    [ComponentKey]: GenericComponent;
-    [GatherProps]: () => Record<string, unknown>;
+    /** An auto-generated ID for identifying features that appear in the DOM. Will not persist between refreshes or updates. */
+    id: string;
+    /** Whether this feature should be visible. */
+    visibility?: MaybeRef<Visibility | boolean>;
+    /** Dictionary of CSS classes to apply to this feature. */
+    classes?: MaybeRef<Record<string, boolean>>;
+    /** CSS to apply to this feature. */
+    style?: MaybeRef<CSSProperties>;
+    /** The components to render inside the vue feature */
+    components: MaybeGetter<Renderable>[];
+    /** The components to render wrapped around the vue feature */
+    wrappers: ((el: () => Renderable) => Renderable)[];
+    /** Used to identify Vue Features */
+    [VueFeature]: true;
 }
 
-export function render(object: VueFeature | CoercableComponent): JSX.Element | DefineComponent {
-    if (isCoercableComponent(object)) {
-        if (typeof object === "function") {
-            return (object as JSXFunction)();
-        }
-        return coerceComponent(object);
+export function vueFeatureMixin(
+    featureName: string,
+    options: VueFeatureOptions,
+    component?: MaybeGetter<Renderable>
+) {
+    return {
+        id: getUniqueID(featureName),
+        visibility: processGetter(options.visibility),
+        classes: processGetter(options.classes),
+        style: processGetter(options.style),
+        components: component == null ? [] : [component],
+        wrappers: [] as ((el: () => Renderable) => Renderable)[],
+        [VueFeature]: true
+    } satisfies VueFeature;
+}
+
+export function render(object: VueFeature, wrapper?: (el: Renderable) => Renderable): JSX.Element;
+export function render<T extends Renderable>(
+    object: MaybeGetter<Renderable>,
+    wrapper?: (el: Renderable) => T
+): T;
+export function render(
+    object: VueFeature | MaybeGetter<Renderable>,
+    wrapper?: (el: Renderable) => Renderable
+): Renderable;
+export function render(
+    object: VueFeature | MaybeGetter<Renderable>,
+    wrapper?: (el: Renderable) => Renderable
+) {
+    if (typeof object === "object" && VueFeature in object) {
+        const { id, visibility, style, classes, components, wrappers } = object;
+        return (
+            <VueFeatureComponent
+                id={id}
+                visibility={visibility}
+                style={style}
+                classes={classes}
+                components={components}
+                wrappers={wrappers}
+            />
+        );
     }
-    const Component = object[ComponentKey];
-    return <Component {...object[GatherProps]()} />;
+
+    object = toValue(object);
+    return wrapper?.(object) ?? object;
 }
 
-export function renderRow(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
-    return <Row>{objects.map(render)}</Row>;
+export function renderRow(...objects: (VueFeature | MaybeGetter<Renderable>)[]): JSX.Element {
+    return <Row>{objects.map(obj => render(obj))}</Row>;
 }
 
-export function renderCol(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
-    return <Col>{objects.map(render)}</Col>;
+export function renderCol(...objects: (VueFeature | MaybeGetter<Renderable>)[]): JSX.Element {
+    return <Col>{objects.map(obj => render(obj))}</Col>;
 }
 
-export function renderJSX(object: VueFeature | CoercableComponent): JSX.Element {
-    if (isCoercableComponent(object)) {
-        if (typeof object === "function") {
-            return (object as JSXFunction)();
-        }
-        if (typeof object === "string") {
-            return <>{object}</>;
-        }
-        // TODO why is object typed as never?
-        const Comp = object as DefineComponent;
-        return <Comp />;
-    }
-    const Component = object[ComponentKey];
-    return <Component {...object[GatherProps]()} />;
+export function joinJSX(
+    objects: (VueFeature | MaybeGetter<Renderable>)[],
+    joiner: JSX.Element
+): JSX.Element {
+    return objects.reduce<JSX.Element>(
+        (acc, curr) => (
+            <>
+                {acc}
+                {joiner}
+                {render(curr)}
+            </>
+        ),
+        <></>
+    );
 }
 
-export function renderRowJSX(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
-    return <Row>{objects.map(renderJSX)}</Row>;
-}
-
-export function renderColJSX(...objects: (VueFeature | CoercableComponent)[]): JSX.Element {
-    return <Col>{objects.map(renderJSX)}</Col>;
-}
-
-export function joinJSX(objects: JSX.Element[], joiner: JSX.Element): JSX.Element {
-    return objects.reduce((acc, curr) => (
-        <>
-            {acc}
-            {joiner}
-            {curr}
-        </>
-    ));
-}
-
-export function isCoercableComponent(component: unknown): component is CoercableComponent {
-    if (typeof component === "string") {
-        return true;
-    } else if (typeof component === "object") {
-        if (component == null) {
-            return false;
-        }
-        return "render" in component || "component" in component;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } else if (typeof component === "function" && (component as any)[DoNotCache] === true) {
-        return true;
-    }
-    return false;
+export function isJSXElement(element: unknown): element is JSX.Element {
+    return (
+        element != null && typeof element === "object" && "type" in element && "children" in element
+    );
 }
 
 export function setupHoldToClick(
@@ -125,17 +127,17 @@ export function setupHoldToClick(
     stop: VoidFunction;
     handleHolding: VoidFunction;
 } {
-    const interval = ref<NodeJS.Timer | null>(null);
+    const interval = ref<NodeJS.Timeout | null>(null);
     const event = ref<MouseEvent | TouchEvent | undefined>(undefined);
 
     function start(e: MouseEvent | TouchEvent) {
-        if (!interval.value) {
+        if (interval.value == null) {
             interval.value = setInterval(handleHolding, 250);
         }
         event.value = e;
     }
     function stop() {
-        if (interval.value) {
+        if (interval.value != null) {
             clearInterval(interval.value);
             interval.value = null;
         }
@@ -153,59 +155,6 @@ export function setupHoldToClick(
     return { start, stop, handleHolding };
 }
 
-export function getFirstFeature<
-    T extends VueFeature & { visibility: ProcessedComputable<Visibility | boolean> }
->(
-    features: T[],
-    filter: (feature: T) => boolean
-): {
-    firstFeature: Ref<T | undefined>;
-    collapsedContent: JSXFunction;
-    hasCollapsedContent: Ref<boolean>;
-} {
-    const filteredFeatures = computed(() =>
-        features.filter(feature => isVisible(feature.visibility) && filter(feature))
-    );
-    return {
-        firstFeature: computed(() => filteredFeatures.value[0]),
-        collapsedContent: jsx(() => renderCol(...filteredFeatures.value.slice(1))),
-        hasCollapsedContent: computed(() => filteredFeatures.value.length > 1)
-    };
-}
-
-export function computeComponent(
-    component: Ref<ProcessedComputable<CoercableComponent>>,
-    defaultWrapper = "div"
-): ShallowRef<Component | ""> {
-    const comp = shallowRef<Component | "">();
-    watchEffect(() => {
-        comp.value = coerceComponent(unwrapRef(component), defaultWrapper);
-    });
-    return comp as ShallowRef<Component | "">;
-}
-export function computeOptionalComponent(
-    component: Ref<ProcessedComputable<CoercableComponent | undefined> | undefined>,
-    defaultWrapper = "div"
-): ShallowRef<Component | "" | null> {
-    const comp = shallowRef<Component | "" | null>(null);
-    watchEffect(() => {
-        const currComponent = unwrapRef(component);
-        comp.value =
-            currComponent === "" || currComponent == null
-                ? null
-                : coerceComponent(currComponent, defaultWrapper);
-    });
-    return comp;
-}
-
-export function wrapRef<T>(ref: Ref<ProcessedComputable<T>>): ComputedRef<T> {
-    return computed(() => unwrapRef(ref));
-}
-
-export function unwrapRef<T>(ref: Ref<ProcessedComputable<T>>): T {
-    return unref<T>(unref(ref));
-}
-
 export function setRefValue<T>(ref: Ref<T | Ref<T>>, value: T) {
     if (isRef(ref.value)) {
         ref.value.value = value;
@@ -221,31 +170,24 @@ export type PropTypes =
     | typeof Function
     | typeof Object
     | typeof Array;
-// TODO Unfortunately, the typescript engine gives up on typing completely when you use this method,
-// Even though it has the same typing as when doing it manually
-export function processedPropType<T>(...types: PropTypes[]): PropType<ProcessedComputable<T>> {
-    if (!types.includes(Object)) {
-        types.push(Object);
-    }
-    return types as PropType<ProcessedComputable<T>>;
-}
 
 export function trackHover(element: VueFeature): Ref<boolean> {
     const isHovered = ref(false);
 
-    const elementGatherProps = element[GatherProps].bind(element);
-    element[GatherProps] = () => ({
-        ...elementGatherProps(),
-        onPointerenter: () => (isHovered.value = true),
-        onPointerleave: () => (isHovered.value = false)
-    });
+    (element as unknown as { onPointerenter: VoidFunction }).onPointerenter = () =>
+        (isHovered.value = true);
+    (element as unknown as { onPointerleave: VoidFunction }).onPointerleave = () =>
+        (isHovered.value = true);
 
     return isHovered;
 }
 
 export function kebabifyObject(object: Record<string, unknown>) {
-    return Object.keys(object).reduce((acc, curr) => {
-        acc[camelToKebab(curr)] = object[curr];
-        return acc;
-    }, {} as Record<string, unknown>);
+    return Object.keys(object).reduce(
+        (acc, curr) => {
+            acc[camelToKebab(curr)] = object[curr];
+            return acc;
+        },
+        {} as Record<string, unknown>
+    );
 }

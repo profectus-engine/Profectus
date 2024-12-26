@@ -13,52 +13,51 @@
 </template>
 
 <script setup lang="ts">
-import type { Link } from "features/links/links";
 import type { FeatureNode } from "game/layers";
 import { BoundsInjectionKey, NodesInjectionKey } from "game/layers";
-import { computed, inject, onMounted, ref, toRef, watch } from "vue";
+import { computed, inject, onMounted, ref, shallowRef, unref, watch } from "vue";
 import LinkVue from "./Link.vue";
+import { Links } from "./links";
 
-const _props = defineProps<{ links?: Link[] }>();
-const links = toRef(_props, "links");
+const props = defineProps<{ links: Links["links"] }>();
 
-const resizeListener = ref<Element | null>(null);
+function updateBounds() {
+    boundingRect.value = resizeListener.value?.getBoundingClientRect();
+}
+
+const resizeObserver = new ResizeObserver(updateBounds);
+const resizeListener = shallowRef<HTMLElement | null>(null);
 
 const nodes = inject(NodesInjectionKey, ref<Record<string, FeatureNode | undefined>>({}));
 const outerBoundingRect = inject(BoundsInjectionKey, ref<DOMRect | undefined>(undefined));
 const boundingRect = ref<DOMRect | undefined>(resizeListener.value?.getBoundingClientRect());
-watch(
-    outerBoundingRect,
-    () => (boundingRect.value = resizeListener.value?.getBoundingClientRect())
-);
-onMounted(() => (boundingRect.value = resizeListener.value?.getBoundingClientRect()));
+watch(outerBoundingRect, updateBounds);
+onMounted(() => {
+    const resListener = resizeListener.value;
+    if (resListener != null) {
+        resizeObserver.observe(resListener);
+    }
+    updateBounds();
+});
 
 const validLinks = computed(() => {
     const n = nodes.value;
     return (
-        links.value?.filter(link => n[link.startNode.id]?.rect && n[link.endNode.id]?.rect) ?? []
+        unref(props.links)?.filter(link =>
+            n[link.startNode.id]?.rect && n[link.endNode.id]?.rect) ?? []
     );
 });
 </script>
 
 <style scoped>
-.resize-listener {
-    position: absolute;
-    top: 0px;
-    left: 0;
-    right: -4px;
-    bottom: 5px;
-    z-index: -10;
-    pointer-events: none;
-}
-
-svg {
+.resize-listener, svg {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
     z-index: -10;
     pointer-events: none;
+    margin: 0;
+    width: 100%;
+    height: 100%;
 }
 </style>

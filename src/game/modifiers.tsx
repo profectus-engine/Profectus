@@ -1,15 +1,12 @@
 import "components/common/modifiers.css";
-import type { CoercableComponent, OptionsFunc } from "features/feature";
-import { jsx } from "features/feature";
 import settings from "game/settings";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { formatSmall } from "util/bignum";
 import type { RequiredKeys, WithRequired } from "util/common";
-import type { Computable, ProcessedComputable } from "util/computed";
-import { convertComputable } from "util/computed";
+import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
-import { renderJSX } from "util/vue";
-import { computed, unref } from "vue";
+import { render, Renderable } from "util/vue";
+import { computed, MaybeRef, MaybeRefOrGetter, unref } from "vue";
 import Formula from "./formulas/formulas";
 import { FormulaSource, GenericFormula } from "./formulas/types";
 
@@ -30,12 +27,12 @@ export interface Modifier {
      * Whether or not this modifier should be considered enabled.
      * Typically for use with modifiers passed into {@link createSequentialModifier}.
      */
-    enabled?: ProcessedComputable<boolean>;
+    enabled?: MaybeRef<boolean>;
     /**
      * A description of this modifier.
      * @see {@link createModifierSection}.
      */
-    description?: ProcessedComputable<CoercableComponent>;
+    description?: MaybeGetter<Renderable>;
 }
 
 /** Utility type that represents the output of all modifiers that represent a single operation. */
@@ -47,11 +44,11 @@ export type OperationModifier<T> = WithRequired<
 /** An object that configures an additive modifier via {@link createAdditiveModifier}. */
 export interface AdditiveModifierOptions {
     /** The amount to add to the input value. */
-    addend: Computable<DecimalSource>;
+    addend: MaybeRefOrGetter<DecimalSource>;
     /** Description of what this modifier is doing. */
-    description?: Computable<CoercableComponent>;
-    /** A computable that will be processed and passed directly into the returned modifier. */
-    enabled?: Computable<boolean>;
+    description?: MaybeGetter<Renderable>;
+    /** A MaybeRefOrGetter that will be processed and passed directly into the returned modifier. */
+    enabled?: MaybeRefOrGetter<boolean>;
     /** Determines if numbers larger or smaller than 0 should be displayed as red. */
     smallerIsBetter?: boolean;
 }
@@ -61,17 +58,13 @@ export interface AdditiveModifierOptions {
  * @param optionsFunc Additive modifier options.
  */
 export function createAdditiveModifier<T extends AdditiveModifierOptions, S = OperationModifier<T>>(
-    optionsFunc: OptionsFunc<T>
+    optionsFunc: () => T
 ) {
-    return createLazyProxy(feature => {
-        const { addend, description, enabled, smallerIsBetter } = optionsFunc.call(
-            feature,
-            feature
-        );
+    return createLazyProxy(() => {
+        const { addend, description, enabled, smallerIsBetter } = optionsFunc();
 
-        const processedAddend = convertComputable(addend);
-        const processedDescription = convertComputable(description);
-        const processedEnabled = enabled == null ? undefined : convertComputable(enabled);
+        const processedAddend = processGetter(addend);
+        const processedEnabled = enabled == null ? undefined : processGetter(enabled);
         return {
             apply: (gain: DecimalSource) => Decimal.add(gain, unref(processedAddend)),
             invert: (gain: DecimalSource) => Decimal.sub(gain, unref(processedAddend)),
@@ -80,14 +73,9 @@ export function createAdditiveModifier<T extends AdditiveModifierOptions, S = Op
             description:
                 description == null
                     ? undefined
-                    : jsx(() => (
+                    : () => (
                           <div class="modifier-container">
-                              {unref(processedDescription) != null ? (
-                                  <span class="modifier-description">
-                                      {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                                      {renderJSX(unref(processedDescription)!)}
-                                  </span>
-                              ) : null}
+                              <span class="modifier-description">{render(description)}</span>
                               <span
                                   class="modifier-amount"
                                   style={
@@ -104,7 +92,7 @@ export function createAdditiveModifier<T extends AdditiveModifierOptions, S = Op
                                   {formatSmall(unref(processedAddend))}
                               </span>
                           </div>
-                      ))
+                      )
         };
     }) as S;
 }
@@ -112,11 +100,11 @@ export function createAdditiveModifier<T extends AdditiveModifierOptions, S = Op
 /** An object that configures an multiplicative modifier via {@link createMultiplicativeModifier}. */
 export interface MultiplicativeModifierOptions {
     /** The amount to multiply the input value by. */
-    multiplier: Computable<DecimalSource>;
+    multiplier: MaybeRefOrGetter<DecimalSource>;
     /** Description of what this modifier is doing. */
-    description?: Computable<CoercableComponent> | undefined;
-    /** A computable that will be processed and passed directly into the returned modifier. */
-    enabled?: Computable<boolean> | undefined;
+    description?: MaybeGetter<Renderable> | undefined;
+    /** A MaybeRefOrGetter that will be processed and passed directly into the returned modifier. */
+    enabled?: MaybeRefOrGetter<boolean> | undefined;
     /** Determines if numbers larger or smaller than 1 should be displayed as red. */
     smallerIsBetter?: boolean;
 }
@@ -128,16 +116,12 @@ export interface MultiplicativeModifierOptions {
 export function createMultiplicativeModifier<
     T extends MultiplicativeModifierOptions,
     S = OperationModifier<T>
->(optionsFunc: OptionsFunc<T>) {
-    return createLazyProxy(feature => {
-        const { multiplier, description, enabled, smallerIsBetter } = optionsFunc.call(
-            feature,
-            feature
-        );
+>(optionsFunc: () => T) {
+    return createLazyProxy(() => {
+        const { multiplier, description, enabled, smallerIsBetter } = optionsFunc();
 
-        const processedMultiplier = convertComputable(multiplier);
-        const processedDescription = convertComputable(description);
-        const processedEnabled = enabled == null ? undefined : convertComputable(enabled);
+        const processedMultiplier = processGetter(multiplier);
+        const processedEnabled = enabled == null ? undefined : processGetter(enabled);
         return {
             apply: (gain: DecimalSource) => Decimal.times(gain, unref(processedMultiplier)),
             invert: (gain: DecimalSource) => Decimal.div(gain, unref(processedMultiplier)),
@@ -146,14 +130,9 @@ export function createMultiplicativeModifier<
             description:
                 description == null
                     ? undefined
-                    : jsx(() => (
+                    : () => (
                           <div class="modifier-container">
-                              {unref(processedDescription) != null ? (
-                                  <span class="modifier-description">
-                                      {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                                      {renderJSX(unref(processedDescription)!)}
-                                  </span>
-                              ) : null}
+                              <span class="modifier-description">{render(description)}</span>
                               <span
                                   class="modifier-amount"
                                   style={
@@ -169,7 +148,7 @@ export function createMultiplicativeModifier<
                                   ×{formatSmall(unref(processedMultiplier))}
                               </span>
                           </div>
-                      ))
+                      )
         };
     }) as S;
 }
@@ -177,11 +156,11 @@ export function createMultiplicativeModifier<
 /** An object that configures an exponential modifier via {@link createExponentialModifier}. */
 export interface ExponentialModifierOptions {
     /** The amount to raise the input value to the power of. */
-    exponent: Computable<DecimalSource>;
+    exponent: MaybeRefOrGetter<DecimalSource>;
     /** Description of what this modifier is doing. */
-    description?: Computable<CoercableComponent> | undefined;
-    /** A computable that will be processed and passed directly into the returned modifier. */
-    enabled?: Computable<boolean> | undefined;
+    description?: MaybeGetter<Renderable> | undefined;
+    /** A MaybeRefOrGetter that will be processed and passed directly into the returned modifier. */
+    enabled?: MaybeRefOrGetter<boolean> | undefined;
     /** Add 1 before calculating, then remove it afterwards. This prevents low numbers from becoming lower. */
     supportLowNumbers?: boolean;
     /** Determines if numbers larger or smaller than 1 should be displayed as red. */
@@ -195,14 +174,13 @@ export interface ExponentialModifierOptions {
 export function createExponentialModifier<
     T extends ExponentialModifierOptions,
     S = OperationModifier<T>
->(optionsFunc: OptionsFunc<T>) {
-    return createLazyProxy(feature => {
+>(optionsFunc: () => T) {
+    return createLazyProxy(() => {
         const { exponent, description, enabled, supportLowNumbers, smallerIsBetter } =
-            optionsFunc.call(feature, feature);
+            optionsFunc();
 
-        const processedExponent = convertComputable(exponent);
-        const processedDescription = convertComputable(description);
-        const processedEnabled = enabled == null ? undefined : convertComputable(enabled);
+        const processedExponent = processGetter(exponent);
+        const processedEnabled = enabled == null ? undefined : processGetter(enabled);
         return {
             apply: (gain: DecimalSource) => {
                 let result = gain;
@@ -234,15 +212,12 @@ export function createExponentialModifier<
             description:
                 description == null
                     ? undefined
-                    : jsx(() => (
+                    : () => (
                           <div class="modifier-container">
-                              {unref(processedDescription) != null ? (
-                                  <span class="modifier-description">
-                                      {/* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */}
-                                      {renderJSX(unref(processedDescription)!)}
-                                      {supportLowNumbers ? " (+1 effective)" : null}
-                                  </span>
-                              ) : null}
+                              <span class="modifier-description">
+                                  {render(description)}
+                                  {supportLowNumbers ? " (+1 effective)" : null}
+                              </span>
                               <span
                                   class="modifier-amount"
                                   style={
@@ -258,7 +233,7 @@ export function createExponentialModifier<
                                   ^{formatSmall(unref(processedExponent))}
                               </span>
                           </div>
-                      ))
+                      )
         };
     }) as S;
 }
@@ -304,16 +279,13 @@ export function createSequentialModifier<
                 ? computed(() => modifiers.filter(m => unref(m.enabled) !== false).length > 0)
                 : undefined,
             description: modifiers.some(m => m.description != null)
-                ? jsx(() => (
-                      <>
-                          {(
-                              modifiers
-                                  .filter(m => unref(m.enabled) !== false)
-                                  .map(m => unref(m.description))
-                                  .filter(d => d) as CoercableComponent[]
-                          ).map(renderJSX)}
-                      </>
-                  ))
+                ? () =>
+                      (
+                          modifiers
+                              .filter(m => unref(m.enabled) !== false)
+                              .map(m => unref(m.description))
+                              .filter(d => d) as MaybeGetter<Renderable>[]
+                      ).map(m => render(m))
                 : undefined
         };
     }) as S;
@@ -332,7 +304,7 @@ export interface ModifierSectionOptions {
     /** The unit of the value being modified, if any. */
     unit?: string;
     /** The label to use for the base value. Defaults to "Base". */
-    baseText?: CoercableComponent;
+    baseText?: MaybeGetter<Renderable>;
     /** Determines if numbers larger or smaller than the base should be displayed as red. */
     smallerIsBetter?: boolean;
 }
@@ -360,13 +332,13 @@ export function createModifierSection({
             </h3>
             <br />
             <div class="modifier-container">
-                <span class="modifier-description">{renderJSX(baseText ?? "Base")}</span>
+                <span class="modifier-description">{render(baseText ?? "Base")}</span>
                 <span class="modifier-amount">
                     {formatSmall(base ?? 1)}
                     {unit}
                 </span>
             </div>
-            {renderJSX(unref(modifier.description))}
+            {render(modifier.description)}
             <hr />
             <div class="modifier-container">
                 <span class="modifier-description">Total</span>

@@ -1,132 +1,61 @@
 <template>
-    <div
-        v-if="isVisible(visibility)"
-        class="tab-family-container"
-        :class="{ ...unref(classes), ...tabClasses }"
-        :style="[
-            {
-                visibility: isHidden(visibility) ? 'hidden' : undefined
-            },
-            unref(style) ?? [],
-            tabStyle ?? []
-        ]"
-    >
+    <div class="tab-family-container" :class="tabClasses" :style="tabStyle">
         <Sticky
             class="tab-buttons-container"
             :class="unref(buttonContainerClasses)"
             :style="unref(buttonContainerStyle)"
         >
             <div class="tab-buttons" :class="{ floating }">
-                <TabButton
-                    v-for="(button, id) in unref(tabs)"
-                    @selectTab="selected.value = id"
-                    :floating="floating"
-                    :key="id"
-                    :active="unref(button.tab) === unref(activeTab)"
-                    v-bind="gatherButtonProps(button)"
-                />
+                <TabButtons />
             </div>
         </Sticky>
-        <template v-if="unref(activeTab)">
-            <component :is="unref(component)" />
-        </template>
+        <Component v-if="unref(activeTab) != null" />
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import Sticky from "components/layout/Sticky.vue";
+import { isType } from "features/feature";
+import { render } from "util/vue";
+import type { Component } from "vue";
+import { computed, unref } from "vue";
+import { TabType } from "./tab";
+import { TabFamily } from "./tabFamily";
 import themes from "data/themes";
-import type { CoercableComponent, StyleValue } from "features/feature";
-import { isHidden, isVisible, Visibility } from "features/feature";
-import type { GenericTab } from "features/tabs/tab";
-import TabButton from "features/tabs/TabButton.vue";
-import type { GenericTabButton } from "features/tabs/tabFamily";
 import settings from "game/settings";
-import { coerceComponent, isCoercableComponent, processedPropType, unwrapRef } from "util/vue";
-import type { Component, PropType, Ref } from "vue";
-import { computed, defineComponent, shallowRef, toRefs, unref, watchEffect } from "vue";
 
-export default defineComponent({
-    props: {
-        visibility: {
-            type: processedPropType<Visibility | boolean>(Number, Boolean),
-            required: true
-        },
-        activeTab: {
-            type: processedPropType<GenericTab | CoercableComponent | null>(Object),
-            required: true
-        },
-        selected: {
-            type: Object as PropType<Ref<string>>,
-            required: true
-        },
-        tabs: {
-            type: processedPropType<Record<string, GenericTabButton>>(Object),
-            required: true
-        },
-        style: processedPropType<StyleValue>(String, Object, Array),
-        classes: processedPropType<Record<string, boolean>>(Object),
-        buttonContainerStyle: processedPropType<StyleValue>(String, Object, Array),
-        buttonContainerClasses: processedPropType<Record<string, boolean>>(Object)
-    },
-    components: {
-        Sticky,
-        TabButton
-    },
-    setup(props) {
-        const { activeTab } = toRefs(props);
+const props = defineProps<{
+    activeTab: TabFamily["activeTab"];
+    tabs: TabFamily["tabs"];
+    buttonContainerClasses: TabFamily["buttonContainerClasses"];
+    buttonContainerStyle: TabFamily["buttonContainerStyle"];
+}>();
 
-        const floating = computed(() => {
-            return themes[settings.theme].floatingTabs;
-        });
+const Component = () => {
+    const activeTab = unref(props.activeTab);
+    if (activeTab == null) {
+        return;
+    }
+    return render(activeTab);
+};
 
-        const component = shallowRef<Component | string>("");
+const floating = computed(() => {
+    return themes[settings.theme].floatingTabs;
+});
 
-        watchEffect(() => {
-            const currActiveTab = unwrapRef(activeTab);
-            if (currActiveTab == null) {
-                component.value = "";
-                return;
-            }
-            if (isCoercableComponent(currActiveTab)) {
-                component.value = coerceComponent(currActiveTab);
-                return;
-            }
-            component.value = coerceComponent(unref(currActiveTab.display));
-        });
+const TabButtons = () => Object.values(props.tabs).map(tab => render(tab));
 
-        const tabClasses = computed(() => {
-            const currActiveTab = unwrapRef(activeTab);
-            const tabClasses =
-                isCoercableComponent(currActiveTab) || !currActiveTab
-                    ? undefined
-                    : unref(currActiveTab.classes);
-            return tabClasses;
-        });
+const tabClasses = computed(() => {
+    const activeTab = unref(props.activeTab);
+    if (isType(activeTab, TabType)) {
+        return unref(activeTab.classes);
+    }
+});
 
-        const tabStyle = computed(() => {
-            const currActiveTab = unwrapRef(activeTab);
-            return isCoercableComponent(currActiveTab) || !currActiveTab
-                ? undefined
-                : unref(currActiveTab.style);
-        });
-
-        function gatherButtonProps(button: GenericTabButton) {
-            const { display, style, classes, glowColor, visibility } = button;
-            return { display, style: unref(style), classes, glowColor, visibility };
-        }
-
-        return {
-            floating,
-            tabClasses,
-            tabStyle,
-            Visibility,
-            component,
-            gatherButtonProps,
-            unref,
-            isVisible,
-            isHidden
-        };
+const tabStyle = computed(() => {
+    const activeTab = unref(props.activeTab);
+    if (isType(activeTab, TabType)) {
+        return unref(activeTab.style);
     }
 });
 </script>
@@ -197,6 +126,10 @@ export default defineComponent({
     display: flex;
     flex-flow: wrap;
     z-index: 4;
+}
+
+.tab-buttons > * {
+    margin: 0;
 }
 
 .layer-tab

@@ -16,8 +16,8 @@ export function exponentialFormat(num: DecimalSource, precision: number, mantiss
     const eString = e.gte(1e9)
         ? format(e, Math.max(Math.max(precision, 3), projInfo.defaultDecimalsShown))
         : e.gte(10000)
-        ? commaFormat(e, 0)
-        : e.toStringWithDecimalPlaces(0);
+          ? commaFormat(e, 0)
+          : e.toStringWithDecimalPlaces(0);
     if (mantissa) {
         return m.toStringWithDecimalPlaces(precision) + "e" + eString;
     } else {

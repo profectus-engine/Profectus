@@ -3,9 +3,8 @@ import type { Persistent, State } from "game/persistence";
 import { NonPersistent, persistent } from "game/persistence";
 import type { DecimalSource } from "util/bignum";
 import Decimal, { format, formatWhole } from "util/bignum";
-import type { ProcessedComputable } from "util/computed";
 import { loadingSave } from "util/save";
-import type { ComputedRef, Ref } from "vue";
+import type { ComputedRef, MaybeRef, Ref } from "vue";
 import { computed, isRef, ref, unref, watch } from "vue";
 
 /** An object that represents a named and quantifiable resource in the game. */
@@ -159,7 +158,7 @@ export function displayResource(resource: Resource, overrideAmount?: DecimalSour
 }
 
 /** Utility for unwrapping a resource that may or may not be inside a ref. */
-export function unwrapResource(resource: ProcessedComputable<Resource>): Resource {
+export function unwrapResource(resource: MaybeRef<Resource>): Resource {
     if ("displayName" in resource) {
         return resource;
     }

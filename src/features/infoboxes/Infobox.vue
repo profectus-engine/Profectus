@@ -1,15 +1,10 @@
 <template>
     <div
         class="infobox"
-        v-if="isVisible(visibility)"
-        :style="[
-            {
+        :style="{
                 borderColor: unref(color),
-                visibility: isHidden(visibility) ? 'hidden' : undefined
-            },
-            unref(style) ?? {}
-        ]"
-        :class="{ collapsed: unref(collapsed), stacked, ...unref(classes) }"
+            }"
+        :class="{ collapsed: unref(collapsed), stacked }"
     >
         <button
             class="title"
@@ -17,78 +12,37 @@
             @click="collapsed.value = !unref(collapsed)"
         >
             <span class="toggle">▼</span>
-            <component :is="titleComponent" />
+            <Title />
         </button>
         <CollapseTransition>
-            <div v-if="!unref(collapsed)" class="body" :style="{ backgroundColor: unref(color) }">
-                <component :is="bodyComponent" :style="unref(bodyStyle)" />
+            <div v-if="!unref(collapsed)" class="body" :style="unref(bodyStyle)">
+                <Body />
             </div>
         </CollapseTransition>
-        <Node :id="id" />
     </div>
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import CollapseTransition from "@ivanv/vue-collapse-transition/src/CollapseTransition.vue";
-import Node from "components/Node.vue";
 import themes from "data/themes";
-import type { CoercableComponent } from "features/feature";
-import { isHidden, isVisible, Visibility } from "features/feature";
 import settings from "game/settings";
-import { computeComponent, processedPropType } from "util/vue";
-import type { PropType, Ref, StyleValue } from "vue";
-import { computed, defineComponent, toRefs, unref } from "vue";
+import { render } from "util/vue";
+import { computed, unref } from "vue";
+import { Infobox } from "./infobox";
 
-export default defineComponent({
-    props: {
-        visibility: {
-            type: processedPropType<Visibility | boolean>(Number, Boolean),
-            required: true
-        },
-        display: {
-            type: processedPropType<CoercableComponent>(Object, String, Function),
-            required: true
-        },
-        title: {
-            type: processedPropType<CoercableComponent>(Object, String, Function),
-            required: true
-        },
-        color: processedPropType<string>(String),
-        collapsed: {
-            type: Object as PropType<Ref<boolean>>,
-            required: true
-        },
-        style: processedPropType<StyleValue>(Object, String, Array),
-        titleStyle: processedPropType<StyleValue>(Object, String, Array),
-        bodyStyle: processedPropType<StyleValue>(Object, String, Array),
-        classes: processedPropType<Record<string, boolean>>(Object),
-        id: {
-            type: String,
-            required: true
-        }
-    },
-    components: {
-        Node,
-        CollapseTransition
-    },
-    setup(props) {
-        const { title, display } = toRefs(props);
+const props = defineProps<{
+    color: Infobox["color"];
+    titleStyle: Infobox["titleStyle"];
+    bodyStyle: Infobox["bodyStyle"];
+    collapsed: Infobox["collapsed"];
+    display: Infobox["display"];
+    title: Infobox["title"];
+}>();
 
-        const titleComponent = computeComponent(title);
-        const bodyComponent = computeComponent(display);
-        const stacked = computed(() => themes[settings.theme].mergeAdjacent);
+const Title = () => render(props.title);
+const Body = () => render(props.display);
 
-        return {
-            titleComponent,
-            bodyComponent,
-            stacked,
-            unref,
-            Visibility,
-            isVisible,
-            isHidden
-        };
-    }
-});
+const stacked = computed(() => themes[settings.theme].mergeAdjacent);
 </script>
 
 <style scoped>
@@ -125,6 +79,8 @@ export default defineComponent({
     width: auto;
     text-align: left;
     padding-left: 30px;
+    border-radius: 0;
+    margin: 00;
 }
 
 .infobox:not(.stacked) .title {
@@ -163,21 +119,15 @@ export default defineComponent({
 
 .body {
     transition-duration: 0.5s;
-    border-radius: 5px;
-    border-top-left-radius: 0;
-}
-
-.infobox:not(.stacked) .body {
-    padding: 4px;
-}
-
-.body > * {
     padding: 8px;
     width: 100%;
     display: block;
     box-sizing: border-box;
-    border-radius: 5px;
-    border-top-left-radius: 0;
     background-color: var(--background);
+    border-radius: 0 0 var(--feature-margin) var(--feature-margin);
+}
+
+.infobox:not(.stacked) .body {
+    padding: 4px;
 }
 </style>

@@ -10,13 +10,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, toRefs, unref, watch } from "vue";
+import { ref, watch } from "vue";
 
-const _props = defineProps<{
+const props = defineProps<{
     disabled?: boolean;
     skipConfirm?: boolean;
 }>();
-const props = toRefs(_props);
+
 const emit = defineEmits<{
     (e: "click"): void;
     (e: "confirmingChanged", value: boolean): void;
@@ -29,7 +29,7 @@ watch(isConfirming, isConfirming => {
 });
 
 function click() {
-    if (unref(props.skipConfirm)) {
+    if (props.skipConfirm) {
         emit("click");
         return;
     }

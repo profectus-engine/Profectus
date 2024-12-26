@@ -12,11 +12,11 @@
 </template>
 
 <script setup lang="ts">
-import { GenericHotkey } from "features/hotkey";
+import { Hotkey } from "features/hotkey";
 import { watchEffect } from "vue";
 
 const props = defineProps<{
-    hotkey: GenericHotkey;
+    hotkey: Hotkey;
 }>();
 
 let key = "";

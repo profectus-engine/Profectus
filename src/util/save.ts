@@ -1,6 +1,8 @@
 import { LoadablePlayerData } from "components/modals/SavesManager.vue";
+import { fixOldSave, getInitialLayers } from "data/projEntry";
 import projInfo from "data/projInfo.json";
 import { globalBus } from "game/events";
+import { addLayer, layers, removeLayer } from "game/layers";
 import type { Player } from "game/player";
 import player, { stringifySave } from "game/player";
 import settings, { loadSettings } from "game/settings";
@@ -101,12 +103,10 @@ export const loadingSave = ref(false);
 export async function loadSave(playerObj: Partial<Player>): Promise<void> {
     console.info("Loading save", playerObj);
     loadingSave.value = true;
-    const { layers, removeLayer, addLayer } = await import("game/layers");
-    const { fixOldSave, getInitialLayers } = await import("data/projEntry");
 
     for (const layer in layers) {
         const l = layers[layer];
-        if (l) {
+        if (l != null) {
             removeLayer(l);
         }
     }

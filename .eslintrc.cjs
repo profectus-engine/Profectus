@@ -5,15 +5,22 @@ module.exports = {
     env: {
         node: true
     },
-    extends: [
-        "plugin:vue/vue3-essential",
-        "@vue/eslint-config-typescript/recommended",
-        "@vue/eslint-config-prettier"
+    parser: '@typescript-eslint/parser',
+    plugins: ["@typescript-eslint"],
+    overrides: [
+        {
+            files: ['*.ts', '*.tsx'],
+            extends: [
+                "plugin:vue/vue3-essential",
+                "@vue/eslint-config-typescript/recommended",
+                "@vue/eslint-config-prettier"
+            ],
+            parserOptions: {
+                ecmaVersion: 2020,
+                project: "./tsconfig.json"
+            },
+        }
     ],
-    parserOptions: {
-        ecmaVersion: 2020,
-        project: "tsconfig.json"
-    },
     ignorePatterns: ["src/lib"],
     rules: {
         "no-console": process.env.NODE_ENV === "production" ? "warn" : "off",

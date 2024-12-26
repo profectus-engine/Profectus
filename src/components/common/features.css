@@ -1,6 +1,9 @@
-.feature:not(li),
-.feature:not(li) button {
+.feature {
     position: relative;
+}
+
+button.feature,
+.feature button {
     padding: 5px;
     border-radius: var(--border-radius);
     border: 2px solid rgba(0, 0, 0, 0.125);
@@ -11,13 +14,17 @@
     transition: all 0.5s, z-index 0s 0.5s;
 }
 
-.can,
+.feature button {
+    position: relative;
+}
+
+button.can,
 .can button {
     background-color: var(--layer-color);
 	cursor: pointer;
 }
 
-.can:hover,
+button.can:hover,
 .can:hover button {
     transform: scale(1.15, 1.15);
     box-shadow: 0 0 20px var(--points);
@@ -25,13 +32,13 @@
     transition: all 0.5s, z-index 0s;
 }
 
-.locked,
+button.locked,
 .locked button {
     background-color: var(--locked);
     cursor: not-allowed;
 }
 
-.bought,
+button.bought,
 .bought button {
     background-color: var(--bought);
     cursor: default;

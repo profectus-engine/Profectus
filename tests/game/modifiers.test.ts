@@ -1,4 +1,3 @@
-import { CoercableComponent, JSXFunction } from "features/feature";
 import Formula from "game/formulas/formulas";
 import {
     createAdditiveModifier,
@@ -10,16 +9,17 @@ import {
 } from "game/modifiers";
 import Decimal, { DecimalSource } from "util/bignum";
 import { WithRequired } from "util/common";
-import { Computable } from "util/computed";
+import { MaybeGetter } from "util/computed";
+import { render, Renderable } from "util/vue";
 import { beforeAll, describe, expect, test } from "vitest";
-import { Ref, ref, unref } from "vue";
+import { MaybeRefOrGetter, Ref, ref, unref } from "vue";
 import "../utils";
 
 export type ModifierConstructorOptions = {
-    [S in "addend" | "multiplier" | "exponent"]: Computable<DecimalSource>;
+    [S in "addend" | "multiplier" | "exponent"]: MaybeRefOrGetter<DecimalSource>;
 } & {
-    description?: Computable<CoercableComponent>;
-    enabled?: Computable<boolean>;
+    description?: MaybeGetter<Renderable>;
+    enabled?: MaybeRefOrGetter<boolean>;
     smallerIsBetter?: boolean;
 };
 
@@ -33,7 +33,7 @@ function testModifiers<
 ) {
     // Util because adding [property] messes up typing
     function createModifier(
-        value: Computable<DecimalSource>,
+        value: MaybeRefOrGetter<DecimalSource>,
         options: Partial<ModifierConstructorOptions> = {}
     ): WithRequired<Modifier, "invert" | "getFormula"> {
         options[property] = value;
@@ -63,7 +63,7 @@ function testModifiers<
         test("with description", () => {
             const desc = createModifier(0, { description: "test" }).description;
             expect(desc).not.toBeUndefined();
-            expect((desc as JSXFunction)()).toMatchSnapshot();
+            expect(render(desc!)).toMatchSnapshot();
         });
     });
 
@@ -80,47 +80,49 @@ function testModifiers<
         describe("without smallerIsBetter false", () => {
             test("negative value", () =>
                 expect(
-                    (
-                        createModifier(-5, { description: "test", smallerIsBetter: false })
-                            .description as JSXFunction
-                    )()
+                    render(
+                        createModifier(-5, {
+                            description: "test",
+                            smallerIsBetter: false
+                        }).description!
+                    )
                 ).toMatchSnapshot());
             test("zero value", () =>
                 expect(
-                    (
+                    render(
                         createModifier(0, { description: "test", smallerIsBetter: false })
-                            .description as JSXFunction
-                    )()
+                            .description!
+                    )
                 ).toMatchSnapshot());
             test("positive value", () =>
                 expect(
-                    (
+                    render(
                         createModifier(5, { description: "test", smallerIsBetter: false })
-                            .description as JSXFunction
-                    )()
+                            .description!
+                    )
                 ).toMatchSnapshot());
         });
         describe("with smallerIsBetter true", () => {
             test("negative value", () =>
                 expect(
-                    (
+                    render(
                         createModifier(-5, { description: "test", smallerIsBetter: true })
-                            .description as JSXFunction
-                    )()
+                            .description!
+                    )
                 ).toMatchSnapshot());
             test("zero value", () =>
                 expect(
-                    (
+                    render(
                         createModifier(0, { description: "test", smallerIsBetter: true })
-                            .description as JSXFunction
-                    )()
+                            .description!
+                    )
                 ).toMatchSnapshot());
             test("positive value", () =>
                 expect(
-                    (
+                    render(
                         createModifier(5, { description: "test", smallerIsBetter: true })
-                            .description as JSXFunction
-                    )()
+                            .description!
+                    )
                 ).toMatchSnapshot());
         });
     });
@@ -134,7 +136,7 @@ describe("Exponential Modifiers", () =>
 
 describe("Sequential Modifiers", () => {
     function createModifier<T extends Partial<ModifierConstructorOptions>>(
-        value: Computable<DecimalSource>,
+        value: MaybeRefOrGetter<DecimalSource>,
         options?: T
     ) {
         return createSequentialModifier(() => [
@@ -167,7 +169,7 @@ describe("Sequential Modifiers", () => {
         test("with description", () => {
             const desc = createModifier(0, { description: "test" }).description;
             expect(desc).not.toBeUndefined();
-            expect((desc as JSXFunction)()).toMatchSnapshot();
+            expect(render(desc!)).toMatchSnapshot();
         });
         test("with both", () => {
             const desc = createSequentialModifier(() => [
@@ -175,7 +177,7 @@ describe("Sequential Modifiers", () => {
                 createMultiplicativeModifier(() => ({ multiplier: 0, description: "test" }))
             ]).description;
             expect(desc).not.toBeUndefined();
-            expect((desc as JSXFunction)()).toMatchSnapshot();
+            expect(render(desc!)).toMatchSnapshot();
         });
     });
 
@@ -216,47 +218,47 @@ describe("Sequential Modifiers", () => {
         describe("without smallerIsBetter false", () => {
             test("negative value", () =>
                 expect(
-                    (
+                    render(
                         createModifier(-5, { description: "test", smallerIsBetter: false })
-                            .description as JSXFunction
-                    )()
+                            .description!
+                    )
                 ).toMatchSnapshot());
             test("zero value", () =>
                 expect(
-                    (
+                    render(
                         createModifier(0, { description: "test", smallerIsBetter: false })
-                            .description as JSXFunction
-                    )()
+                            .description!
+                    )
                 ).toMatchSnapshot());
             test("positive value", () =>
                 expect(
-                    (
+                    render(
                         createModifier(5, { description: "test", smallerIsBetter: false })
-                            .description as JSXFunction
-                    )()
+                            .description!
+                    )
                 ).toMatchSnapshot());
         });
         describe("with smallerIsBetter true", () => {
             test("negative value", () =>
                 expect(
-                    (
+                    render(
                         createModifier(-5, { description: "test", smallerIsBetter: true })
-                            .description as JSXFunction
-                    )()
+                            .description!
+                    )
                 ).toMatchSnapshot());
             test("zero value", () =>
                 expect(
-                    (
+                    render(
                         createModifier(0, { description: "test", smallerIsBetter: true })
-                            .description as JSXFunction
-                    )()
+                            .description!
+                    )
                 ).toMatchSnapshot());
             test("positive value", () =>
                 expect(
-                    (
+                    render(
                         createModifier(5, { description: "test", smallerIsBetter: true })
-                            .description as JSXFunction
-                    )()
+                            .description!
+                    )
                 ).toMatchSnapshot());
         });
         describe("with both", () => {
@@ -279,15 +281,15 @@ describe("Sequential Modifiers", () => {
             });
             test("negative value", () => {
                 value.value = -5;
-                expect((modifier.description as JSXFunction)()).toMatchSnapshot();
+                expect(render(modifier.description!)).toMatchSnapshot();
             });
             test("zero value", () => {
                 value.value = 0;
-                expect((modifier.description as JSXFunction)()).toMatchSnapshot();
+                expect(render(modifier.description!)).toMatchSnapshot();
             });
             test("positive value", () => {
                 value.value = 5;
-                expect((modifier.description as JSXFunction)()).toMatchSnapshot();
+                expect(render(modifier.description!)).toMatchSnapshot();
             });
         });
     });

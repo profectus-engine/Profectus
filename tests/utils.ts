@@ -40,7 +40,7 @@ expect.extend({
         console.error = vi.fn();
         received();
         const calls = (
-            console.error as unknown as Mock<
+            console.error as Mock<
                 Parameters<typeof console.error>,
                 ReturnType<typeof console.error>
             >

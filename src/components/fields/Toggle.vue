@@ -1,25 +1,25 @@
 <template>
     <label class="field">
         <input type="checkbox" class="toggle" v-model="value" />
-        <component :is="component" />
+        <Component />
     </label>
 </template>
 
-<script setup lang="ts">
+<script setup lang="tsx">
 import "components/common/fields.css";
-import type { CoercableComponent } from "features/feature";
-import { coerceComponent } from "util/vue";
-import { computed, unref } from "vue";
+import { MaybeGetter } from "util/computed";
+import { render, Renderable } from "util/vue";
+import { computed } from "vue";
 
 const props = defineProps<{
-    title?: CoercableComponent;
+    title?: MaybeGetter<Renderable>;
     modelValue?: boolean;
 }>();
 const emit = defineEmits<{
     (e: "update:modelValue", value: boolean): void;
 }>();
 
-const component = computed(() => coerceComponent(unref(props.title) ?? "<span></span>", "span"));
+const Component = () => render(props.title ?? "", el => <span>{el}</span>);
 
 const value = computed({
     get() {

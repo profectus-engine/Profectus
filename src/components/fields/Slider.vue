@@ -9,24 +9,24 @@
 
 <script setup lang="ts">
 import "components/common/fields.css";
-import Tooltip from "features/tooltips/Tooltip.vue";
+import Tooltip from "wrappers/tooltips/Tooltip.vue";
 import { Direction } from "util/common";
-import { computed, toRefs, unref } from "vue";
+import { computed } from "vue";
 
-const _props = defineProps<{
+const props = defineProps<{
     title?: string;
     modelValue?: number;
     min?: number;
     max?: number;
 }>();
-const props = toRefs(_props);
+
 const emit = defineEmits<{
     (e: "update:modelValue", value: number): void;
 }>();
 
 const value = computed({
     get() {
-        return String(unref(props.modelValue) ?? 0);
+        return String(props.modelValue ?? 0);
     },
     set(value: string) {
         emit("update:modelValue", Number(value));
