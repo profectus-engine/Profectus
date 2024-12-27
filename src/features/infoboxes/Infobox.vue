@@ -26,17 +26,17 @@
 import CollapseTransition from "@ivanv/vue-collapse-transition/src/CollapseTransition.vue";
 import themes from "data/themes";
 import settings from "game/settings";
-import { render } from "util/vue";
-import { computed, unref } from "vue";
-import { Infobox } from "./infobox";
+import { MaybeGetter } from "util/computed";
+import { render, Renderable } from "util/vue";
+import { computed, CSSProperties, MaybeRef, Ref, unref } from "vue";
 
 const props = defineProps<{
-    color: Infobox["color"];
-    titleStyle: Infobox["titleStyle"];
-    bodyStyle: Infobox["bodyStyle"];
-    collapsed: Infobox["collapsed"];
-    display: Infobox["display"];
-    title: Infobox["title"];
+    color?: MaybeRef<string>;
+    titleStyle?: MaybeRef<CSSProperties>;
+    bodyStyle?: MaybeRef<CSSProperties>;
+    collapsed: Ref<boolean>;
+    display: MaybeGetter<Renderable>;
+    title: MaybeGetter<Renderable>;
 }>();
 
 const Title = () => render(props.title);

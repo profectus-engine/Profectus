@@ -15,14 +15,26 @@
                 <div class="modal-wrapper">
                     <div class="modal-container" :width="width">
                         <div class="modal-header">
-                            <slot name="header" :shown="isOpen"> default header </slot>
+                            <!--
+                                @slot Modal Header
+                                  @binding {boolean} shown Whether the modal is currently open or animating
+                              -->
+                            <slot name="header" :shown="isOpen" />
                         </div>
                         <div class="modal-body">
                             <Context ref="contextRef">
-                                <slot name="body" :shown="isOpen"> default body </slot>
+                                <!--
+                                    @slot Modal Body
+                                      @binding {boolean} shown Whether the modal is currently open or animating
+                                  -->
+                                <slot name="body" :shown="isOpen" />
                             </Context>
                         </div>
                         <div class="modal-footer">
+                            <!--
+                                @slot Modal Footer
+                                  @binding {boolean} shown Whether the modal is currently open or animating
+                              -->
                             <slot name="footer" :shown="isOpen">
                                 <div class="modal-default-footer">
                                     <div class="modal-default-flex-grow"></div>

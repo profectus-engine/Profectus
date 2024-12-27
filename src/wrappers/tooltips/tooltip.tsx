@@ -49,7 +49,7 @@ export interface Tooltip extends VueFeature {
 /**
  * Creates a tooltip on the given element with the given options.
  * @param element The renderable feature to display the tooltip on.
- * @param options Tooltip options.
+ * @param optionsFunc Tooltip options.
  */
 export function addTooltip(
     element: VueFeature,

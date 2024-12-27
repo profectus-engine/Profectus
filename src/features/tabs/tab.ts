@@ -15,7 +15,7 @@ export interface TabOptions extends VueFeatureOptions {
 
 /**
  * An object representing a tab of content in a tabbed interface.
- * @see {@link TabFamily}
+ * @see {@link features/tabs/tabFamily.TabFamily}
  */
 export interface Tab extends VueFeature {
     /** The display to use for this tab. */

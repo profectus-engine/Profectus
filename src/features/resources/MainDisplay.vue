@@ -21,13 +21,13 @@ import ResourceVue from "features/resources/Resource.vue";
 import Decimal from "util/bignum";
 import { MaybeGetter } from "util/computed";
 import { Renderable } from "util/vue";
-import { computed, ref, StyleValue, toValue } from "vue";
+import { computed, CSSProperties, ref, toValue } from "vue";
 
 const props = defineProps<{
     resource: Resource;
     color?: string;
     classes?: Record<string, boolean>;
-    style?: StyleValue;
+    style?: CSSProperties;
     effectDisplay?: MaybeGetter<Renderable>;
 }>();
 

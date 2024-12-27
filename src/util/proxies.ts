@@ -3,8 +3,12 @@ import { NonPersistent } from "game/persistence";
 export const ProxyState = Symbol("ProxyState");
 export const AfterEvaluation = Symbol("AfterEvaluation");
 
-// Takes a function that returns an object and pretends to be that object
-// Note that the object is lazily calculated
+/**
+ * Makes a lazily evaluated object through the use of a Proxy
+ * @param objectFunc Function that constructs the object to be proxies
+ * @param baseObject An optional base object to pass to objectFunc, which all return properties will be assigned onto
+ * @returns A proxy for the object created by objectFunc
+ */
 export function createLazyProxy<T extends object, S extends T>(
     objectFunc: (this: S, baseObject: S) => T,
     baseObject: S = {} as S
@@ -74,6 +78,11 @@ export function createLazyProxy<T extends object, S extends T>(
     }) as S & T;
 }
 
+/**
+ * Registers a callback to be called on a lazily evaluated proxy once its been evaluated.
+ * @param maybeProxy A value that may be a lazily evaluated proxy
+ * @param callback The callback to call once the proxy has been evaluated (or immediately, if the object is not a proxy)
+ */
 export function runAfterEvaluation<T extends object>(maybeProxy: T, callback: (object: T) => void) {
     if (AfterEvaluation in maybeProxy) {
         (maybeProxy[AfterEvaluation] as (callback: (object: T) => void) => void)(callback);

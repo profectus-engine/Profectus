@@ -72,6 +72,7 @@ import {
     decodeSave,
     getCachedSave,
     getUniqueID,
+    LoadablePlayerData,
     loadSave,
     newSave,
     save
@@ -83,8 +84,6 @@ import Select from "../fields/Select.vue";
 import Text from "../fields/Text.vue";
 import Modal from "./Modal.vue";
 import Save from "./Save.vue";
-
-export type LoadablePlayerData = Omit<Partial<Player>, "id"> & { id: string; error?: unknown };
 
 const isOpen = ref(false);
 const modal = ref<ComponentPublicInstance<typeof Modal> | null>(null);

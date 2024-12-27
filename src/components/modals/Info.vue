@@ -18,7 +18,7 @@
                     Made in Profectus, by thepaperpilot with inspiration from Acameada and Jacorb
                 </div>
                 <br />
-                <div class="link" @click="openChangelog">Changelog</div>
+                <div class="link" @click="emits('openChangelog')">Changelog</div>
                 <br />
                 <div>
                     <a
@@ -60,7 +60,6 @@
 </template>
 
 <script setup lang="tsx">
-import type Changelog from "data/Changelog.vue";
 import projInfo from "data/projInfo.json";
 import player from "game/player";
 import { infoComponents } from "game/settings";
@@ -71,7 +70,9 @@ import Modal from "./Modal.vue";
 
 const { title, logo, author, discordName, discordLink, versionNumber, versionTitle } = projInfo;
 
-const props = defineProps<{ changelog: typeof Changelog | null }>();
+const emits = defineEmits<{
+    (e: "openChangelog"): void;
+}>();
 
 const isOpen = ref(false);
 
@@ -84,10 +85,6 @@ defineExpose({
         isOpen.value = true;
     }
 });
-
-function openChangelog() {
-    props.changelog?.open();
-}
 </script>
 
 <style scoped>

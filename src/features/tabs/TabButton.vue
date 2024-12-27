@@ -5,16 +5,16 @@
 </template>
 
 <script setup lang="ts">
-import { getNotifyStyle } from "game/notifications";
-import { render } from "util/vue";
-import { computed, unref } from "vue";
-import { TabButton } from "./tabFamily";
 import themes from "data/themes";
+import { getNotifyStyle } from "game/notifications";
 import settings from "game/settings";
+import { MaybeGetter } from "util/computed";
+import { render, Renderable } from "util/vue";
+import { computed, MaybeRef, unref } from "vue";
 
 const props = defineProps<{
-    display: TabButton["display"];
-    glowColor: TabButton["glowColor"];
+    display: MaybeGetter<Renderable>;
+    glowColor?: MaybeRef<string>;
     active?: boolean;
 }>();
 

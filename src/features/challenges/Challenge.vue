@@ -10,7 +10,7 @@
     >
         <button
             class="toggleChallenge"
-            @click="toggle"
+            @click="emits('toggle')"
             :disabled="!unref(canStart) || unref(maxed)"
         >
             {{ buttonText }}
@@ -22,20 +22,25 @@
 <script setup lang="tsx">
 import "components/common/features.css";
 import { getHighNotifyStyle, getNotifyStyle } from "game/notifications";
-import { render } from "util/vue";
-import type { Component } from "vue";
+import { Requirements } from "game/requirements";
+import { DecimalSource } from "util/bignum";
+import { MaybeGetter } from "util/computed";
+import { render, Renderable } from "util/vue";
+import type { Component, MaybeRef, Ref } from "vue";
 import { computed, unref } from "vue";
-import { Challenge } from "./challenge";
 
 const props = defineProps<{
-    active: Challenge["active"];
-    maxed: Challenge["maxed"];
-    canComplete: Challenge["canComplete"];
-    display: Challenge["display"];
-    requirements: Challenge["requirements"];
-    completed: Challenge["completed"];
-    canStart: Challenge["canStart"];
-    toggle: Challenge["toggle"];
+    active: Ref<boolean>;
+    maxed: Ref<boolean>;
+    canComplete: Ref<DecimalSource>;
+    display?: MaybeGetter<Renderable>;
+    requirements: Requirements;
+    completed: Ref<boolean>;
+    canStart?: MaybeRef<boolean>;
+}>();
+
+const emits = defineEmits<{
+    (e: "toggle"): void;
 }>();
 
 const buttonText = computed(() => {

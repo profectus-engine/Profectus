@@ -67,7 +67,7 @@ export type State =
     | { [key: number]: State };
 
 /**
- * A {@link Ref} that has been augmented with properties to allow it to be saved and loaded within the player save data object.
+ * A [Ref](https://vuejs.org/api/reactivity-core.html#ref) that has been augmented with properties to allow it to be saved and loaded within the player save data object.
  */
 export type Persistent<T extends State = State> = Ref<T> & {
     value: T;

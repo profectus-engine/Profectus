@@ -15,6 +15,7 @@ import { camelToKebab } from "./common";
 export const VueFeature = Symbol("VueFeature");
 
 export type Renderable = JSX.Element | string;
+export type Wrapper = (el: () => Renderable) => Renderable;
 
 export interface VueFeatureOptions {
     /** Whether this feature should be visible. */
@@ -37,7 +38,7 @@ export interface VueFeature {
     /** The components to render inside the vue feature */
     components: MaybeGetter<Renderable>[];
     /** The components to render wrapped around the vue feature */
-    wrappers: ((el: () => Renderable) => Renderable)[];
+    wrappers: Wrapper[];
     /** Used to identify Vue Features */
     [VueFeature]: true;
 }
@@ -53,7 +54,7 @@ export function vueFeatureMixin(
         classes: processGetter(options.classes),
         style: processGetter(options.style),
         components: component == null ? [] : [component],
-        wrappers: [] as ((el: () => Renderable) => Renderable)[],
+        wrappers: [] as Wrapper[],
         [VueFeature]: true
     } satisfies VueFeature;
 }
@@ -119,10 +120,7 @@ export function isJSXElement(element: unknown): element is JSX.Element {
     );
 }
 
-export function setupHoldToClick(
-    onClick?: Ref<((e?: MouseEvent | TouchEvent) => void) | undefined>,
-    onHold?: Ref<VoidFunction | undefined>
-): {
+export function setupHoldToClick(callback: (e?: MouseEvent | TouchEvent) => void): {
     start: (e: MouseEvent | TouchEvent) => void;
     stop: VoidFunction;
     handleHolding: VoidFunction;
@@ -143,11 +141,7 @@ export function setupHoldToClick(
         }
     }
     function handleHolding() {
-        if (onHold && onHold.value) {
-            onHold.value();
-        } else if (onClick && onClick.value) {
-            onClick.value(event.value);
-        }
+        callback(event.value);
     }
 
     onUnmounted(stop);

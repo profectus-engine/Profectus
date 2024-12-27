@@ -15,11 +15,11 @@
 <script setup lang="ts">
 import type { FeatureNode } from "game/layers";
 import { BoundsInjectionKey, NodesInjectionKey } from "game/layers";
-import { computed, inject, onMounted, ref, shallowRef, unref, watch } from "vue";
+import { computed, inject, MaybeRef, onMounted, ref, shallowRef, unref, watch } from "vue";
 import LinkVue from "./Link.vue";
-import { Links } from "./links";
+import { Link } from "./links";
 
-const props = defineProps<{ links: Links["links"] }>();
+const props = defineProps<{ links: MaybeRef<Link[]> }>();
 
 function updateBounds() {
     boundingRect.value = resizeListener.value?.getBoundingClientRect();

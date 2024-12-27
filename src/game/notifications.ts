@@ -1,15 +1,14 @@
 import { globalBus } from "game/events";
 import { processGetter } from "util/computed";
 import { trackHover, VueFeature } from "util/vue";
-import { nextTick, Ref } from "vue";
-import { ref, watch } from "vue";
+import { CSSProperties, nextTick, Ref, ref, watch } from "vue";
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
 
 globalBus.on("setupVue", vue => vue.use(Toast));
 
 /**
- * Gives a {@link CSSProperties} object that makes an object glow, to bring focus to it.
+ * Gives a [CSSProperties](https://vuejs.org/api/utility-types.html#cssproperties) object that makes an object glow, to bring focus to it.
  * Default values are for a "soft" white notif effect.
  * @param color The color of the glow effect.
  * @param strength The strength of the glow effect - affects its spread.
@@ -20,7 +19,7 @@ export function getNotifyStyle(color = "white", strength = "8px") {
         borderColor: "rgba(0, 0, 0, 0.125)",
         boxShadow: `-4px -4px 4px rgba(0, 0, 0, 0.25) inset, 0 0 ${strength} ${color}`,
         zIndex: 1
-    };
+    } satisfies CSSProperties;
 }
 
 /** Utility function to call {@link getNotifyStyle} with "high importance" parameters. */

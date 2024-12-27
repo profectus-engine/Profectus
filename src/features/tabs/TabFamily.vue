@@ -15,20 +15,21 @@
 
 <script setup lang="ts">
 import Sticky from "components/layout/Sticky.vue";
-import { isType } from "features/feature";
-import { render } from "util/vue";
-import type { Component } from "vue";
-import { computed, unref } from "vue";
-import { TabType } from "./tab";
-import { TabFamily } from "./tabFamily";
 import themes from "data/themes";
+import { isType } from "features/feature";
 import settings from "game/settings";
+import { MaybeGetter } from "util/computed";
+import { render, Renderable } from "util/vue";
+import type { Component, CSSProperties, MaybeRef, Ref } from "vue";
+import { computed, unref } from "vue";
+import { Tab, TabType } from "./tab";
+import { TabButton } from "./tabFamily";
 
 const props = defineProps<{
-    activeTab: TabFamily["activeTab"];
-    tabs: TabFamily["tabs"];
-    buttonContainerClasses: TabFamily["buttonContainerClasses"];
-    buttonContainerStyle: TabFamily["buttonContainerStyle"];
+    activeTab: Ref<MaybeGetter<Renderable> | Tab | null>;
+    tabs: Record<string, TabButton>;
+    buttonContainerClasses?: MaybeRef<Record<string, boolean>>;
+    buttonContainerStyle?: MaybeRef<CSSProperties>;
 }>();
 
 const Component = () => {

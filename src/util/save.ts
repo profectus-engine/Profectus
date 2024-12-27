@@ -1,4 +1,3 @@
-import { LoadablePlayerData } from "components/modals/SavesManager.vue";
 import { fixOldSave, getInitialLayers } from "data/projEntry";
 import projInfo from "data/projInfo.json";
 import { globalBus } from "game/events";
@@ -8,6 +7,8 @@ import player, { stringifySave } from "game/player";
 import settings, { loadSettings } from "game/settings";
 import LZString from "lz-string";
 import { ref, shallowReactive } from "vue";
+
+export type LoadablePlayerData = Omit<Partial<Player>, "id"> & { id: string; error?: unknown };
 
 export function setupInitialStore(player: Partial<Player> = {}): Player {
     return Object.assign(

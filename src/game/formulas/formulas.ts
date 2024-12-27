@@ -1290,7 +1290,7 @@ export abstract class InternalFormula<T extends [FormulaSource] | FormulaSource[
  * A class that can be used for cost/goal functions. It can be evaluated similar to a cost function, but also provides extra features for supported formulas. For example, a lot of math functions can be inverted.
  * Typically, the use of these extra features is to support cost/goal functions that have multiple levels purchased/completed at once efficiently.
  * @see {@link calculateMaxAffordable}
- * @see {@link /game/requirements.createCostRequirement}
+ * @see {@link game/requirements.createCostRequirement}
  */
 export default class Formula<
     T extends [FormulaSource] | FormulaSource[]

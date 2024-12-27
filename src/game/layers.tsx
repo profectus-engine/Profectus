@@ -29,22 +29,22 @@ export interface FeatureNode {
 }
 
 /**
- * An injection key that a {@link ContextComponent} will use to provide a function that registers a {@link FeatureNode} with the given id and HTML element.
+ * An injection key that a Context component will use to provide a function that registers a {@link FeatureNode} with the given id and HTML element.
  */
 export const RegisterNodeInjectionKey: InjectionKey<(id: string, element: HTMLElement) => void> =
     Symbol("RegisterNode");
 /**
- * An injection key that a {@link ContextComponent} will use to provide a function that unregisters a {@link FeatureNode} with the given id.
+ * An injection key that a Context component will use to provide a function that unregisters a {@link FeatureNode} with the given id.
  */
 export const UnregisterNodeInjectionKey: InjectionKey<(id: string) => void> =
     Symbol("UnregisterNode");
 /**
- * An injection key that a {@link ContextComponent} will use to provide a ref to a map of all currently registered {@link FeatureNode}s.
+ * An injection key that a Context component will use to provide a ref to a map of all currently registered {@link FeatureNode}s.
  */
 export const NodesInjectionKey: InjectionKey<Ref<Record<string, FeatureNode | undefined>>> =
     Symbol("Nodes");
 /**
- * An injection key that a {@link ContextComponent} will use to provide a ref to a bounding rect of the Context.
+ * An injection key that a Context component will use to provide a ref to a bounding rect of the Context.
  */
 export const BoundsInjectionKey: InjectionKey<Ref<DOMRect | undefined>> = Symbol("Bounds");
 
@@ -106,7 +106,7 @@ export interface LayerOptions {
     color?: MaybeRefOrGetter<string>;
     /**
      * The layout of this layer's features.
-     * When the layer is open in {@link game/player.PlayerData.tabs}, this is the content that is displayed.
+     * When the layer is open in {@link game/player.Player.tabs}, this is the content that is displayed.
      */
     display: MaybeGetter<Renderable>;
     /** An object of classes that should be applied to the display. */
@@ -125,12 +125,12 @@ export interface LayerOptions {
     minimizable?: MaybeRefOrGetter<boolean>;
     /**
      * The layout of this layer's features.
-     * When the layer is open in {@link game/player.PlayerData.tabs}, but the tab is {@link Layer.minimized} this is the content that is displayed.
+     * When the layer is open in {@link game/player.Player.tabs}, but the tab is {@link Layer.minimized} this is the content that is displayed.
      */
     minimizedDisplay?: MaybeGetter<Renderable>;
     /**
      * Whether or not to force the go back button to be hidden.
-     * If true, go back will be hidden regardless of {@link data/projInfo.allowGoBack}.
+     * If true, go back will be hidden regardless of allowGoBack value in the project settings.
      */
     forceHideGoBack?: MaybeRefOrGetter<boolean>;
     /**
@@ -157,7 +157,7 @@ export interface BaseLayer {
     on: OmitThisParameter<Emitter<LayerEvents>["on"]>;
     /** A function to emit a {@link LayerEvents} event to this layer. */
     emit: <K extends keyof LayerEvents>(...args: [K, ...Parameters<LayerEvents[K]>]) => void;
-    /** A map of {@link FeatureNode}s present in this layer's {@link ContextComponent} component. */
+    /** A map of {@link FeatureNode}s present in this layer's Context component. */
     nodes: Ref<Record<string, FeatureNode | undefined>>;
 }
 
@@ -167,7 +167,7 @@ export interface Layer extends BaseLayer {
     color?: MaybeRef<string>;
     /**
      * The layout of this layer's features.
-     * When the layer is open in {@link game/player.PlayerData.tabs}, this is the content that is displayed.
+     * When the layer is open in {@link game/player.Player.tabs}, this is the content that is displayed.
      */
     display: MaybeGetter<Renderable>;
     /** An object of classes that should be applied to the display. */
@@ -186,12 +186,12 @@ export interface Layer extends BaseLayer {
     minimizable?: MaybeRef<boolean>;
     /**
      * The layout of this layer's features.
-     * When the layer is open in {@link game/player.PlayerData.tabs}, but the tab is {@link Layer.minimized} this is the content that is displayed.
+     * When the layer is open in {@link game/player.Player.tabs}, but the tab is {@link Layer.minimized} this is the content that is displayed.
      */
     minimizedDisplay?: MaybeGetter<Renderable>;
     /**
      * Whether or not to force the go back button to be hidden.
-     * If true, go back will be hidden regardless of {@link data/projInfo.allowGoBack}.
+     * If true, go back will be hidden regardless of allowGoBack value in the project settings.
      */
     forceHideGoBack?: MaybeRef<boolean>;
     /**

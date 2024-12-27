@@ -98,6 +98,7 @@ export function createRepeatable<T extends RepeatableOptions>(optionsFunc: () =>
             <Clickable
                 canClick={repeatable.canClick}
                 onClick={repeatable.onClick}
+                onHold={repeatable.onClick}
                 display={repeatable.display}
             />
         ));

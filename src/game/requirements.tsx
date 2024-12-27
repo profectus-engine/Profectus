@@ -1,6 +1,6 @@
 import { isVisible, Visibility } from "features/feature";
 import { displayResource, Resource } from "features/resources/resource";
-import Decimal, { DecimalSource } from "lib/break_eternity";
+import Decimal, { DecimalSource } from "util/bignum";
 import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
 import { joinJSX, Renderable } from "util/vue";
@@ -243,7 +243,7 @@ export function createCostRequirement<T extends CostRequirementOptions>(optionsF
 
 /**
  * Utility function for creating a requirement that a specified vue feature is visible
- * @param feature The feature to check the visibility of
+ * @param visibility The visibility ref to check
  */
 export function createVisibilityRequirement(
     visibility: MaybeRef<Visibility | boolean>

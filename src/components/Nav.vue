@@ -88,7 +88,7 @@
             </ul>
         </div>
     </div>
-    <Info ref="info" :changelog="changelog" />
+    <Info ref="info" @open-changelog="changelog?.open()" />
     <SavesManager ref="savesManager" />
     <Options ref="options" />
     <Changelog ref="changelog" />
@@ -97,22 +97,19 @@
 <script setup lang="ts">
 import Changelog from "data/Changelog.vue";
 import projInfo from "data/projInfo.json";
-import Tooltip from "wrappers/tooltips/Tooltip.vue";
 import settings from "game/settings";
 import { Direction } from "util/common";
 import { galaxy, syncedSaves } from "util/galaxy";
-import type { ComponentPublicInstance } from "vue";
 import { computed, ref } from "vue";
+import Tooltip from "wrappers/tooltips/Tooltip.vue";
 import Info from "./modals/Info.vue";
 import Options from "./modals/Options.vue";
 import SavesManager from "./modals/SavesManager.vue";
 
-const info = ref<ComponentPublicInstance<typeof Info> | null>(null);
-const savesManager = ref<ComponentPublicInstance<typeof SavesManager> | null>(null);
-const options = ref<ComponentPublicInstance<typeof Options> | null>(null);
-// For some reason Info won't accept the changelog unless I do this:
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const changelog = ref<ComponentPublicInstance<any> | null>(null);
+const info = ref<typeof Info | null>(null);
+const savesManager = ref<typeof SavesManager | null>(null);
+const options = ref<typeof Options | null>(null);
+const changelog = ref<typeof Changelog | null>(null);
 
 const { useHeader, banner, title, discordName, discordLink, versionNumber } = projInfo;
 

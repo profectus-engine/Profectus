@@ -87,6 +87,7 @@ export function createClickable<T extends ClickableOptions>(optionsFunc?: () => 
                 <Clickable
                     canClick={clickable.canClick}
                     onClick={clickable.onClick}
+                    onHold={clickable.onClick}
                     display={clickable.display}
                 />
             )),
@@ -95,7 +96,7 @@ export function createClickable<T extends ClickableOptions>(optionsFunc?: () => 
             onClick:
                 onClick == null
                     ? undefined
-                    : function (e) {
+                    : function (e?: MouseEvent | TouchEvent) {
                           if (unref(clickable.canClick) !== false) {
                               onClick.call(clickable, e);
                           }

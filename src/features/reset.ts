@@ -18,7 +18,7 @@ import { isRef, MaybeRef, MaybeRefOrGetter, unref } from "vue";
 export const ResetType = Symbol("Reset");
 
 /**
- * An object that configures a {@link Clickable}.
+ * An object that configures a {@link features/clickables/clickable.Clickable}.
  */
 export interface ResetOptions {
     /** List of things to reset. Can include objects which will be recursed over for persistent values. */

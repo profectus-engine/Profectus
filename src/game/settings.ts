@@ -77,7 +77,7 @@ export const hardResetSettings = (window.hardResetSettings = () => {
 
 /**
  * Loads the player settings from localStorage.
- * Calls the {@link GlobalEvents.loadSettings} event for custom properties to be included.
+ * Calls the {@link game/events.GlobalEvents.loadSettings} event for custom properties to be included.
  * Custom properties should be added by the file they relate to, so they won't be included if the file is tree shaken away.
  * Custom properties should also register the field to modify said setting using {@link registerSettingField}.
  */

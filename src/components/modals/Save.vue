@@ -75,15 +75,15 @@
 </template>
 
 <script setup lang="ts">
-import Tooltip from "wrappers/tooltips/Tooltip.vue";
 import player from "game/player";
 import { Direction } from "util/common";
 import { galaxy, syncedSaves } from "util/galaxy";
+import { LoadablePlayerData } from "util/save";
 import { computed, ref, watch } from "vue";
+import Tooltip from "wrappers/tooltips/Tooltip.vue";
 import DangerButton from "../fields/DangerButton.vue";
 import FeedbackButton from "../fields/FeedbackButton.vue";
 import Text from "../fields/Text.vue";
-import type { LoadablePlayerData } from "./SavesManager.vue";
 
 const props = defineProps<{
     save: LoadablePlayerData;

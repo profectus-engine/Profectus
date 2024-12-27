@@ -23,16 +23,35 @@ export enum Visibility {
     None
 }
 
+/**
+ * Utility function for determining if a visibility value is anything but Visibility.None.
+ Booleans are allowed and false will be considered to be Visibility.None.
+ * @param visibility The ref to either a visibility value or boolean
+ * @returns True if the visibility is either true, Visibility.Visible, or Visibility.Hidden
+ */
 export function isVisible(visibility: MaybeRef<Visibility | boolean>) {
     const currVisibility = unref(visibility);
     return currVisibility !== Visibility.None && currVisibility !== false;
 }
 
+/**
+ * Utility function for determining if a visibility value is Visibility.Hidden.
+ Booleans are allowed but will never be considered to be Visible.Hidden.
+ * @param visibility The ref to either a visibility value or boolean
+ * @returns True if the visibility is Visibility.Hidden
+ */
 export function isHidden(visibility: MaybeRef<Visibility | boolean>) {
     const currVisibility = unref(visibility);
     return currVisibility === Visibility.Hidden;
 }
 
+/**
+ * Utility function for narrowing something that may or may not be a specified type of feature.
+ * Works off the principle that all features have a unique symbol to identify themselves with.
+ * @param object The object to determine whether or not is of the specified type
+ * @param type The symbol to look for in the object's "type" property
+ * @returns Whether or not the object is the specified type
+ */
 export function isType<T extends symbol>(object: unknown, type: T): object is { type: T } {
     return object != null && typeof object === "object" && "type" in object && object.type === type;
 }
@@ -64,6 +83,12 @@ export function findFeatures(obj: object, ...types: symbol[]): unknown[] {
     return objects;
 }
 
+/**
+ * Utility function for taking a list of features and filtering them out, but keeping a reference to the first filtered out feature. Used for having a collapsible of the filtered out content, with the first filtered out item remaining outside the collapsible for easy reference.
+ * @param features The list of features to search through
+ * @param filter The filter to use to determine features that shouldn't be collapsible
+ * @returns An object containing a ref to the first filtered _out_ feature, a render function for the collapsed content, and a ref for whether or not there is any collapsed content to show
+ */
 export function getFirstFeature<T extends VueFeature>(
     features: T[],
     filter: (feature: T) => boolean

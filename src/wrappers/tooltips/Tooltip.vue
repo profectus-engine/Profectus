@@ -37,19 +37,19 @@
 import themes from "data/themes";
 import settings from "game/settings";
 import { Direction } from "util/common";
-import { render } from "util/vue";
-import type { Component } from "vue";
+import { MaybeGetter } from "util/computed";
+import { render, Renderable } from "util/vue";
+import type { Component, CSSProperties, MaybeRef, Ref } from "vue";
 import { computed, ref, unref } from "vue";
-import { Tooltip } from "./tooltip";
 
 const props = defineProps<{
-    pinned?: Tooltip["pinned"];
-    display: Tooltip["display"];
-    style?: Tooltip["style"];
-    classes?: Tooltip["classes"];
-    direction: Tooltip["direction"];
-    xoffset?: Tooltip["xoffset"];
-    yoffset?: Tooltip["yoffset"];
+    pinned?: Ref<boolean>;
+    display: MaybeGetter<Renderable>;
+    style?: MaybeRef<CSSProperties>;
+    classes?: MaybeRef<Record<string, boolean>>;
+    direction: MaybeRef<Direction>;
+    xoffset?: MaybeRef<string>;
+    yoffset?: MaybeRef<string>;
 }>();
 
 const isHovered = ref(false);

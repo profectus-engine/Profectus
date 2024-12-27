@@ -51,7 +51,7 @@ export function setupUniqueIds(nodes: MaybeRefOrGetter<{ id: number }[]>) {
 
 /** An object that configures a {@link DraggableNode}. */
 export interface DraggableNodeOptions<T> {
-    /** A ref to the specific instance of the Board vue component the node will be draggable on. Obtained by passing a suitable ref as the "ref" attribute to the <Board> element. */
+    /** A ref to the specific instance of the Board vue component the node will be draggable on. Obtained by passing a suitable ref as the "ref" attribute to the Board component. */
     board: Ref<ComponentPublicInstance<typeof Board> | undefined>;
     /** Getter function to go from the node (typically ID) to the position of said node. */
     getPosition: (node: T) => NodePosition;
@@ -266,7 +266,7 @@ export interface Draggable<T> extends MakeDraggableOptions<T> {
 /**
  * Makes a vue feature draggable on a Board.
  * @param element The vue feature to make draggable.
- * @param options The options to configure the dragging behavior.
+ * @param optionsFunc The options to configure the dragging behavior.
  */
 export function makeDraggable<T, S extends MakeDraggableOptions<T>>(
     element: VueFeature,
@@ -337,8 +337,8 @@ export function makeDraggable<T, S extends MakeDraggableOptions<T>>(
         (el as VueFeature & { draggable: Draggable<T> }).draggable = draggable;
         element.wrappers.push(el => (
             <Draggable
-                mouseDown={draggable.onMouseDown}
-                mouseUp={draggable.onMouseUp}
+                onMouseDown={draggable.onMouseDown}
+                onMouseUp={draggable.onMouseUp}
                 position={draggable.computedPosition}
             >
                 {el}

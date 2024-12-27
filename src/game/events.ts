@@ -27,7 +27,6 @@ export interface GlobalEvents {
      * Sent when constructing the {@link Settings} object.
      * Use it to add default values for custom properties to the object.
      * @param settings The settings object being constructed.
-     * @see {@link features/features.setDefault} for setting default values.
      */
     loadSettings: (settings: Partial<Settings>) => void;
     /**

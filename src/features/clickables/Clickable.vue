@@ -1,6 +1,6 @@
 <template>
     <button
-        @click="onClick"
+        @click="e => emits('click', e)"
         @mousedown="start"
         @mouseleave="stop"
         @mouseup="stop"
@@ -20,24 +20,28 @@
 
 <script setup lang="tsx">
 import "components/common/features.css";
-import type { Clickable } from "features/clickables/clickable";
+import { MaybeGetter } from "util/computed";
 import {
     render,
+    Renderable,
     setupHoldToClick
 } from "util/vue";
-import type { Component } from "vue";
-import { toRef, unref } from "vue";
+import type { Component, MaybeRef } from "vue";
+import { unref } from "vue";
 
 const props = defineProps<{
-    canClick: Clickable["canClick"];
-    onClick: Clickable["onClick"];
-    onHold?: Clickable["onHold"];
-    display: Clickable["display"];
+    canClick: MaybeRef<boolean>;
+    display?: MaybeGetter<Renderable>;
+}>();
+
+const emits = defineEmits<{
+    (e: "click", event?: MouseEvent | TouchEvent): void;
+    (e: "hold"): void;
 }>();
 
 const Component = () => props.display == null ? <></> : render(props.display);
 
-const { start, stop } = setupHoldToClick(toRef(props, "onClick"), toRef(props, "onHold"));
+const { start, stop } = setupHoldToClick(() => emits("hold"));
 </script>
 
 <style scoped>

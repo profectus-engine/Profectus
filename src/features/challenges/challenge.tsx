@@ -129,7 +129,7 @@ export function createChallenge<T extends ChallengeOptions>(optionsFunc: () => T
                 requirements={challenge.requirements}
                 completed={challenge.completed}
                 canStart={challenge.canStart}
-                toggle={challenge.toggle}
+                onToggle={challenge.toggle}
             />
         ));
 

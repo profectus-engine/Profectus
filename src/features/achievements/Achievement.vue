@@ -16,16 +16,17 @@
 
 <script setup lang="tsx">
 import "components/common/features.css";
-import { render } from "util/vue";
-import { Component, unref } from "vue";
-import { Achievement } from "./achievement";
+import { Requirements } from "game/requirements";
+import { MaybeGetter } from "util/computed";
+import { render, Renderable } from "util/vue";
+import { Component, MaybeRef, Ref, unref } from "vue";
 
 const props = defineProps<{
-    display: Achievement["display"];
-    earned: Achievement["earned"];
-    requirements: Achievement["requirements"];
-    image: Achievement["image"];
-    small: Achievement["small"];
+    display?: MaybeGetter<Renderable>;
+    earned: Ref<boolean>;
+    requirements?: Requirements;
+    image?: MaybeRef<string>;
+    small?: MaybeRef<boolean>;
 }>();
 
 const Component = () => props.display == null ? <></> : render(props.display);

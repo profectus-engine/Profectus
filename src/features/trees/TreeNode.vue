@@ -10,7 +10,7 @@
             treeNode: true,
             can: unref(canClick)
         }"
-        @click="onClick"
+        @click="e => emits('click', e)"
         @mousedown="start"
         @mouseleave="stop"
         @mouseup="stop"
@@ -23,23 +23,26 @@
 </template>
 
 <script setup lang="tsx">
-import { render, setupHoldToClick } from "util/vue";
-import { toRef, unref } from "vue";
-import { TreeNode } from "./tree";
+import { MaybeGetter } from "util/computed";
+import { render, Renderable, setupHoldToClick } from "util/vue";
+import { MaybeRef, toRef, unref } from "vue";
 
 const props = defineProps<{
-    canClick: TreeNode["canClick"];
-    display: TreeNode["display"];
-    onClick: TreeNode["onClick"];
-    onHold: TreeNode["onHold"];
-    color: TreeNode["color"];
-    glowColor: TreeNode["glowColor"];
+    canClick?: MaybeRef<boolean>;
+    display?: MaybeGetter<Renderable>;
+    color?: MaybeRef<string>;
+    glowColor?: MaybeRef<string>;
+}>();
+
+const emits = defineEmits<{
+    (e: "click", event?: MouseEvent | TouchEvent): void;
+    (e: "hold"): void;
 }>();
 
 const Component = () => props.display == null ? <></> :
     render(props.display, el => <div>{el}</div>);
 
-const { start, stop } = setupHoldToClick(toRef(props, "onClick"), toRef(props, "onHold"));
+const { start, stop } = setupHoldToClick(() => emits("hold"));
 </script>
 
 <style scoped>

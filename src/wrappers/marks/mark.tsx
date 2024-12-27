@@ -20,7 +20,7 @@ export interface Mark {
 /**
  * Creates a mark to the top left of the given element with the given options.
  * @param element The renderable feature to display the tooltip on.
- * @param options Mark options.
+ * @param optionsFunc Mark options.
  */
 export function addMark(
     element: VueFeature,

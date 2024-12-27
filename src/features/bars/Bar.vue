@@ -31,23 +31,23 @@
 </template>
 
 <script setup lang="ts">
-import Decimal from "util/bignum";
+import Decimal, { DecimalSource } from "util/bignum";
 import { Direction } from "util/common";
-import { render } from "util/vue";
-import type { CSSProperties } from "vue";
+import { MaybeGetter } from "util/computed";
+import { render, Renderable } from "util/vue";
+import type { CSSProperties, MaybeRef } from "vue";
 import { computed, unref } from "vue";
-import { Bar } from "./bar";
 
 const props = defineProps<{
-    width: Bar["width"];
-    height: Bar["height"];
-    direction: Bar["direction"];
-    borderStyle: Bar["borderStyle"];
-    baseStyle: Bar["baseStyle"];
-    textStyle: Bar["textStyle"];
-    fillStyle: Bar["fillStyle"];
-    progress: Bar["progress"];
-    display: Bar["display"];
+    width: MaybeRef<number>;
+    height: MaybeRef<number>;
+    direction: MaybeRef<Direction>;
+    borderStyle?: MaybeRef<CSSProperties>;
+    baseStyle?: MaybeRef<CSSProperties>;
+    textStyle?: MaybeRef<CSSProperties>;
+    fillStyle?: MaybeRef<CSSProperties>;
+    progress: MaybeRef<DecimalSource>;
+    display?: MaybeGetter<Renderable>;
 }>();
 
 const normalizedProgress = computed(() => {

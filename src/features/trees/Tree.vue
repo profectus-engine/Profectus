@@ -8,15 +8,15 @@
 <script setup lang="tsx">
 import "components/common/table.css";
 import Links from "features/links/Links.vue";
-import type { Tree } from "features/trees/tree";
+import type { Tree, TreeBranch, TreeNode } from "features/trees/tree";
 import { render } from "util/vue";
-import { unref } from "vue";
+import { MaybeRef, unref } from "vue";
 
 const props = defineProps<{
-    nodes: Tree["nodes"];
-    leftSideNodes: Tree["leftSideNodes"];
-    rightSideNodes: Tree["rightSideNodes"];
-    branches: Tree["branches"];
+    nodes: MaybeRef<TreeNode[][]>;
+    leftSideNodes?: MaybeRef<TreeNode[]>;
+    rightSideNodes?: MaybeRef<TreeNode[]>;
+    branches?: MaybeRef<TreeBranch[]>;
 }>();
 
 const Nodes = () => unref(props.nodes).map(nodes => 

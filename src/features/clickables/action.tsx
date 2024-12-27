@@ -2,8 +2,8 @@ import ClickableVue from "features/clickables/Clickable.vue";
 import { findFeatures } from "features/feature";
 import { globalBus } from "game/events";
 import { persistent } from "game/persistence";
-import Decimal, { DecimalSource } from "lib/break_eternity";
 import { Unsubscribe } from "nanoevents";
+import Decimal, { DecimalSource } from "util/bignum";
 import { Direction } from "util/common";
 import { MaybeGetter, processGetter } from "util/computed";
 import { createLazyProxy } from "util/proxies";
@@ -125,6 +125,7 @@ export function createAction<T extends ActionOptions>(optionsFunc?: () => T) {
                     <ClickableVue
                         canClick={action.canClick}
                         onClick={action.onClick}
+                        onHold={action.onClick}
                         display={action.display}
                     />
                 )

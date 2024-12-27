@@ -9,13 +9,12 @@
 import { Application } from "@pixi/app";
 import { globalBus } from "game/events";
 import "lib/pixi";
-import { nextTick, onBeforeUnmount, onMounted, shallowRef, unref } from "vue";
-import type { Particles } from "./particles";
+import { nextTick, onBeforeUnmount, onMounted, shallowRef } from "vue";
 
-const props = defineProps<{
-    onContainerResized: Particles["onContainerResized"];
-    onHotReload: Particles["onHotReload"];
-    onInit: (app: Application) => void;
+const emits = defineEmits<{
+    (e: "containerResized", boundingRect: DOMRect): void;
+    (e: "hotReload"): void;
+    (e: "init", app: Application): void;
 }>();
 
 const app = shallowRef<null | Application>(null);
@@ -32,12 +31,10 @@ onMounted(() => {
             backgroundAlpha: 0
         });
         resizeListener.value?.appendChild(app.value.view);
-        props.onInit(app.value);
+        emits("init", app.value);
     }
     updateBounds();
-    if (props.onHotReload) {
-        nextTick(props.onHotReload);
-    }
+    nextTick(() => emits("hotReload"));
 });
 onBeforeUnmount(() => {
     app.value?.destroy();
@@ -50,7 +47,7 @@ function updateBounds() {
         isDirty = false;
         nextTick(() => {
             if (resizeListener.value != null) {
-                props.onContainerResized?.(resizeListener.value.getBoundingClientRect());
+                emits("containerResized", resizeListener.value.getBoundingClientRect());
             }
             isDirty = true;
         });

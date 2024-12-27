@@ -25,22 +25,23 @@
 
 <script setup lang="ts">
 import projInfo from "data/projInfo.json";
-import { Layer, type FeatureNode } from "game/layers";
+import { type FeatureNode } from "game/layers";
 import player from "game/player";
-import { render } from "util/vue";
-import { computed, onErrorCaptured, ref, unref } from "vue";
+import { MaybeGetter } from "util/computed";
+import { render, Renderable } from "util/vue";
+import { computed, MaybeRef, onErrorCaptured, Ref, ref, unref } from "vue";
 import Context from "./Context.vue";
 import ErrorVue from "./Error.vue";
 
 const props = defineProps<{
-    display: Layer["display"];
-    minimizedDisplay: Layer["minimizedDisplay"];
-    minimized: Layer["minimized"];
-    name: Layer["name"];
-    color: Layer["color"];
-    minimizable: Layer["minimizable"];
-    nodes: Layer["nodes"];
-    forceHideGoBack: Layer["forceHideGoBack"];
+    display: MaybeGetter<Renderable>;
+    minimizedDisplay?: MaybeGetter<Renderable>;
+    minimized: Ref<boolean>;
+    name?: MaybeRef<string>;
+    color?: MaybeRef<string>;
+    minimizable?: MaybeRef<boolean>;
+    nodes: Ref<Record<string, FeatureNode | undefined>>;
+    forceHideGoBack?: MaybeRef<boolean>;
     index: number;
 }>();
 
