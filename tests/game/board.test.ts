@@ -4,10 +4,10 @@ import {
     setupUniqueIds,
     unwrapNodeRef
 } from "game/boards/board";
+import { Direction } from "util/common";
 import { beforeEach, describe, expect, test } from "vitest";
 import { Ref, ref } from "vue";
 import "../utils";
-import { Direction } from "util/common";
 
 describe("Unwraps node refs", () => {
     test("Static value", () => expect(unwrapNodeRef(100, {})).toBe(100));
