@@ -9,18 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.7.0] - 2024-12-31
 ### Additions
 - Added modal to take a mental health break (can be disabled via projInfo.json)
+- Added `ConversionType` symbol
+- Added `isType` function that uses a type symbol to check
+- Added `MaybeGetter` utility type for something that may be a getter function or a static value (but not a ref)
 
 ### Changes
-- **BREAKING** Replaced Board feature with generic Board system
+- **BREAKING** Replaced Board feature with generic Board system that works with SVG and DOM elements
 - **BREAKING** Rewrote how features are written, simplifying them greatly
 - **BREAKING** Replaced decorators with mixins and wrappers
 - **BREAKING** Moved modals to `src/components/modals`
 - **BREAKING** Updated a very large amount of dependencies, making any necessary adjustments
 - **BREAKING** Removed Grid component
+- **BREAKING** `dontMerge` is now a property on rows and columns rather than an undocumented css class you'd have to include on every feature within the row or column
+- **BREAKING** Moved all features that use the clickable component into the clickable folder
+- **BREAKING** Removed small property from clickable, since its a single css rule (min-height: unset)
+- **BREAKING** Removed `setDefault`, just use `??=`
+- **BREAKING** Made Achievement.vue use a Renderable for the display. The object of components can still be passed to createAchievement
+- **BREAKING** Made Challenge.vue use a Renderable for the display. The object of components can still be passed to createChallenge
+- Upgrades now use the clickable component
 
 ### Fixes
 - Hotkey descriptions were not being wrapped in `unref`
 - Links wouldn't check if the end node existed when determining valid links
+- `forceHideGoBack` was not being respected
+- Saves manager not being imported in addiction warning component
 
 Contributors: thepaperpilot
 
