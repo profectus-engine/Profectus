@@ -51,10 +51,11 @@ const props = defineProps<{
 }>();
 
 const normalizedProgress = computed(() => {
-    let progressNumber =
-        props.progress instanceof Decimal
-            ? props.progress.toNumber()
-            : Number(props.progress);
+    const progress = unref(props.progress);
+    const progressNumber =
+        progress instanceof Decimal
+            ? progress.toNumber()
+            : Number(progress);
     return (1 - Math.min(Math.max(progressNumber, 0), 1)) * 100;
 });
 
