@@ -301,7 +301,7 @@ describe("Create modifier sections", () => {
             createModifierSection({
                 title: "Test",
                 modifier: createAdditiveModifier(() => ({ addend: 5, description: "Test Desc" }))
-            })
+            })()
         ).toMatchSnapshot());
     test("With subtitle", () =>
         expect(
@@ -309,7 +309,7 @@ describe("Create modifier sections", () => {
                 title: "Test",
                 subtitle: "Subtitle",
                 modifier: createAdditiveModifier(() => ({ addend: 5, description: "Test Desc" }))
-            })
+            })()
         ).toMatchSnapshot());
     test("With base", () =>
         expect(
@@ -317,7 +317,7 @@ describe("Create modifier sections", () => {
                 title: "Test",
                 modifier: createAdditiveModifier(() => ({ addend: 5, description: "Test Desc" })),
                 base: 10
-            })
+            })()
         ).toMatchSnapshot());
     test("With unit", () =>
         expect(
@@ -325,7 +325,7 @@ describe("Create modifier sections", () => {
                 title: "Test",
                 modifier: createAdditiveModifier(() => ({ addend: 5, description: "Test Desc" })),
                 unit: "/s"
-            })
+            })()
         ).toMatchSnapshot());
     test("With base", () =>
         expect(
@@ -333,7 +333,7 @@ describe("Create modifier sections", () => {
                 title: "Test",
                 modifier: createAdditiveModifier(() => ({ addend: 5, description: "Test Desc" })),
                 baseText: "Based on"
-            })
+            })()
         ).toMatchSnapshot());
     test("With baseText", () =>
         expect(
@@ -341,7 +341,7 @@ describe("Create modifier sections", () => {
                 title: "Test",
                 modifier: createAdditiveModifier(() => ({ addend: 5, description: "Test Desc" })),
                 baseText: "Based on"
-            })
+            })()
         ).toMatchSnapshot());
     describe("With smallerIsBetter", () => {
         test("smallerIsBetter = false", () => {
@@ -353,7 +353,7 @@ describe("Create modifier sections", () => {
                         description: "Test Desc"
                     })),
                     smallerIsBetter: false
-                })
+                })()
             ).toMatchSnapshot();
             expect(
                 createModifierSection({
@@ -363,7 +363,7 @@ describe("Create modifier sections", () => {
                         description: "Test Desc"
                     })),
                     smallerIsBetter: false
-                })
+                })()
             ).toMatchSnapshot();
             expect(
                 createModifierSection({
@@ -373,7 +373,7 @@ describe("Create modifier sections", () => {
                         description: "Test Desc"
                     })),
                     smallerIsBetter: false
-                })
+                })()
             ).toMatchSnapshot();
         });
         test("smallerIsBetter = true", () => {
@@ -385,7 +385,7 @@ describe("Create modifier sections", () => {
                         description: "Test Desc"
                     })),
                     smallerIsBetter: true
-                })
+                })()
             ).toMatchSnapshot();
             expect(
                 createModifierSection({
@@ -395,7 +395,7 @@ describe("Create modifier sections", () => {
                         description: "Test Desc"
                     })),
                     smallerIsBetter: true
-                })
+                })()
             ).toMatchSnapshot();
             expect(
                 createModifierSection({
@@ -405,7 +405,7 @@ describe("Create modifier sections", () => {
                         description: "Test Desc"
                     })),
                     smallerIsBetter: true
-                })
+                })()
             ).toMatchSnapshot();
         });
     });
@@ -419,6 +419,6 @@ describe("Create modifier sections", () => {
                 unit: "/s",
                 baseText: "Based on",
                 smallerIsBetter: true
-            })
+            })()
         ).toMatchSnapshot());
 });
