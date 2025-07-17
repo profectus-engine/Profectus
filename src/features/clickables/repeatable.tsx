@@ -1,6 +1,6 @@
 import Clickable from "features/clickables/Clickable.vue";
 import { Visibility } from "features/feature";
-import { DefaultValue, Persistent, persistent } from "game/persistence";
+import { DefaultValue, Persistent, persistent, SkipPersistence } from "game/persistence";
 import {
     createVisibilityRequirement,
     displayRequirements,
@@ -109,8 +109,9 @@ export function createRepeatable<T extends RepeatableOptions>(optionsFunc: () =>
             ),
             requiresPay: false,
             visibility: Visibility.None,
-            canMaximize: true
-        } as const;
+            canMaximize: true,
+            [SkipPersistence]: true
+        } satisfies Requirements;
         const requirements: Requirements = [
             ...(Array.isArray(_requirements) ? _requirements : [_requirements]),
             limitRequirement
