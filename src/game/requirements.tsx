@@ -7,7 +7,7 @@ import { joinJSX, Renderable } from "util/vue";
 import { computed, MaybeRef, MaybeRefOrGetter, unref } from "vue";
 import Formula, { calculateCost, calculateMaxAffordable } from "./formulas/formulas";
 import type { GenericFormula, InvertibleIntegralFormula } from "./formulas/types";
-import { DefaultValue, Persistent } from "./persistence";
+import { DefaultValue, Persistent, SkipPersistence } from "./persistence";
 
 /**
  * An object that can be used to describe a requirement to perform some purchase or other action.
@@ -43,6 +43,8 @@ export interface Requirement {
      * @param amount The amount of levels of requirements to pay for.
      */
     pay?: (amount?: DecimalSource) => void;
+
+    [SkipPersistence]: true;
 }
 
 /**
@@ -234,7 +236,8 @@ export function createCostRequirement<T extends CostRequirementOptions>(optionsF
                               )
                             : unref(requirement.cost as MaybeRef<DecimalSource>);
                     resource.value = Decimal.sub(resource.value, cost).max(0);
-                }
+                },
+            [SkipPersistence]: true
         } satisfies CostRequirement;
 
         return requirement;
@@ -248,11 +251,15 @@ export function createCostRequirement<T extends CostRequirementOptions>(optionsF
 export function createVisibilityRequirement(
     visibility: MaybeRef<Visibility | boolean>
 ): Requirement {
-    return createLazyProxy(() => ({
-        requirementMet: computed(() => isVisible(visibility)),
-        visibility: Visibility.None,
-        requiresPay: false
-    }));
+    return createLazyProxy(
+        () =>
+            ({
+                [SkipPersistence]: true,
+                requirementMet: computed(() => isVisible(visibility)),
+                visibility: Visibility.None,
+                requiresPay: false
+            }) satisfies Requirement
+    );
 }
 
 /**
@@ -272,8 +279,9 @@ export function createBooleanRequirement(
             partialDisplay,
             display: display == null ? undefined : () => <>Req: {partialDisplay}</>,
             visibility: display == null ? Visibility.None : Visibility.Visible,
-            requiresPay: false
-        };
+            requiresPay: false,
+            [SkipPersistence]: true
+        } satisfies Requirement;
     });
 }
 

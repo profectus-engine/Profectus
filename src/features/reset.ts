@@ -67,7 +67,7 @@ export function createReset<T extends ResetOptions>(optionsFunc: () => T) {
                         if (DefaultValue in obj) {
                             const persistent = obj as NonPersistent;
                             persistent.value = persistent[DefaultValue];
-                        } else if (!(obj instanceof Decimal) && !isRef(obj)) {
+                        } else if (!isRef(obj)) {
                             Object.values(obj).forEach(obj =>
                                 handleObject(obj as Record<string, unknown>)
                             );

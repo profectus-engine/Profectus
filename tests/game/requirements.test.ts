@@ -14,6 +14,7 @@ import {
 import Decimal from "util/bignum";
 import { beforeAll, describe, expect, test } from "vitest";
 import { isRef, ref, unref } from "vue";
+import { SkipPersistence } from "game/persistence";
 import "../utils";
 
 describe("Creating cost requirement", () => {
@@ -46,6 +47,7 @@ describe("Creating cost requirement", () => {
         test("requires pay", () => expect(requirement.requiresPay).toBe(true));
         test("does not spend resources", () => expect(requirement.cumulativeCost).toBe(true));
         test("cannot maximize", () => expect(unref(requirement.canMaximize)).toBe(false));
+        test("marked as SkipPersistence", () => expect(requirement[SkipPersistence]).toBe(true));
     });
 
     describe("Fully customized", () => {
@@ -75,6 +77,7 @@ describe("Creating cost requirement", () => {
         test("maxBulkAmount is set", () =>
             expect(unref(requirement.maxBulkAmount)).compare_tolerance(Decimal.dInf));
         test("directSum is set", () => expect(unref(requirement.directSum)).toBe(5));
+        test("marked as SkipPersistence", () => expect(requirement[SkipPersistence]).toBe(true));
     });
 
     test("Requirement met when meeting the cost", () => {
